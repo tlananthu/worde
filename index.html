@@ -1,0 +1,265 @@
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="jquery-git.slim.min.js"></script>
+<link rel="stylesheet" href="bootstrap.min.css">
+<title>Word Guess</title>
+<style>
+.box{
+  padding:1rem;
+  margin:2px;
+  border-sizing:border-box;
+}
+.blank{
+background-color:rgba(var(--bs-secondary-rgb),var(--bs-bg-opacity)) !important;
+}
+.incorrect{
+background-color:rgba(var(--bs-danger-rgb),var(--bs-bg-opacity)) !important;
+}
+.correct{
+background-color:rgba(var(--bs-success-rgb),var(--bs-bg-opacity)) !important;
+animation: popout 1s ease;
+-webkit-animation: popout 1s ease;
+}
+@keyframes popout {
+  from{transform:scale(0)}
+  80%{transform:scale(1.2)}
+  to{transform:scale(1)}
+}
+@-webkit-keyframes popout {
+  from{-webkit-transform:scale(0)}
+  80%{-webkit-transform:scale(1.2)}
+  to{-webkit-transform:scale(1)}
+}
+.wrongPos{
+background-color:rgba(var(--bs-warning-rgb),var(--bs-bg-opacity)) !important;
+}
+</style>
+<script>
+gLength=3;
+gTries=gLength+1;
+gWords3=[];
+gWords3[3]=['Sip','Sin','Ass','Art','Apt','Red','And','Are','Ape','Ace','Act','Ask','Arm','Age','Ago','Air','All','But','Bye','Bad','Big','Bed','Bat','Boy','Bus','Bag','Box','Bit','Bee','Buy','Bun','Cub','Cat','Car','Cut','Cow','Cry','Cab','Can','Dad','Dam','Did','Dug','Den','Dot','Dip','Day','Ear','Eye','Eat','End','Egg','Far','Fat','Few','Fan','Fun','Fit','Fin','Fox','Fix','Fly','Fry','For','Got','Get','Gel','Gas','Hat','Hit','Has','Had','How','Her','His','Hen','Ink','Ice','Ill','Jab','Jug','Jet','Jam','Jar','Job','Jog','Kit','Lot','Lit','Let','Lay','Mat','Man','Mad','Mug','Mix','Map','Mud','Mom','May','Met','Net','New','Nap','Now','Nod','Net','Not','Nut','Oar','One','Out','Owl','Old','Own','Odd','Our','Pet','Pat','Peg','Paw','Pup','Pit','Put','Pot','Pop','Pin','Rat','Rag','Rub','Row','Rug','Run','Rap','Ram','Sow','See','Saw','Set','Sit','Sir','Sat','Sob','Tap','Tip','Top','Tug','Tow','Toe','Tan','Ten','Two','Use','Van','Vet','Was','Wet','Win','Won','Wig','War','Why','Who','Way','Wow','You','Yes','Yak','Yet','Zip','Zap','Nun'];
+gWords3[4]=['able','acid','aged','also','area','army','away','baby','back','ball','band','bank','base','bath','bear','beat','been','beer','bell','belt','best','bill','bird','blow','blue','boat','body','bomb','bond','bone','book','boom','born','boss','both','bowl','bulk','burn','bush','busy','call','calm','came','camp','card','care','case','cash','cast','cell','chat','chip','city','club','coal','coat','code','cold','come','cook','cool','cope','copy','CORE','cost','crew','crop','dark','data','date','dawn','days','dead','deal','dean','dear','debt','deep','deny','desk','dial','dick','diet','disc','disk','does','done','door','dose','down','draw','drew','drop','drug','dual','duke','dust','duty','each','earn','ease','east','easy','edge','else','even','ever','evil','exit','face','fact','fail','fair','fall','farm','fast','fate','fear','feed','feel','feet','fell','felt','file','fill','film','find','fine','fire','firm','fish','five','flat','flow','food','foot','ford','form','fort','four','free','from','fuel','full','fund','gain','game','gate','gave','gear','gene','gift','girl','give','glad','goal','goes','gold','Golf','gone','good','gray','grew','grey','grow','gulf','hair','half','hall','hand','hang','hard','harm','hate','have','head','hear','heat','held','hell','help','here','hero','high','hill','hire','hold','hole','holy','home','hope','host','hour','huge','hung','hunt','hurt','idea','inch','into','iron','item','jack','jane','jean','john','join','jump','jury','just','keen','keep','kent','kept','kick','kill','kind','king','knee','knew','know','lack','lady','laid','lake','land','lane','last','late','lead','left','less','life','lift','like','line','link','list','live','load','loan','lock','logo','long','look','lord','lose','loss','lost','love','luck','made','mail','main','make','male','many','Mark','mass','matt','meal','mean','meat','meet','menu','mere','mike','mile','milk','mill','mind','mine','miss','mode','mood','moon','more','most','move','much','must','name','navy','near','neck','need','news','next','nice','nick','nine','none','nose','note','okay','once','only','onto','open','oral','over','pace','pack','page','paid','pain','pair','palm','park','part','pass','past','path','peak','pick','pink','pipe','plan','play','plot','plug','plus','poll','pool','poor','port','post','pull','pure','push','race','rail','rain','rank','rare','rate','read','real','rear','rely','rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof','room','root','rose','rule','rush','ruth','safe','said','sake','sale','salt','same','sand','save','seat','seed','seek','seem','seen','self','sell','send','sent','sept','ship','shop','shot','show','shut','sick','side','sign','site','size','skin','slip','slow','snow','soft','soil','sold','sole','some','song','soon','sort','soul','spot','star','stay','step','stop','such','suit','sure','take','tale','talk','tall','tank','tape','task','team','tech','tell','tend','term','test','text','than','that','them','then','they','thin','this','thus','till','time','tiny','told','toll','tone','tony','took','tool','tour','town','tree','trip','TRUE','tune','turn','twin','type','unit','upon','used','user','vary','vast','very','vice','view','vote','wage','wait','wake','walk','wall','want','ward','warm','wash','wave','ways','weak','wear','week','well','went','were','west','what','when','whom','wide','wife','wild','will','wind','wine','wing','wire','wise','wish','with','wood','word','wore','work','yard','yeah','year','your','zero','zone'];
+gWords3[5]=['crane','about','above','abuse','actor','acute','admit','adopt','adult','after','again','agent','agree','ahead','alarm','album','alert','alike','alive','allow','alone','along','alter','among','anger','Angle','angry','apart','apple','apply','arena','argue','arise','array','aside','asset','audio','audit','avoid','award','aware','badly','baker','bases','basic','basis','beach','began','begin','begun','being','below','bench','billy','birth','black','blame','blind','block','blood','board','boost','booth','bound','brain','brand','bread','break','breed','brief','bring','broad','broke','brown','build','built','buyer','cable','calif','carry','catch','cause','chain','chair','chart','chase','cheap','check','chest','chief','child','china','chose','civil','claim','class','clean','clear','click','clock','close','coach','coast','could','count','court','cover','craft','crash','cream','crime','cross','crowd','crown','curve','cycle','daily','dance','dated','dealt','death','debut','delay','depth','doing','doubt','dozen','draft','drama','drawn','dream','dress','drill','drink','drive','drove','dying','eager','early','earth','eight','elite','empty','enemy','enjoy','enter','entry','equal','error','event','every','exact','exist','extra','faith','FALSE','fault','fiber','field','fifth','fifty','fight','final','first','fixed','flash','fleet','floor','fluid','focus','force','forth','forty','forum','found','frame','frank','fraud','fresh','front','fruit','fully','funny','giant','given','glass','globe','going','grace','grade','grand','grant','grass','great','green','gross','group','grown','guard','guess','guest','guide','happy','harry','heart','heavy','hence','henry','horse','hotel','house','human','ideal','image','index','inner','input','issue','japan','jimmy','joint','jones','judge','known','label','large','laser','later','laugh','layer','learn','lease','least','leave','legal','level','lewis','light','limit','links','lives','local','logic','loose','lower','lucky','lunch','lying','magic','major','maker','march','maria','match','maybe','mayor','meant','media','metal','might','minor','minus','mixed','model','money','month','moral','motor','mount','mouse','mouth','movie','music','needs','never','newly','night','noise','north','noted','novel','nurse','occur','ocean','offer','often','order','other','ought','paint','panel','paper','party','peace','peter','phase','phone','photo','piece','pilot','pitch','place','plain','plane','plant','plate','point','pound','power','press','price','pride','prime','print','prior','prize','proof','proud','prove','queen','quick','quiet','quite','radio','raise','range','rapid','ratio','reach','ready','refer','right','rival','river','robin','roger','roman','rough','round','route','royal','rural','scale','scene','scope','score','sense','serve','seven','shall','shape','share','sharp','sheet','shelf','shell','shift','shirt','shock','shoot','short','shown','sight','since','sixth','sixty','sized','skill','sleep','slide','small','smart','smile','smith','smoke','solid','solve','sorry','sound','south','space','spare','speak','speed','spend','spent','split','spoke','sport','staff','stage','stake','stand','start','state','steam','steel','stick','still','stock','stone','stood','store','storm','story','strip','stuck','study','stuff','style','sugar','suite','super','sweet','table','taken','taste','taxes','teach','teeth','terry','texas','thank','theft','their','theme','there','these','thick','thing','think','third','those','three','threw','throw','tight','times','tired','title','today','topic','total','touch','tough','tower','track','trade','train','treat','trend','trial','tried','tries','truck','truly','trust','truth','twice','under','undue','union','unity','until','upper','upset','urban','usage','usual','valid','value','video','virus','visit','vital','voice','waste','watch','water','wheel','where','which','while','white','whole','whose','woman','women','world','worry','worse','worst','worth','would','wound','write','wrong','wrote','yield','young','youth'];
+gWords=[];
+gTestWord="";
+gWordCount=0;
+gNext={
+  row:1,
+  col:1
+};
+
+function debug(message){
+  /*$("div#console").text(message);*/
+}
+function getRandomInt(max){
+  return Math.floor(Math.random() * max);
+}
+function getRandomWord(){
+  return gWords[getRandomInt(gWordCount)].toUpperCase();
+}
+function loadSettings(){
+  getSettings();
+  $("#lettersInput").val(gLength);
+}
+function getSettings(){
+  gLength=parseInt(localStorage.getItem("worde-length"));
+  /*console.log(gLength);*/
+  if (!gLength){
+    gLength=3;
+  }
+  gTries=gLength+1;
+  loadWords();
+  displayInit();
+}
+function savePref(){
+  val=$("#lettersInput").val();
+  
+  localStorage.setItem("worde-length", val);
+  getSettings();
+  $("div.keyarea .col .btn").removeAttr("disabled","");
+  $("div.keyarea .col .btn").removeClass("btn-info").addClass("btn-primary");
+  removeAlert();
+}
+function loadWords(){
+  /*if (gLength==3){
+	gWords=gWords3;
+	gWordCount=gWords.length;
+  }*/
+  gWords=gWords3[gLength].map(word=> word.toUpperCase());
+  gWordCount=gWords.length;
+  gTestWord=getRandomWord();
+  debug(gTestWord);
+}
+function displayInit(){
+  gText="";
+  $("span#gLength").text(gLength+" Letter Worde");
+  $("div#tryArea").empty();
+  for (i=1; i<=gTries; i++){
+    gText+='<div id="row'+i+'" class="row">';
+	for (j=1; j<=gLength; j++){
+	  gText+='<div id="col'+j+'" class="dispkey col box blank">&nbsp;</div>';
+	}
+	gText+='</div>';
+  }
+  $("div#tryArea").append(gText);
+}
+function removeAlert(){
+  $("div#messageArea").html("&nbsp;").removeClass("alert alert-danger alert-primary");
+}
+function displayWord(){
+  $("div#messageArea").html(gTestWord).addClass("alert alert-primary");
+}
+function testWord(row){
+  enteredWord=$("div#row"+row).text();
+  console.log(gWords);
+  if (gWords.indexOf(enteredWord) === -1){
+    $("div#messageArea").text("Word not in my list").addClass("alert alert-danger");
+	setTimeout(removeAlert, 3000);	
+	return false;
+  }
+  
+  inputArray=enteredWord.split("");
+  guessArray=gTestWord.split("");
+  for (i=0; i<=guessArray.length; i++){
+    for (j=0; j<=inputArray.length; j++){
+	  if (i!=j){
+	    if (inputArray[j]==guessArray[i]){
+		  $("div#row"+row+" div#col"+(j+1)).toggleClass("wrongPos");
+		}
+	  }
+	}
+  }
+  /*console.log(inputArray.length);*/
+  correct=0;
+  for (k=0; k<inputArray.length; k++){
+    /*console.log(inputArray[k]+'-'+guessArray[k]);*/
+    if (inputArray[k]==guessArray[k]){
+	  correct++;
+	  $("div#row"+row+" div#col"+(k+1)).toggleClass("correct");
+	  
+	}
+  }
+  var diff = $(inputArray).not(guessArray).get();
+  for (b=0; b<=diff.length; b++){
+    $(".btn-primary:contains('"+diff[b]+"')").removeClass('btn-primary').addClass('btn-info');
+  }
+  /*console.log(diff);*/
+  if (correct==gLength){
+    gameOver();
+  }
+  return true;
+}
+function gameOver(){
+  $("div.keyarea .col .btn").attr("disabled","");
+}
+function findNextSpot(letter){
+  if (letter=="enter"){
+    if (gNext.col>=gLength){
+	  if (testWord(gNext.row)){
+	  gNext.row++;
+	  gNext.col=1;
+	  if(gNext.row==gTries+1){
+	    gameOver();
+		displayWord();
+	  }
+	  }
+	}
+    return "";
+  }
+  if (letter=="back"){
+    if (gNext.col>=1){
+    gNext.col--;
+    $("div#row"+gNext.row+" div#col"+gNext.col).html("&nbsp;");
+    }
+    return "";
+  }
+  finder="div#row"+gNext.row+" div#col"+gNext.col;
+  if (gNext.col<=gLength){
+    gNext.col++;
+  }
+  if (gNext.col > gLength+1){
+    return "";
+  }
+  /*if (gNext.row<=gTries){
+    gNext.row++;
+  }*/
+  debug(finder);
+  return finder;
+}
+function inputMe(letter){
+  $(findNextSpot(letter)).text(letter);
+}
+</script>
+</head>
+<body class="bg-dark" onload="getSettings()">
+  <div class="container-fluid">
+	<div class="text-center row gx-12 p-3 bg-dark text-white">
+	  <span id="gLength"></span>
+	</div>
+	<div id="messageArea" class="sticky-top alert alert-dismissible"></div>
+	
+	<div id="tryArea" class="text-center row gx-12 p-3 bg-dark text-white">
+	  <div id="row1" class="row">
+	  <div class="col box blank">&nbsp;</div>
+	  <div class="col box blank">&nbsp;</div>
+	  <div class="col box blank">&nbsp;</div>
+	  </div>
+	</div>
+	<div id="keyArea1" class="keyarea text-center row gx-12 p-3 bg-secondary text-white">
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('Q')">Q</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('W')">W</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('E')">E</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('R')">R</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('T')">T</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('Y')">Y</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('U')">U</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('I')">I</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('O')">O</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('P')">P</button></div>
+	</div>
+	<div id="keyArea2" class="keyarea text-center row gx-12 p-3 bg-secondary text-white">
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('A')">A</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('S')">S</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('D')">D</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('F')">F</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('G')">G</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('H')">H</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('J')">J</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('K')">K</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('L')">L</button></div>
+	</div>
+	<div id="keyArea3" class="keyarea text-center row gx-12 p-3 bg-secondary text-white">
+	  <div class="col"><button type="button" class="btn btn-success" onclick="inputMe('enter')">enter</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('Z')">Z</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('X')">X</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('C')">C</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('V')">V</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('B')">B</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('N')">N</button></div>
+	  <div class="col"><button type="button" class="btn btn-primary" onclick="inputMe('M')">M</button></div>
+	  <div class="col"><button type="button" class="btn btn-success" onclick="inputMe('back')">back</button></div>
+	</div>
+	<div id="console" class="text-center row gx-12 p-3 bg-secondary text-white">
+	<div id="settings" class="text-center row gx-12 p-3 bg-secondary text-white">
+	  <div class="form-group row">
+	    <label for="lettersInput">Choose Worde Length</label>
+	  </div>
+	  <div class="form-group row" onload="loadSettings()">
+	    <div class="col-sm-10">
+          <select class="form-control" id="lettersInput">
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+          </select>
+		</div>
+		<div class="col-sm-2">
+		  <button type="submit" class="btn btn-primary" onclick="savePref()">Save</button>
+		</div>
+	  </div>
+  </div>
+	</div>
+  </div>
+</body>
