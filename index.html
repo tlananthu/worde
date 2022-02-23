@@ -1,8 +1,10 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="jquery-git.slim.min.js"></script>
+<script src="popper.min.js"></script>
+<script src="bootstrap.min.js"></script>
 <link rel="stylesheet" href="bootstrap.min.css">
 <title>Word Guess</title>
 <style>
@@ -13,6 +15,8 @@
   max-width:100px;
 }
 .key{
+  padding-left:1px;
+  padding-right:1px;
 }
 .box{
   padding:1rem;
@@ -48,8 +52,8 @@ background-color:rgba(var(--bs-warning-rgb),var(--bs-bg-opacity)) !important;
 gLength=3;
 gTries=gLength+1;
 gWords3=[];
-gWords3[3]=['Cot','Sip','Sin','Ass','Art','Apt','Red','And','Are','Ape','Ace','Act','Ask','Arm','Age','Ago','Air','All','But','Bye','Bad','Big','Bed','Bat','Boy','Bus','Bag','Box','Bit','Bee','Buy','Bun','Cub','Cat','Car','Cut','Cow','Cry','Cab','Can','Dad','Dam','Did','Dug','Den','Dot','Dip','Day','Ear','Eye','Eat','End','Egg','Far','Fat','Few','Fan','Fun','Fit','Fin','Fox','Fix','Fly','Fry','For','Got','Get','Gel','Gas','Hat','Hit','Has','Had','How','Her','His','Hen','Ink','Ice','Ill','Jab','Jug','Jet','Jam','Jar','Job','Jog','Kit','Lot','Lit','Let','Lay','Mat','Man','Mad','Mug','Mix','Map','Mud','Mom','May','Met','Net','New','Nap','Now','Nod','Net','Not','Nut','Oar','One','Out','Owl','Old','Own','Odd','Our','Pet','Pat','Peg','Paw','Pup','Pit','Put','Pot','Pop','Pin','Rat','Rag','Rub','Row','Rug','Run','Rap','Ram','Sow','See','Saw','Set','Sit','Sir','Sat','Sob','Tap','Tip','Top','Tug','Tow','Toe','Tan','Ten','Two','Use','Van','Vet','Was','Wet','Win','Won','Wig','War','Why','Who','Way','Wow','You','Yes','Yak','Yet','Zip','Zap','Nun'];
-gWords3[4]=['able','acid','aged','also','area','army','away','baby','back','ball','band','bank','base','bath','bear','beat','been','beer','bell','belt','best','bill','bird','blow','blue','boat','body','bomb','bond','bone','book','boom','born','boss','both','bowl','bulk','burn','bush','busy','call','calm','came','camp','card','care','case','cash','cast','cell','chat','chip','city','club','coal','coat','code','cold','come','cook','cool','cope','copy','CORE','cost','crew','crop','dark','data','date','dawn','days','dead','deal','dean','dear','debt','deep','deny','desk','dial','dick','diet','disc','disk','does','done','door','dose','down','draw','drew','drop','drug','dual','duke','dust','duty','each','earn','ease','east','easy','edge','else','even','ever','evil','exit','face','fact','fail','fair','fall','farm','fast','fate','fear','feed','feel','feet','fell','felt','file','fill','film','find','fine','fire','firm','fish','five','flat','flow','food','foot','ford','form','fort','four','free','from','fuel','full','fund','gain','game','gate','gave','gear','gene','gift','girl','give','glad','goal','goes','gold','Golf','gone','good','gray','grew','grey','grow','gulf','hair','half','hall','hand','hang','hard','harm','hate','have','head','hear','heat','held','hell','help','here','hero','high','hill','hire','hold','hole','holy','home','hope','host','hour','huge','hung','hunt','hurt','idea','inch','into','iron','item','jack','jane','jean','john','join','jump','jury','just','keen','keep','kent','kept','kick','kill','kind','king','knee','knew','know','lack','lady','laid','lake','land','lane','last','late','lead','left','less','life','lift','like','line','link','list','live','load','loan','lock','logo','long','look','lord','lose','loss','lost','love','luck','made','mail','main','make','male','many','Mark','mass','matt','meal','mean','meat','meet','menu','mere','mike','mile','milk','mill','mind','mine','miss','mode','mood','moon','more','most','move','much','must','name','navy','near','neck','need','news','next','nice','nick','nine','none','nose','note','okay','once','only','onto','open','oral','over','pace','pack','page','paid','pain','pair','palm','park','part','pass','past','path','peak','pick','pink','pipe','plan','play','plot','plug','plus','poll','pool','poor','port','post','pull','pure','push','race','rail','rain','rank','rare','rate','read','real','rear','rely','rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof','room','root','rose','rule','rush','ruth','safe','said','sake','sale','salt','same','sand','save','seat','seed','seek','seem','seen','self','sell','send','sent','sept','ship','shop','shot','show','shut','sick','side','sign','site','size','skin','slip','slow','snow','soft','soil','sold','sole','some','song','soon','sort','soul','spot','star','stay','step','stop','such','suit','sure','take','tale','talk','tall','tank','tape','task','team','tech','tell','tend','term','test','text','than','that','them','then','they','thin','this','thus','till','time','tiny','told','toll','tone','tony','took','tool','tour','town','tree','trip','TRUE','tune','turn','twin','type','unit','upon','used','user','vary','vast','very','vice','view','vote','wage','wait','wake','walk','wall','want','ward','warm','wash','wave','ways','weak','wear','week','well','went','were','west','what','when','whom','wide','wife','wild','will','wind','wine','wing','wire','wise','wish','with','wood','word','wore','work','yard','yeah','year','your','zero','zone'];
+gWords3[3]=['pig','Cot','Sip','Sin','Ass','Art','Apt','Red','And','Are','Ape','Ace','Act','Ask','Arm','Age','Ago','Air','All','But','Bye','Bad','Big','Bed','Bat','Boy','Bus','Bag','Box','Bit','Bee','Buy','Bun','Cub','Cat','Car','Cut','Cow','Cry','Cab','Can','Dad','Dam','Did','Dug','Den','Dot','Dip','Day','Ear','Eye','Eat','End','Egg','Far','Fat','Few','Fan','Fun','Fit','Fin','Fox','Fix','Fly','Fry','For','Got','Get','Gel','Gas','Hat','Hit','Has','Had','How','Her','His','Hen','Ink','Ice','Ill','Jab','Jug','Jet','Jam','Jar','Job','Jog','Kit','Lot','Lit','Let','Lay','Mat','Man','Mad','Mug','Mix','Map','Mud','Mom','May','Met','Net','New','Nap','Now','Nod','Net','Not','Nut','Oar','One','Out','Owl','Old','Own','Odd','Our','Pet','Pat','Peg','Paw','Pup','Pit','Put','Pot','Pop','Pin','Rat','Rag','Rub','Row','Rug','Run','Rap','Ram','Sow','See','Saw','Set','Sit','Sir','Sat','Sob','Tap','Tip','Top','Tug','Tow','Toe','Tan','Ten','Two','Use','Van','Vet','Was','Wet','Win','Won','Wig','War','Why','Who','Way','Wow','You','Yes','Yak','Yet','Zip','Zap','Nun'];
+gWords3[4]=['able','acid','aged','also','area','army','away','baby','back','ball','band','bank','base','bath','bear','beat','been','beer','bell','belt','best','bill','bird','blow','blue','boat','body','bomb','bond','bone','book','boom','born','boss','both','bowl','bulk','burn','bush','busy','call','calm','came','camp','card','care','case','cash','cast','cell','chat','chip','city','club','coal','coat','code','cold','come','cook','cool','cope','copy','CORE','cost','crew','crop','dark','data','date','dawn','days','dead','deal','dean','dear','debt','deep','deny','desk','dial','dick','diet','disc','disk','does','done','door','dose','down','draw','drew','drop','drug','dual','duke','dust','duty','each','earn','ease','east','easy','edge','else','even','ever','evil','exit','face','fact','fail','fair','fall','farm','fast','fate','fear','feed','feel','feet','fell','felt','file','fill','film','find','fine','fire','firm','fish','five','flat','flow','food','foot','ford','form','fort','four','free','from','fuel','full','fund','gain','game','gate','gave','gear','gene','gift','girl','give','glad','goal','goes','gold','Golf','gone','good','gray','grew','grey','grow','gulf','hair','half','hall','hand','hang','hard','harm','hate','have','head','hear','heat','held','hell','help','here','hero','high','hill','hire','hold','hole','holy','home','hope','host','hour','huge','hung','hunt','hurt','idea','inch','into','iron','item','jack','jane','jean','john','join','jump','jury','just','keen','keep','kent','kept','kick','kill','kind','king','knee','knew','know','lack','lady','laid','lake','land','lane','last','late','lead','left','less','life','lift','like','line','link','list','live','load','loan','lock','logo','long','look','lord','lose','loss','lost','love','luck','made','mail','main','make','male','many','Mark','mass','matt','meal','mean','meat','meet','menu','mere','mike','mile','milk','mill','mind','mine','miss','mode','mood','moon','more','most','move','much','must','name','navy','near','neck','need','news','next','nice','nick','nine','none','nose','note','okay','once','only','onto','open','oral','over','pace','pack','page','paid','pain','pair','palm','park','part','pass','past','path','peak','pick','pink','pipe','plan','play','plot','plug','plus','poll','pool','poor','port','post','pull','pure','push','race','rail','rain','rank','rare','rate','read','real','rear','rely','rent','rest','rice','rich','ride','ring','rise','risk','road','rock','role','roll','roof','room','root','rose','rule','rush','ruth','safe','said','sake','sale','salt','same','sand','save','seat','seed','seek','seem','seen','self','sell','send','sent','sept','ship','shop','shot','show','shut','sick','side','sign','site','size','skin','slip','slow','snow','soft','soil','sold','sole','some','song','soon','sort','soul','spot','star','stay','step','stop','such','suit','sure','take','tale','talk','tall','tank','tape','task','team','tech','tell','tend','term','test','text','than','that','them','then','they','thin','this','thus','till','time','tiny','told','toll','tone','tony','took','tool','tour','town','tree','trip','TRUE','tune','turn','twin','type','unit','upon','used','user','vary','vast','very','vice','view','vote','wage','wait','wake','walk','wall','want','ward','warm','wash','wave','ways','weak','wear','week','well','went','were','west','what','when','whom','wide','wife','wild','will','wind','wine','wing','wire','wise','wish','with','wood','word','wore','work','yard','yeah','year','your','zero','zone','cure'];
 gWords3[5]=['tiger','crane','about','above','abuse','actor','acute','admit','adopt','adult','after','again','agent','agree','ahead','alarm','album','alert','alike','alive','allow','alone','along','alter','among','anger','Angle','angry','apart','apple','apply','arena','argue','arise','array','aside','asset','audio','audit','avoid','award','aware','badly','baker','bases','basic','basis','beach','began','begin','begun','being','below','bench','billy','birth','black','blame','blind','block','blood','board','boost','booth','bound','brain','brand','bread','break','breed','brief','bring','broad','broke','brown','build','built','buyer','cable','calif','carry','catch','cause','chain','chair','chart','chase','cheap','check','chest','chief','child','china','chose','civil','claim','class','clean','clear','click','clock','close','coach','coast','could','count','court','cover','craft','crash','cream','crime','cross','crowd','crown','curve','cycle','daily','dance','dated','dealt','death','debut','delay','depth','doing','doubt','dozen','draft','drama','drawn','dream','dress','drill','drink','drive','drove','dying','eager','early','earth','eight','elite','empty','enemy','enjoy','enter','entry','equal','error','event','every','exact','exist','extra','faith','FALSE','fault','fiber','field','fifth','fifty','fight','final','first','fixed','flash','fleet','floor','fluid','focus','force','forth','forty','forum','found','frame','frank','fraud','fresh','front','fruit','fully','funny','giant','given','glass','globe','going','grace','grade','grand','grant','grass','great','green','gross','group','grown','guard','guess','guest','guide','happy','harry','heart','heavy','hence','henry','horse','hotel','house','human','ideal','image','index','inner','input','issue','japan','jimmy','joint','jones','judge','known','label','large','laser','later','laugh','layer','learn','lease','least','leave','legal','level','lewis','light','limit','links','lives','local','logic','loose','lower','lucky','lunch','lying','magic','major','maker','march','maria','match','maybe','mayor','meant','media','metal','might','minor','minus','mixed','model','money','month','moral','motor','mount','mouse','mouth','movie','music','needs','never','newly','night','noise','north','noted','novel','nurse','occur','ocean','offer','often','order','other','ought','paint','panel','paper','party','peace','peter','phase','phone','photo','piece','pilot','pitch','place','plain','plane','plant','plate','point','pound','power','press','price','pride','prime','print','prior','prize','proof','proud','prove','queen','quick','quiet','quite','radio','raise','range','rapid','ratio','reach','ready','refer','right','rival','river','robin','roger','roman','rough','round','route','royal','rural','scale','scene','scope','score','sense','serve','seven','shall','shape','share','sharp','sheet','shelf','shell','shift','shirt','shock','shoot','short','shown','sight','since','sixth','sixty','sized','skill','sleep','slide','small','smart','smile','smith','smoke','solid','solve','sorry','sound','south','space','spare','speak','speed','spend','spent','split','spoke','sport','staff','stage','stake','stand','start','state','steam','steel','stick','still','stock','stone','stood','store','storm','story','strip','stuck','study','stuff','style','sugar','suite','super','sweet','table','taken','taste','taxes','teach','teeth','terry','texas','thank','theft','their','theme','there','these','thick','thing','think','third','those','three','threw','throw','tight','times','tired','title','today','topic','total','touch','tough','tower','track','trade','train','treat','trend','trial','tried','tries','truck','truly','trust','truth','twice','under','undue','union','unity','until','upper','upset','urban','usage','usual','valid','value','video','virus','visit','vital','voice','waste','watch','water','wheel','where','which','while','white','whole','whose','woman','women','world','worry','worse','worst','worth','would','wound','write','wrong','wrote','yield','young','youth'];
 gWords=[];
 gTestWord="";
@@ -89,7 +93,7 @@ function savePref(){
   getSettings();
   $("div.keyarea .col .btn").removeAttr("disabled","");
   $("div.keyarea .col .btn").removeClass("btn-info").addClass("btn-primary");
-  removeAlert();
+  removeTooltip();
   gNext.row=1;
   gNext.col=1;
 }
@@ -108,7 +112,7 @@ function displayInit(){
   $("span#gLength").text(gLength+" Letter Worde");
   $("div#tryArea").empty();
   for (i=1; i<=gTries; i++){
-    gText+='<div id="row'+i+'" class="d-flex flex-row justify-content-center">';
+    gText+='<div data-bs-toggle="tooltip" title="" id="row'+i+'" class="d-flex flex-row justify-content-center">';
 	for (j=1; j<=gLength; j++){
 	  gText+='<div id="col'+j+'" class="col-2 dispkey box blank">&nbsp;</div>';
 	}
@@ -116,20 +120,14 @@ function displayInit(){
   }
   $("div#tryArea").append(gText);
 }
-function removeAlert(){
-  $("div#messageArea").html("&nbsp;").removeClass("alert alert-danger alert-primary");
-}
 function displayWord(){
-  $("div#messageArea").html(gTestWord).addClass("alert alert-primary");
-  alert(gTestWord);
+  displayTooltip("Your tries have exhaused. Right word is "+gTestWord);
 }
 function testWord(row){
   enteredWord=$("div#row"+row).text();
-  console.log(gWords);
+  /*console.log(gWords);*/
   if (gWords.indexOf(enteredWord) === -1){
-    $("div#messageArea").text("Word not in my list").addClass("alert alert-danger");
-	alert("Word not in my list");
-	setTimeout(removeAlert, 3000);	
+    displayTooltip('Word not in my list');
 	return false;
   }
   
@@ -169,6 +167,17 @@ function gameOver(){
   gNext.row=1;
   gNext.col=1;
 }
+function removeTooltip(){
+  obj=$("#messageArea");
+  var t=bootstrap.Tooltip.getOrCreateInstance(obj[0]);
+  t.hide();
+}
+function displayTooltip(message){
+  r=$("#messageArea").attr("title",message);
+  var tooltip = new bootstrap.Tooltip(r);
+  tooltip.show();
+  setTimeout(removeTooltip, 2000);
+}
 function findNextSpot(letter){
   if (letter=="enter"){
     if (gNext.col>=gLength){
@@ -207,11 +216,7 @@ function inputMe(letter){
 </head>
 <body class="bg-dark" onload="getSettings()">
   <div class="container-fluid">
-	<!--<div class="text-center row gx-12 p-3 bg-dark text-white">
-	  <span id="gLength"></span>
-	</div>
-	<div id="messageArea" class="sticky-top alert alert-dismissible"></div>-->
-	
+    <div id="messageArea" class="text-white"></div>
 	<div id="tryArea" class="text-center row gx-12 p-3 bg-dark text-white">
 	  <div id="row1" class="row">
 	  <div class="col box blank">&nbsp;</div>
@@ -244,7 +249,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('L')">L</button></div>
 	</div>
 	<div id="keyArea3" class="keyarea text-center d-flex flex-row bg-secondary text-white">
-	  <div class="col"><button type="button" class="btn btn-success" onclick="inputMe('enter')">enter</button></div>
+	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('enter')">enter</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('Z')">Z</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('X')">X</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('C')">C</button></div>
@@ -252,7 +257,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('B')">B</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('N')">N</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('M')">M</button></div>
-	  <div class="col"><button type="button" class="btn btn-success" onclick="inputMe('back')">back</button></div>
+	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('back')">back</button></div>
 	</div>
 	<div id="settings" class="text-center row gx-12 p-3 bg-secondary text-white">
 	  <div class="form-group row">
@@ -267,8 +272,7 @@ function inputMe(letter){
           </select>
 		</div>
 		<div class="col">
-		  <button type="submit" class="btn btn-primary" onclick="savePref()">Save</button>
-		  <button type="submit" class="btn btn-primary" onclick="savePref()">New Game</button>
+		  <button type="submit" class="btn btn-primary" onclick="savePref()">Save & New</button>
 		</div>
 	  </div>
   </div>
