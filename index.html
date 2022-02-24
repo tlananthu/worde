@@ -20,10 +20,12 @@ nav{
   padding:0px;
 }
 .key{
-  padding-left:1px;
-  padding-right:1px;
+  padding-left:2px;
+  padding-right:2px;
+  width:20px;
 }
 .box{
+  width:45px;
   padding:2px;
   margin:2px;
   border-sizing:border-box;
@@ -51,6 +53,9 @@ animation: popout 1s ease;
 }
 .wrongPos{
 background-color:rgba(var(--bs-warning-rgb),var(--bs-bg-opacity)) !important;
+}
+.keyarea{
+padding-bottom:3px;
 }
 </style>
 <script>
@@ -88,6 +93,7 @@ function getSettings(){
     gLength=3;
   }
   gTries=gLength+1;
+  $("div#dispSelection").html(gLength+" Letter Words");
   loadWords();
   displayInit();
 }
@@ -118,9 +124,11 @@ function displayInit(){
   $("div#tryArea").empty();
   for (i=1; i<=gTries; i++){
     gText+='<div data-bs-toggle="tooltip" title="" id="row'+i+'" class="d-flex flex-row justify-content-center">';
+	gText+='<button type="button" class="key btn btn-default" onclick="inputMe(\'back\')">&#8672;</button>';
 	for (j=1; j<=gLength; j++){
 	  gText+='<div id="col'+j+'" class="col-2 dispkey box blank border border-dark">&nbsp;</div>';
 	}
+	gText+='<button type="button" class="key btn btn-default" onclick="inputMe(\'enter\')">&#8627;</button>';
 	gText+='</div>';
   }
   $("div#tryArea").append(gText);
@@ -221,12 +229,13 @@ function inputMe(letter){
 </head>
 <body class="" onload="getSettings()">
   <header>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="#">Worde</a>
+  <nav class="justify-content-between navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Worde</a>
+    <div id="dispSelection" class="form-inline"></div>
   </nav>
   </header>
+  <span class="d-inline-block" tabindex="0" data-toggle="tooltip" id="messageArea"  data-placement="right"></span>
   <div class="container-fluid">
-    <div id="messageArea" class="text-white"></div>
 	<div id="tryArea" class="text-center row gx-12 p-3">
 	  <div id="row1" class="row">
 	  <div class="col box blank">&nbsp;</div>
@@ -259,7 +268,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('L')">L</button></div>
 	</div>
 	<div id="keyArea3" class="keyarea text-center d-flex flex-row">
-	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('enter')">enter</button></div>
+	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('enter')">&#8627;</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('Z')">Z</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('X')">X</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('C')">C</button></div>
@@ -267,7 +276,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('B')">B</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('N')">N</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('M')">M</button></div>
-	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('back')">back</button></div>
+	  <div class="col"><button type="button" class="key btn btn-warning" onclick="inputMe('back')">&#8672;</button></div>
 	</div>
 	<div id="settings" class="text-center row gx-12 p-3">
 	  <div class="form-group row">
