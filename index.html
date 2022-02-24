@@ -33,14 +33,7 @@ nav{
   margin:2px;
   border-sizing:border-box;
 }
-.blank{
-background-color:rgba(var(--bs-secondary-rgb),var(--bs-bg-opacity)) !important;
-}
-.incorrect{
-background-color:rgba(var(--bs-danger-rgb),var(--bs-bg-opacity)) !important;
-}
-.correct{
-background-color:rgba(var(--bs-success-rgb),var(--bs-bg-opacity)) !important;
+.popout{
 animation: popout 1s ease;
 -webkit-animation: popout 1s ease;
 }
@@ -53,9 +46,6 @@ animation: popout 1s ease;
   from{-webkit-transform:scale(0)}
   80%{-webkit-transform:scale(1.2)}
   to{-webkit-transform:scale(1)}
-}
-.wrongPos{
-background-color:rgba(var(--bs-warning-rgb),var(--bs-bg-opacity)) !important;
 }
 .keyarea{
 padding-bottom:3px;
@@ -152,19 +142,25 @@ function testWord(row){
     for (j=0; j<=inputArray.length; j++){
 	  if (i!=j){
 	    if (inputArray[j]==guessArray[i]){
-		  $("div#row"+row+" div#col"+(j+1)).toggleClass("wrongPos");
+		    $("div#row"+row+" div#col"+(j+1)).addClass("popout bg-warning text-black");
 		}
 	  }
 	}
   }
+  for (k=0; k<inputArray.length; k++){
+    for (j=0; j<=inputArray.length; j++){
+      if (inputArray[j]!=guessArray[i]){
+        $("div#row"+row+" div#col"+(j+1)).addClass("popout bg-secondary text-white").removeClass('bg-warning text-black');
+      }
+    }
+  }
   /*console.log(inputArray.length);*/
   correct=0;
   for (k=0; k<inputArray.length; k++){
-    /*console.log(inputArray[k]+'-'+guessArray[k]);*/
+    console.log(inputArray[k]+'-'+guessArray[k]);
     if (inputArray[k]==guessArray[k]){
 	  correct++;
-	  $("div#row"+row+" div#col"+(k+1)).toggleClass("correct");
-	  
+	  $("div#row"+row+" div#col"+(k+1)).addClass("popout bg-success text-white").removeClass('bg-warning text-black bg-secondary');	  
 	}
   }
   var diff = $(inputArray).not(guessArray).get();
