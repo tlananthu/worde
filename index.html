@@ -2,12 +2,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="ScreenOrientation" content="autoRotate:disabled">
 <script src="jquery-git.slim.min.js"></script>
 <script src="popper.min.js"></script>
 <script src="bootstrap.min.js"></script>
 <link rel="stylesheet" href="bootstrap.min.css">
 <title>Word Guess</title>
 <style>
+.refresh {
+  display: inline-block;
+  transform: rotate(90deg);
+}
 .btn{
   box-shadow: none !important;
 }
@@ -77,13 +82,14 @@ function getRandomWord(){
 }
 function loadSettings(){
   getSettings();
-  $("#lettersInput").val(gLength);
+  $("#lettersInput").val(gLength).removeAttr('selected');
+  $('#lettersInput option[value="' + gLength + '"]').addAttr('selected')
 }
 function getSettings(){
   gLength=parseInt(localStorage.getItem("worde-length"));
   /*console.log(gLength);*/
   if (!gLength){
-    gLength=3;
+    gLength=5;
   }
   gTries=gLength+1;
   $("div#dispSelection").html(gLength+" Letter Words");
@@ -177,6 +183,9 @@ function gameOver(){
   $("div.keyarea .col .btn").attr("disabled","");
   gNext.row=1;
   gNext.col=1;
+
+  $("#settings").hide();
+  $("#reload").show();
 }
 function removeTooltip(){
   obj=$("#messageArea");
@@ -293,7 +302,10 @@ function inputMe(letter){
 			  </div>
 		  </form>
 		</div>
-      </div>
+    </div>
+  </div>
+  <div id="reload" style="display:none;" class="text-center row gx-12 p-3">
+    <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
   <footer class="footer"><div class="container"><span class="small text-muted">Version 1.11</span></div></footer>  
