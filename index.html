@@ -8,18 +8,23 @@
 <link rel="stylesheet" href="bootstrap.min.css">
 <title>Word Guess</title>
 <style>
+nav{
+  padding-left:15px;
+  padding-right:15px;
+}
 #tryArea{
   padding:0px!important;
 }
 .dispkey{
   max-width:100px;
+  padding:0px;
 }
 .key{
   padding-left:1px;
   padding-right:1px;
 }
 .box{
-  padding:1rem;
+  padding:2px;
   margin:2px;
   border-sizing:border-box;
 }
@@ -92,7 +97,7 @@ function savePref(){
   localStorage.setItem("worde-length", val);
   getSettings();
   $("div.keyarea .col .btn").removeAttr("disabled","");
-  $("div.keyarea .col .btn").removeClass("btn-info").addClass("btn-primary");
+  $("div.keyarea .col .btn").removeClass("btn-secondary").addClass("btn-primary");
   removeTooltip();
   gNext.row=1;
   gNext.col=1;
@@ -114,7 +119,7 @@ function displayInit(){
   for (i=1; i<=gTries; i++){
     gText+='<div data-bs-toggle="tooltip" title="" id="row'+i+'" class="d-flex flex-row justify-content-center">';
 	for (j=1; j<=gLength; j++){
-	  gText+='<div id="col'+j+'" class="col-2 dispkey box blank">&nbsp;</div>';
+	  gText+='<div id="col'+j+'" class="col-2 dispkey box blank border border-dark">&nbsp;</div>';
 	}
 	gText+='</div>';
   }
@@ -154,7 +159,7 @@ function testWord(row){
   }
   var diff = $(inputArray).not(guessArray).get();
   for (b=0; b<=diff.length; b++){
-    $(".btn-primary:contains('"+diff[b]+"')").removeClass('btn-primary').addClass('btn-info');
+    $(".btn-primary:contains('"+diff[b]+"')").removeClass('btn-primary').addClass('btn-secondary');
   }
   /*console.log(diff);*/
   if (correct==gLength){
@@ -214,10 +219,15 @@ function inputMe(letter){
 }
 </script>
 </head>
-<body class="bg-dark" onload="getSettings()">
+<body class="" onload="getSettings()">
+  <header>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">Worde</a>
+  </nav>
+  </header>
   <div class="container-fluid">
     <div id="messageArea" class="text-white"></div>
-	<div id="tryArea" class="text-center row gx-12 p-3 bg-dark text-white">
+	<div id="tryArea" class="text-center row gx-12 p-3">
 	  <div id="row1" class="row">
 	  <div class="col box blank">&nbsp;</div>
 	  <div class="col box blank">&nbsp;</div>
@@ -225,7 +235,7 @@ function inputMe(letter){
 	  </div>
 	</div>
 	</div>
-	<div id="keyArea1" class="keyarea text-center d-flex flex-row bg-secondary text-white">
+	<div id="keyArea1" class="keyarea text-center d-flex flex-row">
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('Q')">Q</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('W')">W</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('E')">E</button></div>
@@ -237,7 +247,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('O')">O</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('P')">P</button></div>
 	</div>
-	<div id="keyArea2" class="keyarea text-center d-flex flex-row bg-secondary text-white">
+	<div id="keyArea2" class="keyarea text-center d-flex flex-row">
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('A')">A</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('S')">S</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('D')">D</button></div>
@@ -248,7 +258,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('K')">K</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('L')">L</button></div>
 	</div>
-	<div id="keyArea3" class="keyarea text-center d-flex flex-row bg-secondary text-white">
+	<div id="keyArea3" class="keyarea text-center d-flex flex-row">
 	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('enter')">enter</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('Z')">Z</button></div>
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('X')">X</button></div>
@@ -259,7 +269,7 @@ function inputMe(letter){
 	  <div class="col"><button type="button" class="key btn btn-primary" onclick="inputMe('M')">M</button></div>
 	  <div class="col"><button type="button" class="key btn btn-success" onclick="inputMe('back')">back</button></div>
 	</div>
-	<div id="settings" class="text-center row gx-12 p-3 bg-secondary text-white">
+	<div id="settings" class="text-center row gx-12 p-3">
 	  <div class="form-group row">
 	    <label for="lettersInput">Choose Worde Length</label>
 	  </div>
