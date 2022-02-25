@@ -214,7 +214,7 @@ function displayTooltip(message){
 }
 function findNextSpot(letter){
   if (letter=="enter"){
-    if (gNext.col>=gLength){
+    if (gNext.col>gLength){
       if (testWord(gNext.row)){
         gNext.row++;
         gNext.col=1;
@@ -327,5 +327,5 @@ function inputMe(letter){
     <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
-  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.19</span></div></footer>  
+  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.20</span></div></footer>  
 </body>
