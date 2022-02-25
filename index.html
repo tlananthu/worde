@@ -11,12 +11,12 @@
 <link rel="stylesheet" href="bootstrap.min.css">
 <title>Word Guess</title>
 <style>
-@media only screen and (orientation:landscape) {
-  body {
-    height: 100vw;
-    transform: rotate(90deg);
-  }
+.dispkey{
+  width:40px;height:40px;
+  text-align: center;
+  font-size:1.5em;
 }
+body { overflow: hidden;}
 .refresh {
   display: inline-block;
   transform: rotate(90deg);
@@ -31,14 +31,11 @@ nav{
 #tryArea{
   padding:0px!important;
 }
-.dispkey{
-  max-width:100px;
-  padding:0px;
-}
 .key{
   padding-left:2px;
   padding-right:2px;
-  width:25px;
+  width:30px;
+  height:50px;
 }
 .box{
   width:45px;
@@ -102,7 +99,7 @@ function getSettings(){
     gLength=5;
   }
   gTries=gLength+1;
-  $("div#dispSelection").html(gLength+" Letter Words");
+  $("div#dispSelection").html(gLength+" Letter");
   loadWords();
   displayInit();
 }
@@ -194,52 +191,6 @@ function testWord(row){
   if (correctCounter==inputArray.length){
     gameOver();
   }
-  /*for (i=0; i<=guessArray.length; i++){
-    for (j=0; j<=inputArray.length; j++){
-	  if (i!=j){
-	    if (inputArray[j]==guessArray[i]){
-		    $("div#row"+row+" div#col"+(j+1)).addClass("popout bg-warning text-black");
-		}
-	  }
-	}
-  }
-  for (k=0; k<inputArray.length; k++){
-    for (j=0; j<=inputArray.length; j++){
-      if (inputArray[j]!=guessArray[i]){
-        $("div#row"+row+" div#col"+(j+1)).addClass("popout bg-secondary text-white");
-      }
-    }
-  }*/
-  /*console.log(inputArray.length);*/
-  /*correct=0;
-  for (k=0; k<inputArray.length; k++){
-    console.log(inputArray[k]+'-'+guessArray[k]);
-    if (inputArray[k]==guessArray[k]){
-	    correct++;
-	    $("div#row"+row+" div#col"+(k+1)).addClass("popout bg-success text-white").removeClass('bg-warning text-black bg-secondary');
-	  }
-  }
-  for (l=0; l<inputArray.length; l++){
-    console.log(guessArray.indexOf(inputArray[l]));
-    if (guessArray.indexOf(inputArray[l])==-1){
-      $("button#"+inputArray[l]).addClass('btn-secondary');
-    }
-    if (guessArray.indexOf(inputArray[l])>-1){
-      $("button#"+inputArray[l]).addClass('btn-warning');
-    }
-    if (guessArray.indexOf(inputArray[l])==l){
-      $("button#"+inputArray[l]).addClass('btn-success');
-    }
-  }*/
-  /*$("button#"+inputArray[j]).addClass('btn-secondary');*/
-  /*var diff = $(inputArray).not(guessArray).get();
-  for (b=0; b<=diff.length; b++){
-    $(".btn-primary:contains('"+diff[b]+"')").removeClass('btn-primary').addClass('btn-secondary');
-  }*/
-  /*console.log(diff);*/
-  /*if (correct==gLength){
-    gameOver();
-  }*/
   return true;
 }
 function gameOver(){
@@ -264,21 +215,21 @@ function displayTooltip(message){
 function findNextSpot(letter){
   if (letter=="enter"){
     if (gNext.col>=gLength){
-	  if (testWord(gNext.row)){
-	  gNext.row++;
-	  gNext.col=1;
-	  if(gNext.row==gTries+1){
-	    gameOver();
-		displayWord();
+      if (testWord(gNext.row)){
+        gNext.row++;
+        gNext.col=1;
+        if(gNext.row==gTries+1){
+          gameOver();
+          displayWord();
+        }
+      }
 	  }
-	  }
-	}
-    return "";
+  return "";
   }
   if (letter=="back"){
     if (gNext.col>1){
-    gNext.col--;
-    $("div#row"+gNext.row+" div#col"+gNext.col).html("&nbsp;");
+      gNext.col--;
+      $("div#row"+gNext.row+" div#col"+gNext.col).html("&nbsp;");
     }
     return "";
   }
@@ -304,6 +255,7 @@ function inputMe(letter){
   <nav class="justify-content-between navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="#">Worde</a>
     <div id="dispSelection" class="form-inline"></div>
+    <button type="submit" class="btn btn-default shadow-none" onclick="savePref()">↻</strong></span></button>
   </nav>
   </header>
   <span class="d-inline-block" tabindex="0" data-toggle="tooltip" id="messageArea"  data-placement="right"></span>
@@ -373,5 +325,5 @@ function inputMe(letter){
     <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
-  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.15</span></div></footer>  
+  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.16</span></div></footer>  
 </body>
