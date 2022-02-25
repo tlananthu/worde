@@ -11,6 +11,12 @@
 <link rel="stylesheet" href="bootstrap.min.css">
 <title>Word Guess</title>
 <style>
+@media only screen and (orientation:landscape) {
+  body {
+    height: 100vw;
+    transform: rotate(90deg);
+  }
+}
 .refresh {
   display: inline-block;
   transform: rotate(90deg);
@@ -367,5 +373,5 @@ function inputMe(letter){
     <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
-  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.14</span></div></footer>  
+  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.15</span></div></footer>  
 </body>
