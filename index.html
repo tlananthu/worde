@@ -16,7 +16,11 @@
   text-align: center;
   font-size:1.5em;
 }
-body { overflow: hidden;}
+body { 
+  overflow: hidden;
+  max-width:480px;
+  vertical-align: middle;
+}
 .refresh {
   display: inline-block;
   transform: rotate(90deg);
@@ -79,6 +83,15 @@ gNext={
 function debug(message){
   /*console.log(message);*/
 }
+document.addEventListener('keydown', (event) => {
+  var name = event.key;
+  var code =  parseInt(event.keyCode);
+  // Alert the key name and key code on keydown
+  console.log('Key pressed '+ name +' value: '+code);
+  if (name == 'Enter'){inputMe('enter');}
+  if (name == 'Backspace'){inputMe('back');}
+  if (code >=65 && code <= 90){inputMe(name.toUpperCase());}
+}, false);
 function getRandomInt(max){
   return Math.floor(Math.random() * max);
 }
@@ -326,5 +339,5 @@ function inputMe(letter){
     <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
-  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.21</span></div></footer>  
+  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.22</span></div></footer>  
 </body>
