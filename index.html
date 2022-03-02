@@ -81,7 +81,7 @@ gNext={
 };
 
 function debug(message){
-  console.log(message);
+  /*console.log(message);*/
 }
 function copyText(){
   text="Worde "+(gNext.row-1)+"/"+(gLength+1)+"\n";
@@ -180,7 +180,7 @@ function applyColours(row, ia, ga){
   //apply incorrect letters only
   for (i=0; i<ia.length; i++){
     if (ga.indexOf(ia[i])==-1 && ia[i]!='-'){
-      $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-secondary text-white").append('<span class="share d-none">&#128155;</span>');
+      $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-secondary text-white").append('<span class="share d-none">&#128152;</span>');
       $("button.btn-primary#"+ia[i]).addClass('btn-secondary').removeClass('btn-primary');
     }
   }
@@ -188,7 +188,7 @@ function applyColours(row, ia, ga){
   for (i=0; i<ia.length; i++){
     for (j=0; j<ga.length; j++){
       if (i!=j && ia[i]!=ga[j] && ga.indexOf(ia[i])>-1 && ia[i]!=ga[i]  && ia[i]!='-'){
-        $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-warning text-white").append('<span class="share d-none">&#128152;</span>');
+        $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-warning text-white").append('<span class="share d-none">&#128155;</span>');
         $("button.btn-primary#"+ia[i]).addClass('btn-warning').removeClass('btn-primary');
       }
     }
@@ -269,9 +269,9 @@ function findNextSpot(letter){
 }
 function inputMe(letter){
   obj=findNextSpot(letter);
-  localStorage.setItem(obj,letter);
+  /*localStorage.setItem(obj,letter);
   localStorage.setItem("row",gNext.row);
-  localStorage.setItem("col",gNext.col);
+  localStorage.setItem("col",gNext.col);*/
   $(obj).text(letter);
 }
 </script>
@@ -357,5 +357,5 @@ function inputMe(letter){
     <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
-  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.25</span></div></footer>  
+  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.26</span></div></footer>  
 </body>
