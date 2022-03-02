@@ -81,13 +81,27 @@ gNext={
 };
 
 function debug(message){
-  /*console.log(message);*/
+  console.log(message);
+}
+function copyText(){
+  text="Worde "+(gNext.row-1)+"/"+(gLength+1)+"\n";
+  var colShare="";
+  for (i=1; i<=gNext.row; i++){
+    colShare="";
+    for (j=1; j<=gLength; j++){
+      colShare=$("div#row"+i+" div#col"+j+" span.share").text().trim();
+      text=text+colShare;
+    }
+    text=text+"\n";
+  }
+  navigator.clipboard.writeText(text);
+  displayTooltip('Copied');
 }
 document.addEventListener('keydown', (event) => {
   var name = event.key;
   var code =  parseInt(event.keyCode);
   // Alert the key name and key code on keydown
-  console.log('Key pressed '+ name +' value: '+code);
+  /*debug('Key pressed '+ name +' value: '+code);*/
   if (name == 'Enter'){inputMe('enter');}
   if (name == 'Backspace'){inputMe('back');}
   if (code >=65 && code <= 90){inputMe(name.toUpperCase());}
@@ -156,19 +170,17 @@ function displayWord(){
 function applyColours(row, ia, ga){
   //apply correct position only
   for (i=0; i<ia.length; i++){
-    debug(ga[i]+' '+ia[i]);
     if (ga[i]==ia[i]){
-      $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-success text-white");
+      $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-success text-white").append('<span class="share d-none">&#128154;</span>');
       $("button#"+ia[i]).addClass('btn-success').removeClass('btn-warning btn-primary');
       //remove element from inputarray
       ia[i]='-';
-      debug(ia);
     }
   }
   //apply incorrect letters only
   for (i=0; i<ia.length; i++){
     if (ga.indexOf(ia[i])==-1 && ia[i]!='-'){
-      $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-secondary text-white");
+      $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-secondary text-white").append('<span class="share d-none">&#128155;</span>');
       $("button.btn-primary#"+ia[i]).addClass('btn-secondary').removeClass('btn-primary');
     }
   }
@@ -176,7 +188,7 @@ function applyColours(row, ia, ga){
   for (i=0; i<ia.length; i++){
     for (j=0; j<ga.length; j++){
       if (i!=j && ia[i]!=ga[j] && ga.indexOf(ia[i])>-1 && ia[i]!=ga[i]  && ia[i]!='-'){
-        $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-warning text-white");
+        $("div#row"+row+" div#col"+(i+1)).addClass("popout bg-warning text-white").append('<span class="share d-none">&#128152;</span>');
         $("button.btn-primary#"+ia[i]).addClass('btn-warning').removeClass('btn-primary');
       }
     }
@@ -207,11 +219,12 @@ function testWord(row){
 }
 function gameOver(){
   $("div.keyarea .col .btn").attr("disabled","");
-  gNext.row=1;
-  gNext.col=1;
+  /*gNext.row=1;
+  gNext.col=1;*/
 
   $("#settings").hide();
   $("#reload").show();
+  $("#shareBtn").removeClass('d-none');
 }
 function removeTooltip(){
   obj=$("#messageArea");
@@ -252,7 +265,6 @@ function findNextSpot(letter){
   if (gNext.col > gLength+1){
     return "";
   }
-  debug(finder);
   return finder;
 }
 function inputMe(letter){
@@ -269,7 +281,13 @@ function inputMe(letter){
   <nav class="justify-content-between navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="#">Worde</a>
     <div id="dispSelection" class="form-inline"></div>
-    <button type="submit" class="btn btn-default shadow-none" onclick="savePref()">↻</strong></span></button>
+    <div>
+      <button type="submit" class="btn btn-default shadow-none" onclick="savePref()">↻</strong></span></button>
+      <button type="submit" id="shareBtn" class="d-none btn btn-default shadow-none" onclick="copyText()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-share" viewBox="0 0 16 16">
+        <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm11 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"></path>
+      </svg></button>
+  </div>
   </nav>
   </header>
   <span class="d-inline-block" tabindex="0" data-toggle="tooltip" id="messageArea"  data-placement="right"></span>
@@ -339,5 +357,5 @@ function inputMe(letter){
     <button type="submit" class="btn btn-primary shadow-none" onclick="savePref()">New Game <span class="refresh"><strong>↻</strong></span></button>
   </div>
   </div>
-  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.22</span></div></footer>  
+  <footer class="footer"><div class="container"><span class="small text-muted">Version 1.25</span></div></footer>  
 </body>
