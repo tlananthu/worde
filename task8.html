@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Melbourne 3-Month Business Trip Checklist</title>
+<!-- Materialize CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet" />
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<style>
+  html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #fafafa;
+    font-family: 'Roboto', sans-serif;
+    overscroll-behavior: contain;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 56px 0 56px 0; /* space for fixed header/footer */
+  }
+  header.page-header {
+    height: 56px;
+    background-color: #6200ee;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 1.25rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+  }
+  main.content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .task-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 1rem;
+  }
+  .task-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .task-main {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0;
+  }
+  input[type="checkbox"] {
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    transform: scale(1.15);
+    margin-right: 16px;
+  }
+  .task-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70vw;
+  }
+  .task-title.completed {
+    text-decoration: line-through;
+    color: #999;
+  }
+  .deadline {
+    font-size: 0.9rem;
+    color: #d32f2f;
+    white-space: nowrap;
+    margin-left: 16px;
+  }
+  .task-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 12px;
+  }
+  .btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.7rem;
+    color: #6200ee;
+    user-select: none;
+    padding: 6px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+  }
+  .btn-icon:hover {
+    background-color: rgba(98,0,238,0.1);
+  }
+  ul.subtasks {
+    margin-top: 16px;
+    padding-left: 16px;
+  }
+  li.subtask-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .subtask-left {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    flex-grow: 1;
+  }
+  input.subtask-checkbox {
+    width: 22px;
+    height: 22px;
+    transform: scale(1.1);
+    margin-right: 16px;
+  }
+  .subtask-description {
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60vw;
+  }
+  .subtask-description.completed {
+    text-decoration: line-through;
+    color: #999;
+  }
+  .subtask-deadline {
+    font-size: 0.75rem;
+    color: #d32f2f;
+    white-space: nowrap;
+    margin-left: 16px;
+  }
+  .subtask-actions {
+    display: flex;
+    gap: 12px;
+  }
+  footer.action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background-color: white;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    z-index: 20;
+  }
+  footer.action-bar button {
+    border:none;
+    background:none;
+    font-size: 1.8rem;
+    color: #6200ee;
+    cursor: pointer;
+  }
+  footer.action-bar button:hover {
+    color: #3700b3;
+  }
+  /* Modal tweaks */
+  .modal .modal-content {
+    padding-bottom: 1.5rem;
+  }
+  .modal .modal-footer {
+    padding-bottom: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header" role="banner" aria-label="App Header">
+  Melbourne 3-Month Business Trip Checklist
+</header>
+
+<main class="content" role="main" aria-live="polite" aria-atomic="true">
+  <div id="checklist"></div>
+</main>
+
+<footer class="action-bar" role="contentinfo" aria-label="Application actions">
+  <button id="btnAdd" title="Add Task" aria-label="Add Task"><i class="material-icons">add</i></button>
+  <button id="btnSave" title="Save Checklist" aria-label="Save Checklist"><i class="material-icons">save</i></button>
+  <button id="btnLoad" title="Load Checklist" aria-label="Load Checklist"><i class="material-icons">file_upload</i></button>
+  <input type="file" id="loadChecklistFile" accept=".json" style="display:none" />
+</footer>
+
+<!-- Edit Modal Structure -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h5 id="modalTitle">Edit Item</h5>
+    <div class="input-field">
+      <input id="editDescription" type="text" required />
+      <label for="editDescription" class="active">Description</label>
+    </div>
+    <div class="input-field">
+      <input id="editDeadline" type="text" />
+      <label for="editDeadline" class="active">Deadline</label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <a href="#!" class="modal-close waves-effect waves-green btn-flat" aria-label="Cancel Edit">Cancel</a>
+    <a href="#!" id="saveEditBtn" class="waves-effect waves-light btn" aria-label="Save Edit">Save</a>
+  </div>
+</div>
+
+<!-- Materialize JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  M.AutoInit();
+
+  const STORAGE_KEY = 'melbourneTripChecklist_v1';
+  let checklist = loadChecklist();
+
+  let currentEdit = { type: null, taskIdx: null, subtaskIdx: null };
+
+  const checklistContainer = document.getElementById('checklist');
+  const editModalElem = document.getElementById('editModal');
+  const editModalInstance = M.Modal.init(editModalElem);
+
+  const editDescriptionInput = document.getElementById('editDescription');
+  const editDeadlineInput = document.getElementById('editDeadline');
+  const saveEditBtn = document.getElementById('saveEditBtn');
+  const loadChecklistFile = document.getElementById('loadChecklistFile');
+
+  function loadChecklist() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {"task":"Apply for/renew Australian Business Visa (Subclass 600)","deadline":"8-10 weeks before travel","subtasks":[{"description":"Check passport validity (minimum 6 months remaining)","deadline":""},{"description":"Gather required documents (employment letter, bank statements, invitation letter)","deadline":""},{"description":"Submit online application via ImmiAccount","deadline":""},{"description":"Pay visa application fee","deadline":""},{"description":"Await approval and print visa grant letter","deadline":""}]},
+      {"task":"Prepare travel documents","deadline":"2 weeks before travel","subtasks":[{"description":"Print visa grant letter and keep copies","deadline":""},{"description":"Photocopy passport and store separately","deadline":""},{"description":"Organize travel insurance documents","deadline":""},{"description":"Get international driving permit (if planning to drive)","deadline":""},{"description":"Prepare emergency contact list with embassy details","deadline":""}]}
+    ];
+  }
+
+  function saveChecklistToStorage() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(checklist));
+  }
+
+  function renderChecklist() {
+    checklistContainer.innerHTML = '';
+
+    checklist.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'task-card';
+
+      const taskHeader = document.createElement('div');
+      taskHeader.className = 'task-header';
+
+      // Checkbox and Title
+      const taskMain = document.createElement('div');
+      taskMain.className = 'task-main';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = item.completed || false;
+      checkbox.id = `task-checkbox-${idx}`;
+      checkbox.classList.add('filled-in');
+      checkbox.addEventListener('change', () => {
+        item.completed = checkbox.checked;
+        if(item.completed) {
+          (item.subtasks || []).forEach(sub => sub.completed = true);
+        }
+        saveChecklistToStorage();
+        renderChecklist();
+      });
+
+      const label = document.createElement('label');
+      label.htmlFor = `task-checkbox-${idx}`;
+      label.className = 'task-title';
+      label.textContent = item.task;
+      if(item.completed) label.classList.add('completed');
+
+      taskMain.appendChild(checkbox);
+      taskMain.appendChild(label);
+
+      // Deadline
+      const deadline = document.createElement('span');
+      deadline.className = 'deadline';
+      deadline.textContent = item.deadline;
+
+      // Actions
+      const taskActions = document.createElement('div');
+      taskActions.className = 'task-actions';
+
+      const btnAddSub = document.createElement('button');
+      btnAddSub.type = 'button';
+      btnAddSub.className = 'btn-icon';
+      btnAddSub.title = 'Add Subtask';
+      btnAddSub.setAttribute('aria-label', 'Add Subtask');
+      btnAddSub.innerHTML = '<i class="material-icons">add_box</i>';
+      btnAddSub.addEventListener('click', () => addSubtask(idx));
+      taskActions.appendChild(btnAddSub);
+
+      const btnEdit = document.createElement('button');
+      btnEdit.type = 'button';
+      btnEdit.className = 'btn-icon';
+      btnEdit.title = 'Edit Task';
+      btnEdit.setAttribute('aria-label', 'Edit Task');
+      btnEdit.innerHTML = '<i class="material-icons">edit</i>';
+      btnEdit.addEventListener('click', () => openEditModal('task', idx));
+      taskActions.appendChild(btnEdit);
+
+      const btnDelete = document.createElement('button');
+      btnDelete.type = 'button';
+      btnDelete.className = 'btn-icon';
+      btnDelete.title = 'Delete Task';
+      btnDelete.setAttribute('aria-label', 'Delete Task');
+      btnDelete.innerHTML = '<i class="material-icons">delete</i>';
+      btnDelete.addEventListener('click', () => {
+        if(confirm('Delete this task and all its subtasks?')) {
+          checklist.splice(idx, 1);
+          saveChecklistToStorage();
+          renderChecklist();
+        }
+      });
+      taskActions.appendChild(btnDelete);
+
+      taskHeader.appendChild(taskMain);
+      taskHeader.appendChild(deadline);
+      taskHeader.appendChild(taskActions);
+      card.appendChild(taskHeader);
+
+      // Subtasks
+      if(item.subtasks && item.subtasks.length > 0){
+        const ul = document.createElement('ul');
+        ul.className = 'subtasks';
+
+        item.subtasks.forEach((sub, sidx) => {
+          const li = document.createElement('li');
+          li.className = 'subtask-item';
+
+          const subLeft = document.createElement('div');
+          subLeft.className = 'subtask-left';
+
+          const subCheckbox = document.createElement('input');
+          subCheckbox.type = 'checkbox';
+          subCheckbox.checked = sub.completed || false;
+          subCheckbox.className = 'subtask-checkbox filled-in';
+          subCheckbox.id = `subtask-checkbox-${idx}-${sidx}`;
+          subCheckbox.addEventListener('change', () => {
+            sub.completed = subCheckbox.checked;
+            saveChecklistToStorage();
+            renderChecklist();
+          });
+
+          const subLabel = document.createElement('label');
+          subLabel.htmlFor = `subtask-checkbox-${idx}-${sidx}`;
+          subLabel.className = 'subtask-description';
+          if(sub.completed) subLabel.classList.add('completed');
+          subLabel.textContent = sub.description;
+
+          subLeft.appendChild(subCheckbox);
+          subLeft.appendChild(subLabel);
+
+          const subDeadline = document.createElement('span');
+          subDeadline.className = 'subtask-deadline';
+          subDeadline.textContent = sub.deadline;
+
+          const subActions = document.createElement('div');
+          subActions.className = 'subtask-actions';
+
+          const btnEditSub = document.createElement('button');
+          btnEditSub.type = 'button';
+          btnEditSub.className = 'btn-icon';
+          btnEditSub.title = 'Edit Subtask';
+          btnEditSub.setAttribute('aria-label', 'Edit Subtask');
+          btnEditSub.innerHTML = '<i class="material-icons">edit</i>';
+          btnEditSub.style.marginRight = '8px';
+          btnEditSub.addEventListener('click', () => openEditModal('subtask', idx, sidx));
+          subActions.appendChild(btnEditSub);
+
+          const btnDelSub = document.createElement('button');
+          btnDelSub.type = 'button';
+          btnDelSub.className = 'btn-icon';
+          btnDelSub.title = 'Delete Subtask';
+          btnDelSub.setAttribute('aria-label', 'Delete Subtask');
+          btnDelSub.innerHTML = '<i class="material-icons">delete</i>';
+          btnDelSub.addEventListener('click', () => {
+            if(confirm('Delete this subtask?')) {
+              checklist[idx].subtasks.splice(sidx, 1);
+              saveChecklistToStorage();
+              renderChecklist();
+            }
+          });
+          subActions.appendChild(btnDelSub);
+
+          li.appendChild(subLeft);
+          li.appendChild(subDeadline);
+          li.appendChild(subActions);
+
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      }
+
+      checklistContainer.appendChild(card);
+    });
+  }
+
+  function addTask() {
+    const title = prompt('New task title:');
+    if(!title) return;
+    const deadline = prompt('Deadline (e.g., 2 weeks before travel):', '');
+    checklist.push({task: title, deadline: deadline || '', subtasks: []});
+    saveChecklistToStorage();
+    renderChecklist();
+  }
+
+  function addSubtask(taskIdx) {
+    const desc = prompt('Subtask description:');
+    if(!desc) return;
+    const deadline = prompt('Subtask deadline:', '');
+    if(!checklist[taskIdx].subtasks) checklist[taskIdx].subtasks = [];
+    checklist[taskIdx].subtasks.push({description: desc, deadline: deadline || ''});
+    saveChecklistToStorage();
+    renderChecklist();
+  }
+
+  function openEditModal(type, taskIdx, subtaskIdx = null) {
+    currentEdit.type = type;
+    currentEdit.taskIdx = taskIdx;
+    currentEdit.subtaskIdx = subtaskIdx;
+
+    if(type === 'task') {
+      const task = checklist[taskIdx];
+      editDescriptionInput.value = task.task;
+      editDeadlineInput.value = task.deadline;
+      document.getElementById('modalTitle').textContent = 'Edit Task';
+    } else if(type === 'subtask') {
+      const subtask = checklist[taskIdx].subtasks[subtaskIdx];
+      editDescriptionInput.value = subtask.description;
+      editDeadlineInput.value = subtask.deadline;
+      document.getElementById('modalTitle').textContent = 'Edit Subtask';
+    }
+    editModalInstance.open();
+    setTimeout(() => editDescriptionInput.focus(), 100);
+  }
+
+  function closeEditModal() {
+    editModalInstance.close();
+    editForm.reset();
+    currentEdit = {type:null, taskIdx:null, subtaskIdx:null};
+  }
+
+  saveEditBtn.addEventListener('click', () => {
+    if(editDescriptionInput.value.trim() === '') {
+      M.toast({html: 'Description cannot be empty'});
+      return;
+    }
+    if(currentEdit.type === 'task') {
+      checklist[currentEdit.taskIdx].task = editDescriptionInput.value.trim();
+      checklist[currentEdit.taskIdx].deadline = editDeadlineInput.value.trim();
+    } else if(currentEdit.type === 'subtask') {
+      checklist[currentEdit.taskIdx].subtasks[currentEdit.subtaskIdx].description = editDescriptionInput.value.trim();
+      checklist[currentEdit.taskIdx].subtasks[currentEdit.subtaskIdx].deadline = editDeadlineInput.value.trim();
+    }
+    saveChecklistToStorage();
+    renderChecklist();
+    closeEditModal();
+  });
+
+  editModalElem.querySelector('.modal-close').addEventListener('click', closeEditModal);
+
+  document.getElementById('btnAdd').addEventListener('click', addTask);
+
+  document.getElementById('btnSave').addEventListener('click', () => {
+    const dataStr = JSON.stringify(checklist, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'melbourne_trip_checklist.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnLoad').addEventListener('click', () => {
+    loadChecklistFile.click();
+  });
+
+  loadChecklistFile.addEventListener('change', function(evt) {
+    const files = evt.target.files;
+    if (!files || !files.length) {
+      M.toast({html: "No file selected"});
+      return;
+    }
+    const file = files[0];
+    if (!(file instanceof Blob)) {
+      M.toast({html: "File is not recognized"});
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const loaded = JSON.parse(e.target.result);
+        if (Array.isArray(loaded) && loaded.length && loaded[0].task) {
+          checklist = loaded;
+          saveChecklistToStorage();
+          renderChecklist();
+          M.toast({html: "Checklist loaded!"});
+        } else {
+          M.toast({html: "Invalid checklist file"});
+        }
+      } catch(err) {
+        M.toast({html: "Could not read file or invalid JSON"});
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  renderChecklist();
+});
+</script>
+</body>
+</html>
