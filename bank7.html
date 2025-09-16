@@ -241,10 +241,17 @@
   <div id="popupBg" class="popup-bg"></div>
 
   <script>
-    // Initial empty data arrays
-    let users = [];
-    let transactions = [];
+    // Load data or initialize
+    let users = JSON.parse(localStorage.getItem("vb_users") || "[]");
+    let transactions = JSON.parse(localStorage.getItem("vb_transactions") || "[]");
 
+    // Save data to localStorage
+    function saveData() {
+      localStorage.setItem("vb_users", JSON.stringify(users));
+      localStorage.setItem("vb_transactions", JSON.stringify(transactions));
+    }
+
+    // Render user cards
     function renderUsers() {
       const userList = document.getElementById("userList");
       userList.innerHTML = "";
@@ -280,6 +287,7 @@
       if (!name) return alert("Enter a user name.");
       users.push({ id: Date.now(), name, balance: 0 });
       nameInput.value = "";
+      saveData();
       renderUsers();
     }
 
@@ -294,7 +302,6 @@
       return dt.getFullYear() + "-" + m + "-" + d;
     }
 
-    // Rename user
     function openRenamePopup(userId) {
       const user = users.find((u) => u.id === userId);
       if (!user) return;
@@ -318,6 +325,7 @@
       const user = users.find((u) => u.id === userId);
       if (user) {
         user.name = newName;
+        saveData();
         renderUsers();
       }
       closePopup();
@@ -357,8 +365,9 @@
       const fromUser = users.find((u) => u.id === fromId);
       const toUser = users.find((u) => u.id == data.to);
       if (!fromUser || !toUser) return alert("Invalid user selection.");
-      if (fromUser.balance < amount)
-        return alert("Insufficient balance for this transaction.");
+
+      // ALLOW negative balances - no check here
+
       fromUser.balance -= amount;
       toUser.balance += amount;
       transactions.push({
@@ -368,6 +377,7 @@
         amount,
         remarks: data.remarks,
       });
+      saveData();
       closePopup();
       renderUsers();
     }
@@ -408,6 +418,7 @@
         amount,
         remarks: data.remarks,
       });
+      saveData();
       closePopup();
       renderUsers();
     }
@@ -415,7 +426,8 @@
     // Statement popup
     function openStatementReport() {
       if (users.length === 0) {
-        return alert("No users available to generate statement.");
+        alert("No users available to generate statement.");
+        return;
       }
       const popup = document.getElementById("popupBg");
       let userOptions = users
@@ -486,7 +498,8 @@
     // Delete user popup
     function openDeletePopup() {
       if (users.length === 0) {
-        return alert("No users to delete.");
+        alert("No users to delete.");
+        return;
       }
       const popup = document.getElementById("popupBg");
       let userOptions = users
@@ -524,6 +537,7 @@
       transactions = transactions.filter(
         (tr) => tr.from !== userId && tr.to !== userId
       );
+      saveData();
       closePopup();
       renderUsers();
     }
@@ -573,6 +587,7 @@
           }
           users = data.users;
           transactions = data.transactions;
+          saveData();
           renderUsers();
           alert("Data restored successfully.");
           closePopup();
@@ -584,6 +599,7 @@
       reader.readAsText(file);
     }
 
+    // Initial UI render on page load with saved data
     renderUsers();
   </script>
 </body>
