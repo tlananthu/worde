@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Virtual Bank Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8f9fa;
+      color: #222;
+    }
+    .app-header {
+      background: #0a6efd;
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    .dashboard {
+      padding: 16px;
+      max-width: 400px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .add-user-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .add-user-input {
+      flex: 1;
+      padding: 8px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+    .user-list {
+      margin-bottom: 24px;
+    }
+    .user-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(5, 59, 97, 0.04);
+      margin-bottom: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .user-info {
+      flex: 1;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #222;
+    }
+    .user-info:hover {
+      text-decoration: underline;
+    }
+    .balance {
+      flex-shrink: 0;
+      margin-left: 12px;
+      color: #0a6efd;
+      font-weight: 600;
+      min-width: 95px;
+      text-align: right;
+      font-size: 1rem;
+    }
+    .user-actions {
+      margin-left: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 8px 12px;
+      transition: background 0.24s;
+      white-space: nowrap;
+      color: #fff;
+    }
+    button:active,
+    button:focus {
+      outline: none;
+      filter: brightness(85%);
+    }
+    .btn-add {
+      background: #0a6efd;
+    }
+    .btn-transact {
+      background: #30a34c;
+    }
+    .btn-deposit {
+      background: #28a745;
+    }
+    .btn-report {
+      background: #ff9e26;
+      width: 100%;
+      font-weight: 600;
+    }
+    .btn-delete {
+      background: #dd2c2c;
+      width: 100%;
+      font-weight: 600;
+    }
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 0.9rem;
+    }
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .upload-input {
+      display: none;
+    }
+    .statement-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-top: 10px;
+      font-size: 0.97em;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .statement-table th,
+    .statement-table td {
+      border: 1px solid #eee;
+      padding: 7px;
+      text-align: left;
+    }
+    .statement-table th {
+      background: #fafafa;
+      font-weight: 600;
+    }
+    .popup-bg {
+      display: none;
+      position: fixed;
+      z-index: 1500;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.25);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .popup-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+      max-width: 340px;
+      margin: 12vh auto;
+      padding: 24px;
+      position: relative;
+    }
+    .popup-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #333;
+    }
+    .popup-box h2 {
+      margin-top: 0;
+      margin-bottom: 18px;
+    }
+    .popup-form label {
+      display: block;
+      margin: 8px 0 4px 0;
+      font-weight: 500;
+      font-size: 1em;
+    }
+    .popup-form input,
+    .popup-form select,
+    .popup-form textarea {
+      width: 100%;
+      padding: 7px;
+      border-radius: 7px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      font-size: 1em;
+      resize: vertical;
+    }
+    .popup-form textarea {
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-header">Virtual Bank Dashboard</div>
+  <div class="dashboard">
+    <div class="add-user-bar">
+      <input
+        id="newUserName"
+        class="add-user-input"
+        type="text"
+        placeholder="Add new user"
+      />
+      <button class="btn btn-add" onclick="addUser()">Add User</button>
+    </div>
+    <div class="user-list" id="userList"></div>
+    <div class="action-buttons">
+      <button class="btn btn-report" onclick="openStatementReport()">
+        Statement
+      </button>
+      <button class="btn btn-delete" onclick="openDeletePopup()">
+        Delete Account
+      </button>
+      <button class="btn" onclick="backupData()">Backup Data</button>
+      <button
+        class="btn"
+        onclick="document.getElementById('uploadInput').click()"
+      >
+        Restore Data
+      </button>
+      <input
+        type="file"
+        id="uploadInput"
+        class="upload-input"
+        accept="application/json"
+        onchange="restoreData(event)"
+      />
+    </div>
+  </div>
+
+  <div id="popupBg" class="popup-bg"></div>
+
+  <script>
+    // Initial empty data arrays
+    let users = [];
+    let transactions = [];
+
+    function renderUsers() {
+      const userList = document.getElementById("userList");
+      userList.innerHTML = "";
+      users.forEach((u) => {
+        userList.innerHTML += `
+          <div class="user-card">
+            <div class="user-info" title="Click to rename" onclick="openRenamePopup(${u.id})">${escapeHtml(
+          u.name
+        )}</div>
+            <div class="balance">₹${u.balance.toLocaleString()}</div>
+            <div class="user-actions">
+              <button class="btn btn-transact btn-small" onclick="openTransaction(${u.id})">Transact</button>
+              <button class="btn btn-deposit btn-small" onclick="openDepositPopup(${u.id})">Deposit</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    function escapeHtml(text) {
+      const map = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      };
+      return text.replace(/[&<>"']/g, (m) => map[m]);
+    }
+
+    function addUser() {
+      const nameInput = document.getElementById("newUserName");
+      const name = nameInput.value.trim();
+      if (!name) return alert("Enter a user name.");
+      users.push({ id: Date.now(), name, balance: 0 });
+      nameInput.value = "";
+      renderUsers();
+    }
+
+    function closePopup() {
+      document.getElementById("popupBg").style.display = "none";
+    }
+
+    function todayStr() {
+      const dt = new Date(),
+        m = (dt.getMonth() + 1).toString().padStart(2, "0"),
+        d = dt.getDate().toString().padStart(2, "0");
+      return dt.getFullYear() + "-" + m + "-" + d;
+    }
+
+    // Rename user
+    function openRenamePopup(userId) {
+      const user = users.find((u) => u.id === userId);
+      if (!user) return;
+      const popup = document.getElementById("popupBg");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Rename Account</h2>
+        <form class="popup-form" onsubmit="renameAccount(event, ${userId})">
+          <label>New Name</label>
+          <input type="text" name="newName" value="${escapeHtml(user.name)}" required maxlength="50" autofocus />
+          <button class="btn btn-add" type="submit">Save</button>
+        </form>
+      </div>`;
+      popup.style.display = "block";
+    }
+    function renameAccount(event, userId) {
+      event.preventDefault();
+      const newName = event.target.newName.value.trim();
+      if (!newName) return alert("Name cannot be empty.");
+      const user = users.find((u) => u.id === userId);
+      if (user) {
+        user.name = newName;
+        renderUsers();
+      }
+      closePopup();
+    }
+
+    // Transaction popup
+    function openTransaction(fromId) {
+      const popup = document.getElementById("popupBg");
+      let options = users
+        .filter((u) => u.id !== fromId)
+        .map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`)
+        .join("");
+      popup.innerHTML = `
+        <div class="popup-box">
+          <button class="popup-close" onclick="closePopup()">&times;</button>
+          <h2>New Transaction</h2>
+          <form class="popup-form" onsubmit="submitTransaction(event, ${fromId})">
+            <label>Transfer To</label>
+            <select name="to" required>${options}</select>
+            <label>Date</label>
+            <input type="date" name="date" required value="${todayStr()}" />
+            <label>Amount (₹)</label>
+            <input type="number" name="amount" min="1" required />
+            <label>Remarks</label>
+            <textarea name="remarks" rows="2" placeholder="(Optional)"></textarea>
+            <button class="btn btn-transact" type="submit">Transfer</button>
+          </form>
+        </div>
+      `;
+      popup.style.display = "block";
+    }
+    function submitTransaction(e, fromId) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const amount = Number(data.amount);
+      if (amount <= 0) return alert("Enter a valid amount.");
+      const fromUser = users.find((u) => u.id === fromId);
+      const toUser = users.find((u) => u.id == data.to);
+      if (!fromUser || !toUser) return alert("Invalid user selection.");
+      if (fromUser.balance < amount)
+        return alert("Insufficient balance for this transaction.");
+      fromUser.balance -= amount;
+      toUser.balance += amount;
+      transactions.push({
+        from: fromId,
+        to: Number(data.to),
+        date: data.date,
+        amount,
+        remarks: data.remarks,
+      });
+      closePopup();
+      renderUsers();
+    }
+
+    // Deposit popup
+    function openDepositPopup(userId) {
+      const user = users.find((u) => u.id === userId);
+      if (!user) return;
+      const popup = document.getElementById("popupBg");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Deposit to ${escapeHtml(user.name)}</h2>
+        <form class="popup-form" onsubmit="submitDeposit(event, ${userId})">
+          <label>Date</label>
+          <input type="date" name="date" required value="${todayStr()}" autofocus />
+          <label>Amount (₹)</label>
+          <input type="number" name="amount" min="1" required />
+          <label>Remarks</label>
+          <textarea name="remarks" rows="2" placeholder="(Optional)"></textarea>
+          <button class="btn btn-deposit" type="submit">Deposit</button>
+        </form>
+      </div>`;
+      popup.style.display = "block";
+    }
+    function submitDeposit(e, userId) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const amount = Number(data.amount);
+      if (amount <= 0) return alert("Enter a valid amount.");
+      const user = users.find((u) => u.id === userId);
+      if (!user) return alert("User not found.");
+      user.balance += amount;
+      transactions.push({
+        from: null,
+        to: userId,
+        date: data.date,
+        amount,
+        remarks: data.remarks,
+      });
+      closePopup();
+      renderUsers();
+    }
+
+    // Statement popup
+    function openStatementReport() {
+      if (users.length === 0) {
+        return alert("No users available to generate statement.");
+      }
+      const popup = document.getElementById("popupBg");
+      let userOptions = users
+        .map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`)
+        .join("");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Account Statement</h2>
+        <form class="popup-form" onsubmit="showStatementReport(event)">
+          <label>Select User</label>
+          <select name="userId" required>${userOptions}</select>
+          <label>From</label>
+          <input type="date" name="from" required value="${todayStr()}" />
+          <label>To</label>
+          <input type="date" name="to" required value="${todayStr()}" />
+          <button class="btn btn-report" type="submit">Show</button>
+        </form>
+        <div id="statementResult"></div>
+      </div>
+      `;
+      popup.style.display = "block";
+    }
+    function showStatementReport(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const userId = Number(data.userId);
+      const from = data.from;
+      const to = data.to;
+      const user = users.find((u) => u.id === userId);
+      if (!user) return alert("User not found");
+      const trs = transactions.filter(
+        (tr) =>
+          (tr.from === userId || tr.to === userId) &&
+          tr.date >= from &&
+          tr.date <= to
+      );
+      let rows = trs
+        .map((tr) => {
+          const type = tr.from === userId ? "Debit" : "Credit";
+          const other =
+            tr.from === null
+              ? "Deposit"
+              : users.find(
+                  (u) =>
+                    u.id === (type === "Credit" ? tr.from : tr.to)
+                ).name;
+          return `<tr>
+            <td>${tr.date}</td>
+            <td>${type}</td>
+            <td>${escapeHtml(other)}</td>
+            <td>₹${tr.amount}</td>
+            <td>${escapeHtml(tr.remarks || "")}</td>
+          </tr>`;
+        })
+        .join("");
+      if (!rows) rows = `<tr><td colspan="5">No transactions in period</td></tr>`;
+      const table = `
+        <table class="statement-table">
+          <tr>
+            <th>Date</th><th>Type</th><th>With</th><th>Amount</th><th>Remarks</th>
+          </tr>
+          ${rows}
+        </table>`;
+      e.target.nextElementSibling.innerHTML = table;
+    }
+
+    // Delete user popup
+    function openDeletePopup() {
+      if (users.length === 0) {
+        return alert("No users to delete.");
+      }
+      const popup = document.getElementById("popupBg");
+      let userOptions = users
+        .map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`)
+        .join("");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Delete Account</h2>
+        <form class="popup-form" onsubmit="confirmDeleteUser(event)">
+          <label>Select User to Delete</label>
+          <select name="userId" required>${userOptions}</select>
+          <button class="btn btn-delete" type="submit">Delete</button>
+        </form>
+      </div>
+      `;
+      popup.style.display = "block";
+    }
+    function confirmDeleteUser(e) {
+      e.preventDefault();
+      const form = e.target;
+      const userId = Number(new FormData(form).get("userId"));
+      const user = users.find((u) => u.id === userId);
+      if (!user) return alert("User not found.");
+      form.innerHTML = `
+      <p>Are you sure you want to delete <b>${escapeHtml(
+        user.name
+      )}</b>'s account?<br>This will remove all their transactions.</p>
+      <button class="btn" style="background:#999;" onclick="closePopup(); return false;">Cancel</button>
+      <button class="btn btn-delete" onclick="deleteUser(${userId}); return false;">Delete</button>
+      `;
+    }
+    function deleteUser(userId) {
+      users = users.filter((u) => u.id !== userId);
+      transactions = transactions.filter(
+        (tr) => tr.from !== userId && tr.to !== userId
+      );
+      closePopup();
+      renderUsers();
+    }
+
+    // Backup data with robust download
+    function backupData() {
+      try {
+        const data = JSON.stringify({ users, transactions }, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, "virtual_bank_backup.json");
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = `virtual_bank_backup_${new Date()
+            .toISOString()
+            .slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 200);
+        }
+      } catch (err) {
+        alert("Backup failed: " + err.message);
+      }
+    }
+
+    // Restore data from file
+    function restoreData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (
+            !data ||
+            !Array.isArray(data.users) ||
+            !Array.isArray(data.transactions)
+          ) {
+            alert("Invalid backup file.");
+            return;
+          }
+          users = data.users;
+          transactions = data.transactions;
+          renderUsers();
+          alert("Data restored successfully.");
+          closePopup();
+          event.target.value = "";
+        } catch (err) {
+          alert("Failed to parse backup file: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    renderUsers();
+  </script>
+</body>
+</html>
