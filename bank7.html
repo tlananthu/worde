@@ -235,6 +235,7 @@
         accept="application/json"
         onchange="restoreData(event)"
       />
+      <button class="btn btn-add" onclick="saveAll()">Save</button>
     </div>
   </div>
 
@@ -251,7 +252,34 @@
       localStorage.setItem("vb_transactions", JSON.stringify(transactions));
     }
 
-    // Render user cards
+    // Save data to localStorage AND download backup JSON file
+    function saveAll() {
+      saveData();
+      try {
+        const data = JSON.stringify({ users, transactions }, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, "virtual_bank_backup.json");
+        } else {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = `virtual_bank_backup_${new Date()
+            .toISOString()
+            .slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 200);
+        }
+      } catch (err) {
+        alert("Backup failed: " + err.message);
+      }
+    }
+
     function renderUsers() {
       const userList = document.getElementById("userList");
       userList.innerHTML = "";
@@ -365,9 +393,6 @@
       const fromUser = users.find((u) => u.id === fromId);
       const toUser = users.find((u) => u.id == data.to);
       if (!fromUser || !toUser) return alert("Invalid user selection.");
-
-      // ALLOW negative balances - no check here
-
       fromUser.balance -= amount;
       toUser.balance += amount;
       transactions.push({
@@ -599,7 +624,6 @@
       reader.readAsText(file);
     }
 
-    // Initial UI render on page load with saved data
     renderUsers();
   </script>
 </body>
