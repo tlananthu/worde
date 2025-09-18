@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zoom In - Game Selection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: linear-gradient(120deg, #D0E6FF 0%, #EDEAF9 100%);
+      font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+      margin: 0; min-height: 100vh; color: #212245;
+    }
+    .container { max-width: 400px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 8px 28px rgba(120,120,180,0.10); padding: 28px 14px 32px 14px;}
+    h1 { font-size: 2.1rem; letter-spacing: 2px; font-weight: 700; color: #394DDD; text-align: center;}
+    .game-list { display: flex; flex-direction: column; gap: 12px;}
+    .game-option { display: flex; align-items: center; justify-content: space-between; background: #F3F9FF; border-radius: 10px; padding: 18px 22px; font-size: 1.16rem; font-weight: 500; cursor: pointer; box-shadow: 0 3px 12px rgba(80,80,120,.06); transition: background 0.15s;}
+    .game-option:hover, .game-option:focus { background: linear-gradient(90deg, #EDEAF9 60%, #D0E6FF 100%); color: #5E75C3; }
+    .arrow { font-size: 1.6em; color: #3250a6; transition: transform 0.15s;}
+    .game-option:hover .arrow, .game-option:focus .arrow { transform: translateX(7px); color: #7B2FF2;}
+    @media (max-width: 500px) { .container { margin: 12px 2px; max-width: 97vw; padding: 8px 2px 18px 2px;} h1 { font-size: 1.3rem;} .game-option { padding: 13px 13px; font-size: 1rem;} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Zoom In - Choose a Game</h1>
+    <div class="game-list">
+      <button class="game-option" onclick="location.href='flag.html'">Guess the flag <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the map <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the capital <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the continent <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the galaxy <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the shape <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the color <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Grappler hook <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Laser beam <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Guess the stone <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Cut in half <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Paint <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Fruit merge <span class="arrow">&#8594;</span></button>
+      <button class="game-option" onclick="location.href='#'">Car painting <span class="arrow">&#8594;</span></button>
+    </div>
+  </div>
+</body>
+</html>
