@@ -57,7 +57,7 @@ const countries = [
   {code: 'gb', name: 'United Kingdom'},
   {code: 'mx', name: 'Mexico'},
   {code: 'ar', name: 'Argentina'}
-  // ...add more as needed, using 2-letter ISO codes
+  // ...add more countries as desired!
 ];
 
 let unusedCountries = [];
@@ -97,7 +97,7 @@ function renderQuestion() {
   let country = pickCountry();
   let {options, correctIndex: corrIdx} = generateOptions(country);
   correctIndex = corrIdx;
-  document.getElementById('mapImg').src = `https://cdn.jsdelivr.net/npm/mapsicon/${country.code}.svg`;
+  document.getElementById('mapImg').src = `https://raw.githubusercontent.com/djaiss/mapsicon/master/all/${country.code}/vector.svg`;
   let optionsList = document.getElementById('optionsList');
   optionsList.innerHTML = '';
   options.forEach((c, i) => {
@@ -127,7 +127,6 @@ function handleAnswer(selected, corrIdx) {
     btns[selected].classList.add('incorrect');
     btns[corrIdx].classList.add('correct');
   }
-  // Show next button after feedback delay
   setTimeout(() => {
     document.getElementById('nextBtn').style.display = 'block';
     document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
