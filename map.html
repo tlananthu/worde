@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Guess the Map - Country Outlines Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {background: linear-gradient(115deg, #FFECAA, #EDEAF9); font-family: 'Roboto', Arial, sans-serif; color: #252c45; min-height: 100vh; margin: 0;}
+  .container {max-width: 400px; margin: 50px auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 28px rgba(120,120,180,0.11); padding: 28px 18px 33px 18px; text-align: center;}
+  h1 {font-size: 1.6rem; color: #394DDD; margin-bottom: 18px;}
+  .map-box {width: 180px; height: 120px; margin: 0 auto 25px auto; background: #fafafd; border-radius: 13px; display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;}
+  .map-img {height: 105px; width: auto;}
+  .options-list {display: flex; flex-direction: column; gap: 13px;}
+  .option-btn {
+    font-size: 1.1rem; color: #323c5c; background: #f3f9ff; border: 2.5px solid transparent;
+    border-radius: 10px; padding: 11px 8px; transition: all 0.21s; cursor: pointer; width: 100%;
+    box-shadow: 0 2px 7px rgba(80,120,180,0.05); outline: none; text-align: center;
+  }
+  .option-btn:hover {background: #e8f4ff;}
+  .option-btn.correct {border-color: #25b46f; background: #e4fde4;}
+  .option-btn.incorrect {border-color: #e24c61; background: #ffeaea;}
+  .option-btn:disabled {cursor: not-allowed; opacity: 0.6;}
+  #timer-container {margin: 14px auto 10px auto; font-size: 1.2rem; color: #c91818; font-weight: 500;}
+  .next-btn {background: #3EC97A; color: #fff; font-size: 1.05rem; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; margin-top: 18px; transition: background 0.19s; display: none;}
+  .next-btn:hover {background: #20a364;}
+  #levelCounter, #scoreCounter {font-size:1.01em; color:#47474c; margin:7px 20px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🗺️ Guess the Map!</h1>
+  <div class="map-box">
+    <img id="mapImg" src="" alt="Country Outline" class="map-img">
+  </div>
+  <div id="timer-container">⏳ <span id="timer">30</span> s</div>
+  <div class="options-list" id="optionsList"></div>
+  <button class="next-btn" id="nextBtn">Next Map →</button>
+  <div>
+    <span id="levelCounter">Level: 1</span>
+    <span id="scoreCounter">Score: 0/0</span>
+  </div>
+</div>
+<script>
+const countries = [
+  {code: 'in', name: 'India'},
+  {code: 'br', name: 'Brazil'},
+  {code: 'us', name: 'United States'},
+  {code: 'au', name: 'Australia'},
+  {code: 'de', name: 'Germany'},
+  {code: 'ng', name: 'Nigeria'},
+  {code: 'fr', name: 'France'},
+  {code: 'jp', name: 'Japan'},
+  {code: 'ca', name: 'Canada'},
+  {code: 'za', name: 'South Africa'},
+  {code: 'eg', name: 'Egypt'},
+  {code: 'ru', name: 'Russia'},
+  {code: 'gb', name: 'United Kingdom'},
+  {code: 'mx', name: 'Mexico'},
+  {code: 'ar', name: 'Argentina'}
+  // ...add more as needed, using 2-letter ISO codes
+];
+
+let unusedCountries = [];
+let levelCount = 1, correctCount = 0, totalQuestions = 0;
+let timer = null, timerInterval = null, correctIndex = null;
+
+function shuffle(array) {
+  let a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function resetUnusedCountries() {
+  unusedCountries = shuffle([...countries]);
+}
+
+function pickCountry() {
+  if (unusedCountries.length === 0) resetUnusedCountries();
+  return unusedCountries.pop();
+}
+
+function generateOptions(correctCountry) {
+  let others = shuffle(countries.filter(c => c.code !== correctCountry.code)).slice(0, 2); // 2 wrong + 1 correct option
+  let all = shuffle([correctCountry, ...others]);
+  return {options: all, correctIndex: all.indexOf(correctCountry)};
+}
+
+function renderQuestion() {
+  if (timerInterval) clearInterval(timerInterval);
+  document.getElementById('timer').textContent = 30;
+  document.getElementById('timer-container').style.display = 'block';
+  timer = 30;
+
+  let country = pickCountry();
+  let {options, correctIndex: corrIdx} = generateOptions(country);
+  correctIndex = corrIdx;
+  document.getElementById('mapImg').src = `https://cdn.jsdelivr.net/npm/mapsicon/${country.code}.svg`;
+  let optionsList = document.getElementById('optionsList');
+  optionsList.innerHTML = '';
+  options.forEach((c, i) => {
+    let btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = c.name;
+    btn.onclick = () => handleAnswer(i, corrIdx);
+    optionsList.appendChild(btn);
+  });
+  document.getElementById('levelCounter').textContent = `Level: ${levelCount}`;
+  document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+  document.getElementById('nextBtn').style.display = 'none';
+
+  startTimer();
+}
+
+function handleAnswer(selected, corrIdx) {
+  totalQuestions++;
+  let btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  if (timerInterval) clearInterval(timerInterval);
+
+  if (selected === corrIdx) {
+    correctCount++;
+    btns[selected].classList.add('correct');
+  } else {
+    btns[selected].classList.add('incorrect');
+    btns[corrIdx].classList.add('correct');
+  }
+  // Show next button after feedback delay
+  setTimeout(() => {
+    document.getElementById('nextBtn').style.display = 'block';
+    document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+  }, 700);
+}
+
+function startTimer() {
+  let t = 30;
+  document.getElementById('timer').textContent = t;
+  timerInterval = setInterval(() => {
+    t--;
+    document.getElementById('timer').textContent = t;
+    if (t <= 0) {
+      clearInterval(timerInterval);
+      autoFail();
+    }
+  }, 1000);
+}
+
+function autoFail() {
+  let btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[correctIndex].classList.add('correct');
+  document.getElementById('nextBtn').style.display = 'block';
+  totalQuestions++;
+  document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+}
+
+document.getElementById('nextBtn').onclick = function() {
+  levelCount++;
+  renderQuestion();
+};
+
+resetUnusedCountries();
+renderQuestion();
+</script>
+</body>
+</html>
