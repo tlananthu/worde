@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Guess the Flag - Complete Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { 
+      background: linear-gradient(115deg, #FFECAA 0%, #EDEAF9 100%); 
+      font-family: 'Roboto', Arial, sans-serif; 
+      color: #212245; 
+      min-height: 100vh; 
+      margin: 0;
+    }
+    .container { 
+      max-width: 380px; 
+      margin: 48px auto; 
+      background: #fff; 
+      border-radius: 18px; 
+      box-shadow: 0 8px 28px rgba(120,120,180,0.11); 
+      padding: 28px 20px 35px 20px; 
+      text-align: center;
+    }
+    h1 { 
+      font-size: 1.8rem; 
+      color: #394DDD; 
+      margin-bottom: 20px; 
+    }
+    .flag-box { 
+      width: 220px; 
+      height: 130px; 
+      margin: 0 auto 25px auto; 
+      background: #f9f9f9; 
+      border-radius: 15px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      border: 2px solid #eee;
+    }
+    .flag-img { 
+      max-width: 180px; 
+      max-height: 90px; 
+      border-radius: 8px; 
+      background: #fff;
+    }
+    .options-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 12px; 
+      margin-top: 15px;
+    }
+    .option-btn {
+      font-size: 1.15rem;
+      color: #323c5c;
+      background: #f3f9ff;
+      border: 2.5px solid transparent;
+      border-radius: 10px;
+      padding: 12px 8px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 2px 8px rgba(80,120,180,0.06);
+      outline: none;
+    }
+    .option-btn:hover { 
+      background: #e8f4ff; 
+      transform: translateY(-1px);
+    }
+    .option-btn.correct { 
+      border-color: #27b86e; 
+      background: #e4fde4;
+    }
+    .option-btn.incorrect { 
+      border-color: #e24c61; 
+      background: #ffeaea;
+    }
+    .option-btn:disabled { 
+      cursor: not-allowed; 
+      opacity: 0.7;
+    }
+    .game-info { 
+      display: flex; 
+      justify-content: space-between; 
+      margin-top: 20px; 
+      font-size: 0.95rem; 
+      color: #7B8B97;
+    }
+    .score { 
+      color: #394DDD; 
+      font-weight: 600;
+    }
+    .next-btn {
+      background: #3EC97A;
+      color: #fff;
+      font-size: 1.1rem;
+      border: none;
+      padding: 10px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.2s;
+      display: none;
+    }
+    .next-btn:hover { 
+      background: #20a364;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏁 Guess the Flag!</h1>
+    <div class="flag-box">
+      <img id="flagImg" src="" alt="Flag to guess" class="flag-img">
+    </div>
+    <div class="options-list" id="optionsList"></div>
+    <button class="next-btn" id="nextBtn">Next Flag →</button>
+    <div class="game-info">
+      <span id="levelCounter">Level: 1</span>
+      <span class="score" id="scoreCounter">Score: 0/0</span>
+    </div>
+  </div>
+
+  <script>
+    // Complete country list with ISO codes and names
+    const countries = [
+      {code: "af", name: "Afghanistan", difficulty: "Hard"},
+      {code: "br", name: "Brazil", difficulty: "Easy"},
+      {code: "ca", name: "Canada", difficulty: "Easy"},
+      {code: "dk", name: "Denmark", difficulty: "Medium"},
+      {code: "ng", name: "Nigeria", difficulty: "Medium"},
+      {code: "fr", name: "France", difficulty: "Easy"},
+      {code: "de", name: "Germany", difficulty: "Easy"},
+      {code: "jp", name: "Japan", difficulty: "Easy"},
+      {code: "in", name: "India", difficulty: "Easy"},
+      {code: "pk", name: "Pakistan", difficulty: "Medium"},
+      {code: "cn", name: "China", difficulty: "Easy"},
+      {code: "us", name: "United States", difficulty: "Easy"},
+      {code: "ru", name: "Russia", difficulty: "Medium"},
+      {code: "it", name: "Italy", difficulty: "Easy"},
+      {code: "mx", name: "Mexico", difficulty: "Medium"},
+      {code: "au", name: "Australia", difficulty: "Easy"},
+      {code: "es", name: "Spain", difficulty: "Medium"},
+      {code: "ke", name: "Kenya", difficulty: "Medium"},
+      {code: "za", name: "South Africa", difficulty: "Medium"},
+      {code: "kr", name: "South Korea", difficulty: "Medium"},
+      {code: "hu", name: "Hungary", difficulty: "Hard"},
+      {code: "vn", name: "Vietnam", difficulty: "Medium"},
+      {code: "eg", name: "Egypt", difficulty: "Medium"},
+      {code: "se", name: "Sweden", difficulty: "Medium"},
+      {code: "fi", name: "Finland", difficulty: "Medium"},
+      {code: "no", name: "Norway", difficulty: "Medium"},
+      {code: "ch", name: "Switzerland", difficulty: "Medium"},
+      {code: "ar", name: "Argentina", difficulty: "Medium"},
+      {code: "cl", name: "Chile", difficulty: "Hard"},
+      {code: "pl", name: "Poland", difficulty: "Medium"},
+      {code: "nl", name: "Netherlands", difficulty: "Medium"},
+      {code: "be", name: "Belgium", difficulty: "Medium"},
+      {code: "at", name: "Austria", difficulty: "Medium"},
+      {code: "ie", name: "Ireland", difficulty: "Medium"},
+      {code: "pt", name: "Portugal", difficulty: "Medium"},
+      {code: "gr", name: "Greece", difficulty: "Medium"},
+      {code: "ua", name: "Ukraine", difficulty: "Medium"},
+      {code: "cz", name: "Czechia", difficulty: "Hard"},
+      {code: "sg", name: "Singapore", difficulty: "Medium"},
+      {code: "th", name: "Thailand", difficulty: "Medium"},
+      {code: "my", name: "Malaysia", difficulty: "Medium"},
+      {code: "id", name: "Indonesia", difficulty: "Medium"},
+      {code: "ph", name: "Philippines", difficulty: "Medium"},
+      {code: "bd", name: "Bangladesh", difficulty: "Medium"},
+      {code: "lk", name: "Sri Lanka", difficulty: "Hard"},
+      {code: "mm", name: "Myanmar", difficulty: "Hard"},
+      {code: "np", name: "Nepal", difficulty: "Hard"},
+      {code: "bt", name: "Bhutan", difficulty: "Hard"},
+      {code: "kh", name: "Cambodia", difficulty: "Hard"}
+    ];
+
+    const RECENT_HISTORY_SIZE = 15; // Prevent recent repeats
+    let recentFlags = [];
+    let levelCount = 1;
+    let correctCount = 0;
+    let totalQuestions = 0;
+    let currentFlag = null;
+    let gameEnded = false;
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function pickRandomCountry() {
+      let available = countries.filter((_, i) => !recentFlags.includes(i));
+      if (available.length === 0) {
+        recentFlags = [];
+        available = countries;
+      }
+      
+      const randomCountry = available[Math.floor(Math.random() * available.length)];
+      const countryIndex = countries.indexOf(randomCountry);
+      recentFlags.push(countryIndex);
+      
+      if (recentFlags.length > RECENT_HISTORY_SIZE) {
+        recentFlags.shift();
+      }
+      
+      return randomCountry;
+    }
+
+    function generateOptions(correctCountry) {
+      const otherCountries = countries.filter(c => c.code !== correctCountry.code);
+      const wrongOptions = shuffleArray(otherCountries).slice(0, 3);
+      const allOptions = shuffleArray([correctCountry, ...wrongOptions]);
+      
+      return {
+        options: allOptions,
+        correctIndex: allOptions.indexOf(correctCountry)
+      };
+    }
+
+    function renderQuestion() {
+      if (gameEnded) return;
+      
+      currentFlag = pickRandomCountry();
+      const { options, correctIndex } = generateOptions(currentFlag);
+      
+      // Update flag image
+      document.getElementById('flagImg').src = `https://flagcdn.com/${currentFlag.code}.svg`;
+      
+      // Update options
+      const optionsList = document.getElementById('optionsList');
+      optionsList.innerHTML = '';
+      
+      options.forEach((country, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = country.name;
+        btn.onclick = () => handleAnswer(i, correctIndex, options);
+        optionsList.appendChild(btn);
+      });
+      
+      // Update counters
+      document.getElementById('levelCounter').textContent = `Level: ${levelCount}`;
+      document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+      document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function handleAnswer(selectedIndex, correctIndex, options) {
+      totalQuestions++;
+      const optionBtns = document.querySelectorAll('.option-btn');
+      
+      // Disable all buttons
+      optionBtns.forEach(btn => btn.disabled = true);
+      
+      if (selectedIndex === correctIndex) {
+        correctCount++;
+        optionBtns[selectedIndex].classList.add('correct');
+      } else {
+        optionBtns[selectedIndex].classList.add('incorrect');
+        optionBtns[correctIndex].classList.add('correct');
+      }
+      
+      // Show next button after a brief delay
+      setTimeout(() => {
+        document.getElementById('nextBtn').style.display = 'block';
+        document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+      }, 800);
+    }
+
+    function nextQuestion() {
+      levelCount++;
+      renderQuestion();
+    }
+
+    // Event listeners
+    document.getElementById('nextBtn').onclick = nextQuestion;
+
+    // Start the game
+    renderQuestion();
+  </script>
+</body>
+</html>
