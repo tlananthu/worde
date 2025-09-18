@@ -1,37 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Guess the Map - Country Outlines Game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body {background: linear-gradient(115deg, #FFECAA, #EDEAF9); font-family: 'Roboto', Arial, sans-serif; color: #252c45; min-height: 100vh; margin: 0;}
-  .container {max-width: 400px; margin: 50px auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 28px rgba(120,120,180,0.11); padding: 28px 18px 33px 18px; text-align: center;}
-  h1 {font-size: 1.6rem; color: #394DDD; margin-bottom: 18px;}
-  .map-box {width: 180px; height: 120px; margin: 0 auto 25px auto; background: #fafafd; border-radius: 13px; display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;}
-  .map-img {height: 105px; width: auto;}
-  .options-list {display: flex; flex-direction: column; gap: 13px;}
-  .option-btn {
-    font-size: 1.1rem; color: #323c5c; background: #f3f9ff; border: 2.5px solid transparent;
-    border-radius: 10px; padding: 11px 8px; transition: all 0.21s; cursor: pointer; width: 100%;
-    box-shadow: 0 2px 7px rgba(80,120,180,0.05); outline: none; text-align: center;
-  }
-  .option-btn:hover {background: #e8f4ff;}
-  .option-btn.correct {border-color: #25b46f; background: #e4fde4;}
-  .option-btn.incorrect {border-color: #e24c61; background: #ffeaea;}
-  .option-btn:disabled {cursor: not-allowed; opacity: 0.6;}
-  #timer-container {margin: 14px auto 10px auto; font-size: 1.2rem; color: #c91818; font-weight: 500;}
-  .next-btn {background: #3EC97A; color: #fff; font-size: 1.05rem; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; margin-top: 18px; transition: background 0.19s; display: none;}
-  .next-btn:hover {background: #20a364;}
-  #levelCounter, #scoreCounter {font-size:1.01em; color:#47474c; margin:7px 20px;}
-</style>
+  <meta charset="UTF-8">
+  <title>Guess the Map - All Countries (Omitted Logic)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {background: linear-gradient(115deg, #FFECAA, #EDEAF9); font-family: 'Roboto', Arial, sans-serif; color: #252c45; min-height: 100vh; margin: 0;}
+    .container {max-width: 425px; margin: 50px auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 28px rgba(120,120,180,0.11); padding: 28px 18px 33px 18px; text-align: center;}
+    h1 {font-size: 1.5rem; color: #394DDD; margin-bottom: 15px;}
+    .map-box {width: 200px; height: 130px; margin: 0 auto 25px auto; background: #fafafd; border-radius: 13px; display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;}
+    .map-img { max-height: 120px; width: auto;}
+    .options-list {display: flex; flex-direction: column; gap: 13px;}
+    .option-btn {font-size: 1.1rem; color: #323c5c; background: #f3f9ff; border: 2.5px solid transparent; border-radius: 10px; padding: 11px 8px; transition: all 0.21s; cursor: pointer; width: 100%; box-shadow: 0 2px 7px rgba(80,120,180,0.05); outline: none; text-align: center;}
+    .option-btn:hover { background: #e8f4ff;}
+    .option-btn.correct { border-color: #25b46f; background: #e4fde4;}
+    .option-btn.incorrect { border-color: #e24c61; background: #ffeaea;}
+    .option-btn:disabled { cursor: not-allowed; opacity: 0.6;}
+    #timer-container { margin: 14px auto 10px auto; font-size: 1.17rem; color: #c91818; font-weight: 500;}
+    .next-btn {background: #3EC97A; color: #fff; font-size: 1.05rem; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; margin-top: 18px; transition: background 0.19s; display: none;}
+    .next-btn:hover {background: #20a364;}
+    #levelCounter, #scoreCounter {font-size:1.01em; color:#47474c; margin:7px 20px;}
+    .info {color:#993333;font-size:.97em;margin-bottom:10px;}
+  </style>
 </head>
 <body>
 <div class="container">
-  <h1>🗺️ Guess the Map!</h1>
-  <div class="map-box">
-    <img id="mapImg" src="" alt="Country Outline" class="map-img">
-  </div>
+  <h1>🗺️ Guess the Country by Map!</h1>
+  <!--<div class="info">Maps for Jersey, Micronesia, Marshall Islands, Tuvalu, and similar are skipped automatically.</div>-->
+  <div class="map-box"><img id="mapImg" src="" alt="Country Outline" class="map-img"></div>
   <div id="timer-container">⏳ <span id="timer">30</span> s</div>
   <div class="options-list" id="optionsList"></div>
   <button class="next-btn" id="nextBtn">Next Map →</button>
@@ -41,28 +37,83 @@
   </div>
 </div>
 <script>
-const countries = [
-  {code: 'in', name: 'India'},
-  {code: 'br', name: 'Brazil'},
-  {code: 'us', name: 'United States'},
-  {code: 'au', name: 'Australia'},
-  {code: 'de', name: 'Germany'},
-  {code: 'ng', name: 'Nigeria'},
-  {code: 'fr', name: 'France'},
-  {code: 'jp', name: 'Japan'},
-  {code: 'ca', name: 'Canada'},
-  {code: 'za', name: 'South Africa'},
-  {code: 'eg', name: 'Egypt'},
-  {code: 'ru', name: 'Russia'},
-  {code: 'gb', name: 'United Kingdom'},
-  {code: 'mx', name: 'Mexico'},
-  {code: 'ar', name: 'Argentina'}
-  // ...add more countries as desired!
+// Omitted due to missing or problematic map SVGs in Mapsicon, etc.
+const omitted = ['fm','je','mh','mp','ps','tv','um']; // Micronesia, Jersey, Marshall Islands, etc.
+
+const countries =[{code:"is",name:"Iceland"},{code:"in",name:"India"},{code:"id",name:"Indonesia"},{code:"ir",name:"Iran"}];
+const countries1 = [
+  {code:"af",name:"Afghanistan"},{code:"al",name:"Albania"},{code:"dz",name:"Algeria"},{code:"as",name:"American Samoa"},
+  {code:"ad",name:"Andorra"},{code:"ao",name:"Angola"},{code:"ai",name:"Anguilla"},{code:"aq",name:"Antarctica"},
+  {code:"ag",name:"Antigua and Barbuda"},{code:"ar",name:"Argentina"},{code:"am",name:"Armenia"},{code:"aw",name:"Aruba"},
+  {code:"au",name:"Australia"},{code:"at",name:"Austria"},{code:"az",name:"Azerbaijan"},{code:"bs",name:"Bahamas"},
+  {code:"bh",name:"Bahrain"},{code:"bd",name:"Bangladesh"},{code:"bb",name:"Barbados"},{code:"by",name:"Belarus"},
+  {code:"be",name:"Belgium"},{code:"bz",name:"Belize"},{code:"bj",name:"Benin"},{code:"bm",name:"Bermuda"},
+  {code:"bt",name:"Bhutan"},{code:"bo",name:"Bolivia"},{code:"ba",name:"Bosnia and Herzegovina"},
+  {code:"bw",name:"Botswana"},{code:"br",name:"Brazil"},{code:"io",name:"British Indian Ocean Territory"},
+  {code:"bn",name:"Brunei Darussalam"},{code:"bg",name:"Bulgaria"},{code:"bf",name:"Burkina Faso"},{code:"bi",name:"Burundi"},
+  {code:"kh",name:"Cambodia"},{code:"cm",name:"Cameroon"},{code:"ca",name:"Canada"},{code:"cv",name:"Cabo Verde"},
+  {code:"ky",name:"Cayman Islands"},{code:"cf",name:"Central African Republic"},{code:"td",name:"Chad"},
+  {code:"cl",name:"Chile"},{code:"cn",name:"China"},{code:"cx",name:"Christmas Island"},{code:"cc",name:"Cocos (Keeling) Islands"},
+  {code:"co",name:"Colombia"},{code:"km",name:"Comoros"},{code:"cg",name:"Congo"},{code:"cd",name:"Congo, Democratic Republic of the"},
+  {code:"ck",name:"Cook Islands"},{code:"cr",name:"Costa Rica"},{code:"ci",name:"Côte d'Ivoire"},{code:"hr",name:"Croatia"},
+  {code:"cu",name:"Cuba"},{code:"cy",name:"Cyprus"},{code:"cz",name:"Czechia"},{code:"dk",name:"Denmark"},
+  {code:"dj",name:"Djibouti"},{code:"dm",name:"Dominica"},{code:"do",name:"Dominican Republic"},{code:"ec",name:"Ecuador"},
+  {code:"eg",name:"Egypt"},{code:"sv",name:"El Salvador"},{code:"gq",name:"Equatorial Guinea"},{code:"er",name:"Eritrea"},
+  {code:"ee",name:"Estonia"},{code:"sz",name:"Eswatini"},{code:"et",name:"Ethiopia"},{code:"fj",name:"Fiji"},
+  {code:"fi",name:"Finland"},{code:"fr",name:"France"},{code:"gf",name:"French Guiana"},{code:"pf",name:"French Polynesia"},
+  {code:"ga",name:"Gabon"},{code:"gm",name:"Gambia"},{code:"ge",name:"Georgia"},{code:"de",name:"Germany"},
+  {code:"gh",name:"Ghana"},{code:"gr",name:"Greece"},{code:"gl",name:"Greenland"},{code:"gd",name:"Grenada"},
+  {code:"gp",name:"Guadeloupe"},{code:"gu",name:"Guam"},{code:"gt",name:"Guatemala"},{code:"gg",name:"Guernsey"},
+  {code:"gn",name:"Guinea"},{code:"gw",name:"Guinea-Bissau"},{code:"gy",name:"Guyana"},{code:"ht",name:"Haiti"},
+  {code:"va",name:"Holy See"},{code:"hn",name:"Honduras"},{code:"hk",name:"Hong Kong"},{code:"hu",name:"Hungary"},
+  {code:"is",name:"Iceland"},{code:"in",name:"India"},{code:"id",name:"Indonesia"},{code:"ir",name:"Iran"},
+  {code:"iq",name:"Iraq"},{code:"ie",name:"Ireland"},{code:"il",name:"Israel"},{code:"it",name:"Italy"},
+  {code:"jm",name:"Jamaica"},{code:"jp",name:"Japan"},{code:"jo",name:"Jordan"},{code:"kz",name:"Kazakhstan"},
+  {code:"ke",name:"Kenya"},{code:"ki",name:"Kiribati"},{code:"kp",name:"Korea (Democratic People's Republic of)"},
+  {code:"kr",name:"Korea (Republic of)"},{code:"kw",name:"Kuwait"},{code:"kg",name:"Kyrgyzstan"},{code:"la",name:"Lao People's Democratic Republic"},
+  {code:"lv",name:"Latvia"},{code:"lb",name:"Lebanon"},{code:"ls",name:"Lesotho"},{code:"lr",name:"Liberia"},
+  {code:"ly",name:"Libya"},{code:"lt",name:"Lithuania"},{code:"lu",name:"Luxembourg"},{code:"mo",name:"Macao"},
+  {code:"mg",name:"Madagascar"},{code:"mw",name:"Malawi"},{code:"my",name:"Malaysia"},{code:"mv",name:"Maldives"},
+  {code:"ml",name:"Mali"},{code:"mt",name:"Malta"},{code:"ma",name:"Morocco"},{code:"mu",name:"Mauritius"},
+  {code:"yt",name:"Mayotte"},{code:"mx",name:"Mexico"},{code:"md",name:"Moldova"},{code:"mc",name:"Monaco"},
+  {code:"mn",name:"Mongolia"},{code:"me",name:"Montenegro"},{code:"ms",name:"Montserrat"},{code:"ma",name:"Morocco"},
+  {code:"mz",name:"Mozambique"},{code:"mm",name:"Myanmar"},{code:"na",name:"Namibia"},{code:"nr",name:"Nauru"},
+  {code:"np",name:"Nepal"},{code:"nl",name:"Netherlands"},{code:"nc",name:"New Caledonia"},{code:"nz",name:"New Zealand"},
+  {code:"ni",name:"Nicaragua"},{code:"ne",name:"Niger"},{code:"ng",name:"Nigeria"},{code:"no",name:"Norway"},
+  {code:"om",name:"Oman"},{code:"pk",name:"Pakistan"},{code:"pw",name:"Palau"},{code:"pa",name:"Panama"},
+  {code:"pg",name:"Papua New Guinea"},{code:"py",name:"Paraguay"},{code:"pe",name:"Peru"},{code:"ph",name:"Philippines"},
+  {code:"pl",name:"Poland"},{code:"pt",name:"Portugal"},{code:"pr",name:"Puerto Rico"},{code:"qa",name:"Qatar"},
+  {code:"ro",name:"Romania"},{code:"ru",name:"Russia"},{code:"rw",name:"Rwanda"},{code:"kn",name:"Saint Kitts and Nevis"},
+  {code:"lc",name:"Saint Lucia"},{code:"vc",name:"Saint Vincent and the Grenadines"},{code:"ws",name:"Samoa"},
+  {code:"sm",name:"San Marino"},{code:"st",name:"Sao Tome and Principe"},{code:"sa",name:"Saudi Arabia"},
+  {code:"sn",name:"Senegal"},{code:"rs",name:"Serbia"},{code:"sc",name:"Seychelles"},{code:"sl",name:"Sierra Leone"},
+  {code:"sg",name:"Singapore"},{code:"sk",name:"Slovakia"},{code:"si",name:"Slovenia"},{code:"sb",name:"Solomon Islands"},
+  {code:"so",name:"Somalia"},{code:"za",name:"South Africa"},{code:"ss",name:"South Sudan"},{code:"es",name:"Spain"},
+  {code:"lk",name:"Sri Lanka"},{code:"sd",name:"Sudan"},{code:"sr",name:"Suriname"},{code:"se",name:"Sweden"},
+  {code:"ch",name:"Switzerland"},{code:"sy",name:"Syrian Arab Republic"},{code:"tw",name:"Taiwan"},
+  {code:"tj",name:"Tajikistan"},{code:"tz",name:"Tanzania"},{code:"th",name:"Thailand"},{code:"tl",name:"Timor-Leste"},
+  {code:"tg",name:"Togo"},{code:"to",name:"Tonga"},{code:"tt",name:"Trinidad and Tobago"},{code:"tn",name:"Tunisia"},
+  {code:"tr",name:"Turkey"},{code:"tm",name:"Turkmenistan"},{code:"ug",name:"Uganda"},{code:"ua",name:"Ukraine"},
+  {code:"ae",name:"United Arab Emirates"},{code:"gb",name:"United Kingdom"},{code:"us",name:"United States"},
+  {code:"uy",name:"Uruguay"},{code:"uz",name:"Uzbekistan"},{code:"vu",name:"Vanuatu"},{code:"ve",name:"Venezuela"},
+  {code:"vn",name:"Vietnam"},{code:"eh",name:"Western Sahara"},{code:"ye",name:"Yemen"},{code:"zm",name:"Zambia"},
+  {code:"zw",name:"Zimbabwe"}
 ];
+
+function getMapSvgUrl(code) {
+  if (code === 'in') {
+  return 'india_full_territory.png'; // Place this file in your project directory
+}
+
+
+  // Omitted countries have no SVG map: return "" (local handling)
+  if (omitted.includes(code)) return '';
+  return `https://raw.githubusercontent.com/djaiss/mapsicon/master/all/${code}/vector.svg`;
+}
 
 let unusedCountries = [];
 let levelCount = 1, correctCount = 0, totalQuestions = 0;
-let timer = null, timerInterval = null, correctIndex = null;
+let timerInterval = null, correctIndex = null;
 
 function shuffle(array) {
   let a = [...array];
@@ -72,96 +123,72 @@ function shuffle(array) {
   }
   return a;
 }
-
 function resetUnusedCountries() {
-  unusedCountries = shuffle([...countries]);
+  unusedCountries = shuffle(countries.filter(c=>!omitted.includes(c.code)));
 }
-
 function pickCountry() {
   if (unusedCountries.length === 0) resetUnusedCountries();
   return unusedCountries.pop();
 }
-
 function generateOptions(correctCountry) {
-  let others = shuffle(countries.filter(c => c.code !== correctCountry.code)).slice(0, 2); // 2 wrong + 1 correct option
-  let all = shuffle([correctCountry, ...others]);
-  return {options: all, correctIndex: all.indexOf(correctCountry)};
+  let pool = countries.filter(c => c.code !== correctCountry.code && !omitted.includes(c.code));
+  let wrong = shuffle(pool).slice(0,2);
+  let opts = shuffle([correctCountry,...wrong]);
+  return {options:opts, correctIndex:opts.indexOf(correctCountry)};
 }
-
 function renderQuestion() {
   if (timerInterval) clearInterval(timerInterval);
   document.getElementById('timer').textContent = 30;
   document.getElementById('timer-container').style.display = 'block';
-  timer = 30;
-
   let country = pickCountry();
   let {options, correctIndex: corrIdx} = generateOptions(country);
   correctIndex = corrIdx;
-  document.getElementById('mapImg').src = `https://raw.githubusercontent.com/djaiss/mapsicon/master/all/${country.code}/vector.svg`;
+  let mapUrl = getMapSvgUrl(country.code);
+  let imgElem = document.getElementById('mapImg');
+  imgElem.onerror = function(){
+    imgElem.src = '';
+    imgElem.alt = 'No map outline available';
+  };
+  imgElem.src = mapUrl;
   let optionsList = document.getElementById('optionsList');
   optionsList.innerHTML = '';
   options.forEach((c, i) => {
     let btn = document.createElement('button');
-    btn.className = 'option-btn';
-    btn.textContent = c.name;
-    btn.onclick = () => handleAnswer(i, corrIdx);
-    optionsList.appendChild(btn);
+    btn.className = 'option-btn'; btn.textContent = c.name;
+    btn.onclick = () => handleAnswer(i, corrIdx); optionsList.appendChild(btn);
   });
   document.getElementById('levelCounter').textContent = `Level: ${levelCount}`;
   document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
   document.getElementById('nextBtn').style.display = 'none';
-
   startTimer();
 }
-
 function handleAnswer(selected, corrIdx) {
   totalQuestions++;
   let btns = document.querySelectorAll('.option-btn');
   btns.forEach(b => b.disabled = true);
   if (timerInterval) clearInterval(timerInterval);
-
-  if (selected === corrIdx) {
-    correctCount++;
-    btns[selected].classList.add('correct');
-  } else {
-    btns[selected].classList.add('incorrect');
-    btns[corrIdx].classList.add('correct');
-  }
+  if (selected === corrIdx) { correctCount++; btns[selected].classList.add('correct'); }
+  else { btns[selected].classList.add('incorrect'); btns[corrIdx].classList.add('correct'); }
   setTimeout(() => {
     document.getElementById('nextBtn').style.display = 'block';
     document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
   }, 700);
 }
-
 function startTimer() {
-  let t = 30;
-  document.getElementById('timer').textContent = t;
+  let t = 30; document.getElementById('timer').textContent = t;
   timerInterval = setInterval(() => {
-    t--;
-    document.getElementById('timer').textContent = t;
-    if (t <= 0) {
-      clearInterval(timerInterval);
-      autoFail();
-    }
+    t--; document.getElementById('timer').textContent = t;
+    if (t <= 0) { clearInterval(timerInterval); autoFail(); }
   }, 1000);
 }
-
 function autoFail() {
   let btns = document.querySelectorAll('.option-btn');
-  btns.forEach(b => b.disabled = true);
-  btns[correctIndex].classList.add('correct');
+  btns.forEach(b => b.disabled = true); btns[correctIndex].classList.add('correct');
   document.getElementById('nextBtn').style.display = 'block';
-  totalQuestions++;
-  document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+  totalQuestions++; document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
 }
-
-document.getElementById('nextBtn').onclick = function() {
-  levelCount++;
-  renderQuestion();
-};
-
-resetUnusedCountries();
-renderQuestion();
+document.getElementById('nextBtn').onclick = function() { levelCount++; renderQuestion(); };
+resetUnusedCountries(); renderQuestion();
 </script>
 </body>
 </html>
