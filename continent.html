@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Guess the Continent</title>
+<style>
+body { font-family: sans-serif; text-align: center; background: #f3f9ff;}
+.country-box { font-size: 1.6em; margin: 30px 0 18px 0; }
+.option-btn { margin: 8px 0; padding: 10px 0; border-radius: 8px; border: none; width: 80%; font-size: 1.18rem;}
+.option-btn.correct { background: #b5e5b6; }
+.option-btn.incorrect { background: #e5b5b5; }
+#nextBtn {margin:12px;}
+</style>
+</head>
+<body>
+<h2>Which continent does this country belong to?</h2>
+<div>
+  <div class="country-box" id="countryBox"></div>
+  <div id="optionsList"></div>
+  <div id="timer">⏳ 30</div>
+  <button id="nextBtn" style="display:none">Next</button>
+  <div id="score"></div>
+</div>
+<script>
+const countries = [
+  {name:"Afghanistan", continent:"Asia"},
+  {name:"Albania", continent:"Europe"},
+  {name:"Algeria", continent:"Africa"},
+  {name:"Andorra", continent:"Europe"},
+  {name:"Angola", continent:"Africa"},
+  {name:"Antigua and Barbuda", continent:"North America"},
+  {name:"Argentina", continent:"South America"},
+  {name:"Armenia", continent:"Asia"},
+  {name:"Australia", continent:"Oceania"},
+  {name:"Austria", continent:"Europe"},
+  {name:"Azerbaijan", continent:"Asia"},
+  {name:"Bahamas", continent:"North America"},
+  {name:"Bahrain", continent:"Asia"},
+  {name:"Bangladesh", continent:"Asia"},
+  {name:"Barbados", continent:"North America"},
+  {name:"Belarus", continent:"Europe"},
+  {name:"Belgium", continent:"Europe"},
+  {name:"Belize", continent:"North America"},
+  {name:"Benin", continent:"Africa"},
+  {name:"Bhutan", continent:"Asia"},
+  {name:"Bolivia", continent:"South America"},
+  {name:"Bosnia and Herzegovina", continent:"Europe"},
+  {name:"Botswana", continent:"Africa"},
+  {name:"Brazil", continent:"South America"},
+  {name:"Brunei", continent:"Asia"},
+  {name:"Bulgaria", continent:"Europe"},
+  {name:"Burkina Faso", continent:"Africa"},
+  {name:"Burundi", continent:"Africa"},
+  {name:"Cabo Verde", continent:"Africa"},
+  {name:"Cambodia", continent:"Asia"},
+  {name:"Cameroon", continent:"Africa"},
+  {name:"Canada", continent:"North America"},
+  {name:"Central African Republic", continent:"Africa"},
+  {name:"Chad", continent:"Africa"},
+  {name:"Chile", continent:"South America"},
+  {name:"China", continent:"Asia"},
+  {name:"Colombia", continent:"South America"},
+  {name:"Comoros", continent:"Africa"},
+  {name:"Congo", continent:"Africa"},
+  {name:"Costa Rica", continent:"North America"},
+  {name:"Côte d'Ivoire", continent:"Africa"},
+  {name:"Croatia", continent:"Europe"},
+  {name:"Cuba", continent:"North America"},
+  {name:"Cyprus", continent:"Asia"},
+  {name:"Czechia", continent:"Europe"},
+  {name:"Democratic Republic of the Congo", continent:"Africa"},
+  {name:"Denmark", continent:"Europe"},
+  {name:"Djibouti", continent:"Africa"},
+  {name:"Dominica", continent:"North America"},
+  {name:"Dominican Republic", continent:"North America"},
+  {name:"Ecuador", continent:"South America"},
+  {name:"Egypt", continent:"Africa"},
+  {name:"El Salvador", continent:"North America"},
+  {name:"Equatorial Guinea", continent:"Africa"},
+  {name:"Eritrea", continent:"Africa"},
+  {name:"Estonia", continent:"Europe"},
+  {name:"Eswatini", continent:"Africa"},
+  {name:"Ethiopia", continent:"Africa"},
+  {name:"Fiji", continent:"Oceania"},
+  {name:"Finland", continent:"Europe"},
+  {name:"France", continent:"Europe"},
+  {name:"Gabon", continent:"Africa"},
+  {name:"Gambia", continent:"Africa"},
+  {name:"Georgia", continent:"Asia"},
+  {name:"Germany", continent:"Europe"},
+  {name:"Ghana", continent:"Africa"},
+  {name:"Greece", continent:"Europe"},
+  {name:"Grenada", continent:"North America"},
+  {name:"Guatemala", continent:"North America"},
+  {name:"Guinea", continent:"Africa"},
+  {name:"Guinea-Bissau", continent:"Africa"},
+  {name:"Guyana", continent:"South America"},
+  {name:"Haiti", continent:"North America"},
+  {name:"Honduras", continent:"North America"},
+  {name:"Hungary", continent:"Europe"},
+  {name:"Iceland", continent:"Europe"},
+  {name:"India", continent:"Asia"},
+  {name:"Indonesia", continent:"Asia"},
+  {name:"Iran", continent:"Asia"},
+  {name:"Iraq", continent:"Asia"},
+  {name:"Ireland", continent:"Europe"},
+  {name:"Israel", continent:"Asia"},
+  {name:"Italy", continent:"Europe"},
+  {name:"Jamaica", continent:"North America"},
+  {name:"Japan", continent:"Asia"},
+  {name:"Jordan", continent:"Asia"},
+  {name:"Kazakhstan", continent:"Asia"},
+  {name:"Kenya", continent:"Africa"},
+  {name:"Kiribati", continent:"Oceania"},
+  {name:"Kuwait", continent:"Asia"},
+  {name:"Kyrgyzstan", continent:"Asia"},
+  {name:"Laos", continent:"Asia"},
+  {name:"Latvia", continent:"Europe"},
+  {name:"Lebanon", continent:"Asia"},
+  {name:"Lesotho", continent:"Africa"},
+  {name:"Liberia", continent:"Africa"},
+  {name:"Libya", continent:"Africa"},
+  {name:"Liechtenstein", continent:"Europe"},
+  {name:"Lithuania", continent:"Europe"},
+  {name:"Luxembourg", continent:"Europe"},
+  {name:"Madagascar", continent:"Africa"},
+  {name:"Malawi", continent:"Africa"},
+  {name:"Malaysia", continent:"Asia"},
+  {name:"Maldives", continent:"Asia"},
+  {name:"Mali", continent:"Africa"},
+  {name:"Malta", continent:"Europe"},
+  {name:"Marshall Islands", continent:"Oceania"},
+  {name:"Mauritania", continent:"Africa"},
+  {name:"Mauritius", continent:"Africa"},
+  {name:"Mexico", continent:"North America"},
+  {name:"Micronesia", continent:"Oceania"},
+  {name:"Moldova", continent:"Europe"},
+  {name:"Monaco", continent:"Europe"},
+  {name:"Mongolia", continent:"Asia"},
+  {name:"Montenegro", continent:"Europe"},
+  {name:"Morocco", continent:"Africa"},
+  {name:"Mozambique", continent:"Africa"},
+  {name:"Myanmar", continent:"Asia"},
+  {name:"Namibia", continent:"Africa"},
+  {name:"Nauru", continent:"Oceania"},
+  {name:"Nepal", continent:"Asia"},
+  {name:"Netherlands", continent:"Europe"},
+  {name:"New Zealand", continent:"Oceania"},
+  {name:"Nicaragua", continent:"North America"},
+  {name:"Niger", continent:"Africa"},
+  {name:"Nigeria", continent:"Africa"},
+  {name:"North Korea", continent:"Asia"},
+  {name:"North Macedonia", continent:"Europe"},
+  {name:"Norway", continent:"Europe"},
+  {name:"Oman", continent:"Asia"},
+  {name:"Pakistan", continent:"Asia"},
+  {name:"Palau", continent:"Oceania"},
+  {name:"Palestine", continent:"Asia"},
+  {name:"Panama", continent:"North America"},
+  {name:"Papua New Guinea", continent:"Oceania"},
+  {name:"Paraguay", continent:"South America"},
+  {name:"Peru", continent:"South America"},
+  {name:"Philippines", continent:"Asia"},
+  {name:"Poland", continent:"Europe"},
+  {name:"Portugal", continent:"Europe"},
+  {name:"Qatar", continent:"Asia"},
+  {name:"Romania", continent:"Europe"},
+  {name:"Russia", continent:"Europe"},
+  {name:"Rwanda", continent:"Africa"},
+  {name:"Saint Kitts and Nevis", continent:"North America"},
+  {name:"Saint Lucia", continent:"North America"},
+  {name:"Saint Vincent and the Grenadines", continent:"North America"},
+  {name:"Samoa", continent:"Oceania"},
+  {name:"San Marino", continent:"Europe"},
+  {name:"Sao Tome and Principe", continent:"Africa"},
+  {name:"Saudi Arabia", continent:"Asia"},
+  {name:"Senegal", continent:"Africa"},
+  {name:"Serbia", continent:"Europe"},
+  {name:"Seychelles", continent:"Africa"},
+  {name:"Sierra Leone", continent:"Africa"},
+  {name:"Singapore", continent:"Asia"},
+  {name:"Slovakia", continent:"Europe"},
+  {name:"Slovenia", continent:"Europe"},
+  {name:"Solomon Islands", continent:"Oceania"},
+  {name:"Somalia", continent:"Africa"},
+  {name:"South Africa", continent:"Africa"},
+  {name:"South Korea", continent:"Asia"},
+  {name:"South Sudan", continent:"Africa"},
+  {name:"Spain", continent:"Europe"},
+  {name:"Sri Lanka", continent:"Asia"},
+  {name:"Sudan", continent:"Africa"},
+  {name:"Suriname", continent:"South America"},
+  {name:"Sweden", continent:"Europe"},
+  {name:"Switzerland", continent:"Europe"},
+  {name:"Syria", continent:"Asia"},
+  {name:"Taiwan", continent:"Asia"},
+  {name:"Tajikistan", continent:"Asia"},
+  {name:"Tanzania", continent:"Africa"},
+  {name:"Thailand", continent:"Asia"},
+  {name:"Timor-Leste", continent:"Asia"},
+  {name:"Togo", continent:"Africa"},
+  {name:"Tonga", continent:"Oceania"},
+  {name:"Trinidad and Tobago", continent:"North America"},
+  {name:"Tunisia", continent:"Africa"},
+  {name:"Turkey", continent:"Asia"},
+  {name:"Turkmenistan", continent:"Asia"},
+  {name:"Tuvalu", continent:"Oceania"},
+  {name:"Uganda", continent:"Africa"},
+  {name:"Ukraine", continent:"Europe"},
+  {name:"United Arab Emirates", continent:"Asia"},
+  {name:"United Kingdom", continent:"Europe"},
+  {name:"United States", continent:"North America"},
+  {name:"Uruguay", continent:"South America"},
+  {name:"Uzbekistan", continent:"Asia"},
+  {name:"Vanuatu", continent:"Oceania"},
+  {name:"Vatican City", continent:"Europe"},
+  {name:"Venezuela", continent:"South America"},
+  {name:"Vietnam", continent:"Asia"},
+  {name:"Yemen", continent:"Asia"},
+  {name:"Zambia", continent:"Africa"},
+  {name:"Zimbabwe", continent:"Africa"}
+];
+
+
+  
+let questions = [], current, options = [], correctIdx = 0, score=0, total=0, timer=30, countdown;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function refillQuestions() { questions = shuffle([...countries]); }
+function nextQ(){
+  document.getElementById('nextBtn').style.display='none'; timer=30;
+  if(questions.length===0){ refillQuestions(); }
+  current = questions.pop();
+  document.getElementById('countryBox').textContent=current.name;
+  let fakeContinents=shuffle(continents.filter(c=>c!==current.continent)).slice(0,3);
+  options = shuffle([current.continent, ...fakeContinents]);
+  correctIdx = options.indexOf(current.continent);
+  let ops = options.map((c,i)=>`<button class="option-btn" onclick="pick(${i})">${c}</button>`).join("");
+  document.getElementById('optionsList').innerHTML=ops;
+  document.getElementById('timer').innerText='⏳ '+timer;
+  clearInterval(countdown);
+  countdown = setInterval(() => {
+    timer--; document.getElementById('timer').innerText='⏳ '+timer;
+    if(timer<=0){pick(-1);}
+  },1000);
+  document.getElementById('score').innerText = `Score: ${score}/${total}`;
+}
+function pick(idx){
+  clearInterval(countdown);
+  let btns=document.querySelectorAll('.option-btn');
+  btns.forEach(b=>b.disabled=true);
+  if(idx==correctIdx){btns[idx].classList.add('correct'); score++;}
+  else{
+    if(idx>=0)btns[idx].classList.add('incorrect');
+    btns[correctIdx].classList.add('correct');
+  }
+  total++;
+  document.getElementById('nextBtn').style.display='inline';
+  document.getElementById('score').innerText = `Score: ${score}/${total}`;
+}
+document.getElementById('nextBtn').onclick=nextQ;
+refillQuestions(); nextQ();
+</script>
+</body>
+</html>
