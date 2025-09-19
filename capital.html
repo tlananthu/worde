@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Guess the Capital by Flag</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {background: linear-gradient(115deg, #FFECAA, #EDEAF9); font-family: 'Roboto', Arial, sans-serif; color: #252c45; min-height: 100vh; margin: 0;}
+    .container {max-width: 430px; margin: 45px auto; background: #fff; border-radius: 18px; box-shadow: 0 8px 28px #8899ff18; padding: 28px 18px 33px 18px; text-align: center;}
+    h1 {font-size: 1.55rem; color: #394DDD; margin-bottom: 16px;}
+    .flag-box {width: 130px; height: 90px; margin: 0 auto 20px auto; background: #fafafd; border-radius: 13px; display: flex; align-items: center; justify-content: center; border: 2px solid #ddd;}
+    .flag-img {height: 70px; width: auto;}
+    .options-list {display: flex; flex-direction: column; gap: 13px;}
+    .option-btn {font-size: 1.17rem; color: #323c5c; background: #f3f9ff; border: 2.5px solid transparent; border-radius: 10px; padding: 11px 8px; transition: all 0.21s; cursor: pointer; width: 100%; box-shadow: 0 2px 7px #8899ff0e; outline: none; text-align: center;}
+    .option-btn:hover { background: #e8f4ff;}
+    .option-btn.correct { border-color: #25b46f; background: #e4fde4;}
+    .option-btn.incorrect { border-color: #e24c61; background: #ffeaea;}
+    .option-btn:disabled { cursor: not-allowed; opacity: 0.6;}
+    #timer-container { margin: 12px auto 9px auto; font-size: 1.13rem; color: #c91818; font-weight: 500;}
+    .next-btn {background: #3EC97A; color: #fff; font-size: 1.05rem; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; margin-top: 18px; transition: background 0.19s; display: none;}
+    .next-btn:hover {background: #20a364;}
+    #levelCounter, #scoreCounter {font-size: 1.01em; color:#47474c; margin:7px 20px;}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🇺🇳 Guess the Capital!</h1>
+  <div class="flag-box"><img id="flagImg" src="" alt="Country Flag" class="flag-img"></div>
+  <div id="timer-container">⏳ <span id="timer">20</span> s</div>
+  <div class="options-list" id="optionsList"></div>
+  <button class="next-btn" id="nextBtn">Next Country →</button>
+  <div>
+    <span id="levelCounter">Level: 1</span>
+    <span id="scoreCounter">Score: 0/0</span>
+  </div>
+</div>
+<script>
+// Demo subset -- extend with the full data for all countries in your app!
+const capitals = [
+  {code:"af",country:"Afghanistan",capital:"Kabul"}, {code:"al",country:"Albania",capital:"Tirana"},
+  {code:"dz",country:"Algeria",capital:"Algiers"}, {code:"ao",country:"Angola",capital:"Luanda"},
+  {code:"ar",country:"Argentina",capital:"Buenos Aires"}, {code:"am",country:"Armenia",capital:"Yerevan"},
+  {code:"au",country:"Australia",capital:"Canberra"}, {code:"at",country:"Austria",capital:"Vienna"},
+  {code:"az",country:"Azerbaijan",capital:"Baku"}, {code:"bh",country:"Bahrain",capital:"Manama"},
+  {code:"bd",country:"Bangladesh",capital:"Dhaka"}, {code:"by",country:"Belarus",capital:"Minsk"},
+  {code:"be",country:"Belgium",capital:"Brussels"}, {code:"bz",country:"Belize",capital:"Belmopan"},
+  {code:"bj",country:"Benin",capital:"Porto-Novo"}, {code:"bt",country:"Bhutan",capital:"Thimphu"},
+  {code:"bo",country:"Bolivia",capital:"Sucre"}, {code:"ba",country:"Bosnia and Herzegovina",capital:"Sarajevo"},
+  {code:"bw",country:"Botswana",capital:"Gaborone"}, {code:"br",country:"Brazil",capital:"Brasilia"},
+  {code:"bn",country:"Brunei Darussalam",capital:"Bandar Seri Begawan"}, {code:"bg",country:"Bulgaria",capital:"Sofia"},
+  {code:"bf",country:"Burkina Faso",capital:"Ouagadougou"}, {code:"bi",country:"Burundi",capital:"Gitega"},
+  {code:"kh",country:"Cambodia",capital:"Phnom Penh"}, {code:"cm",country:"Cameroon",capital:"Yaounde"},
+  {code:"ca",country:"Canada",capital:"Ottawa"}, {code:"cv",country:"Cabo Verde",capital:"Praia"},
+  {code:"cf",country:"Central African Republic",capital:"Bangui"}, {code:"td",country:"Chad",capital:"N'Djamena"},
+  {code:"cl",country:"Chile",capital:"Santiago"}, {code:"cn",country:"China",capital:"Beijing"},
+  {code:"co",country:"Colombia",capital:"Bogota"}, {code:"km",country:"Comoros",capital:"Moroni"},
+  {code:"cg",country:"Congo",capital:"Brazzaville"}, {code:"cr",country:"Costa Rica",capital:"San Jose"},
+  {code:"hr",country:"Croatia",capital:"Zagreb"}, {code:"cu",country:"Cuba",capital:"Havana"},
+  {code:"cy",country:"Cyprus",capital:"Nicosia"}, {code:"cz",country:"Czechia",capital:"Prague"},
+  {code:"dk",country:"Denmark",capital:"Copenhagen"}, {code:"dj",country:"Djibouti",capital:"Djibouti"},
+  {code:"do",country:"Dominican Republic",capital:"Santo Domingo"}, {code:"ec",country:"Ecuador",capital:"Quito"},
+  {code:"eg",country:"Egypt",capital:"Cairo"}, {code:"sv",country:"El Salvador",capital:"San Salvador"},
+  {code:"gq",country:"Equatorial Guinea",capital:"Malabo"}, {code:"er",country:"Eritrea",capital:"Asmara"},
+  {code:"ee",country:"Estonia",capital:"Tallinn"}, {code:"sz",country:"Eswatini",capital:"Mbabane"},
+  {code:"et",country:"Ethiopia",capital:"Addis Ababa"}, {code:"fj",country:"Fiji",capital:"Suva"},
+  {code:"fi",country:"Finland",capital:"Helsinki"}, {code:"fr",country:"France",capital:"Paris"},
+  {code:"ga",country:"Gabon",capital:"Libreville"}, {code:"gm",country:"Gambia",capital:"Banjul"},
+  {code:"ge",country:"Georgia",capital:"Tbilisi"}, {code:"de",country:"Germany",capital:"Berlin"},
+  {code:"gh",country:"Ghana",capital:"Accra"}, {code:"gr",country:"Greece",capital:"Athens"},
+  {code:"gd",country:"Grenada",capital:"St. George's"}, {code:"gt",country:"Guatemala",capital:"Guatemala City"},
+  {code:"gn",country:"Guinea",capital:"Conakry"}, {code:"gw",country:"Guinea-Bissau",capital:"Bissau"},
+  {code:"gy",country:"Guyana",capital:"Georgetown"}, {code:"ht",country:"Haiti",capital:"Port-au-Prince"},
+  {code:"hn",country:"Honduras",capital:"Tegucigalpa"}, {code:"hu",country:"Hungary",capital:"Budapest"},
+  {code:"is",country:"Iceland",capital:"Reykjavik"}, {code:"in",country:"India",capital:"New Delhi"},
+  {code:"id",country:"Indonesia",capital:"Jakarta"}, {code:"ir",country:"Iran",capital:"Tehran"},
+  {code:"iq",country:"Iraq",capital:"Baghdad"}, {code:"ie",country:"Ireland",capital:"Dublin"},
+  {code:"il",country:"Israel",capital:"Jerusalem"}, {code:"it",country:"Italy",capital:"Rome"},
+  {code:"jm",country:"Jamaica",capital:"Kingston"}, {code:"jp",country:"Japan",capital:"Tokyo"},
+  {code:"jo",country:"Jordan",capital:"Amman"}, {code:"kz",country:"Kazakhstan",capital:"Nur-Sultan"},
+  {code:"ke",country:"Kenya",capital:"Nairobi"}, {code:"ki",country:"Kiribati",capital:"Tarawa"},
+  {code:"kw",country:"Kuwait",capital:"Kuwait City"}, {code:"kg",country:"Kyrgyzstan",capital:"Bishkek"},
+  {code:"la",country:"Laos",capital:"Vientiane"}, {code:"lv",country:"Latvia",capital:"Riga"},
+  {code:"lb",country:"Lebanon",capital:"Beirut"}, {code:"ls",country:"Lesotho",capital:"Maseru"},
+  {code:"lr",country:"Liberia",capital:"Monrovia"}, {code:"ly",country:"Libya",capital:"Tripoli"},
+  {code:"li",country:"Liechtenstein",capital:"Vaduz"}, {code:"lt",country:"Lithuania",capital:"Vilnius"},
+  {code:"lu",country:"Luxembourg",capital:"Luxembourg"}, {code:"mg",country:"Madagascar",capital:"Antananarivo"},
+  {code:"mw",country:"Malawi",capital:"Lilongwe"}, {code:"my",country:"Malaysia",capital:"Kuala Lumpur"},
+  {code:"mv",country:"Maldives",capital:"Male"}, {code:"ml",country:"Mali",capital:"Bamako"},
+  {code:"mt",country:"Malta",capital:"Valletta"}, {code:"mh",country:"Marshall Islands",capital:"Majuro"},
+  {code:"mr",country:"Mauritania",capital:"Nouakchott"}, {code:"mu",country:"Mauritius",capital:"Port Louis"},
+  {code:"mx",country:"Mexico",capital:"Mexico City"}, {code:"md",country:"Moldova",capital:"Chisinau"},
+  {code:"mc",country:"Monaco",capital:"Monaco"}, {code:"mn",country:"Mongolia",capital:"Ulaanbaatar"},
+  {code:"me",country:"Montenegro",capital:"Podgorica"}, {code:"ma",country:"Morocco",capital:"Rabat"},
+  {code:"mz",country:"Mozambique",capital:"Maputo"}, {code:"mm",country:"Myanmar",capital:"Naypyidaw"},
+  {code:"na",country:"Namibia",capital:"Windhoek"}, {code:"nr",country:"Nauru",capital:"Yaren"},
+  {code:"np",country:"Nepal",capital:"Kathmandu"}, {code:"nl",country:"Netherlands",capital:"Amsterdam"},
+  {code:"nz",country:"New Zealand",capital:"Wellington"}, {code:"ni",country:"Nicaragua",capital:"Managua"},
+  {code:"ne",country:"Niger",capital:"Niamey"}, {code:"ng",country:"Nigeria",capital:"Abuja"},
+  {code:"no",country:"Norway",capital:"Oslo"}, {code:"om",country:"Oman",capital:"Muscat"},
+  {code:"pk",country:"Pakistan",capital:"Islamabad"}, {code:"pw",country:"Palau",capital:"Ngerulmud"},
+  {code:"pa",country:"Panama",capital:"Panama City"}, {code:"pg",country:"Papua New Guinea",capital:"Port Moresby"},
+  {code:"py",country:"Paraguay",capital:"Asuncion"}, {code:"pe",country:"Peru",capital:"Lima"},
+  {code:"ph",country:"Philippines",capital:"Manila"}, {code:"pl",country:"Poland",capital:"Warsaw"},
+  {code:"pt",country:"Portugal",capital:"Lisbon"}, {code:"qa",country:"Qatar",capital:"Doha"},
+  {code:"ro",country:"Romania",capital:"Bucharest"}, {code:"ru",country:"Russia",capital:"Moscow"},
+  {code:"rw",country:"Rwanda",capital:"Kigali"}, {code:"kn",country:"Saint Kitts and Nevis",capital:"Basseterre"},
+  {code:"lc",country:"Saint Lucia",capital:"Castries"}, {code:"vc",country:"Saint Vincent and the Grenadines",capital:"Kingstown"},
+  {code:"ws",country:"Samoa",capital:"Apia"}, {code:"sm",country:"San Marino",capital:"San Marino"},
+  {code:"st",country:"Sao Tome and Principe",capital:"Sao Tome"}, {code:"sa",country:"Saudi Arabia",capital:"Riyadh"},
+  {code:"sn",country:"Senegal",capital:"Dakar"}, {code:"rs",country:"Serbia",capital:"Belgrade"},
+  {code:"sc",country:"Seychelles",capital:"Victoria"}, {code:"sl",country:"Sierra Leone",capital:"Freetown"},
+  {code:"sg",country:"Singapore",capital:"Singapore"}, {code:"sk",country:"Slovakia",capital:"Bratislava"},
+  {code:"si",country:"Slovenia",capital:"Ljubljana"}, {code:"sb",country:"Solomon Islands",capital:"Honiara"},
+  {code:"so",country:"Somalia",capital:"Mogadishu"}, {code:"za",country:"South Africa",capital:"Pretoria"},
+  {code:"kr",country:"South Korea",capital:"Seoul"}, {code:"es",country:"Spain",capital:"Madrid"},
+  {code:"lk",country:"Sri Lanka",capital:"Sri Jayawardenepura Kotte"}, {code:"sd",country:"Sudan",capital:"Khartoum"},
+  {code:"sr",country:"Suriname",capital:"Paramaribo"}, {code:"se",country:"Sweden",capital:"Stockholm"},
+  {code:"ch",country:"Switzerland",capital:"Bern"}, {code:"sy",country:"Syria",capital:"Damascus"},
+  {code:"tw",country:"Taiwan",capital:"Taipei"}, {code:"tj",country:"Tajikistan",capital:"Dushanbe"},
+  {code:"tz",country:"Tanzania",capital:"Dodoma"}, {code:"th",country:"Thailand",capital:"Bangkok"},
+  {code:"tl",country:"Timor-Leste",capital:"Dili"}, {code:"tg",country:"Togo",capital:"Lome"},
+  {code:"to",country:"Tonga",capital:"Nuku'alofa"}, {code:"tt",country:"Trinidad and Tobago",capital:"Port of Spain"},
+  {code:"tn",country:"Tunisia",capital:"Tunis"}, {code:"tr",country:"Turkey",capital:"Ankara"},
+  {code:"tm",country:"Turkmenistan",capital:"Ashgabat"}, {code:"ug",country:"Uganda",capital:"Kampala"},
+  {code:"ua",country:"Ukraine",capital:"Kyiv"}, {code:"ae",country:"United Arab Emirates",capital:"Abu Dhabi"},
+  {code:"gb",country:"United Kingdom",capital:"London"}, {code:"us",country:"United States",capital:"Washington, D.C."},
+  {code:"uy",country:"Uruguay",capital:"Montevideo"}, {code:"uz",country:"Uzbekistan",capital:"Tashkent"},
+  {code:"vu",country:"Vanuatu",capital:"Port Vila"}, {code:"ve",country:"Venezuela",capital:"Caracas"},
+  {code:"vn",country:"Vietnam",capital:"Hanoi"}, {code:"ye",country:"Yemen",capital:"Sanaa"},
+  {code:"zm",country:"Zambia",capital:"Lusaka"}, {code:"zw",country:"Zimbabwe",capital:"Harare"}
+];
+
+
+let unusedQuestions = [];
+let levelCount = 1, correctCount = 0, totalQuestions = 0;
+let timerInterval = null, correctIndex = null;
+
+function shuffle(array) {
+  let a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function resetUnused() { unusedQuestions = shuffle([...capitals]); }
+function pickQuestion() { if (unusedQuestions.length === 0) resetUnused(); return unusedQuestions.pop(); }
+
+function generateOptions(correctItem) {
+  let pool = capitals.filter(c => c.capital !== correctItem.capital);
+  let wrong = shuffle(pool).slice(0, 3);
+  let opts = shuffle([correctItem, ...wrong]);
+  return {options: opts.map(x => x.capital), correctIndex: opts.indexOf(correctItem)};
+}
+
+function renderQuestion() {
+  if (timerInterval) clearInterval(timerInterval);
+  document.getElementById('timer').textContent = 20;
+  document.getElementById('timer-container').style.display = 'block';
+  let q = pickQuestion();
+  let {options, correctIndex: corrIdx} = generateOptions(q);
+  correctIndex = corrIdx;
+  document.getElementById('flagImg').src = `https://flagcdn.com/${q.code}.svg`;
+  document.getElementById('flagImg').alt = q.country;
+  let optionsList = document.getElementById('optionsList');
+  optionsList.innerHTML = '';
+  options.forEach((capital, i) => {
+    let btn = document.createElement('button');
+    btn.className = 'option-btn'; btn.textContent = capital;
+    btn.onclick = () => handleAnswer(i, corrIdx); optionsList.appendChild(btn);
+  });
+  document.getElementById('levelCounter').textContent = `Level: ${levelCount}`;
+  document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+  document.getElementById('nextBtn').style.display = 'none';
+  startTimer();
+}
+
+function handleAnswer(selected, corrIdx) {
+  totalQuestions++;
+  let btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  if (timerInterval) clearInterval(timerInterval);
+  if (selected === corrIdx) { correctCount++; btns[selected].classList.add('correct'); }
+  else { btns[selected].classList.add('incorrect'); btns[corrIdx].classList.add('correct'); }
+  setTimeout(() => {
+    document.getElementById('nextBtn').style.display = 'block';
+    document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+  }, 700);
+}
+
+function startTimer() {
+  let t = 20; document.getElementById('timer').textContent = t;
+  timerInterval = setInterval(() => {
+    t--; document.getElementById('timer').textContent = t;
+    if (t <= 0) { clearInterval(timerInterval); autoFail(); }
+  }, 1000);
+}
+function autoFail() {
+  let btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true); btns[correctIndex].classList.add('correct');
+  document.getElementById('nextBtn').style.display = 'block';
+  totalQuestions++; document.getElementById('scoreCounter').textContent = `Score: ${correctCount}/${totalQuestions}`;
+}
+document.getElementById('nextBtn').onclick = function() { levelCount++; renderQuestion(); };
+resetUnused(); renderQuestion();
+</script>
+</body>
+</html>
