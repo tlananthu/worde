@@ -439,7 +439,7 @@
       e.preventDefault();
       const data = Object.fromEntries(new FormData(e.target));
       const amount = Number(data.amount);
-      //if (amount <= 0) return alert("Enter a valid amount.");
+      if (amount <= 0) return alert("Enter a valid amount.");
       const user = users.find((u) => u.id === userId);
       if (!user) return alert("User not found.");
       user.balance += amount;
