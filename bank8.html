@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Virtual Bank Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f8f9fa;
+      color: #222;
+    }
+    .app-header {
+      background: #0a6efd;
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      position: relative;
+    }
+    .sync-status {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.75rem;
+      font-weight: 400;
+      opacity: 0.85;
+    }
+    .dashboard {
+      padding: 16px;
+      max-width: 400px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── PIN / Login screen ── */
+    #loginScreen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 16px;
+    }
+    #loginScreen h2 { margin: 0; color: #0a6efd; }
+    #loginScreen p  { margin: 0; color: #666; font-size: 0.95rem; text-align: center; }
+    #pinInput {
+      font-size: 1.3rem;
+      letter-spacing: 4px;
+      text-align: center;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      width: 180px;
+    }
+    #loginError { color: #dd2c2c; font-size: 0.9rem; display: none; }
+
+    /* ── Main app ── */
+    #appScreen { display: none; }
+
+    .add-user-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .add-user-input {
+      flex: 1;
+      padding: 8px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+    .user-list { margin-bottom: 24px; }
+    .user-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(5, 59, 97, 0.04);
+      margin-bottom: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .user-info {
+      flex: 1;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #222;
+    }
+    .user-info:hover { text-decoration: underline; }
+    .balance {
+      flex-shrink: 0;
+      margin-left: 12px;
+      color: #0a6efd;
+      font-weight: 600;
+      min-width: 95px;
+      text-align: right;
+      font-size: 1rem;
+    }
+    .user-actions {
+      margin-left: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 8px 12px;
+      transition: background 0.24s;
+      white-space: nowrap;
+      color: #fff;
+    }
+    button:active, button:focus { outline: none; filter: brightness(85%); }
+    .btn-add      { background: #0a6efd; }
+    .btn-transact { background: #30a34c; }
+    .btn-deposit  { background: #28a745; }
+    .btn-report   { background: #ff9e26; width: 100%; font-weight: 600; }
+    .btn-delete   { background: #dd2c2c; width: 100%; font-weight: 600; }
+    .btn-small    { padding: 6px 10px; font-size: 0.9rem; }
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .upload-input { display: none; }
+    .statement-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-top: 10px;
+      font-size: 0.97em;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .statement-table th,
+    .statement-table td {
+      border: 1px solid #eee;
+      padding: 7px;
+      text-align: left;
+    }
+    .statement-table th { background: #fafafa; font-weight: 600; }
+    .popup-bg {
+      display: none;
+      position: fixed;
+      z-index: 1500;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.25);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .popup-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+      max-width: 340px;
+      margin: 12vh auto;
+      padding: 24px;
+      position: relative;
+    }
+    .popup-close {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #333;
+    }
+    .popup-box h2 { margin-top: 0; margin-bottom: 18px; }
+    .popup-form label {
+      display: block;
+      margin: 8px 0 4px;
+      font-weight: 500;
+      font-size: 1em;
+    }
+    .popup-form input,
+    .popup-form select,
+    .popup-form textarea {
+      width: 100%;
+      padding: 7px;
+      border-radius: 7px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      font-size: 1em;
+      resize: vertical;
+    }
+
+    /* Loading overlay */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: #0a6efd;
+      font-weight: 600;
+    }
+    #loadingOverlay.active { display: flex; }
+  </style>
+</head>
+<body>
+  <div class="app-header">
+    Virtual Bank Dashboard
+    <span class="sync-status" id="syncStatus"></span>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay">⏳ Syncing…</div>
+
+  <!-- Login screen -->
+  <div class="dashboard" id="loginScreen">
+    <h2>🔐 Enter PIN</h2>
+    <p>Enter the shared PIN to access the dashboard</p>
+    <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" />
+    <button class="btn-add" onclick="doLogin()">Unlock</button>
+    <span id="loginError">Incorrect PIN. Try again.</span>
+  </div>
+
+  <!-- Main app screen -->
+  <div class="dashboard" id="appScreen">
+    <div class="add-user-bar">
+      <input id="newUserName" class="add-user-input" type="text" placeholder="Add new user" />
+      <button class="btn btn-add" onclick="addUser()">Add User</button>
+    </div>
+    <div class="user-list" id="userList"></div>
+    <div class="action-buttons">
+      <button class="btn btn-report" onclick="openStatementReport()">Statement</button>
+      <button class="btn btn-delete" onclick="openDeletePopup()">Delete Account</button>
+      <button class="btn btn-report" onclick="syncNow()">🔄 Sync Now</button>
+      <button class="btn btn-add" style="background:#888;" onclick="logout()">Lock / Logout</button>
+      <div style="background:#fff; border-radius:10px; padding:12px; font-size:0.9rem; line-height:1.7;">
+        <b>Allowance guide</b>
+        <ul style="margin:6px 0 0; padding-left:20px;">
+          <li>GREAT JOB — ₹50 or 1 hr screen time</li>
+          <li>BEDROCK — ₹20</li>
+          <li>WELL DONE (without telling) — ₹15</li>
+          <li>STAR (after telling) — ₹10</li>
+          <li>NICE EFFORT (tried) — ₹5</li>
+          <li>WEAPONS — ₹−5</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="popupBg" class="popup-bg"></div>
+
+  <script>
+    // ============================================================
+    // ⚠️  PASTE YOUR APPS SCRIPT WEB APP URL BELOW
+    // ============================================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbxIrARpwwIMGn1F1AVv7LuwZW-r0UqhsF-0yEVNegUOJQlgksVnzcn5looGcP3XheSAJQ/exec";
+    // ============================================================
+
+    let users = [];
+    let transactions = [];
+    let userPIN = "";
+
+    // ── Login ──────────────────────────────────────────────────
+    document.getElementById("pinInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    async function doLogin() {
+      const pin = document.getElementById("pinInput").value.trim();
+      if (!pin) return;
+      userPIN = pin;
+      showLoading(true);
+      document.getElementById("loginError").style.display = "none";
+      try {
+        const data = await apiGet();
+        if (data.error === "Unauthorized") {
+          document.getElementById("loginError").style.display = "block";
+          userPIN = "";
+          showLoading(false);
+          return;
+        }
+        users = data.users || [];
+        transactions = data.transactions || [];
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("appScreen").style.display = "flex";
+        renderUsers();
+        setSyncStatus("✅ Synced");
+      } catch (err) {
+        // Fallback to localStorage cache if offline
+        const cached = localStorage.getItem("vb_cache_" + pin);
+        if (cached) {
+          const d = JSON.parse(cached);
+          users = d.users || [];
+          transactions = d.transactions || [];
+          document.getElementById("loginScreen").style.display = "none";
+          document.getElementById("appScreen").style.display = "flex";
+          renderUsers();
+          setSyncStatus("⚠️ Offline (cached)");
+          alert("Could not reach server. Showing cached data. Changes will sync when online.");
+        } else {
+          document.getElementById("loginError").textContent = "Cannot connect. Check your internet.";
+          document.getElementById("loginError").style.display = "block";
+          userPIN = "";
+        }
+      }
+      showLoading(false);
+    }
+
+    function logout() {
+      userPIN = "";
+      users = [];
+      transactions = [];
+      document.getElementById("pinInput").value = "";
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("appScreen").style.display = "none";
+    }
+
+    // ── API helpers ────────────────────────────────────────────
+    async function apiGet() {
+      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(userPIN)}`);
+      return res.json();
+    }
+
+    async function apiSave() {
+      const payload = { pin: userPIN, users, transactions };
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain" } // Apps Script needs text/plain for CORS
+      });
+      return res.json();
+    }
+
+    // Cache locally + push to Google Sheets
+    async function saveData() {
+      // Local cache immediately (for offline resilience)
+      localStorage.setItem("vb_cache_" + userPIN, JSON.stringify({ users, transactions }));
+      // Background sync to Sheets
+      setSyncStatus("⏳ Saving…");
+      try {
+        const result = await apiSave();
+        if (result.success) {
+          setSyncStatus("✅ Saved");
+        } else {
+          setSyncStatus("⚠️ Save error");
+        }
+      } catch {
+        setSyncStatus("⚠️ Offline");
+      }
+    }
+
+    async function syncNow() {
+      showLoading(true);
+      try {
+        const data = await apiGet();
+        if (data.error) { alert("Sync failed: " + data.error); return; }
+        users = data.users || [];
+        transactions = data.transactions || [];
+        localStorage.setItem("vb_cache_" + userPIN, JSON.stringify({ users, transactions }));
+        renderUsers();
+        setSyncStatus("✅ Synced");
+        alert("Sync complete!");
+      } catch {
+        alert("Could not reach server. Check your connection.");
+        setSyncStatus("⚠️ Offline");
+      }
+      showLoading(false);
+    }
+
+    function setSyncStatus(msg) {
+      document.getElementById("syncStatus").textContent = msg;
+    }
+
+    function showLoading(on) {
+      document.getElementById("loadingOverlay").classList.toggle("active", on);
+    }
+
+    // ── Render ─────────────────────────────────────────────────
+    function renderUsers() {
+      const userList = document.getElementById("userList");
+      userList.innerHTML = "";
+      users.forEach(u => {
+        userList.innerHTML += `
+          <div class="user-card">
+            <div class="user-info" title="Click to rename" onclick="openRenamePopup(${u.id})">${escapeHtml(u.name)}</div>
+            <div class="balance">₹${u.balance.toLocaleString()}</div>
+            <div class="user-actions">
+              <button class="btn btn-transact btn-small" onclick="openTransaction(${u.id})">Transact</button>
+              <button class="btn btn-deposit btn-small" onclick="openDepositPopup(${u.id})">Deposit</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    // ── User management ────────────────────────────────────────
+    function addUser() {
+      const nameInput = document.getElementById("newUserName");
+      const name = nameInput.value.trim();
+      if (!name) return alert("Enter a user name.");
+      users.push({ id: Date.now(), name, balance: 0 });
+      nameInput.value = "";
+      saveData();
+      renderUsers();
+    }
+
+    function openRenamePopup(userId) {
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+      const popup = document.getElementById("popupBg");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Rename Account</h2>
+        <form class="popup-form" onsubmit="renameAccount(event, ${userId})">
+          <label>New Name</label>
+          <input type="text" name="newName" value="${escapeHtml(user.name)}" required maxlength="50" autofocus />
+          <button class="btn btn-add" type="submit">Save</button>
+        </form>
+      </div>`;
+      popup.style.display = "block";
+    }
+    function renameAccount(event, userId) {
+      event.preventDefault();
+      const newName = event.target.newName.value.trim();
+      if (!newName) return alert("Name cannot be empty.");
+      const user = users.find(u => u.id === userId);
+      if (user) { user.name = newName; saveData(); renderUsers(); }
+      closePopup();
+    }
+
+    // ── Transactions ───────────────────────────────────────────
+    function openTransaction(fromId) {
+      const popup = document.getElementById("popupBg");
+      let options = users.filter(u => u.id !== fromId)
+        .map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+      popup.innerHTML = `
+        <div class="popup-box">
+          <button class="popup-close" onclick="closePopup()">&times;</button>
+          <h2>New Transaction</h2>
+          <form class="popup-form" onsubmit="submitTransaction(event, ${fromId})">
+            <label>Transfer To</label>
+            <select name="to" required>${options}</select>
+            <label>Date</label>
+            <input type="date" name="date" required value="${todayStr()}" />
+            <label>Amount (₹)</label>
+            <input type="number" name="amount" min="1" required />
+            <label>Remarks</label>
+            <textarea name="remarks" rows="2" placeholder="(Optional)"></textarea>
+            <button class="btn btn-transact" type="submit">Transfer</button>
+          </form>
+        </div>`;
+      popup.style.display = "block";
+    }
+    function submitTransaction(e, fromId) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const amount = Number(data.amount);
+      if (amount <= 0) return alert("Enter a valid amount.");
+      const fromUser = users.find(u => u.id === fromId);
+      const toUser   = users.find(u => u.id == data.to);
+      if (!fromUser || !toUser) return alert("Invalid user selection.");
+      fromUser.balance -= amount;
+      toUser.balance   += amount;
+      transactions.push({ from: fromId, to: Number(data.to), date: data.date, amount, remarks: data.remarks });
+      saveData();
+      closePopup();
+      renderUsers();
+    }
+
+    // ── Deposits ───────────────────────────────────────────────
+    function openDepositPopup(userId) {
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+      const popup = document.getElementById("popupBg");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Deposit to ${escapeHtml(user.name)}</h2>
+        <form class="popup-form" onsubmit="submitDeposit(event, ${userId})">
+          <label>Date</label>
+          <input type="date" name="date" required value="${todayStr()}" autofocus />
+          <label>Amount (₹)</label>
+          <input type="number" name="amount" min="1" required />
+          <label>Remarks</label>
+          <textarea name="remarks" rows="2" placeholder="(Optional)"></textarea>
+          <button class="btn btn-deposit" type="submit">Deposit</button>
+        </form>
+      </div>`;
+      popup.style.display = "block";
+    }
+    function submitDeposit(e, userId) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const amount = Number(data.amount);
+      if (amount <= 0) return alert("Enter a valid amount.");
+      const user = users.find(u => u.id === userId);
+      if (!user) return alert("User not found.");
+      user.balance += amount;
+      transactions.push({ from: null, to: userId, date: data.date, amount, remarks: data.remarks });
+      saveData();
+      closePopup();
+      renderUsers();
+    }
+
+    // ── Statement ──────────────────────────────────────────────
+    function openStatementReport() {
+      if (users.length === 0) { alert("No users available."); return; }
+      const popup = document.getElementById("popupBg");
+      let userOptions = users.map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Account Statement</h2>
+        <form class="popup-form" onsubmit="showStatementReport(event)">
+          <label>Select User</label>
+          <select name="userId" required>${userOptions}</select>
+          <label>From</label>
+          <input type="date" name="from" required value="${todayStr()}" />
+          <label>To</label>
+          <input type="date" name="to" required value="${todayStr()}" />
+          <button class="btn btn-report" type="submit">Show</button>
+        </form>
+        <div id="statementResult"></div>
+      </div>`;
+      popup.style.display = "block";
+    }
+    function showStatementReport(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      const userId = Number(data.userId);
+      const user = users.find(u => u.id === userId);
+      if (!user) return alert("User not found");
+      const trs = transactions.filter(tr =>
+        (tr.from === userId || tr.to === userId) && tr.date >= data.from && tr.date <= data.to
+      );
+      let rows = trs.map(tr => {
+        const type  = tr.from === userId ? "Debit" : "Credit";
+        const other = tr.from === null ? "Deposit"
+          : users.find(u => u.id === (type === "Credit" ? tr.from : tr.to))?.name || "—";
+        return `<tr>
+          <td>${tr.date}</td><td>${type}</td><td>${escapeHtml(other)}</td>
+          <td>₹${tr.amount}</td><td>${escapeHtml(tr.remarks || "")}</td>
+        </tr>`;
+      }).join("");
+      if (!rows) rows = `<tr><td colspan="5">No transactions in this period</td></tr>`;
+      e.target.nextElementSibling.innerHTML = `
+        <table class="statement-table">
+          <tr><th>Date</th><th>Type</th><th>With</th><th>Amount</th><th>Remarks</th></tr>
+          ${rows}
+        </table>`;
+    }
+
+    // ── Delete user ────────────────────────────────────────────
+    function openDeletePopup() {
+      if (users.length === 0) { alert("No users to delete."); return; }
+      const popup = document.getElementById("popupBg");
+      let userOptions = users.map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+      popup.innerHTML = `
+      <div class="popup-box">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h2>Delete Account</h2>
+        <form class="popup-form" onsubmit="confirmDeleteUser(event)">
+          <label>Select User to Delete</label>
+          <select name="userId" required>${userOptions}</select>
+          <button class="btn btn-delete" type="submit">Delete</button>
+        </form>
+      </div>`;
+      popup.style.display = "block";
+    }
+    function confirmDeleteUser(e) {
+      e.preventDefault();
+      const userId = Number(new FormData(e.target).get("userId"));
+      const user = users.find(u => u.id === userId);
+      if (!user) return alert("User not found.");
+      e.target.innerHTML = `
+      <p>Are you sure you want to delete <b>${escapeHtml(user.name)}</b>'s account?<br>All transactions will be removed.</p>
+      <button class="btn" style="background:#999;" onclick="closePopup(); return false;">Cancel</button>
+      <button class="btn btn-delete" onclick="deleteUser(${userId}); return false;">Delete</button>`;
+    }
+    function deleteUser(userId) {
+      users = users.filter(u => u.id !== userId);
+      transactions = transactions.filter(tr => tr.from !== userId && tr.to !== userId);
+      saveData();
+      closePopup();
+      renderUsers();
+    }
+
+    // ── Utilities ──────────────────────────────────────────────
+    function closePopup() {
+      document.getElementById("popupBg").style.display = "none";
+    }
+    function todayStr() {
+      const dt = new Date(), m = (dt.getMonth()+1).toString().padStart(2,"0"), d = dt.getDate().toString().padStart(2,"0");
+      return dt.getFullYear() + "-" + m + "-" + d;
+    }
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text.replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[m]);
+    }
+  </script>
+</body>
+</html>
