@@ -253,6 +253,7 @@
       <button class="btn btn-report" onclick="openStatementReport()">Statement</button>
       <button class="btn btn-delete" onclick="openDeletePopup()">Delete Account</button>
       <button class="btn btn-report" onclick="syncNow()">🔄 Sync Now</button>
+      <button class="btn btn-add" style="background:#17a2b8;" onclick="exportData()">⬇️ Export Backup JSON</button>
       <button class="btn btn-add" style="background:#888;" onclick="logout()">Lock / Logout</button>
       <div style="background:#fff; border-radius:10px; padding:12px; font-size:0.9rem; line-height:1.7;">
         <b>Allowance guide</b>
@@ -656,6 +657,25 @@
         event.target.value = "";
       };
       reader.readAsText(file);
+    }
+
+    // ── Export ─────────────────────────────────────────────────
+    function exportData() {
+      try {
+        const data = JSON.stringify({ users, transactions }, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = `virtual_bank_backup_${todayStr()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+        setSyncStatus("✅ Exported");
+      } catch (err) {
+        alert("Export failed: " + err.message);
+      }
     }
 
     // ── Utilities ──────────────────────────────────────────────
