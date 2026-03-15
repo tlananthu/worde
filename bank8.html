@@ -1,695 +1,775 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Virtual Bank Dashboard</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Virtual Bank</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #1a6cf6;
+      --blue-dk: #1254c4;
+      --green:   #12b76a;
+      --red:     #f04438;
+      --amber:   #f79009;
+      --teal:    #0891b2;
+      --bg:      #f4f6fb;
+      --card:    #ffffff;
+      --border:  #e4e7f0;
+      --txt1:    #101828;
+      --txt2:    #475467;
+      --txt3:    #98a2b3;
+      --radius:  14px;
+      --shadow:  0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+      --shadow-md: 0 4px 16px rgba(16,24,40,.10);
+    }
+
     body {
-      margin: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f8f9fa;
-      color: #222;
-    }
-    .app-header {
-      background: #0a6efd;
-      color: #fff;
-      padding: 16px;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-      position: relative;
-    }
-    .sync-status {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.75rem;
-      font-weight: 400;
-      opacity: 0.85;
-    }
-    .dashboard {
-      padding: 16px;
-      max-width: 400px;
-      margin: auto;
-      display: flex;
-      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--txt1);
       min-height: 100vh;
     }
 
-    /* ── PIN / Login screen ── */
+    /* LOADING */
+    #loadingOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(255,255,255,.75); z-index: 9999;
+      align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+    }
+    #loadingOverlay.active { display: flex; }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--blue); border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingOverlay span { font-size: .9rem; color: var(--txt2); font-weight: 500; }
+
+    /* LOGIN */
     #loginScreen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 60vh;
-      gap: 16px;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 0 20px 40px;
     }
-    #loginScreen h2 { margin: 0; color: #0a6efd; }
-    #loginScreen p  { margin: 0; color: #666; font-size: 0.95rem; text-align: center; }
-    #pinInput {
-      font-size: 1.3rem;
-      letter-spacing: 4px;
-      text-align: center;
-      padding: 10px 16px;
-      border-radius: 8px;
-      border: 1.5px solid #ccc;
-      width: 180px;
+    .login-hero {
+      width: 100%; background: linear-gradient(135deg, #1254c4 0%, #1a6cf6 100%);
+      padding: 56px 24px 64px; text-align: center; color: #fff;
+      border-radius: 0 0 32px 32px; margin-bottom: -28px;
     }
-    #loginError { color: #dd2c2c; font-size: 0.9rem; display: none; }
+    .login-hero .icon {
+      width: 60px; height: 60px; background: rgba(255,255,255,.18);
+      border-radius: 18px; display: flex; align-items: center; justify-content: center;
+      font-size: 28px; margin: 0 auto 16px;
+    }
+    .login-hero h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.3px; }
+    .login-hero p  { font-size: .9rem; opacity: .8; margin-top: 6px; }
 
-    /* ── Main app ── */
-    #appScreen { display: none; }
+    .login-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); padding: 28px 24px;
+      width: 100%; max-width: 380px; z-index: 1;
+    }
+    .login-card h2 { font-size: 1.05rem; font-weight: 600; color: var(--txt1); margin-bottom: 4px; }
+    .login-card p  { font-size: .85rem; color: var(--txt2); margin-bottom: 20px; }
 
-    .add-user-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 18px;
+    .pin-row { display: flex; gap: 10px; }
+    .pin-row input {
+      flex: 1; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 1.1rem; letter-spacing: 6px;
+      text-align: center; color: var(--txt1); outline: none;
+      transition: border-color .2s;
     }
-    .add-user-input {
-      flex: 1;
-      padding: 8px;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ddd;
+    .pin-row input:focus { border-color: var(--blue); }
+    .btn-unlock {
+      padding: 11px 22px; background: var(--blue); color: #fff;
+      border: none; border-radius: 10px; font-size: .95rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: background .2s;
     }
-    .user-list { margin-bottom: 24px; }
+    .btn-unlock:hover { background: var(--blue-dk); }
+
+    .login-error {
+      display: none; margin-top: 10px; padding: 8px 12px;
+      background: #fef3f2; border: 1px solid #fecdca; border-radius: 8px;
+      color: var(--red); font-size: .84rem;
+    }
+
+    .import-section {
+      margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .import-section h3 { font-size: .82rem; font-weight: 600; color: var(--txt2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .4px; }
+    .import-section .pin-row input { letter-spacing: 4px; font-size: 1rem; }
+    .btn-import {
+      width: 100%; margin-top: 10px; padding: 10px;
+      background: #ecfdf3; color: var(--green); border: 1.5px solid #a9efc5;
+      border-radius: 10px; font-size: .9rem; font-weight: 600;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn-import:hover { background: #d1fae5; }
+    #importStatus { display: block; margin-top: 8px; font-size: .82rem; color: var(--txt2); min-height: 18px; }
+
+    /* APP */
+    #appScreen { display: none; flex-direction: column; min-height: 100vh; }
+
+    .app-header {
+      background: linear-gradient(135deg, #1254c4 0%, #1a6cf6 100%);
+      padding: 20px 16px 60px; color: #fff;
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+    }
+    .header-top .app-title { font-size: 1.05rem; font-weight: 700; letter-spacing: -.2px; }
+    .sync-pill {
+      font-size: .72rem; font-weight: 600; padding: 4px 10px;
+      background: rgba(255,255,255,.18); border-radius: 20px;
+      white-space: nowrap; min-width: 80px; text-align: center;
+    }
+
+    .balance-summary {
+      background: rgba(255,255,255,.15); border-radius: 16px;
+      padding: 16px 18px; border: 1px solid rgba(255,255,255,.2);
+    }
+    .balance-summary .label { font-size: .75rem; opacity: .8; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; }
+    .balance-summary .total { font-size: 2rem; font-weight: 700; letter-spacing: -1px; margin: 4px 0 2px; }
+    .balance-summary .sub   { font-size: .82rem; opacity: .75; }
+
+    .content {
+      padding: 16px; max-width: 600px; width: 100%;
+      margin: -36px auto 0; flex: 1;
+    }
+
+    .add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .add-row input {
+      flex: 1; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: .95rem; color: var(--txt1);
+      background: var(--card); outline: none; transition: border-color .2s;
+      box-shadow: var(--shadow);
+    }
+    .add-row input:focus { border-color: var(--blue); }
+    .add-row .btn-add-user {
+      padding: 11px 18px; background: var(--blue); color: #fff;
+      border: none; border-radius: 10px; font-size: .9rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap; box-shadow: var(--shadow);
+      transition: background .2s;
+    }
+    .add-row .btn-add-user:hover { background: var(--blue-dk); }
+
+    .section-label {
+      font-size: .72rem; font-weight: 700; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: .8px; margin: 4px 0 10px;
+    }
+
     .user-card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(5, 59, 97, 0.04);
-      margin-bottom: 16px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+      margin-bottom: 10px; padding: 14px 14px 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+      transition: box-shadow .2s;
     }
-    .user-info {
-      flex: 1;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 1.1rem;
-      color: #222;
+    .user-card:hover { box-shadow: var(--shadow-md); }
+
+    .avatar {
+      width: 42px; height: 42px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .9rem; font-weight: 700; flex-shrink: 0; color: #fff;
     }
-    .user-info:hover { text-decoration: underline; }
-    .balance {
-      flex-shrink: 0;
-      margin-left: 12px;
-      color: #0a6efd;
-      font-weight: 600;
-      min-width: 95px;
-      text-align: right;
-      font-size: 1rem;
+    .av-0{background:#6366f1}.av-1{background:#0891b2}.av-2{background:#d97706}
+    .av-3{background:#dc2626}.av-4{background:#7c3aed}.av-5{background:#059669}
+    .av-6{background:#db2777}.av-7{background:#2563eb}
+
+    .user-meta { flex: 1; min-width: 0; cursor: pointer; }
+    .user-meta .name {
+      font-size: .96rem; font-weight: 600; color: var(--txt1);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .user-actions {
-      margin-left: 12px;
-      display: flex;
-      gap: 8px;
+    .user-meta .name:hover { color: var(--blue); }
+    .user-meta .bal { font-size: 1.05rem; font-weight: 700; color: var(--blue); margin-top: 2px; }
+    .user-meta .bal.neg { color: var(--red); }
+
+    .card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 9px; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700; transition: background .2s, transform .1s;
     }
-    button {
-      border: none;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      padding: 8px 12px;
-      transition: background 0.24s;
-      white-space: nowrap;
-      color: #fff;
+    .icon-btn:active { transform: scale(.93); }
+    .icon-btn.rn { background: #f5f3ff; color: #7c3aed; }
+    .icon-btn.rn:hover { background: #ede9fe; }
+    .icon-btn.tr { background: #eff8ff; color: var(--blue); }
+    .icon-btn.tr:hover { background: #dbeafe; }
+    .icon-btn.dp { background: #ecfdf3; color: var(--green); }
+    .icon-btn.dp:hover { background: #d1fae5; }
+
+    /* Toolbar */
+    .toolbar {
+      position: sticky; bottom: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      padding: 10px 8px env(safe-area-inset-bottom, 10px);
+      display: flex; gap: 4px; justify-content: center;
+      box-shadow: 0 -4px 16px rgba(16,24,40,.07);
     }
-    button:active, button:focus { outline: none; filter: brightness(85%); }
-    .btn-add      { background: #0a6efd; }
-    .btn-transact { background: #30a34c; }
-    .btn-deposit  { background: #28a745; }
-    .btn-report   { background: #ff9e26; width: 100%; font-weight: 600; }
-    .btn-delete   { background: #dd2c2c; width: 100%; font-weight: 600; }
-    .btn-small    { padding: 6px 10px; font-size: 0.9rem; }
-    .action-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 30px;
+    .tb-btn {
+      flex: 1; max-width: 90px; padding: 8px 4px; border: none; border-radius: 10px;
+      font-size: .68rem; font-weight: 600; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      transition: background .18s, transform .1s; color: var(--txt2); background: transparent;
     }
-    .upload-input { display: none; }
-    .statement-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      margin-top: 10px;
-      font-size: 0.97em;
-      border-radius: 8px;
-      overflow: hidden;
+    .tb-btn:active { transform: scale(.94); }
+    .tb-btn .ti { font-size: 1.2rem; line-height: 1; }
+    .tb-btn:hover { background: var(--bg); }
+    .tb-btn.c-amber{ color: var(--amber); }
+    .tb-btn.c-teal { color: var(--teal); }
+    .tb-btn.c-blue  { color: var(--blue); }
+    .tb-btn.c-red   { color: var(--red); }
+    .tb-btn.c-gray  { color: var(--txt3); }
+
+    .guide-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 90px;
     }
-    .statement-table th,
-    .statement-table td {
-      border: 1px solid #eee;
-      padding: 7px;
-      text-align: left;
+    .guide-title {
+      font-size: .72rem; font-weight: 700; color: var(--txt2);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
     }
-    .statement-table th { background: #fafafa; font-weight: 600; }
+    .guide-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 0; border-bottom: 1px solid var(--border); font-size: .86rem;
+    }
+    .guide-row:last-child { border-bottom: none; }
+    .badge {
+      font-size: .72rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+    }
+    .bg  { background: #ecfdf3; color: var(--green); }
+    .bb  { background: #eff8ff; color: var(--blue); }
+    .br  { background: #fef3f2; color: var(--red); }
+
+    /* Popups */
     .popup-bg {
-      display: none;
-      position: fixed;
-      z-index: 1500;
-      left: 0; top: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.25);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      display: none; position: fixed; inset: 0;
+      background: rgba(16,24,40,.4); z-index: 1500;
+      overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px;
     }
     .popup-box {
-      background: #f8f9fa;
-      border-radius: 12px;
-      box-shadow: 0 2px 20px rgba(0,0,0,0.15);
-      max-width: 340px;
-      margin: 12vh auto;
-      padding: 24px;
-      position: relative;
+      background: var(--card); border-radius: 18px;
+      box-shadow: var(--shadow-md); max-width: 400px;
+      margin: 8vh auto; padding: 24px; position: relative;
+      border: 1px solid var(--border);
     }
+    .popup-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+    }
+    .popup-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--txt1); }
     .popup-close {
-      position: absolute;
-      top: 10px; right: 10px;
-      background: transparent;
-      border: none;
-      font-size: 1.4rem;
-      cursor: pointer;
-      color: #333;
+      width: 30px; height: 30px; border-radius: 8px; border: none;
+      background: var(--bg); cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--txt2); transition: background .2s;
     }
-    .popup-box h2 { margin-top: 0; margin-bottom: 18px; }
+    .popup-close:hover { background: var(--border); }
+
     .popup-form label {
-      display: block;
-      margin: 8px 0 4px;
-      font-weight: 500;
-      font-size: 1em;
+      display: block; font-size: .8rem; font-weight: 600;
+      color: var(--txt2); margin-bottom: 5px;
     }
     .popup-form input,
     .popup-form select,
     .popup-form textarea {
-      width: 100%;
-      padding: 7px;
-      border-radius: 7px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      margin-bottom: 12px;
-      font-size: 1em;
-      resize: vertical;
+      width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: .95rem; color: var(--txt1);
+      outline: none; margin-bottom: 14px; transition: border-color .2s;
+      background: var(--card); resize: vertical;
     }
+    .popup-form input:focus,
+    .popup-form select:focus,
+    .popup-form textarea:focus { border-color: var(--blue); }
+    .popup-form .fr { display: flex; gap: 10px; }
+    .popup-form .fr > div { flex: 1; }
 
-    /* Loading overlay */
-    #loadingOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,0.7);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-      color: #0a6efd;
-      font-weight: 600;
+    .btn-p {
+      width: 100%; padding: 12px; color: #fff; border: none;
+      border-radius: 10px; font-size: .95rem; font-weight: 600;
+      cursor: pointer; transition: filter .2s;
     }
-    #loadingOverlay.active { display: flex; }
+    .btn-p:hover { filter: brightness(.9); }
+    .btn-p.blue  { background: var(--blue); }
+    .btn-p.green { background: var(--green); }
+    .btn-p.red   { background: var(--red); }
+    .btn-p.amber { background: var(--amber); }
+    .btn-p.gray  { background: var(--bg); color: var(--txt2); border: 1px solid var(--border); }
+
+    .range-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .range-pill {
+      padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border);
+      background: var(--bg); font-size: .78rem; font-weight: 600; color: var(--txt2);
+      cursor: pointer; transition: all .15s;
+    }
+    .range-pill:hover, .range-pill.active {
+      background: var(--blue); color: #fff; border-color: var(--blue);
+    }
+    .stmt-summary {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    .stmt-chip {
+      flex: 1; background: var(--bg); border-radius: 10px;
+      padding: 8px 10px; text-align: center;
+    }
+    .stmt-chip .sc-label { font-size: .68rem; font-weight: 600; color: var(--txt3); text-transform: uppercase; }
+    .stmt-chip .sc-val   { font-size: .95rem; font-weight: 700; margin-top: 2px; }
+    .stmt-wrap { overflow-x: auto; margin-top: 12px; border-radius: 10px; border: 1px solid var(--border); }
+    .statement-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .statement-table th {
+      background: var(--bg); padding: 8px 10px; text-align: left;
+      font-weight: 600; color: var(--txt2); font-size: .76rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .statement-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .statement-table tr:last-child td { border-bottom: none; }
+    .tag { font-size: .7rem; font-weight: 700; padding: 2px 7px; border-radius: 20px; }
+    .tcr { background: #ecfdf3; color: var(--green); }
+    .tdr { background: #fef3f2; color: var(--red); }
+
+    @media (min-width: 480px) {
+      .content { padding: 20px; }
+      .app-header { padding: 24px 24px 64px; }
+    }
   </style>
 </head>
 <body>
-  <div class="app-header">
-    Virtual Bank Dashboard
-    <span class="sync-status" id="syncStatus"></span>
+
+<div id="loadingOverlay">
+  <div class="spinner"></div>
+  <span id="loadingMsg">Syncing…</span>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-hero">
+    <div class="icon">🏦</div>
+    <h1>Virtual Bank</h1>
+    <p>Family allowance tracker</p>
   </div>
-
-  <!-- Loading overlay -->
-  <div id="loadingOverlay">⏳ Syncing…</div>
-
-  <!-- Login screen -->
-  <div class="dashboard" id="loginScreen">
-    <h2>🔐 Enter PIN</h2>
-    <p>Enter the shared PIN to access the dashboard</p>
-    <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" />
-    <button class="btn-add" onclick="doLogin()">Unlock</button>
-    <span id="loginError" style="color:#dd2c2c; font-size:0.9rem; display:none;">Incorrect PIN. Try again.</span>
-
-    <hr style="width:100%; border:none; border-top:1px solid #ddd; margin:24px 0 16px;" />
-    <p style="margin:0 0 10px; color:#555; font-size:0.9rem; text-align:center;">
-      <b>First time setup?</b><br>Upload your existing backup JSON to import data into Google Sheets.
-    </p>
-    <input id="pinForImport" type="password" inputmode="numeric" placeholder="PIN" style="font-size:1rem; padding:8px 12px; border-radius:8px; border:1px solid #ccc; width:180px; text-align:center; letter-spacing:4px; margin-bottom:8px;" />
-    <button class="btn-add" style="background:#30a34c; width:180px;" onclick="document.getElementById('importFileInput').click()">
-      📂 Import backup JSON
-    </button>
-    <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="importAndUpload(event)" />
-    <span id="importStatus" style="font-size:0.85rem; color:#555; text-align:center; margin-top:4px;"></span>
-  </div>
-
-  <!-- Main app screen -->
-  <div class="dashboard" id="appScreen">
-    <div class="add-user-bar">
-      <input id="newUserName" class="add-user-input" type="text" placeholder="Add new user" />
-      <button class="btn btn-add" onclick="addUser()">Add User</button>
+  <div class="login-card">
+    <h2>Welcome back</h2>
+    <p>Enter your shared PIN to continue</p>
+    <div class="pin-row">
+      <input id="pinInput" type="password" inputmode="numeric" placeholder="••••" autocomplete="off"/>
+      <button class="btn-unlock" onclick="doLogin()">Unlock</button>
     </div>
-    <div class="user-list" id="userList"></div>
-    <div class="action-buttons">
-      <button class="btn btn-report" onclick="openStatementReport()">Statement</button>
-      <button class="btn btn-delete" onclick="openDeletePopup()">Delete Account</button>
-      <button class="btn btn-report" onclick="syncNow()">🔄 Refresh from Sheets</button>
-      <button class="btn btn-add" style="background:#17a2b8;" onclick="exportData()">⬇️ Export Backup JSON</button>
-      <button class="btn btn-add" style="background:#888;" onclick="logout()">Lock / Logout</button>
-      <div style="background:#fff; border-radius:10px; padding:12px; font-size:0.9rem; line-height:1.7;">
-        <b>Allowance guide</b>
-        <ul style="margin:6px 0 0; padding-left:20px;">
-          <li>GREAT JOB — ₹50 or 1 hr screen time</li>
-          <li>BEDROCK — ₹20</li>
-          <li>WELL DONE (without telling) — ₹15</li>
-          <li>STAR (after telling) — ₹10</li>
-          <li>NICE EFFORT (tried) — ₹5</li>
-          <li>WEAPONS — ₹−5</li>
-        </ul>
+    <div class="login-error" id="loginError">Incorrect PIN — please try again.</div>
+
+    <div class="import-section">
+      <h3>First-time setup — import existing backup</h3>
+      <div class="pin-row">
+        <input id="pinForImport" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"/>
       </div>
+      <button class="btn-import" onclick="document.getElementById('importFileInput').click()">
+        📂 Import backup JSON
+      </button>
+      <input type="file" id="importFileInput" accept="application/json" style="display:none" onchange="importAndUpload(event)"/>
+      <span id="importStatus"></span>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+  <div class="app-header">
+    <div class="header-top">
+      <span class="app-title">🏦 Virtual Bank</span>
+      <span class="sync-pill" id="syncStatus">—</span>
+    </div>
+    <div class="balance-summary">
+      <div class="label">Total balance</div>
+      <div class="total" id="totalBalance">₹0</div>
+      <div class="sub" id="userCount">0 accounts</div>
     </div>
   </div>
 
-  <div id="popupBg" class="popup-bg"></div>
+  <div class="content">
+    <div class="add-row">
+      <input id="newUserName" type="text" placeholder="New account name…"/>
+      <button class="btn-add-user" onclick="addUser()">+ Add</button>
+    </div>
+    <div class="section-label">Accounts</div>
+    <div id="userList"></div>
 
-  <script>
-    // ============================================================
-    // ⚠️  PASTE YOUR APPS SCRIPT WEB APP URL BELOW
-    // ============================================================
-    const API_URL = "https://script.google.com/macros/s/AKfycbxIrARpwwIMGn1F1AVv7LuwZW-r0UqhsF-0yEVNegUOJQlgksVnzcn5looGcP3XheSAJQ/exec";
-    // ============================================================
+    <div class="guide-card">
+      <div class="guide-title">Allowance guide</div>
+      <div class="guide-row"><span>Great Job</span><span class="badge bg">₹50 or 1 hr screen</span></div>
+      <div class="guide-row"><span>Bedrock</span><span class="badge bg">₹20</span></div>
+      <div class="guide-row"><span>Well Done (without telling)</span><span class="badge bg">₹15</span></div>
+      <div class="guide-row"><span>Star (after telling)</span><span class="badge bb">₹10</span></div>
+      <div class="guide-row"><span>Nice Effort (tried)</span><span class="badge bb">₹5</span></div>
+      <div class="guide-row"><span>Weapons</span><span class="badge br">−₹5</span></div>
+    </div>
+  </div>
 
-    let users = [];
-    let transactions = [];
-    let userPIN = "";
+  <div class="toolbar">
+    <button class="tb-btn c-amber" onclick="openStatementReport()"><span class="ti">📋</span>Statement</button>
+    <button class="tb-btn c-teal"  onclick="exportData()"><span class="ti">⬇️</span>Export</button>
+    <button class="tb-btn c-blue"  onclick="syncNow()"><span class="ti">🔄</span>Refresh</button>
+    <button class="tb-btn c-red"   onclick="openDeletePopup()"><span class="ti">🗑️</span>Delete</button>
+    <button class="tb-btn c-gray"  onclick="logout()"><span class="ti">🔒</span>Lock</button>
+  </div>
+</div>
 
-    // ── Login ──────────────────────────────────────────────────
-    document.getElementById("pinInput").addEventListener("keydown", e => {
-      if (e.key === "Enter") doLogin();
-    });
+<div id="popupBg" class="popup-bg"></div>
 
-    async function doLogin() {
-      const pin = document.getElementById("pinInput").value.trim();
-      if (!pin) return;
-      userPIN = pin;
-      showLoading(true);
-      document.getElementById("loginError").style.display = "none";
-      try {
-        const data = await apiGet();
-        if (data.error === "Unauthorized") {
-          document.getElementById("loginError").style.display = "block";
-          userPIN = "";
-          showLoading(false);
-          return;
-        }
-        users = data.users || [];
-        transactions = data.transactions || [];
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("appScreen").style.display = "flex";
-        renderUsers();
-        setSyncStatus("✅ Synced");
-      } catch (err) {
-        // Fallback to localStorage cache if offline
-        const cached = localStorage.getItem("vb_cache_" + pin);
-        if (cached) {
-          const d = JSON.parse(cached);
-          users = d.users || [];
-          transactions = d.transactions || [];
-          document.getElementById("loginScreen").style.display = "none";
-          document.getElementById("appScreen").style.display = "flex";
-          renderUsers();
-          setSyncStatus("⚠️ Offline (cached)");
-          alert("Could not reach server. Showing cached data. Changes will sync when online.");
-        } else {
-          document.getElementById("loginError").textContent = "Cannot connect. Check your internet.";
-          document.getElementById("loginError").style.display = "block";
-          userPIN = "";
-        }
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbxIrARpwwIMGn1F1AVv7LuwZW-r0UqhsF-0yEVNegUOJQlgksVnzcn5looGcP3XheSAJQ/exec";
+
+  let users = [], transactions = [], userPIN = "";
+
+  document.getElementById("pinInput").addEventListener("keydown", e => { if (e.key==="Enter") doLogin(); });
+
+  async function doLogin() {
+    const pin = document.getElementById("pinInput").value.trim();
+    if (!pin) return;
+    userPIN = pin;
+    setLoading(true, "Syncing data…");
+    document.getElementById("loginError").style.display = "none";
+    try {
+      const data = await apiGet();
+      if (data.error === "Unauthorized") {
+        document.getElementById("loginError").style.display = "block";
+        userPIN = ""; setLoading(false); return;
       }
-      showLoading(false);
-    }
-
-    function logout() {
-      userPIN = "";
-      users = [];
-      transactions = [];
-      document.getElementById("pinInput").value = "";
-      document.getElementById("loginScreen").style.display = "flex";
-      document.getElementById("appScreen").style.display = "none";
-    }
-
-    // ── API helpers ────────────────────────────────────────────
-    async function apiGet() {
-      const res = await fetch(`${API_URL}?pin=${encodeURIComponent(userPIN)}`);
-      return res.json();
-    }
-
-    async function apiSave() {
-      const payload = { pin: userPIN, users, transactions };
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain" } // Apps Script needs text/plain for CORS
-      });
-      return res.json();
-    }
-
-    // Cache locally + push to Google Sheets
-    async function saveData() {
-      // Local cache immediately (for offline resilience)
-      localStorage.setItem("vb_cache_" + userPIN, JSON.stringify({ users, transactions }));
-      // Background sync to Sheets
-      setSyncStatus("⏳ Saving…");
-      try {
-        const result = await apiSave();
-        if (result.success) {
-          setSyncStatus("✅ Saved");
-        } else {
-          setSyncStatus("⚠️ Save error");
-        }
-      } catch {
-        setSyncStatus("⚠️ Offline");
+      users = data.users||[]; transactions = data.transactions||[];
+      showApp(); setSyncStatus("✅ Synced");
+    } catch {
+      const cached = localStorage.getItem("vb_cache_"+pin);
+      if (cached) {
+        const d = JSON.parse(cached);
+        users = d.users||[]; transactions = d.transactions||[];
+        showApp(); setSyncStatus("⚠️ Offline");
+        alert("Cannot reach server — showing cached data.");
+      } else {
+        document.getElementById("loginError").textContent = "Cannot connect. Check internet.";
+        document.getElementById("loginError").style.display = "block";
+        userPIN = "";
       }
     }
+    setLoading(false);
+  }
 
-    async function syncNow() {
-      showLoading(true);
-      try {
-        const data = await apiGet();
-        if (data.error) { alert("Sync failed: " + data.error); return; }
-        users = data.users || [];
-        transactions = data.transactions || [];
-        localStorage.setItem("vb_cache_" + userPIN, JSON.stringify({ users, transactions }));
-        renderUsers();
-        setSyncStatus("✅ Synced");
-        alert("Sync complete!");
-      } catch {
-        alert("Could not reach server. Check your connection.");
-        setSyncStatus("⚠️ Offline");
-      }
-      showLoading(false);
-    }
+  function showApp() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appScreen").style.display = "flex";
+    renderUsers();
+  }
+  function logout() {
+    userPIN=""; users=[]; transactions=[];
+    document.getElementById("pinInput").value = "";
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("appScreen").style.display = "none";
+  }
 
-    function setSyncStatus(msg) {
-      document.getElementById("syncStatus").textContent = msg;
-    }
+  async function apiGet() {
+    const r = await fetch(`${API_URL}?pin=${encodeURIComponent(userPIN)}`); return r.json();
+  }
+  async function apiSave() {
+    const r = await fetch(API_URL,{method:"POST",body:JSON.stringify({pin:userPIN,users,transactions}),headers:{"Content-Type":"text/plain"}});
+    return r.json();
+  }
+  async function saveData() {
+    localStorage.setItem("vb_cache_"+userPIN, JSON.stringify({users,transactions}));
+    setSyncStatus("⏳ Saving…");
+    try { const r=await apiSave(); setSyncStatus(r.success?"✅ Saved":"⚠️ Error"); }
+    catch { setSyncStatus("⚠️ Offline"); }
+  }
+  async function syncNow() {
+    setLoading(true,"Refreshing…");
+    try {
+      const d=await apiGet();
+      if(d.error){alert("Sync failed: "+d.error);setLoading(false);return;}
+      users=d.users||[]; transactions=d.transactions||[];
+      localStorage.setItem("vb_cache_"+userPIN,JSON.stringify({users,transactions}));
+      renderUsers(); setSyncStatus("✅ Synced");
+    } catch { setSyncStatus("⚠️ Offline"); }
+    setLoading(false);
+  }
 
-    function showLoading(on) {
-      document.getElementById("loadingOverlay").classList.toggle("active", on);
-    }
+  const AV = ["av-0","av-1","av-2","av-3","av-4","av-5","av-6","av-7"];
+  function ini(name){ return name.trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase(); }
 
-    // ── Render ─────────────────────────────────────────────────
-    function renderUsers() {
-      const userList = document.getElementById("userList");
-      userList.innerHTML = "";
-      users.forEach(u => {
-        userList.innerHTML += `
-          <div class="user-card">
-            <div class="user-info" title="Click to rename" onclick="openRenamePopup(${u.id})">${escapeHtml(u.name)}</div>
-            <div class="balance">₹${u.balance.toLocaleString()}</div>
-            <div class="user-actions">
-              <button class="btn btn-transact btn-small" onclick="openTransaction(${u.id})">Transact</button>
-              <button class="btn btn-deposit btn-small" onclick="openDepositPopup(${u.id})">Deposit</button>
-            </div>
-          </div>`;
-      });
-    }
-
-    // ── User management ────────────────────────────────────────
-    function addUser() {
-      const nameInput = document.getElementById("newUserName");
-      const name = nameInput.value.trim();
-      if (!name) return alert("Enter a user name.");
-      users.push({ id: Date.now(), name, balance: 0 });
-      nameInput.value = "";
-      saveData();
-      renderUsers();
-    }
-
-    function openRenamePopup(userId) {
-      const user = users.find(u => u.id === userId);
-      if (!user) return;
-      const popup = document.getElementById("popupBg");
-      popup.innerHTML = `
-      <div class="popup-box">
-        <button class="popup-close" onclick="closePopup()">&times;</button>
-        <h2>Rename Account</h2>
-        <form class="popup-form" onsubmit="renameAccount(event, ${userId})">
-          <label>New Name</label>
-          <input type="text" name="newName" value="${escapeHtml(user.name)}" required maxlength="50" autofocus />
-          <button class="btn btn-add" type="submit">Save</button>
-        </form>
-      </div>`;
-      popup.style.display = "block";
-    }
-    function renameAccount(event, userId) {
-      event.preventDefault();
-      const newName = event.target.newName.value.trim();
-      if (!newName) return alert("Name cannot be empty.");
-      const user = users.find(u => u.id === userId);
-      if (user) { user.name = newName; saveData(); renderUsers(); }
-      closePopup();
-    }
-
-    // ── Transactions ───────────────────────────────────────────
-    function openTransaction(fromId) {
-      const popup = document.getElementById("popupBg");
-      let options = users.filter(u => u.id !== fromId)
-        .map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
-      popup.innerHTML = `
-        <div class="popup-box">
-          <button class="popup-close" onclick="closePopup()">&times;</button>
-          <h2>New Transaction</h2>
-          <form class="popup-form" onsubmit="submitTransaction(event, ${fromId})">
-            <label>Transfer To</label>
-            <select name="to" required>${options}</select>
-            <label>Date</label>
-            <input type="date" name="date" required value="${todayStr()}" />
-            <label>Amount (₹)</label>
-            <input type="number" name="amount" min="1" required />
-            <label>Remarks</label>
-            <textarea name="remarks" rows="2" placeholder="(Optional)"></textarea>
-            <button class="btn btn-transact" type="submit">Transfer</button>
-          </form>
+  function renderUsers() {
+    const list = document.getElementById("userList");
+    list.innerHTML = "";
+    const total = users.reduce((s,u)=>s+u.balance,0);
+    document.getElementById("totalBalance").textContent = "₹"+total.toLocaleString("en-IN");
+    document.getElementById("userCount").textContent = users.length+" account"+(users.length!==1?"s":"");
+    users.forEach((u,i)=>{
+      const neg = u.balance<0;
+      list.innerHTML += `
+        <div class="user-card">
+          <div class="avatar ${AV[i%8]}">${ini(u.name)}</div>
+          <div class="user-meta" onclick="openStatementFor(${u.id})" title="View statement">
+            <div class="name">${escapeHtml(u.name)}</div>
+            <div class="bal${neg?" neg":""}">₹${u.balance.toLocaleString("en-IN")}</div>
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn rn" onclick="openRenamePopup(${u.id})" title="Rename">✎</button>
+            <button class="icon-btn tr" onclick="openTransaction(${u.id})" title="Transfer">⇄</button>
+            <button class="icon-btn dp" onclick="openDepositPopup(${u.id})" title="Deposit">＋</button>
+          </div>
         </div>`;
-      popup.style.display = "block";
-    }
-    function submitTransaction(e, fromId) {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(e.target));
-      const amount = Number(data.amount);
-      if (amount <= 0) return alert("Enter a valid amount.");
-      const fromUser = users.find(u => u.id === fromId);
-      const toUser   = users.find(u => u.id == data.to);
-      if (!fromUser || !toUser) return alert("Invalid user selection.");
-      fromUser.balance -= amount;
-      toUser.balance   += amount;
-      transactions.push({ from: fromId, to: Number(data.to), date: data.date, amount, remarks: data.remarks });
-      saveData();
-      closePopup();
-      renderUsers();
-    }
+    });
+  }
 
-    // ── Deposits ───────────────────────────────────────────────
-    function openDepositPopup(userId) {
-      const user = users.find(u => u.id === userId);
-      if (!user) return;
-      const popup = document.getElementById("popupBg");
-      popup.innerHTML = `
-      <div class="popup-box">
-        <button class="popup-close" onclick="closePopup()">&times;</button>
-        <h2>Deposit to ${escapeHtml(user.name)}</h2>
-        <form class="popup-form" onsubmit="submitDeposit(event, ${userId})">
-          <label>Date</label>
-          <input type="date" name="date" required value="${todayStr()}" autofocus />
-          <label>Amount (₹)</label>
-          <input type="number" name="amount" min="1" required />
-          <label>Remarks</label>
-          <textarea name="remarks" rows="2" placeholder="(Optional)"></textarea>
-          <button class="btn btn-deposit" type="submit">Deposit</button>
-        </form>
+  function addUser() {
+    const inp=document.getElementById("newUserName"), name=inp.value.trim();
+    if(!name) return;
+    users.push({id:Date.now(),name,balance:0}); inp.value=""; saveData(); renderUsers();
+  }
+  function openRenamePopup(id) {
+    const u=users.find(u=>u.id===id); if(!u) return;
+    showPopup(`
+      <div class="popup-header"><h2>Rename account</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" onsubmit="renameAccount(event,${id})">
+        <label>Account name</label>
+        <input type="text" name="newName" value="${escapeHtml(u.name)}" required maxlength="50" autofocus/>
+        <button class="btn-p blue" type="submit">Save</button>
+      </form>`);
+  }
+  function renameAccount(e,id) {
+    e.preventDefault();
+    const u=users.find(u=>u.id===id); if(!u) return;
+    u.name=e.target.newName.value.trim()||u.name;
+    saveData(); renderUsers(); closePopup();
+  }
+  function openDeletePopup() {
+    if(!users.length){alert("No accounts to delete.");return;}
+    const opts=users.map(u=>`<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+    showPopup(`
+      <div class="popup-header"><h2>Delete account</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" onsubmit="confirmDeleteUser(event)">
+        <label>Select account</label>
+        <select name="userId" required>${opts}</select>
+        <button class="btn-p red" type="submit">Delete account</button>
+      </form>`);
+  }
+  function confirmDeleteUser(e) {
+    e.preventDefault();
+    const id=Number(new FormData(e.target).get("userId"));
+    const u=users.find(u=>u.id===id); if(!u) return;
+    e.target.innerHTML=`
+      <p style="font-size:.9rem;color:var(--txt2);margin-bottom:16px;">Delete <strong>${escapeHtml(u.name)}</strong>'s account and all their transactions?</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-p gray" onclick="closePopup();return false;">Cancel</button>
+        <button class="btn-p red"  onclick="deleteUser(${id});return false;">Yes, delete</button>
       </div>`;
-      popup.style.display = "block";
-    }
-    function submitDeposit(e, userId) {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(e.target));
-      const amount = Number(data.amount);
-      if (amount <= 0) return alert("Enter a valid amount.");
-      const user = users.find(u => u.id === userId);
-      if (!user) return alert("User not found.");
-      user.balance += amount;
-      transactions.push({ from: null, to: userId, date: data.date, amount, remarks: data.remarks });
-      saveData();
-      closePopup();
-      renderUsers();
-    }
+  }
+  function deleteUser(id) {
+    users=users.filter(u=>u.id!==id);
+    transactions=transactions.filter(t=>t.from!==id&&t.to!==id);
+    saveData(); closePopup(); renderUsers();
+  }
 
-    // ── Statement ──────────────────────────────────────────────
-    function openStatementReport() {
-      if (users.length === 0) { alert("No users available."); return; }
-      const popup = document.getElementById("popupBg");
-      let userOptions = users.map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
-      popup.innerHTML = `
-      <div class="popup-box">
-        <button class="popup-close" onclick="closePopup()">&times;</button>
-        <h2>Account Statement</h2>
-        <form class="popup-form" onsubmit="showStatementReport(event)">
-          <label>Select User</label>
-          <select name="userId" required>${userOptions}</select>
-          <label>From</label>
-          <input type="date" name="from" required value="${todayStr()}" />
-          <label>To</label>
-          <input type="date" name="to" required value="${todayStr()}" />
-          <button class="btn btn-report" type="submit">Show</button>
-        </form>
-        <div id="statementResult"></div>
-      </div>`;
-      popup.style.display = "block";
+  function openTransaction(fromId) {
+    const opts=users.filter(u=>u.id!==fromId).map(u=>`<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
+    showPopup(`
+      <div class="popup-header"><h2>Transfer</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" onsubmit="submitTransaction(event,${fromId})">
+        <label>Transfer to</label>
+        <select name="to" required>${opts}</select>
+        <div class="fr">
+          <div><label>Date</label><input type="date" name="date" required value="${todayStr()}"/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" min="1" required/></div>
+        </div>
+        <label>Remarks</label>
+        <textarea name="remarks" rows="2" placeholder="Optional"></textarea>
+        <button class="btn-p blue" type="submit">Transfer</button>
+      </form>`);
+  }
+  function submitTransaction(e,fromId) {
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target)), amt=Number(d.amount);
+    if(amt<=0) return alert("Enter a valid amount.");
+    const from=users.find(u=>u.id===fromId), to=users.find(u=>u.id==d.to);
+    if(!from||!to) return;
+    from.balance-=amt; to.balance+=amt;
+    transactions.push({from:fromId,to:Number(d.to),date:d.date,amount:amt,remarks:d.remarks});
+    saveData(); closePopup(); renderUsers();
+  }
+
+  function openDepositPopup(uid) {
+    const u=users.find(u=>u.id===uid); if(!u) return;
+    showPopup(`
+      <div class="popup-header"><h2>Deposit — ${escapeHtml(u.name)}</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" onsubmit="submitDeposit(event,${uid})">
+        <div class="fr">
+          <div><label>Date</label><input type="date" name="date" required value="${todayStr()}" autofocus/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" min="1" required/></div>
+        </div>
+        <label>Remarks</label>
+        <textarea name="remarks" rows="2" placeholder="Optional"></textarea>
+        <button class="btn-p green" type="submit">Deposit</button>
+      </form>`);
+  }
+  function submitDeposit(e,uid) {
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target)), amt=Number(d.amount);
+    if(amt<=0) return alert("Enter a valid amount.");
+    const u=users.find(u=>u.id===uid); if(!u) return;
+    u.balance+=amt;
+    transactions.push({from:null,to:uid,date:d.date,amount:amt,remarks:d.remarks});
+    saveData(); closePopup(); renderUsers();
+  }
+
+  function openStatementFor(preselectedId) {
+    if(!users.length){alert("No accounts available.");return;}
+    const opts=users.map(u=>`<option value="${u.id}"${u.id===preselectedId?" selected":""}>${escapeHtml(u.name)}</option>`).join("");
+    const {from,to} = rangeFor("month");
+    showPopup(`
+      <div class="popup-header"><h2>Statement</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" id="stmtForm" onsubmit="showStatementReport(event)">
+        <label>Account</label>
+        <select name="userId" required>${opts}</select>
+        <label>Quick range</label>
+        <div class="range-pills">
+          <span class="range-pill active" onclick="applyRange(this,'month')">This month</span>
+          <span class="range-pill" onclick="applyRange(this,'lastmonth')">Last month</span>
+          <span class="range-pill" onclick="applyRange(this,'3months')">3 months</span>
+          <span class="range-pill" onclick="applyRange(this,'6months')">6 months</span>
+          <span class="range-pill" onclick="applyRange(this,'year')">This year</span>
+          <span class="range-pill" onclick="applyRange(this,'all')">All time</span>
+        </div>
+        <div class="fr">
+          <div><label>From</label><input type="date" name="from" required id="stmtFrom" value="${from}"/></div>
+          <div><label>To</label><input type="date" name="to" required id="stmtTo" value="${to}"/></div>
+        </div>
+        <button class="btn-p amber" type="submit">Show statement</button>
+      </form>
+      <div id="statementResult"></div>`);
+  }
+
+  function openStatementReport() { openStatementFor(null); }
+
+  function rangeFor(key) {
+    const now = new Date();
+    const y = now.getFullYear(), m = now.getMonth();
+    const pad = n => String(n).padStart(2,"0");
+    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    if (key==="month")     return { from: `${y}-${pad(m+1)}-01`, to: fmt(now) };
+    if (key==="lastmonth") {
+      const f = new Date(y, m-1, 1), t = new Date(y, m, 0);
+      return { from: fmt(f), to: fmt(t) };
     }
-    function showStatementReport(e) {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(e.target));
-      const userId = Number(data.userId);
-      const user = users.find(u => u.id === userId);
-      if (!user) return alert("User not found");
-      const trs = transactions.filter(tr =>
-        (tr.from === userId || tr.to === userId) && tr.date >= data.from && tr.date <= data.to
-      );
-      let rows = trs.map(tr => {
-        const type  = tr.from === userId ? "Debit" : "Credit";
-        const other = tr.from === null ? "Deposit"
-          : users.find(u => u.id === (type === "Credit" ? tr.from : tr.to))?.name || "—";
-        return `<tr>
-          <td>${tr.date}</td><td>${type}</td><td>${escapeHtml(other)}</td>
-          <td>₹${tr.amount}</td><td>${escapeHtml(tr.remarks || "")}</td>
-        </tr>`;
-      }).join("");
-      if (!rows) rows = `<tr><td colspan="5">No transactions in this period</td></tr>`;
-      e.target.nextElementSibling.innerHTML = `
+    if (key==="3months")   return { from: fmt(new Date(y, m-2, 1)), to: fmt(now) };
+    if (key==="6months")   return { from: fmt(new Date(y, m-5, 1)), to: fmt(now) };
+    if (key==="year")      return { from: `${y}-01-01`, to: fmt(now) };
+    if (key==="all")       return { from: "2000-01-01", to: fmt(now) };
+    return { from: fmt(now), to: fmt(now) };
+  }
+
+  function applyRange(el, key) {
+    document.querySelectorAll(".range-pill").forEach(p=>p.classList.remove("active"));
+    el.classList.add("active");
+    const {from,to} = rangeFor(key);
+    document.getElementById("stmtFrom").value = from;
+    document.getElementById("stmtTo").value   = to;
+  }
+
+  function showStatementReport(e) {
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target)), uid=Number(d.userId);
+    const u=users.find(u=>u.id===uid); if(!u) return;
+    const trs=transactions.filter(t=>(t.from===uid||t.to===uid)&&t.date>=d.from&&t.date<=d.to);
+    const totalCr = trs.filter(t=>t.from!==uid).reduce((s,t)=>s+t.amount,0);
+    const totalDr = trs.filter(t=>t.from===uid).reduce((s,t)=>s+t.amount,0);
+    let rows=trs.map(t=>{
+      const cr=t.from!==uid;
+      const other=t.from===null?"Deposit":(users.find(u=>u.id===(cr?t.from:t.to))?.name||"—");
+      return `<tr>
+        <td>${t.date}</td>
+        <td><span class="tag ${cr?"tcr":"tdr"}">${cr?"Credit":"Debit"}</span></td>
+        <td>${escapeHtml(other)}</td>
+        <td style="font-weight:600;color:${cr?"var(--green)":"var(--red)"}">
+          ${cr?"+":"−"}₹${t.amount.toLocaleString("en-IN")}
+        </td>
+        <td style="color:var(--txt3)">${escapeHtml(t.remarks||"")}</td>
+      </tr>`;
+    }).join("");
+    if(!rows) rows=`<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:16px">No transactions in this period</td></tr>`;
+    e.target.nextElementSibling.innerHTML=`
+      <div class="stmt-summary">
+        <div class="stmt-chip">
+          <div class="sc-label">Credits</div>
+          <div class="sc-val" style="color:var(--green)">+₹${totalCr.toLocaleString("en-IN")}</div>
+        </div>
+        <div class="stmt-chip">
+          <div class="sc-label">Debits</div>
+          <div class="sc-val" style="color:var(--red)">−₹${totalDr.toLocaleString("en-IN")}</div>
+        </div>
+        <div class="stmt-chip">
+          <div class="sc-label">Net</div>
+          <div class="sc-val" style="color:var(--blue)">₹${(totalCr-totalDr).toLocaleString("en-IN")}</div>
+        </div>
+      </div>
+      <div class="stmt-wrap">
         <table class="statement-table">
-          <tr><th>Date</th><th>Type</th><th>With</th><th>Amount</th><th>Remarks</th></tr>
-          ${rows}
-        </table>`;
-    }
-
-    // ── Delete user ────────────────────────────────────────────
-    function openDeletePopup() {
-      if (users.length === 0) { alert("No users to delete."); return; }
-      const popup = document.getElementById("popupBg");
-      let userOptions = users.map(u => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join("");
-      popup.innerHTML = `
-      <div class="popup-box">
-        <button class="popup-close" onclick="closePopup()">&times;</button>
-        <h2>Delete Account</h2>
-        <form class="popup-form" onsubmit="confirmDeleteUser(event)">
-          <label>Select User to Delete</label>
-          <select name="userId" required>${userOptions}</select>
-          <button class="btn btn-delete" type="submit">Delete</button>
-        </form>
+          <thead><tr><th>Date</th><th>Type</th><th>With</th><th>Amount</th><th>Note</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>`;
-      popup.style.display = "block";
-    }
-    function confirmDeleteUser(e) {
-      e.preventDefault();
-      const userId = Number(new FormData(e.target).get("userId"));
-      const user = users.find(u => u.id === userId);
-      if (!user) return alert("User not found.");
-      e.target.innerHTML = `
-      <p>Are you sure you want to delete <b>${escapeHtml(user.name)}</b>'s account?<br>All transactions will be removed.</p>
-      <button class="btn" style="background:#999;" onclick="closePopup(); return false;">Cancel</button>
-      <button class="btn btn-delete" onclick="deleteUser(${userId}); return false;">Delete</button>`;
-    }
-    function deleteUser(userId) {
-      users = users.filter(u => u.id !== userId);
-      transactions = transactions.filter(tr => tr.from !== userId && tr.to !== userId);
-      saveData();
-      closePopup();
-      renderUsers();
-    }
+  }
 
-    // ── Import existing backup → push to Sheets ────────────────
-    function importAndUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const pin = document.getElementById("pinForImport").value.trim();
-      if (!pin) {
-        document.getElementById("importStatus").textContent = "⚠️ Enter PIN before importing.";
-        event.target.value = "";
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        let data;
-        try {
-          data = JSON.parse(e.target.result);
-          if (!Array.isArray(data.users) || !Array.isArray(data.transactions)) {
-            throw new Error("Invalid backup format.");
-          }
-        } catch (err) {
-          document.getElementById("importStatus").textContent = "❌ " + err.message;
-          event.target.value = "";
-          return;
-        }
-        document.getElementById("importStatus").textContent = "⏳ Uploading to Google Sheets…";
-        showLoading(true);
-        try {
-          const payload = { pin, users: data.users, transactions: data.transactions };
-          const res = await fetch(API_URL, {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "text/plain" }
-          });
-          const result = await res.json();
-          if (result.error === "Unauthorized") {
-            document.getElementById("importStatus").textContent = "❌ Wrong PIN.";
-          } else if (result.success) {
-            document.getElementById("importStatus").textContent =
-              `✅ Imported ${data.users.length} users & ${data.transactions.length} transactions! Now unlock above.`;
-            // Pre-fill the unlock PIN for convenience
-            document.getElementById("pinInput").value = pin;
-          } else {
-            document.getElementById("importStatus").textContent = "❌ Upload failed.";
-          }
-        } catch (err) {
-          document.getElementById("importStatus").textContent = "❌ Network error: " + err.message;
-        }
-        showLoading(false);
-        event.target.value = "";
-      };
-      reader.readAsText(file);
-    }
-
-    // ── Export ─────────────────────────────────────────────────
-    function exportData() {
+  function importAndUpload(event) {
+    const file=event.target.files[0]; if(!file) return;
+    const pin=document.getElementById("pinForImport").value.trim();
+    if(!pin){document.getElementById("importStatus").textContent="⚠️ Enter PIN first.";event.target.value="";return;}
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      let data;
       try {
-        const data = JSON.stringify({ users, transactions }, null, 2);
-        const blob = new Blob([data], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.style.display = "none";
-        a.href = url;
-        a.download = `virtual_bank_backup_${todayStr()}.json`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
-        setSyncStatus("✅ Exported");
-      } catch (err) {
-        alert("Export failed: " + err.message);
-      }
-    }
+        data=JSON.parse(e.target.result);
+        if(!Array.isArray(data.users)||!Array.isArray(data.transactions)) throw new Error("Invalid backup format.");
+      } catch(err){document.getElementById("importStatus").textContent="❌ "+err.message;event.target.value="";return;}
+      document.getElementById("importStatus").textContent="⏳ Uploading…";
+      setLoading(true,"Importing…");
+      try {
+        const res=await fetch(API_URL,{method:"POST",body:JSON.stringify({pin,users:data.users,transactions:data.transactions}),headers:{"Content-Type":"text/plain"}});
+        const result=await res.json();
+        if(result.error==="Unauthorized") document.getElementById("importStatus").textContent="❌ Wrong PIN.";
+        else if(result.success) {
+          document.getElementById("importStatus").textContent=`✅ Imported ${data.users.length} accounts & ${data.transactions.length} transactions. Unlock above.`;
+          document.getElementById("pinInput").value=pin;
+        } else document.getElementById("importStatus").textContent="❌ Upload failed.";
+      } catch(err){document.getElementById("importStatus").textContent="❌ "+err.message;}
+      setLoading(false); event.target.value="";
+    };
+    reader.readAsText(file);
+  }
 
-    // ── Utilities ──────────────────────────────────────────────
-    function closePopup() {
-      document.getElementById("popupBg").style.display = "none";
-    }
-    function todayStr() {
-      const dt = new Date(), m = (dt.getMonth()+1).toString().padStart(2,"0"), d = dt.getDate().toString().padStart(2,"0");
-      return dt.getFullYear() + "-" + m + "-" + d;
-    }
-    function escapeHtml(text) {
-      if (!text) return "";
-      return text.replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[m]);
-    }
-  </script>
+  function exportData() {
+    try {
+      const blob=new Blob([JSON.stringify({users,transactions},null,2)],{type:"application/json"});
+      const a=Object.assign(document.createElement("a"),{href:URL.createObjectURL(blob),download:`virtual_bank_backup_${todayStr()}.json`,style:"display:none"});
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(a.href);},200);
+      setSyncStatus("✅ Exported");
+    } catch(err){alert("Export failed: "+err.message);}
+  }
+
+  function showPopup(html) {
+    const bg=document.getElementById("popupBg");
+    bg.innerHTML=`<div class="popup-box">${html}</div>`;
+    bg.style.display="block";
+  }
+  function closePopup(){ document.getElementById("popupBg").style.display="none"; }
+  function setSyncStatus(msg){ document.getElementById("syncStatus").textContent=msg; }
+  function setLoading(on,msg="Syncing…"){
+    document.getElementById("loadingMsg").textContent=msg;
+    document.getElementById("loadingOverlay").classList.toggle("active",on);
+  }
+  function todayStr(){
+    const d=new Date(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0");
+    return `${d.getFullYear()}-${m}-${dd}`;
+  }
+  function escapeHtml(t){
+    if(!t) return "";
+    return t.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"})[c]);
+  }
+</script>
 </body>
 </html>
