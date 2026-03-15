@@ -228,7 +228,18 @@
     <p>Enter the shared PIN to access the dashboard</p>
     <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" />
     <button class="btn-add" onclick="doLogin()">Unlock</button>
-    <span id="loginError">Incorrect PIN. Try again.</span>
+    <span id="loginError" style="color:#dd2c2c; font-size:0.9rem; display:none;">Incorrect PIN. Try again.</span>
+
+    <hr style="width:100%; border:none; border-top:1px solid #ddd; margin:24px 0 16px;" />
+    <p style="margin:0 0 10px; color:#555; font-size:0.9rem; text-align:center;">
+      <b>First time setup?</b><br>Upload your existing backup JSON to import data into Google Sheets.
+    </p>
+    <input id="pinForImport" type="password" inputmode="numeric" placeholder="PIN" style="font-size:1rem; padding:8px 12px; border-radius:8px; border:1px solid #ccc; width:180px; text-align:center; letter-spacing:4px; margin-bottom:8px;" />
+    <button class="btn-add" style="background:#30a34c; width:180px;" onclick="document.getElementById('importFileInput').click()">
+      📂 Import backup JSON
+    </button>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="importAndUpload(event)" />
+    <span id="importStatus" style="font-size:0.85rem; color:#555; text-align:center; margin-top:4px;"></span>
   </div>
 
   <!-- Main app screen -->
@@ -593,6 +604,58 @@
       saveData();
       closePopup();
       renderUsers();
+    }
+
+    // ── Import existing backup → push to Sheets ────────────────
+    function importAndUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const pin = document.getElementById("pinForImport").value.trim();
+      if (!pin) {
+        document.getElementById("importStatus").textContent = "⚠️ Enter PIN before importing.";
+        event.target.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        let data;
+        try {
+          data = JSON.parse(e.target.result);
+          if (!Array.isArray(data.users) || !Array.isArray(data.transactions)) {
+            throw new Error("Invalid backup format.");
+          }
+        } catch (err) {
+          document.getElementById("importStatus").textContent = "❌ " + err.message;
+          event.target.value = "";
+          return;
+        }
+        document.getElementById("importStatus").textContent = "⏳ Uploading to Google Sheets…";
+        showLoading(true);
+        try {
+          const payload = { pin, users: data.users, transactions: data.transactions };
+          const res = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "text/plain" }
+          });
+          const result = await res.json();
+          if (result.error === "Unauthorized") {
+            document.getElementById("importStatus").textContent = "❌ Wrong PIN.";
+          } else if (result.success) {
+            document.getElementById("importStatus").textContent =
+              `✅ Imported ${data.users.length} users & ${data.transactions.length} transactions! Now unlock above.`;
+            // Pre-fill the unlock PIN for convenience
+            document.getElementById("pinInput").value = pin;
+          } else {
+            document.getElementById("importStatus").textContent = "❌ Upload failed.";
+          }
+        } catch (err) {
+          document.getElementById("importStatus").textContent = "❌ Network error: " + err.message;
+        }
+        showLoading(false);
+        event.target.value = "";
+      };
+      reader.readAsText(file);
     }
 
     // ── Utilities ──────────────────────────────────────────────
