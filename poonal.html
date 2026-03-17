@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upanayanam Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Crimson+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--sf:#D97706;--sf2:#F59E0B;--mr:#7C1D2E;--mr2:#9B2335;--gd:#B45309;--iv:#FDF6E3;--cr:#FAF0D7;--wh:#FFFFFF;--td:#1C0A00;--tm:#5C3A22;--tl:#9C7B6A;--bd:#E8D5B0;--sh:0 2px 12px rgba(28,10,0,.10);--rd:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Crimson Pro',Georgia,serif;background:var(--iv);color:var(--td);min-height:100vh}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--mr) 0%,#5C1020 40%,var(--gd) 100%);color:var(--iv);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 16px rgba(0,0,0,.30)}
+.hdr h1{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:700;line-height:1.2}
+.hdr .sub{font-size:.82rem;opacity:.82;margin-top:3px}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:white;padding:6px 13px;border-radius:6px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:.88rem;transition:background .2s;white-space:nowrap}
+.hbtn:hover{background:rgba(255,255,255,.26)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;display:inline-block;margin-right:4px}
+.sync-dot.off{background:#FCA5A5}
+
+/* SETUP BANNER */
+.setup-banner{background:#FFFBEB;border-left:4px solid var(--sf);padding:10px 20px;font-size:.88rem;color:var(--td);display:flex;align-items:center;gap:8px}
+.setup-banner a{color:var(--mr);cursor:pointer;text-decoration:underline}
+.hidden{display:none!important}
+
+/* NAV */
+.nav{background:white;border-bottom:2px solid var(--bd);padding:0 12px;display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ntab{padding:11px 16px;border:none;background:none;color:var(--tl);font-family:'Crimson Pro',serif;font-size:.92rem;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s}
+.ntab.active{color:var(--mr);border-bottom-color:var(--mr);font-weight:600}
+.ntab:hover:not(.active){color:var(--sf)}
+
+/* MAIN */
+.main{padding:18px;max-width:1280px;margin:0 auto}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.sc{background:white;border-radius:var(--rd);padding:14px 18px;box-shadow:var(--sh);border-left:4px solid var(--sf)}
+.sc.mr{border-left-color:var(--mr)}.sc.gd{border-left-color:var(--gd)}.sc.gn{border-left-color:#15803D}
+.sc .lbl{font-size:.75rem;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sc .val{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:var(--td);line-height:1}
+.sc .sub{font-size:.78rem;color:var(--tl);margin-top:4px}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.st{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--mr)}
+.sa{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{padding:8px 15px;border-radius:6px;border:none;cursor:pointer;font-family:'Crimson Pro',serif;font-size:.9rem;font-weight:500;transition:all .2s}
+.bp{background:var(--mr);color:white}.bp:hover{background:var(--mr2)}
+.bo{background:transparent;border:1.5px solid var(--bd);color:var(--tm)}.bo:hover{border-color:var(--mr);color:var(--mr)}
+.bo.active{background:var(--mr);border-color:var(--mr);color:white}
+.bd2{background:#B91C1C;color:white}.bd2:hover{background:#DC2626}
+.bsm{padding:4px 9px;font-size:.8rem}
+.bic{padding:4px 7px;background:none;border:1px solid var(--bd);border-radius:5px;cursor:pointer;font-size:.85rem}.bic:hover{background:var(--cr)}
+
+/* CHIPS */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.chip{padding:4px 12px;border-radius:20px;border:1.5px solid var(--bd);background:white;color:var(--tm);font-size:.83rem;cursor:pointer;transition:all .2s}
+.chip.active{background:var(--mr);color:white;border-color:var(--mr)}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:var(--rd);box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;background:white;font-size:.88rem}
+thead th{background:var(--cr);color:var(--mr);font-weight:600;padding:9px 11px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap;font-family:'Crimson Pro',serif;font-size:.8rem;text-transform:uppercase;letter-spacing:.4px}
+tbody td{padding:9px 11px;border-bottom:1px solid #F0E8D8;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FFFAF2}
+.es{text-align:center;padding:36px;color:var(--tl);font-style:italic}
+
+/* BADGES */
+.bg{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:500}
+.by{background:#DCFCE7;color:#166534}.bn{background:#FEF3C7;color:#92400E}
+.bp2{background:#FEE2E2;color:#991B1B}.bpnd{background:#FEF9C3;color:#854D0E}
+.bdone{background:#DCFCE7;color:#166534}.bpart{background:#DBEAFE;color:#1E40AF}
+.bmy{background:#FCE7F3;color:#831843}.bwf{background:#EDE9FE;color:#3730A3}
+
+/* COUNTDOWN */
+.cdbar{background:linear-gradient(135deg,var(--mr),var(--gd));color:white;padding:12px 18px;border-radius:var(--rd);margin-bottom:18px;display:flex;justify-content:space-around;text-align:center;gap:8px;flex-wrap:wrap}
+.cdi .cdv{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700}
+.cdi .cdl{font-size:.76rem;opacity:.85}
+
+/* DASH GRID */
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:700px){.dg{grid-template-columns:1fr}}
+.dc{background:white;border-radius:var(--rd);box-shadow:var(--sh);padding:16px 18px}
+.dct{font-family:'Playfair Display',serif;font-size:.98rem;color:var(--mr);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--bd)}
+.sr{display:flex;justify-content:space-between;padding:5px 0;font-size:.88rem;border-bottom:1px solid #F5EDD8}
+.sr:last-child{border-bottom:none}
+.sl{color:var(--tm)}.sv{font-weight:600;color:var(--td)}
+
+/* PROGRESS */
+.pb{height:5px;background:#E8D5B0;border-radius:3px;overflow:hidden;margin-top:6px}
+.pf{height:100%;background:linear-gradient(90deg,var(--sf),var(--gd));border-radius:3px;transition:width .4s}
+
+/* ROOM CARDS */
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin-bottom:22px}
+.rc{background:white;border-radius:var(--rd);box-shadow:var(--sh);overflow:hidden}
+.rch{background:linear-gradient(135deg,var(--mr),var(--gd));color:white;padding:10px 15px;display:flex;justify-content:space-between;align-items:center}
+.rcn{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600}
+.rcb{padding:13px 15px}
+.rf{margin-bottom:7px;font-size:.86rem}
+.rf label{color:var(--tl);font-size:.74rem;display:block;text-transform:uppercase;letter-spacing:.4px}
+.rv{color:var(--tl);font-style:italic;padding:16px;text-align:center;font-size:.88rem}
+
+/* PAYMENT TOTALS */
+.ptbar{background:white;border-radius:var(--rd);padding:14px 18px;box-shadow:var(--sh);margin-bottom:14px;display:flex;gap:22px;flex-wrap:wrap}
+.pti .ptl{font-size:.74rem;color:var(--tl);text-transform:uppercase;letter-spacing:.4px}
+.pti .ptv{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:var(--td)}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(28,10,0,.52);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.m{background:white;border-radius:12px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.28)}
+.mh{background:linear-gradient(135deg,var(--mr),var(--gd));color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:12px 12px 0 0;flex-shrink:0}
+.mh h3{font-family:'Playfair Display',serif;font-size:1.05rem}
+.mc{background:none;border:none;color:white;font-size:1.3rem;cursor:pointer;padding:0 4px;line-height:1}
+.mb{padding:18px}
+.mf{padding:14px 18px;border-top:1px solid var(--bd);display:flex;gap:9px;justify-content:flex-end}
+
+/* FORM */
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+.fr.s{grid-template-columns:1fr}.fr.t{grid-template-columns:1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:.78rem;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{padding:8px 11px;border:1.5px solid var(--bd);border-radius:6px;font-family:'Crimson Pro',serif;font-size:.93rem;color:var(--td);background:var(--iv);transition:border-color .2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--mr);background:white}
+.fg textarea{resize:vertical;min-height:56px}
+.fg .ck{display:flex;align-items:center;gap:7px;font-size:.93rem;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer}
+.fg input[type=checkbox]{width:15px;height:15px}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--td);color:white;padding:11px 18px;border-radius:8px;font-size:.88rem;z-index:2000;opacity:0;transform:translateY(14px);transition:all .3s;max-width:280px;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:#166534}.toast.err{background:#991B1B}.toast.inf{background:var(--mr)}
+
+/* SECTION CARD */
+.scard{background:white;border-radius:var(--rd);box-shadow:var(--sh);padding:12px 18px;margin-bottom:14px;font-size:.88rem}
+.tr{text-align:right}.tc{text-align:center}
+.fw6{font-weight:600}.tmr{color:var(--mr);font-weight:600}.tgn{color:#166534;font-weight:600}.tor{color:var(--gd);font-weight:600}
+.nw{white-space:nowrap}
+.sep{margin:14px 0;border-color:var(--bd)}
+
+/* HELP BOX */
+.helpbox{background:#FFFBEB;padding:12px;border-radius:6px;font-size:.83rem;margin-top:8px;line-height:1.65;border:1px solid #FDE68A}
+.helpbox code{background:#FEF9C3;padding:1px 5px;border-radius:3px;font-size:.8rem}
+@media(max-width:600px){.fr{grid-template-columns:1fr}.fr.t{grid-template-columns:1fr 1fr}.stats-grid{grid-template-columns:1fr 1fr}.main{padding:10px}.hdr h1{font-size:1.15rem}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div>
+    <h1 id="hdr-title">🪶 Upanayanam Manager</h1>
+    <div class="sub" id="hdr-sub">22 Mar (Naandi) · 23 Mar (Upanayanam) 2026</div>
+  </div>
+  <div class="hdr-right">
+    <span id="sync-ind" style="font-size:.78rem;opacity:.8;"></span>
+    <button class="hbtn" onclick="syncData()">⟳ Sync Sheets</button>
+    <button class="hbtn" onclick="openSettings()">⚙</button>
+  </div>
+</header>
+
+<!-- SETUP BANNER -->
+<div class="setup-banner hidden" id="setup-banner">
+  ⚠️ Google Sheets not connected — data saved locally only.
+  <a onclick="openSettings()">Connect Google Sheets →</a>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="ntab active" onclick="sw('dashboard')" id="nb-dashboard">🏠 Dashboard</button>
+  <button class="ntab" onclick="sw('guests')" id="nb-guests">👥 Guests</button>
+  <button class="ntab" onclick="sw('shopping')" id="nb-shopping">🛒 Shopping</button>
+  <button class="ntab" onclick="sw('expenses')" id="nb-expenses">💰 Expenses</button>
+  <button class="ntab" onclick="sw('rooms')" id="nb-rooms">🏨 Rooms</button>
+  <button class="ntab" onclick="sw('payments')" id="nb-payments">💳 Payments</button>
+</nav>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="tab-panel active" id="panel-dashboard">
+  <div class="cdbar" id="cdbar"></div>
+  <div class="stats-grid" id="dstats"></div>
+  <div class="dg">
+    <div class="dc"><div class="dct">👥 Guest Overview</div><div id="dg-guest"></div></div>
+    <div class="dc"><div class="dct">💰 Expenses by Category</div><div id="dg-exp"></div></div>
+    <div class="dc"><div class="dct">🏨 Room Status</div><div id="dg-room"></div></div>
+    <div class="dc"><div class="dct">💳 Payment Status</div><div id="dg-pay"></div></div>
+  </div>
+</div>
+
+<!-- GUESTS -->
+<div class="tab-panel" id="panel-guests">
+  <div class="sh">
+    <h2 class="st">Guest List</h2>
+    <div class="sa">
+      <button class="btn bp" onclick="om('guest')">+ Add Guest</button>
+    </div>
+  </div>
+  <div class="chips">
+    <span class="chip active" onclick="fg('all',this)">All</span>
+    <span class="chip" onclick="fg('my',this)">My Family</span>
+    <span class="chip" onclick="fg('wife',this)">Wife's Family</span>
+    <span class="chip" onclick="fg('notcalled',this)">Not Called</span>
+    <span class="chip" onclick="fg('nocard',this)">Card Pending</span>
+    <span class="chip" onclick="fg('confirmed',this)">Confirmed</span>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Side</th><th>Relation</th><th>Phone</th><th>Called</th><th>Card Sent</th><th>Expected #</th><th>Confirmed</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="gtbody"><tr><td colspan="11" class="es">No guests added yet</td></tr></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;font-size:.83rem;color:var(--tl)" id="gbar"></div>
+</div>
+
+<!-- SHOPPING -->
+<div class="tab-panel" id="panel-shopping">
+  <div class="sh">
+    <h2 class="st">Shopping & To-Do List</h2>
+    <div class="sa"><button class="btn bp" onclick="om('shopping')">+ Add Item</button></div>
+  </div>
+  <div class="chips" id="shop-chips">
+    <span class="chip active" onclick="fsh('all',this)">All</span>
+    <span class="chip" onclick="fsh('Pending',this)">Pending</span>
+    <span class="chip" onclick="fsh('Ordered',this)">Ordered</span>
+    <span class="chip" onclick="fsh('Received',this)">Received</span>
+  </div>
+  <div class="scard" id="shop-totals"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Qty</th><th>Est. Cost ₹</th><th>Actual Cost ₹</th><th>Status</th><th>Assigned To</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="shtbody"><tr><td colspan="10" class="es">No items added yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EXPENSES -->
+<div class="tab-panel" id="panel-expenses">
+  <div class="sh">
+    <h2 class="st">Expense Tracker</h2>
+    <div class="sa"><button class="btn bp" onclick="om('expense')">+ Add Expense</button></div>
+  </div>
+  <div class="chips" id="exp-chips">
+    <span class="chip active" onclick="fex('all',this)">All</span>
+    <span class="chip" onclick="fex('Catering',this)">Catering</span>
+    <span class="chip" onclick="fex('Decoration',this)">Decoration</span>
+    <span class="chip" onclick="fex('Venue',this)">Venue</span>
+    <span class="chip" onclick="fex('Priest',this)">Priest</span>
+    <span class="chip" onclick="fex('Photography',this)">Photography</span>
+    <span class="chip" onclick="fex('Gifts',this)">Gifts</span>
+    <span class="chip" onclick="fex('Other',this)">Other</span>
+  </div>
+  <div class="scard" id="exp-totals"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Date</th><th>Category</th><th>Description</th><th>Amount ₹</th><th>Paid By</th><th>Mode</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="extbody"><tr><td colspan="9" class="es">No expenses recorded yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ROOMS -->
+<div class="tab-panel" id="panel-rooms">
+  <div class="sh"><h2 class="st">Marriage Hall Rooms (5 Rooms)</h2></div>
+  <div class="rg" id="rooms-grid"></div>
+  <div class="sh">
+    <h2 class="st">Overflow Accommodation</h2>
+    <div class="sa"><button class="btn bp" onclick="om('overflow')">+ Add Hotel Room</button></div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Hotel Name</th><th>Guest</th><th>Check-in</th><th>Check-out</th><th>Persons</th><th>Cost/Night ₹</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="ovtbody"><tr><td colspan="9" class="es">No overflow rooms booked</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAYMENTS -->
+<div class="tab-panel" id="panel-payments">
+  <div class="sh">
+    <h2 class="st">Vendor Payments</h2>
+    <div class="sa"><button class="btn bp" onclick="om('payment')">+ Add Vendor</button></div>
+  </div>
+  <div class="ptbar" id="pay-totals"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Payee / Vendor</th><th>Category</th><th>Total ₹</th><th>Advance ₹</th><th>Balance ₹</th><th>Due Date</th><th>Status</th><th>Mode</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="paytbody"><tr><td colspan="11" class="es">No vendors added yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MAIN MODAL -->
+<div class="mo" id="modal-ov" onclick="if(event.target===this)cm()">
+  <div class="m">
+    <div class="mh"><h3 id="m-title">Add</h3><button class="mc" onclick="cm()">✕</button></div>
+    <div class="mb" id="m-body"></div>
+    <div class="mf">
+      <button class="btn bo" onclick="cm()">Cancel</button>
+      <button class="btn bp" onclick="sm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="mo" id="set-ov" onclick="if(event.target===this)cs()">
+  <div class="m">
+    <div class="mh"><h3>⚙ Settings & Google Sheets Setup</h3><button class="mc" onclick="cs()">✕</button></div>
+    <div class="mb">
+      <div class="fr s"><div class="fg"><label>Child's Name(s)</label><input type="text" id="s-child" placeholder="e.g., Srivatsav & Srihari"></div></div>
+      <div class="fr">
+        <div class="fg"><label>Day 1 — Naandi Date</label><input type="text" id="s-d1" placeholder="22 Mar 2026"></div>
+        <div class="fg"><label>Day 2 — Upanayanam Date</label><input type="text" id="s-d2" placeholder="23 Mar 2026"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Venue Name</label><input type="text" id="s-venue" placeholder="e.g., Sri Kalyana Mantapa"></div>
+        <div class="fg"><label>Father's Name</label><input type="text" id="s-parent" placeholder="Your name"></div>
+      </div>
+      <hr class="sep">
+      <div class="fr s">
+        <div class="fg">
+          <label>Google Apps Script Web App URL</label>
+          <input type="url" id="s-url" placeholder="https://script.google.com/macros/s/...">
+          <small style="margin-top:5px;display:block;color:var(--tl)">
+            <a href="#" onclick="toggleHelp()" style="color:var(--mr)">📋 How to set up Google Sheets sync →</a>
+          </small>
+        </div>
+      </div>
+      <div id="help-box" class="helpbox hidden">
+        <strong>One-time Setup (5 minutes):</strong><br>
+        1. Open <a href="https://sheets.google.com" target="_blank" style="color:var(--mr)">sheets.google.com</a> → Create a new spreadsheet → note its ID from the URL<br>
+        2. In that sheet: Extensions → Apps Script<br>
+        3. Delete any existing code; paste the contents of <strong>Code.gs</strong> (provided alongside this app)<br>
+        4. Click ⚙ Project Settings → Script Properties → Add property:<br>
+        &nbsp;&nbsp;<code>SPREADSHEET_ID</code> = your spreadsheet ID<br>
+        5. Run <code>initializeSheets()</code> once (click ▶ Run in Apps Script)<br>
+        6. Deploy → New Deployment → Web App<br>
+        &nbsp;&nbsp;Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong><br>
+        7. Copy the Web App URL → paste above → Save → click "⟳ Sync Sheets"
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bo" onclick="cs()">Cancel</button>
+      <button class="btn bp" onclick="saveSets()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  url:'', activeTab:'dashboard',
+  gf:'all', shf:'all', exf:'all',
+  modal:null, eid:null,
+  guests:[], shopping:[], expenses:[],
+  rooms:[], overflow:[], payments:[],
+  sets:{childName:'',date1:'22 Mar 2026',date2:'23 Mar 2026',venue:'',parent:''}
+};
+
+function initRooms(){
+  return [1,2,3,4,5].map(n=>({id:'room'+n,name:'Room '+n,guestName:'',relation:'',checkin:'',checkout:'',pax:'',notes:''}));
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+const LS = k => 'upan_'+k;
+function save(){
+  ['guests','shopping','expenses','rooms','overflow','payments','sets'].forEach(k=>localStorage.setItem(LS(k),JSON.stringify(S[k])));
+  localStorage.setItem(LS('url'),S.url);
+}
+function load(){
+  S.url = localStorage.getItem(LS('url'))||'';
+  ['guests','shopping','expenses','overflow','payments'].forEach(k=>{const d=localStorage.getItem(LS(k));if(d)S[k]=JSON.parse(d);});
+  const r=localStorage.getItem(LS('rooms')); S.rooms = r?JSON.parse(r):initRooms();
+  const st=localStorage.getItem(LS('sets')); if(st)S.sets={...S.sets,...JSON.parse(st)};
+}
+
+// ─── SHEETS SYNC ─────────────────────────────────────────────────────────────
+async function syncData(){
+  if(!S.url){toast('Configure Google Sheets URL in Settings first','err');return;}
+  ind('⟳ syncing…');
+  try{
+    const r=await fetch(S.url+'?action=readAll');
+    const d=await r.json();
+    if(d.success){
+      const x=d.data;
+      if(x.guests?.length) S.guests=x.guests;
+      if(x.shopping?.length) S.shopping=x.shopping;
+      if(x.expenses?.length) S.expenses=x.expenses;
+      if(x.overflow?.length) S.overflow=x.overflow;
+      if(x.payments?.length) S.payments=x.payments;
+      if(x.rooms?.length){
+        x.rooms.forEach(sr=>{const lr=S.rooms.find(r=>r.id===sr.id);if(lr)Object.assign(lr,sr);});
+      }
+      save(); renderAll(); toast('Synced from Google Sheets!','ok');
+    } else toast('Sync failed: '+(d.error||'Unknown'),'err');
+  }catch(e){toast('Sync error: '+e.message,'err');}
+  ind('');
+}
+
+async function push(sheet,action,data){
+  if(!S.url) return;
+  try{
+    const p=new URLSearchParams({action,sheet,id:(data&&data.id)||'',data:JSON.stringify(data||{})});
+    await fetch(S.url+'?'+p);
+  }catch(e){console.warn('Sheet push failed',e.message);}
+}
+
+function ind(msg){document.getElementById('sync-ind').textContent=msg;}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const fmt=n=>(+n||0).toLocaleString('en-IN');
+const b=v=>v===true||v==='true'||v===1||v==='1';
+const gv=id=>{const e=document.getElementById(id);return e?e.type==='checkbox'?e.checked:e.value:'';}
+
+function toast(msg,type='inf'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function sw(tab){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  document.getElementById('nb-'+tab).classList.add('active');
+  S.activeTab=tab;
+  if(tab==='dashboard') rdash();
+}
+
+function toggleHelp(){const h=document.getElementById('help-box');h.classList.toggle('hidden');}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function rdash(){
+  const ev1=new Date('2026-03-22'), now=new Date();
+  const diff=Math.max(0,Math.ceil((ev1-now)/(864e5)));
+  const expTot=S.guests.reduce((s,g)=>s+(+g.expectedCount||0),0);
+  document.getElementById('cdbar').innerHTML=`
+    <div class="cdi"><div class="cdv">${diff}</div><div class="cdl">Days to Naandi</div></div>
+    <div class="cdi"><div class="cdv">${diff+1}</div><div class="cdl">Days to Upanayanam</div></div>
+    <div class="cdi"><div class="cdv">${S.guests.length}</div><div class="cdl">Guests Added</div></div>
+    <div class="cdi"><div class="cdv">${expTot}</div><div class="cdl">Expected Attendees</div></div>`;
+
+  const called=S.guests.filter(g=>b(g.called)).length;
+  const cards=S.guests.filter(g=>b(g.cardSent)).length;
+  const conf=S.guests.filter(g=>b(g.confirmed)).length;
+  const expAmt=S.expenses.reduce((s,e)=>s+(+e.amount||0),0);
+  const payTot=S.payments.reduce((s,p)=>s+(+p.total||0),0);
+  const payAdv=S.payments.reduce((s,p)=>s+(+p.advance||0),0);
+  const rOcc=S.rooms.filter(r=>r.guestName?.trim()).length;
+
+  document.getElementById('dstats').innerHTML=`
+    <div class="sc"><div class="lbl">Total Guests</div><div class="val">${S.guests.length}</div><div class="sub">${called} called · ${cards} invited</div></div>
+    <div class="sc mr"><div class="lbl">Expected Attendance</div><div class="val">${expTot}</div><div class="sub">${conf} confirmed</div></div>
+    <div class="sc gd"><div class="lbl">Total Expenses</div><div class="val">₹${fmt(expAmt)}</div><div class="sub">${S.expenses.length} entries</div></div>
+    <div class="sc gn"><div class="lbl">Rooms Occupied</div><div class="val">${rOcc}/5</div><div class="sub">${S.overflow.length} overflow rooms</div></div>`;
+
+  const my=S.guests.filter(g=>g.side==='my');
+  const wf=S.guests.filter(g=>g.side==='wife');
+  const myE=my.reduce((s,g)=>s+(+g.expectedCount||0),0);
+  const wfE=wf.reduce((s,g)=>s+(+g.expectedCount||0),0);
+  const tot=S.guests.length||1;
+  document.getElementById('dg-guest').innerHTML=`
+    <div class="sr"><span class="sl">My Family</span><span class="sv">${my.length} guests (${myE} expected)</span></div>
+    <div class="sr"><span class="sl">Wife's Family</span><span class="sv">${wf.length} guests (${wfE} expected)</span></div>
+    <div class="sr"><span class="sl">Called / Informed</span><span class="sv">${called} / ${S.guests.length}</span></div>
+    <div class="sr"><span class="sl">Invitation Card Sent</span><span class="sv">${cards} / ${S.guests.length}</span></div>
+    <div class="sr"><span class="sl">Confirmed Attending</span><span class="sv">${conf} / ${S.guests.length}</span></div>
+    <div class="pb"><div class="pf" style="width:${Math.round(cards/tot*100)}%"></div></div>
+    <div style="font-size:.75rem;color:var(--tl);margin-top:4px">${Math.round(cards/tot*100)}% invited</div>`;
+
+  const byCat={};S.expenses.forEach(e=>{byCat[e.category]=(byCat[e.category]||0)+(+e.amount||0);});
+  const topC=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('dg-exp').innerHTML=(topC.length?topC.map(([c,a])=>`<div class="sr"><span class="sl">${c}</span><span class="sv">₹${fmt(a)}</span></div>`).join(''):'<div style="color:var(--tl);font-style:italic;font-size:.88rem;padding:8px 0">No expenses recorded yet</div>')+
+    `<div class="sr" style="border-top:2px solid var(--bd);margin-top:6px;padding-top:6px"><span class="sl fw6">Total</span><span class="sv tmr">₹${fmt(expAmt)}</span></div>`;
+
+  document.getElementById('dg-room').innerHTML=S.rooms.map(r=>`<div class="sr"><span class="sl">${r.name}</span><span class="sv">${r.guestName?r.guestName:'<em style="color:var(--tl);font-weight:400">Vacant</em>'}</span></div>`).join('')+
+    (S.overflow.length?`<div class="sr"><span class="sl">Hotel Overflow</span><span class="sv">${S.overflow.length} room(s)</span></div>`:'');
+
+  const pPaid=S.payments.filter(p=>p.status==='Paid').length;
+  document.getElementById('dg-pay').innerHTML=`
+    <div class="sr"><span class="sl">Total Vendors</span><span class="sv">${S.payments.length}</span></div>
+    <div class="sr"><span class="sl">Total Committed</span><span class="sv">₹${fmt(payTot)}</span></div>
+    <div class="sr"><span class="sl">Advance Paid</span><span class="sv tgn">₹${fmt(payAdv)}</span></div>
+    <div class="sr"><span class="sl">Balance Pending</span><span class="sv tor">₹${fmt(payTot-payAdv)}</span></div>
+    <div class="sr"><span class="sl">Fully Settled</span><span class="sv">${pPaid} of ${S.payments.length} vendors</span></div>`;
+}
+
+// ─── GUESTS ──────────────────────────────────────────────────────────────────
+function fg(f,el){
+  S.gf=f;
+  document.querySelectorAll('#panel-guests .chip').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active'); rguests();
+}
+function filteredGuests(){
+  if(S.gf==='my') return S.guests.filter(g=>g.side==='my');
+  if(S.gf==='wife') return S.guests.filter(g=>g.side==='wife');
+  if(S.gf==='notcalled') return S.guests.filter(g=>!b(g.called));
+  if(S.gf==='nocard') return S.guests.filter(g=>!b(g.cardSent));
+  if(S.gf==='confirmed') return S.guests.filter(g=>b(g.confirmed));
+  return S.guests;
+}
+function rguests(){
+  const list=filteredGuests();
+  document.getElementById('gtbody').innerHTML=list.length?list.map((g,i)=>`
+    <tr>
+      <td>${i+1}</td><td class="fw6">${g.name||''}</td>
+      <td><span class="bg ${g.side==='my'?'bmy':'bwf'}">${g.side==='my'?'My Family':"Wife's"}</span></td>
+      <td>${g.relation||''}</td><td>${g.phone||''}</td>
+      <td><span class="bg ${b(g.called)?'by':'bn'}">${b(g.called)?'✓ Yes':'✗ No'}</span></td>
+      <td><span class="bg ${b(g.cardSent)?'by':'bn'}">${b(g.cardSent)?'✓ Yes':'✗ No'}</span></td>
+      <td class="tc">${g.expectedCount||0}</td>
+      <td><span class="bg ${b(g.confirmed)?'by':'bn'}">${b(g.confirmed)?'✓ Yes':'✗ No'}</span></td>
+      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;color:var(--tl)">${g.notes||''}</td>
+      <td class="nw"><button class="bic" onclick="om('guest','${g.id}')">✎</button> <button class="bic" onclick="del('guests','${g.id}')">🗑</button></td>
+    </tr>`).join(''):`<tr><td colspan="11" class="es">No guests match this filter</td></tr>`;
+
+  const tot=S.guests.length,called=S.guests.filter(g=>b(g.called)).length,
+    cards=S.guests.filter(g=>b(g.cardSent)).length,
+    exp=S.guests.reduce((s,g)=>s+(+g.expectedCount||0),0);
+  document.getElementById('gbar').innerHTML=`Showing ${list.length} of ${tot} &nbsp;|&nbsp; Called: <b>${called}</b> &nbsp;|&nbsp; Cards Sent: <b>${cards}</b> &nbsp;|&nbsp; Expected Total: <b>${exp} persons</b>`;
+}
+
+// ─── SHOPPING ────────────────────────────────────────────────────────────────
+function fsh(f,el){
+  S.shf=f;
+  document.querySelectorAll('#shop-chips .chip').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active'); rshopping();
+}
+function rshopping(){
+  const list=S.shf==='all'?S.shopping:S.shopping.filter(i=>i.status===S.shf);
+  document.getElementById('shtbody').innerHTML=list.length?list.map((it,i)=>{
+    const sb=it.status==='Received'?'bdone':it.status==='Ordered'?'bpart':'bpnd';
+    return`<tr><td>${i+1}</td><td class="fw6">${it.item||''}</td><td>${it.category||''}</td>
+      <td>${it.qty||''} ${it.unit||''}</td>
+      <td class="tr">₹${fmt(+it.estCost||0)}</td>
+      <td class="tr">${it.actualCost?'₹'+fmt(+it.actualCost):'-'}</td>
+      <td><span class="bg ${sb}">${it.status||'Pending'}</span></td>
+      <td>${it.assignedTo||''}</td>
+      <td style="font-size:.8rem;color:var(--tl)">${it.notes||''}</td>
+      <td class="nw"><button class="bic" onclick="om('shopping','${it.id}')">✎</button> <button class="bic" onclick="del('shopping','${it.id}')">🗑</button></td>
+    </tr>`;}).join(''):`<tr><td colspan="10" class="es">No items found</td></tr>`;
+
+  const et=S.shopping.reduce((s,i)=>s+(+i.estCost||0),0),at=S.shopping.reduce((s,i)=>s+(+i.actualCost||0),0),
+    pnd=S.shopping.filter(i=>i.status!=='Received').length;
+  document.getElementById('shop-totals').innerHTML=`Items: <b>${S.shopping.length}</b> &nbsp;|&nbsp; Estimated: <b>₹${fmt(et)}</b> &nbsp;|&nbsp; Actual: <b>₹${fmt(at)}</b> &nbsp;|&nbsp; Yet to Receive: <b>${pnd}</b>`;
+}
+
+// ─── EXPENSES ────────────────────────────────────────────────────────────────
+function fex(f,el){
+  S.exf=f;
+  document.querySelectorAll('#exp-chips .chip').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active'); rexpenses();
+}
+function rexpenses(){
+  const list=S.exf==='all'?S.expenses:S.expenses.filter(e=>e.category===S.exf);
+  const sorted=[...list].sort((a,c)=>new Date(c.date)-new Date(a.date));
+  document.getElementById('extbody').innerHTML=sorted.length?sorted.map((e,i)=>`
+    <tr><td>${i+1}</td><td>${e.date||''}</td><td>${e.category||''}</td>
+      <td>${e.description||''}</td><td class="tr fw6">₹${fmt(+e.amount||0)}</td>
+      <td>${e.paidBy||''}</td><td>${e.mode||''}</td>
+      <td style="font-size:.8rem;color:var(--tl)">${e.notes||''}</td>
+      <td class="nw"><button class="bic" onclick="om('expense','${e.id}')">✎</button> <button class="bic" onclick="del('expenses','${e.id}')">🗑</button></td>
+    </tr>`).join(''):`<tr><td colspan="9" class="es">No expenses found</td></tr>`;
+
+  const tot=S.expenses.reduce((s,e)=>s+(+e.amount||0),0),sub=list.reduce((s,e)=>s+(+e.amount||0),0);
+  document.getElementById('exp-totals').innerHTML=`Showing: <b>${list.length}</b> entries &nbsp;|&nbsp; Subtotal: <b>₹${fmt(sub)}</b> &nbsp;|&nbsp; Grand Total: <b class="tmr">₹${fmt(tot)}</b>`;
+}
+
+// ─── ROOMS ───────────────────────────────────────────────────────────────────
+function rrooms(){
+  document.getElementById('rooms-grid').innerHTML=S.rooms.map(room=>{
+    const occ=room.guestName?.trim();
+    return`<div class="rc">
+      <div class="rch"><span class="rcn">🏠 ${room.name}</span><span class="bg ${occ?'by':'bn'}" style="font-size:.7rem">${occ?'Occupied':'Vacant'}</span></div>
+      <div class="rcb">
+        ${occ?`
+          <div class="rf"><label>Guest</label><b>${room.guestName}</b></div>
+          ${room.relation?`<div class="rf"><label>Relation</label>${room.relation}</div>`:''}
+          ${room.checkin?`<div class="rf"><label>Check-in</label>${room.checkin}</div>`:''}
+          ${room.checkout?`<div class="rf"><label>Check-out</label>${room.checkout}</div>`:''}
+          ${room.pax?`<div class="rf"><label>Persons</label>${room.pax}</div>`:''}
+          ${room.notes?`<div class="rf"><label>Notes</label><span style="font-size:.83rem">${room.notes}</span></div>`:''}
+        `:`<div class="rv">— Vacant —</div>`}
+        <div style="margin-top:8px;text-align:right">
+          <button class="btn bo bsm" onclick="om('room','${room.id}')">✎ ${occ?'Edit':'Assign'}</button>
+          ${occ?`<button class="btn bo bsm" style="margin-left:6px" onclick="clrRoom('${room.id}')">Clear</button>`:''}
+        </div>
+      </div>
+    </div>`;}).join('');
+
+  document.getElementById('ovtbody').innerHTML=S.overflow.length?S.overflow.map((o,i)=>`
+    <tr><td>${i+1}</td><td class="fw6">${o.hotelName||''}</td><td>${o.guestName||''}</td>
+      <td>${o.checkin||''}</td><td>${o.checkout||''}</td><td class="tc">${o.pax||''}</td>
+      <td class="tr">₹${fmt(+o.costPerNight||0)}</td>
+      <td style="font-size:.8rem">${o.notes||''}</td>
+      <td class="nw"><button class="bic" onclick="om('overflow','${o.id}')">✎</button> <button class="bic" onclick="del('overflow','${o.id}')">🗑</button></td>
+    </tr>`).join(''):`<tr><td colspan="9" class="es">No overflow rooms booked</td></tr>`;
+}
+
+function clrRoom(id){
+  const r=S.rooms.find(x=>x.id===id);
+  if(r&&confirm(`Clear ${r.name}?`)){
+    Object.assign(r,{guestName:'',relation:'',checkin:'',checkout:'',pax:'',notes:''});
+    save();push('Rooms','update',r);rrooms();toast('Room cleared','inf');
+  }
+}
+
+// ─── PAYMENTS ────────────────────────────────────────────────────────────────
+function rpayments(){
+  document.getElementById('paytbody').innerHTML=S.payments.length?S.payments.map((p,i)=>{
+    const bal=(+p.total||0)-(+p.advance||0);
+    const sb=p.status==='Paid'?'bdone':p.status==='Partial'?'bpart':'bpnd';
+    return`<tr><td>${i+1}</td><td class="fw6">${p.payee||''}</td><td>${p.category||''}</td>
+      <td class="tr">₹${fmt(+p.total||0)}</td>
+      <td class="tr tgn">₹${fmt(+p.advance||0)}</td>
+      <td class="tr tor">₹${fmt(bal)}</td>
+      <td>${p.dueDate||''}</td><td><span class="bg ${sb}">${p.status||'Pending'}</span></td>
+      <td>${p.mode||''}</td>
+      <td style="font-size:.8rem;color:var(--tl)">${p.notes||''}</td>
+      <td class="nw"><button class="bic" onclick="om('payment','${p.id}')">✎</button> <button class="bic" onclick="del('payments','${p.id}')">🗑</button></td>
+    </tr>`;}).join(''):`<tr><td colspan="11" class="es">No vendors added yet</td></tr>`;
+
+  const tot=S.payments.reduce((s,p)=>s+(+p.total||0),0),
+    adv=S.payments.reduce((s,p)=>s+(+p.advance||0),0),
+    paid=S.payments.filter(p=>p.status==='Paid').length;
+  document.getElementById('pay-totals').innerHTML=`
+    <div class="pti"><div class="ptl">Committed</div><div class="ptv">₹${fmt(tot)}</div></div>
+    <div class="pti"><div class="ptl">Advance Paid</div><div class="ptv" style="color:#166534">₹${fmt(adv)}</div></div>
+    <div class="pti"><div class="ptl">Balance Due</div><div class="ptv" style="color:var(--gd)">₹${fmt(tot-adv)}</div></div>
+    <div class="pti"><div class="ptl">Fully Paid</div><div class="ptv">${paid} / ${S.payments.length}</div></div>`;
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+const CATS_SH=['Pooja Items','Clothing','Food & Grocery','Decoration','Stationery & Cards','Gifts','Catering','Music','Photography','Other'];
+const CATS_EX=['Catering','Decoration','Venue','Priest','Music & Nadaswaram','Photography','Gifts','Travel','Clothing','Other'];
+const CATS_PA=['Marriage Hall','Catering','Priest / Purohit','Music & Nadaswaram','Photography & Video','Decoration','Tent & Furniture','Generator','Workers','Transport','Printing','Gifts','Other'];
+const MODES=['Cash','UPI','Net Banking','Card','Cheque'];
+const sel=(opts,cur)=>opts.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('');
+
+function om(type,id){
+  S.modal=type;S.eid=id||null;
+  let ex=null;
+  if(id){
+    if(type==='room') ex=S.rooms.find(r=>r.id===id);
+    else ex=S[type==='guest'?'guests':type==='shopping'?'shopping':type==='expense'?'expenses':type==='overflow'?'overflow':'payments']?.find(x=>x.id===id);
+  }
+  const v=(f,d='')=>ex?(ex[f]??d):d;
+  const ck=f=>b(v(f))?'checked':'';
+  const today=new Date().toISOString().split('T')[0];
+
+  const titles={guest:'Guest',shopping:'Shopping Item',expense:'Expense',room:'Room Assignment',overflow:'Hotel Room',payment:'Vendor Payment'};
+  document.getElementById('m-title').textContent=(id?'Edit ':'Add ')+titles[type];
+
+  let html='';
+  if(type==='guest'){html=`
+    <div class="fr"><div class="fg"><label>Name *</label><input id="f-name" value="${v('name')}"></div>
+      <div class="fg"><label>Family Side *</label><select id="f-side"><option value="my"${v('side')==='my'?' selected':''}>My Family</option><option value="wife"${v('side')==='wife'?' selected':''}>Wife's Family</option></select></div></div>
+    <div class="fr"><div class="fg"><label>Relation</label><input id="f-relation" placeholder="Uncle, Cousin…" value="${v('relation')}"></div>
+      <div class="fg"><label>Phone</label><input id="f-phone" type="tel" value="${v('phone')}"></div></div>
+    <div class="fr"><div class="fg"><label>City</label><input id="f-city" value="${v('city')}"></div>
+      <div class="fg"><label>Expected # Persons</label><input id="f-expectedCount" type="number" min="0" value="${v('expectedCount',1)}"></div></div>
+    <div class="fr t">
+      <div class="fg"><label class="ck"><input type="checkbox" id="f-called" ${ck('called')}> Called / Informed</label></div>
+      <div class="fg"><label class="ck"><input type="checkbox" id="f-cardSent" ${ck('cardSent')}> Card Sent</label></div>
+      <div class="fg"><label class="ck"><input type="checkbox" id="f-confirmed" ${ck('confirmed')}> Confirmed</label></div></div>
+    <div class="fr s"><div class="fg"><label>Notes</label><textarea id="f-notes">${v('notes')}</textarea></div></div>`;}
+  else if(type==='shopping'){html=`
+    <div class="fr"><div class="fg"><label>Item Name *</label><input id="f-item" value="${v('item')}"></div>
+      <div class="fg"><label>Category</label><select id="f-category">${sel(CATS_SH,v('category'))}</select></div></div>
+    <div class="fr t"><div class="fg"><label>Quantity</label><input id="f-qty" value="${v('qty')}"></div>
+      <div class="fg"><label>Unit</label><input id="f-unit" placeholder="kg, pcs…" value="${v('unit')}"></div>
+      <div class="fg"><label>Status</label><select id="f-status">${sel(['Pending','Ordered','Received'],v('status','Pending'))}</select></div></div>
+    <div class="fr"><div class="fg"><label>Est. Cost ₹</label><input id="f-estCost" type="number" value="${v('estCost')}"></div>
+      <div class="fg"><label>Actual Cost ₹</label><input id="f-actualCost" type="number" value="${v('actualCost')}"></div></div>
+    <div class="fr"><div class="fg"><label>Assigned To</label><input id="f-assignedTo" value="${v('assignedTo')}"></div></div>
+    <div class="fr s"><div class="fg"><label>Notes</label><textarea id="f-notes">${v('notes')}</textarea></div></div>`;}
+  else if(type==='expense'){html=`
+    <div class="fr"><div class="fg"><label>Date *</label><input id="f-date" type="date" value="${v('date',today)}"></div>
+      <div class="fg"><label>Category</label><select id="f-category">${sel(CATS_EX,v('category'))}</select></div></div>
+    <div class="fr"><div class="fg"><label>Description *</label><input id="f-description" value="${v('description')}"></div>
+      <div class="fg"><label>Amount ₹ *</label><input id="f-amount" type="number" value="${v('amount')}"></div></div>
+    <div class="fr"><div class="fg"><label>Paid By</label><input id="f-paidBy" value="${v('paidBy')}"></div>
+      <div class="fg"><label>Payment Mode</label><select id="f-mode">${sel(MODES,v('mode'))}</select></div></div>
+    <div class="fr s"><div class="fg"><label>Notes</label><textarea id="f-notes">${v('notes')}</textarea></div></div>`;}
+  else if(type==='room'){html=`
+    <div class="fr"><div class="fg"><label>Guest Name</label><input id="f-guestName" value="${v('guestName')}"></div>
+      <div class="fg"><label>Relation</label><input id="f-relation" value="${v('relation')}"></div></div>
+    <div class="fr"><div class="fg"><label>Check-in</label><input id="f-checkin" placeholder="21 Mar Evening" value="${v('checkin')}"></div>
+      <div class="fg"><label>Check-out</label><input id="f-checkout" placeholder="24 Mar Morning" value="${v('checkout')}"></div></div>
+    <div class="fr"><div class="fg"><label>Number of Persons</label><input id="f-pax" type="number" min="0" value="${v('pax')}"></div></div>
+    <div class="fr s"><div class="fg"><label>Notes</label><textarea id="f-notes">${v('notes')}</textarea></div></div>`;}
+  else if(type==='overflow'){html=`
+    <div class="fr"><div class="fg"><label>Hotel Name *</label><input id="f-hotelName" value="${v('hotelName')}"></div>
+      <div class="fg"><label>Guest Name</label><input id="f-guestName" value="${v('guestName')}"></div></div>
+    <div class="fr t"><div class="fg"><label>Check-in</label><input id="f-checkin" value="${v('checkin')}"></div>
+      <div class="fg"><label>Check-out</label><input id="f-checkout" value="${v('checkout')}"></div>
+      <div class="fg"><label>Persons</label><input id="f-pax" type="number" min="0" value="${v('pax')}"></div></div>
+    <div class="fr"><div class="fg"><label>Cost / Night ₹</label><input id="f-costPerNight" type="number" value="${v('costPerNight')}"></div></div>
+    <div class="fr s"><div class="fg"><label>Notes</label><textarea id="f-notes">${v('notes')}</textarea></div></div>`;}
+  else if(type==='payment'){
+    const defBal=(+v('total')||0)-(+v('advance')||0);
+    html=`
+    <div class="fr"><div class="fg"><label>Payee / Vendor Name *</label><input id="f-payee" value="${v('payee')}"></div>
+      <div class="fg"><label>Category</label><select id="f-category">${sel(CATS_PA,v('category'))}</select></div></div>
+    <div class="fr t"><div class="fg"><label>Total Amount ₹</label><input id="f-total" type="number" value="${v('total')}" oninput="calcBal()"></div>
+      <div class="fg"><label>Advance Paid ₹</label><input id="f-advance" type="number" value="${v('advance')}" oninput="calcBal()"></div>
+      <div class="fg"><label>Balance ₹</label><input id="f-balance" type="number" value="${defBal}" readonly style="background:#F5F5F5"></div></div>
+    <div class="fr"><div class="fg"><label>Due Date</label><input id="f-dueDate" placeholder="23 Mar 2026" value="${v('dueDate')}"></div>
+      <div class="fg"><label>Status</label><select id="f-status">${sel(['Pending','Partial','Paid'],v('status','Pending'))}</select></div></div>
+    <div class="fr"><div class="fg"><label>Payment Mode</label><select id="f-mode">${sel(MODES,v('mode'))}</select></div>
+      <div class="fg"><label>Payment Date</label><input id="f-paidDate" value="${v('paidDate')}"></div></div>
+    <div class="fr s"><div class="fg"><label>Notes</label><textarea id="f-notes">${v('notes')}</textarea></div></div>`;}
+
+  document.getElementById('m-body').innerHTML=html;
+  document.getElementById('modal-ov').classList.add('open');
+}
+
+function calcBal(){
+  const t=+document.getElementById('f-total')?.value||0,a=+document.getElementById('f-advance')?.value||0;
+  const b=document.getElementById('f-balance');if(b)b.value=t-a;
+}
+
+function cm(){document.getElementById('modal-ov').classList.remove('open');S.modal=null;S.eid=null;}
+
+function sm(){
+  const type=S.modal,id=S.eid;
+  const g=f=>{const el=document.getElementById('f-'+f);return el?el.type==='checkbox'?el.checked:el.value:'';};
+
+  let data={};
+  if(type==='guest'){
+    if(!g('name').trim()){toast('Name is required','err');return;}
+    data={id:id||uid(),side:g('side'),name:g('name').trim(),relation:g('relation'),phone:g('phone'),city:g('city'),expectedCount:g('expectedCount')||1,called:g('called'),cardSent:g('cardSent'),confirmed:g('confirmed'),notes:g('notes')};
+    if(id){const i=S.guests.findIndex(x=>x.id===id);if(i!==-1)S.guests[i]=data;}else S.guests.push(data);
+    rguests();
+  }else if(type==='shopping'){
+    if(!g('item').trim()){toast('Item name required','err');return;}
+    data={id:id||uid(),item:g('item').trim(),category:g('category'),qty:g('qty'),unit:g('unit'),estCost:g('estCost'),actualCost:g('actualCost'),status:g('status')||'Pending',assignedTo:g('assignedTo'),notes:g('notes')};
+    if(id){const i=S.shopping.findIndex(x=>x.id===id);if(i!==-1)S.shopping[i]=data;}else S.shopping.push(data);
+    rshopping();
+  }else if(type==='expense'){
+    if(!g('amount')){toast('Amount is required','err');return;}
+    data={id:id||uid(),date:g('date'),category:g('category'),description:g('description'),amount:g('amount'),paidBy:g('paidBy'),mode:g('mode'),notes:g('notes')};
+    if(id){const i=S.expenses.findIndex(x=>x.id===id);if(i!==-1)S.expenses[i]=data;}else S.expenses.push(data);
+    rexpenses();
+  }else if(type==='room'){
+    const room=S.rooms.find(r=>r.id===id);
+    if(room){Object.assign(room,{guestName:g('guestName'),relation:g('relation'),checkin:g('checkin'),checkout:g('checkout'),pax:g('pax'),notes:g('notes')});data={...room};}
+    rrooms();
+  }else if(type==='overflow'){
+    if(!g('hotelName').trim()){toast('Hotel name required','err');return;}
+    data={id:id||uid(),hotelName:g('hotelName').trim(),guestName:g('guestName'),checkin:g('checkin'),checkout:g('checkout'),pax:g('pax'),costPerNight:g('costPerNight'),notes:g('notes')};
+    if(id){const i=S.overflow.findIndex(x=>x.id===id);if(i!==-1)S.overflow[i]=data;}else S.overflow.push(data);
+    rrooms();
+  }else if(type==='payment'){
+    if(!g('payee').trim()){toast('Payee name required','err');return;}
+    const tot=+g('total')||0,adv=+g('advance')||0;
+    data={id:id||uid(),payee:g('payee').trim(),category:g('category'),total:tot,advance:adv,balance:tot-adv,dueDate:g('dueDate'),status:g('status')||'Pending',mode:g('mode'),paidDate:g('paidDate'),notes:g('notes')};
+    if(id){const i=S.payments.findIndex(x=>x.id===id);if(i!==-1)S.payments[i]=data;}else S.payments.push(data);
+    rpayments();
+  }
+
+  save();
+  const SM={guest:'Guests',shopping:'Shopping',expense:'Expenses',room:'Rooms',overflow:'Overflow',payment:'Payments'};
+  push(SM[type],id?'update':'write',data);
+  cm();toast(id?'Updated!':'Added!','ok');
+  if(S.activeTab==='dashboard')rdash();
+}
+
+function del(col,id){
+  if(!confirm('Delete this item?'))return;
+  S[col]=S[col].filter(x=>x.id!==id);
+  save();
+  const SM={guests:'Guests',shopping:'Shopping',expenses:'Expenses',overflow:'Overflow',payments:'Payments'};
+  if(SM[col])push(SM[col],'delete',{id});
+  if(col==='guests')rguests();
+  else if(col==='shopping')rshopping();
+  else if(col==='expenses')rexpenses();
+  else if(col==='overflow')rrooms();
+  else if(col==='payments')rpayments();
+  toast('Deleted','inf');
+  if(S.activeTab==='dashboard')rdash();
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+function openSettings(){
+  const st=S.sets;
+  document.getElementById('s-child').value=st.childName||'';
+  document.getElementById('s-d1').value=st.date1||'22 Mar 2026';
+  document.getElementById('s-d2').value=st.date2||'23 Mar 2026';
+  document.getElementById('s-venue').value=st.venue||'';
+  document.getElementById('s-parent').value=st.parent||'';
+  document.getElementById('s-url').value=S.url||'';
+  document.getElementById('set-ov').classList.add('open');
+}
+function cs(){document.getElementById('set-ov').classList.remove('open');}
+function saveSets(){
+  S.sets.childName=document.getElementById('s-child').value;
+  S.sets.date1=document.getElementById('s-d1').value||'22 Mar 2026';
+  S.sets.date2=document.getElementById('s-d2').value||'23 Mar 2026';
+  S.sets.venue=document.getElementById('s-venue').value;
+  S.sets.parent=document.getElementById('s-parent').value;
+  S.url=document.getElementById('s-url').value.trim();
+  save();updateHeader();updateBanner();cs();toast('Settings saved!','ok');
+}
+
+function updateHeader(){
+  const s=S.sets;
+  document.getElementById('hdr-title').textContent='🪶 Upanayanam'+(s.childName?' — '+s.childName:'');
+  document.getElementById('hdr-sub').textContent=`${s.date1} (Naandi) · ${s.date2} (Upanayanam)`+(s.venue?' · '+s.venue:'');
+}
+function updateBanner(){
+  document.getElementById('setup-banner').classList.toggle('hidden',!!S.url);
+}
+
+// ─── RENDER ALL & INIT ────────────────────────────────────────────────────────
+function renderAll(){rguests();rshopping();rexpenses();rrooms();rpayments();rdash();}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  load();updateHeader();updateBanner();renderAll();
+});
+</script>
+</body>
+</html>
