@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upanayanam Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Crimson+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--sf:#D97706;--sf2:#F59E0B;--mr:#7C1D2E;--mr2:#9B2335;--gd:#B45309;--iv:#FDF6E3;--cr:#FAF0D7;--wh:#FFFFFF;--td:#1C0A00;--tm:#5C3A22;--tl:#9C7B6A;--bd:#E8D5B0;--sh:0 2px 12px rgba(28,10,0,.10);--rd:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Crimson Pro',Georgia,serif;background:var(--iv);color:var(--td);min-height:100vh}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--mr) 0%,#5C1020 40%,var(--gd) 100%);color:var(--iv);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 16px rgba(0,0,0,.30)}
+.hdr h1{font-family:'Playfair Display',serif;font-size:1.45rem;font-weight:700;line-height:1.2}
+.hdr .sub{font-size:.82rem;opacity:.82;margin-top:3px}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:white;padding:6px 13px;border-radius:6px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:.88rem;transition:background .2s;white-space:nowrap}
+.hbtn:hover{background:rgba(255,255,255,.26)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;display:inline-block;margin-right:4px}
+.sync-dot.off{background:#FCA5A5}
+
+/* SETUP BANNER */
+.setup-banner{background:#FFFBEB;border-left:4px solid var(--sf);padding:10px 20px;font-size:.88rem;color:var(--td);display:flex;align-items:center;gap:8px}
+.setup-banner a{color:var(--mr);cursor:pointer;text-decoration:underline}
+.hidden{display:none!important}
+
+/* NAV */
+.nav{background:white;border-bottom:2px solid var(--bd);padding:0 12px;display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ntab{padding:11px 16px;border:none;background:none;color:var(--tl);font-family:'Crimson Pro',serif;font-size:.92rem;font-weight:500;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s}
+.ntab.active{color:var(--mr);border-bottom-color:var(--mr);font-weight:600}
+.ntab:hover:not(.active){color:var(--sf)}
+
+/* MAIN */
+.main{padding:18px;max-width:1280px;margin:0 auto}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.sc{background:white;border-radius:var(--rd);padding:14px 18px;box-shadow:var(--sh);border-left:4px solid var(--sf)}
+.sc.mr{border-left-color:var(--mr)}.sc.gd{border-left-color:var(--gd)}.sc.gn{border-left-color:#15803D}
+.sc .lbl{font-size:.75rem;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sc .val{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:var(--td);line-height:1}
+.sc .sub{font-size:.78rem;color:var(--tl);margin-top:4px}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.st{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--mr)}
+.sa{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{padding:8px 15px;border-radius:6px;border:none;cursor:pointer;font-family:'Crimson Pro',serif;font-size:.9rem;font-weight:500;transition:all .2s}
+.bp{background:var(--mr);color:white}.bp:hover{background:var(--mr2)}
+.bo{background:transparent;border:1.5px solid var(--bd);color:var(--tm)}.bo:hover{border-color:var(--mr);color:var(--mr)}
+.bo.active{background:var(--mr);border-color:var(--mr);color:white}
+.bd2{background:#B91C1C;color:white}.bd2:hover{background:#DC2626}
+.bsm{padding:4px 9px;font-size:.8rem}
+.bic{padding:4px 7px;background:none;border:1px solid var(--bd);border-radius:5px;cursor:pointer;font-size:.85rem}.bic:hover{background:var(--cr)}
+
+/* CHIPS */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+.chip{padding:4px 12px;border-radius:20px;border:1.5px solid var(--bd);background:white;color:var(--tm);font-size:.83rem;cursor:pointer;transition:all .2s}
+.chip.active{background:var(--mr);color:white;border-color:var(--mr)}
+
+/* TABLE */
+.tw{overflow-x:auto;border-radius:var(--rd);box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;background:white;font-size:.88rem}
+thead th{background:var(--cr);color:var(--mr);font-weight:600;padding:9px 11px;text-align:left;border-bottom:2px solid var(--bd);white-space:nowrap;font-family:'Crimson Pro',serif;font-size:.8rem;text-transform:uppercase;letter-spacing:.4px}
+tbody td{padding:9px 11px;border-bottom:1px solid #F0E8D8;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FFFAF2}
+.es{text-align:center;padding:36px;color:var(--tl);font-style:italic}
+
+/* BADGES */
+.bg{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.74rem;font-weight:500}
+.by{background:#DCFCE7;color:#166534}.bn{background:#FEF3C7;color:#92400E}
+.bp2{background:#FEE2E2;color:#991B1B}.bpnd{background:#FEF9C3;color:#854D0E}
+.bdone{background:#DCFCE7;color:#166534}.bpart{background:#DBEAFE;color:#1E40AF}
+.bmy{background:#FCE7F3;color:#831843}.bwf{background:#EDE9FE;color:#3730A3}
+
+/* COUNTDOWN */
+.cdbar{background:linear-gradient(135deg,var(--mr),var(--gd));color:white;padding:12px 18px;border-radius:var(--rd);margin-bottom:18px;display:flex;justify-content:space-around;text-align:center;gap:8px;flex-wrap:wrap}
+.cdi .cdv{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700}
+.cdi .cdl{font-size:.76rem;opacity:.85}
+
+/* DASH GRID */
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+@media(max-width:700px){.dg{grid-template-columns:1fr}}
+.dc{background:white;border-radius:var(--rd);box-shadow:var(--sh);padding:16px 18px}
+.dct{font-family:'Playfair Display',serif;font-size:.98rem;color:var(--mr);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--bd)}
+.sr{display:flex;justify-content:space-between;padding:5px 0;font-size:.88rem;border-bottom:1px solid #F5EDD8}
+.sr:last-child{border-bottom:none}
+.sl{color:var(--tm)}.sv{font-weight:600;color:var(--td)}
+
+/* PROGRESS */
+.pb{height:5px;background:#E8D5B0;border-radius:3px;overflow:hidden;margin-top:6px}
+.pf{height:100%;background:linear-gradient(90deg,var(--sf),var(--gd));border-radius:3px;transition:width .4s}
+
+/* ROOM CARDS */
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin-bottom:22px}
+.rc{background:white;border-radius:var(--rd);box-shadow:var(--sh);overflow:hidden}
+.rch{background:linear-gradient(135deg,var(--mr),var(--gd));color:white;padding:10px 15px;display:flex;justify-content:space-between;align-items:center}
+.rcn{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600}
+.rcb{padding:13px 15px}
+.rf{margin-bottom:7px;font-size:.86rem}
+.rf label{color:var(--tl);font-size:.74rem;display:block;text-transform:uppercase;letter-spacing:.4px}
+.rv{color:var(--tl);font-style:italic;padding:16px;text-align:center;font-size:.88rem}
+
+/* PAYMENT TOTALS */
+.ptbar{background:white;border-radius:var(--rd);padding:14px 18px;box-shadow:var(--sh);margin-bottom:14px;display:flex;gap:22px;flex-wrap:wrap}
+.pti .ptl{font-size:.74rem;color:var(--tl);text-transform:uppercase;letter-spacing:.4px}
+.pti .ptv{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;color:var(--td)}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(28,10,0,.52);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.m{background:white;border-radius:12px;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.28)}
+.mh{background:linear-gradient(135deg,var(--mr),var(--gd));color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-radius:12px 12px 0 0;flex-shrink:0}
+.mh h3{font-family:'Playfair Display',serif;font-size:1.05rem}
+.mc{background:none;border:none;color:white;font-size:1.3rem;cursor:pointer;padding:0 4px;line-height:1}
+.mb{padding:18px}
+.mf{padding:14px 18px;border-top:1px solid var(--bd);display:flex;gap:9px;justify-content:flex-end}
+
+/* FORM */
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:13px}
+.fr.s{grid-template-columns:1fr}.fr.t{grid-template-columns:1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:.78rem;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{padding:8px 11px;border:1.5px solid var(--bd);border-radius:6px;font-family:'Crimson Pro',serif;font-size:.93rem;color:var(--td);background:var(--iv);transition:border-color .2s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--mr);background:white}
+.fg textarea{resize:vertical;min-height:56px}
+.fg .ck{display:flex;align-items:center;gap:7px;font-size:.93rem;text-transform:none;letter-spacing:0;font-weight:400;cursor:pointer}
+.fg input[type=checkbox]{width:15px;height:15px}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--td);color:white;padding:11px 18px;border-radius:8px;font-size:.88rem;z-index:2000;opacity:0;transform:translateY(14px);transition:all .3s;max-width:280px;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{background:#166534}.toast.err{background:#991B1B}.toast.inf{background:var(--mr)}
+
+/* SECTION CARD */
+.scard{background:white;border-radius:var(--rd);box-shadow:var(--sh);padding:12px 18px;margin-bottom:14px;font-size:.88rem}
+.tr{text-align:right}.tc{text-align:center}
+.fw6{font-weight:600}.tmr{color:var(--mr);font-weight:600}.tgn{color:#166534;font-weight:600}.tor{color:var(--gd);font-weight:600}
+.nw{white-space:nowrap}
+.sep{margin:14px 0;border-color:var(--bd)}
+
+/* HELP BOX */
+.helpbox{background:#FFFBEB;padding:12px;border-radius:6px;font-size:.83rem;margin-top:8px;line-height:1.65;border:1px solid #FDE68A}
+.helpbox code{background:#FEF9C3;padding:1px 5px;border-radius:3px;font-size:.8rem}
+@media(max-width:600px){.fr{grid-template-columns:1fr}.fr.t{grid-template-columns:1fr 1fr}.stats-grid{grid-template-columns:1fr 1fr}.main{padding:10px}.hdr h1{font-size:1.15rem}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div>
+    <h1 id="hdr-title">🪶 Upanayanam Manager</h1>
+    <div class="sub" id="hdr-sub">22 Mar (Naandi) · 23 Mar (Upanayanam) 2026</div>
+  </div>
+  <div class="hdr-right">
+    <span id="sync-ind" style="font-size:.78rem;opacity:.8;"></span>
+    <button class="hbtn" onclick="syncData()">⟳ Sync Sheets</button>
+    <button class="hbtn" onclick="openSettings()">⚙</button>
+  </div>
+</header>
+
+<!-- SETUP BANNER -->
+<div class="setup-banner hidden" id="setup-banner">
+  ⚠️ Google Sheets not connected — data saved locally only.
+  <a onclick="openSettings()">Connect Google Sheets →</a>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="ntab active" onclick="sw('dashboard')" id="nb-dashboard">🏠 Dashboard</button>
+  <button class="ntab" onclick="sw('guests')" id="nb-guests">👥 Guests</button>
+  <button class="ntab" onclick="sw('shopping')" id="nb-shopping">🛒 Shopping</button>
+  <button class="ntab" onclick="sw('expenses')" id="nb-expenses">💰 Expenses</button>
+  <button class="ntab" onclick="sw('rooms')" id="nb-rooms">🏨 Rooms</button>
+  <button class="ntab" onclick="sw('payments')" id="nb-payments">💳 Payments</button>
+</nav>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="tab-panel active" id="panel-dashboard">
+  <div class="cdbar" id="cdbar"></div>
+  <div class="stats-grid" id="dstats"></div>
+  <div class="dg">
+    <div class="dc"><div class="dct">👥 Guest Overview</div><div id="dg-guest"></div></div>
+    <div class="dc"><div class="dct">💰 Expenses by Category</div><div id="dg-exp"></div></div>
+    <div class="dc"><div class="dct">🏨 Room Status</div><div id="dg-room"></div></div>
+    <div class="dc"><div class="dct">💳 Payment Status</div><div id="dg-pay"></div></div>
+  </div>
+</div>
+
+<!-- GUESTS -->
+<div class="tab-panel" id="panel-guests">
+  <div class="sh">
+    <h2 class="st">Guest List</h2>
+    <div class="sa">
+      <button class="btn bp" onclick="om('guest')">+ Add Guest</button>
+    </div>
+  </div>
+  <div class="chips">
+    <span class="chip active" onclick="fg('all',this)">All</span>
+    <span class="chip" onclick="fg('my',this)">My Family</span>
+    <span class="chip" onclick="fg('wife',this)">Wife's Family</span>
+    <span class="chip" onclick="fg('notcalled',this)">Not Called</span>
+    <span class="chip" onclick="fg('nocard',this)">Card Pending</span>
+    <span class="chip" onclick="fg('confirmed',this)">Confirmed</span>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Side</th><th>Relation</th><th>Phone</th><th>Called</th><th>Card Sent</th><th>Expected #</th><th>Confirmed</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="gtbody"><tr><td colspan="11" class="es">No guests added yet</td></tr></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;font-size:.83rem;color:var(--tl)" id="gbar"></div>
+</div>
+
+<!-- SHOPPING -->
+<div class="tab-panel" id="panel-shopping">
+  <div class="sh">
+    <h2 class="st">Shopping & To-Do List</h2>
+    <div class="sa"><button class="btn bp" onclick="om('shopping')">+ Add Item</button></div>
+  </div>
+  <div class="chips" id="shop-chips">
+    <span class="chip active" onclick="fsh('all',this)">All</span>
+    <span class="chip" onclick="fsh('Pending',this)">Pending</span>
+    <span class="chip" onclick="fsh('Ordered',this)">Ordered</span>
+    <span class="chip" onclick="fsh('Received',this)">Received</span>
+  </div>
+  <div class="scard" id="shop-totals"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Item</th><th>Category</th><th>Qty</th><th>Est. Cost ₹</th><th>Actual Cost ₹</th><th>Status</th><th>Assigned To</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="shtbody"><tr><td colspan="10" class="es">No items added yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EXPENSES -->
+<div class="tab-panel" id="panel-expenses">
+  <div class="sh">
+    <h2 class="st">Expense Tracker</h2>
+    <div class="sa"><button class="btn bp" onclick="om('expense')">+ Add Expense</button></div>
+  </div>
+  <div class="chips" id="exp-chips">
+    <span class="chip active" onclick="fex('all',this)">All</span>
+    <span class="chip" onclick="fex('Catering',this)">Catering</span>
+    <span class="chip" onclick="fex('Decoration',this)">Decoration</span>
+    <span class="chip" onclick="fex('Venue',this)">Venue</span>
+    <span class="chip" onclick="fex('Priest',this)">Priest</span>
+    <span class="chip" onclick="fex('Photography',this)">Photography</span>
+    <span class="chip" onclick="fex('Gifts',this)">Gifts</span>
+    <span class="chip" onclick="fex('Other',this)">Other</span>
+  </div>
+  <div class="scard" id="exp-totals"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Date</th><th>Category</th><th>Description</th><th>Amount ₹</th><th>Paid By</th><th>Mode</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="extbody"><tr><td colspan="9" class="es">No expenses recorded yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ROOMS -->
+<div class="tab-panel" id="panel-rooms">
+  <div class="sh"><h2 class="st">Marriage Hall Rooms (5 Rooms)</h2></div>
+  <div class="rg" id="rooms-grid"></div>
+  <div class="sh">
+    <h2 class="st">Overflow Accommodation</h2>
+    <div class="sa"><button class="btn bp" onclick="om('overflow')">+ Add Hotel Room</button></div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Hotel Name</th><th>Guest</th><th>Check-in</th><th>Check-out</th><th>Persons</th><th>Cost/Night ₹</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="ovtbody"><tr><td colspan="9" class="es">No overflow rooms booked</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PAYMENTS -->
+<div class="tab-panel" id="panel-payments">
+  <div class="sh">
+    <h2 class="st">Vendor Payments</h2>
+    <div class="sa"><button class="btn bp" onclick="om('payment')">+ Add Vendor</button></div>
+  </div>
+  <div class="ptbar" id="pay-totals"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Payee / Vendor</th><th>Category</th><th>Total ₹</th><th>Advance ₹</th><th>Balance ₹</th><th>Due Date</th><th>Status</th><th>Mode</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="paytbody"><tr><td colspan="11" class="es">No vendors added yet</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MAIN MODAL -->
+<div class="mo" id="modal-ov" onclick="if(event.target===this)cm()">
+  <div class="m">
+    <div class="mh"><h3 id="m-title">Add</h3><button class="mc" onclick="cm()">✕</button></div>
+    <div class="mb" id="m-body"></div>
+    <div class="mf">
+      <button class="btn bo" onclick="cm()">Cancel</button>
+      <button class="btn bp" onclick="sm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="mo" id="set-ov" onclick="if(event.target===this)cs()">
+  <div class="m">
+    <div class="mh"><h3>⚙ Settings & Google Sheets Setup</h3><button class="mc" onclick="cs()">✕</button></div>
+    <div class="mb">
+      <div class="fr s"><div class="fg"><label>Child's Name(s)</label><input type="text" id="s-child" placeholder="e.g., Srivatsav & Srihari"></div></div>
+      <div class="fr">
+        <div class="fg"><label>Day 1 — Naandi Date</label><input type="text" id="s-d1" placeholder="22 Mar 2026"></div>
+        <div class="fg"><label>Day 2 — Upanayanam Date</label><input type="text" id="s-d2" placeholder="23 Mar 2026"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>Venue Name</label><input type="text" id="s-venue" placeholder="e.g., Sri Kalyana Mantapa"></div>
+        <div class="fg"><label>Father's Name</label><input type="text" id="s-parent" placeholder="Your name"></div>
+      </div>
+      <hr class="sep">
+      <div class="fr s">
+        <div class="fg">
+          <label>Google Apps Script Web App URL</label>
+          <input type="url" id="s-url" placeholder="https://script.google.com/macros/s/...">
+          <small style="margin-top:5px;display:block;color:var(--tl)">
+            <a href="#" onclick="toggleHelp()" style="color:var(--mr)">📋 How to set up Google Sheets sync →</a>
+          </small>
+        </div>
+      </div>
+      <div id="help-box" class="helpbox hidden">
+        <strong>One-time Setup (5 minutes):</strong><br>
+        1. Open <a href="https://sheets.google.com" target="_blank" style="color:var(--mr)">sheets.google.com</a> → Create a new spreadsheet → note its ID from the URL<br>
+        2. In that sheet: Extensions → Apps Script<br>
+        3. Delete any existing code; paste the contents of <strong>Code.gs</strong> (provided alongside this app)<br>
+        4. Click ⚙ Project Settings → Script Properties → Add property:<br>
+        &nbsp;&nbsp;<code>SPREADSHEET_ID</code> = your spreadsheet ID<br>
+        5. Run <code>initializeSheets()</code> once (click ▶ Run in Apps Script)<br>
+        6. Deploy → New Deployment → Web App<br>
+        &nbsp;&nbsp;Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong><br>
+        7. Copy the Web App URL → paste above → Save → click "⟳ Sync Sheets"
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn bo" onclick="cs()">Cancel</button>
+      <button class="btn bp" onclick="saveSets()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ──────
