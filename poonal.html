@@ -326,7 +326,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
         <div class="fg"><label>Day 2 — Upanayanam Date</label><input type="text" id="s-d2" placeholder="23 Apr 2026" value="23 Apr 2026"></div>
       </div>
       <div class="fr">
-        <div class="fg"><label>Venue Name</label><input type="text" id="s-venue" placeholder="e.g., Sri Kalyana Mantapa" value="Sri Sarada Shankara Kalyanamandapam"></div>
+        <div class="fg"><label>Venue Name</label><input type="text" id="s-venue" placeholder="e.g., Sri Kalyana Mantapa" value="Sarada Sankara Mandapam"></div>
         <div class="fg"><label>Father's Name</label><input type="text" id="s-parent" placeholder="Ananthanarayanan" value="Ananthanarayanan"></div>
       </div>
       <hr class="sep">
@@ -369,7 +369,7 @@ const S = {
   modal:null, eid:null,
   guests:[], shopping:[], expenses:[],
   rooms:[], overflow:[], payments:[],
-  sets:{childName:'',date1:'22 Apr 2026',date2:'23 Apr 2026',venue:'',parent:''}
+  sets:{childName:'Advaith & Anirudh',date1:'22 Apr 2026',date2:'23 Apr 2026',venue:'Sarada Sankara Mandapam',parent:''}
 };
 
 function initRooms(){
@@ -383,7 +383,7 @@ function save(){
   localStorage.setItem(LS('url'),S.url);
 }
 function load(){
-  S.url = localStorage.getItem(LS('url'))||'';
+  S.url = localStorage.getItem(LS('url'))||'https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec';
   ['guests','shopping','expenses','overflow','payments'].forEach(k=>{const d=localStorage.getItem(LS(k));if(d)S[k]=JSON.parse(d);});
   const r=localStorage.getItem(LS('rooms')); S.rooms = r?JSON.parse(r):initRooms();
   const st=localStorage.getItem(LS('sets')); if(st)S.sets={...S.sets,...JSON.parse(st)};
