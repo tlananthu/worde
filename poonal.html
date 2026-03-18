@@ -398,11 +398,12 @@ async function syncData(){
     const d=await r.json();
     if(d.success){
       const x=d.data;
-      if(x.guests?.length) S.guests=x.guests;
-      if(x.shopping?.length) S.shopping=x.shopping;
-      if(x.expenses?.length) S.expenses=x.expenses;
-      if(x.overflow?.length) S.overflow=x.overflow;
-      if(x.payments?.length) S.payments=x.payments;
+      // Always overwrite local with Sheets data (so new browsers get full data)
+      S.guests   = x.guests   ?? S.guests;
+      S.shopping = x.shopping ?? S.shopping;
+      S.expenses = x.expenses ?? S.expenses;
+      S.overflow = x.overflow ?? S.overflow;
+      S.payments = x.payments ?? S.payments;
       if(x.rooms?.length){
         x.rooms.forEach(sr=>{const lr=S.rooms.find(r=>r.id===sr.id);if(lr)Object.assign(lr,sr);});
       }
@@ -833,6 +834,11 @@ function renderAll(){rguests();rshopping();rexpenses();rrooms();rpayments();rdas
 
 document.addEventListener('DOMContentLoaded',()=>{
   load();updateHeader();updateBanner();renderAll();
+  // Auto-sync from Google Sheets on load so new browsers always get fresh data
+  if(S.url){
+    ind('⟳ Loading data from Google Sheets…');
+    syncData().catch(()=>ind(''));
+  }
 });
 </script>
 </body>
