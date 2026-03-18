@@ -447,7 +447,7 @@ function toggleHelp(){const h=document.getElementById('help-box');h.classList.to
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function rdash(){
-  const ev1=new Date('2026-03-22'), now=new Date();
+  const ev1=new Date('2026-04-22'), now=new Date();
   const diff=Math.max(0,Math.ceil((ev1-now)/(864e5)));
   const expTot=S.guests.reduce((s,g)=>s+(+g.expectedCount||0),0);
   document.getElementById('cdbar').innerHTML=`
