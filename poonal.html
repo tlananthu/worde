@@ -373,10 +373,6 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
         <div class="fg">
           <label>Google Apps Script Web App URL</label>
           <input type="url" id="s-url" placeholder="https://script.google.com/macros/s/..." value="https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec">
-          <div style="margin-top:10px">
-            <label>API Token <small style="font-weight:normal;color:var(--tl)">(must match API_TOKEN in Script Properties)</small></label>
-            <input type="password" id="s-token" placeholder="e.g. upa_poonal_2026" style="margin-top:4px;width:100%;padding:9px 12px;border:1.5px solid var(--bd);border-radius:8px;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--td)">
-          </div>
           <small style="margin-top:5px;display:block;color:var(--tl)">
             <a href="#" onclick="toggleHelp()" style="color:var(--mr)">📋 How to set up Google Sheets sync →</a>
           </small>
@@ -423,6 +419,7 @@ async function doLogin(){
   const h = await sha256(pwd);
   if(h === getStoredHash()){
     sessionStorage.setItem('upa_session','1');
+    sessionStorage.setItem('upa_token', pwd); // password doubles as API token
     document.getElementById('lock-screen').style.display = 'none';
     err.textContent = '';
   } else {
@@ -434,12 +431,14 @@ async function doLogin(){
 function doLogout(){
   if(!confirm('Log out? You will need to enter the password again.')) return;
   sessionStorage.removeItem('upa_session');
+  sessionStorage.removeItem('upa_token');
   location.reload();
 }
 function toggleLockEye(){
   const inp = document.getElementById('lock-pwd');
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
+function getToken(){ return sessionStorage.getItem('upa_token')||''; }
 function checkAuth(){
   if(sessionStorage.getItem('upa_session') === '1'){
     document.getElementById('lock-screen').style.display = 'none';
@@ -458,7 +457,7 @@ async function changePassword(cur, nw){
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const S = {
-  url:'https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec', apiToken:'', activeTab:'dashboard',
+  url:'https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec', activeTab:'dashboard',
   gf:'all', shf:'all', exf:'all',
   modal:null, eid:null,
   guests:[], shopping:[], expenses:[],
@@ -475,11 +474,11 @@ const LS = k => 'upan_'+k;
 function save(){
   ['guests','shopping','expenses','rooms','overflow','payments','sets'].forEach(k=>localStorage.setItem(LS(k),JSON.stringify(S[k])));
   localStorage.setItem(LS('url'),S.url);
-  localStorage.setItem(LS('apiToken'),S.apiToken);
+
 }
 function load(){
   S.url = localStorage.getItem(LS('url'))||'https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec';
-  S.apiToken = localStorage.getItem(LS('apiToken'))||'';
+
   ['guests','shopping','expenses','overflow','payments'].forEach(k=>{const d=localStorage.getItem(LS(k));if(d)S[k]=JSON.parse(d);});
   const r=localStorage.getItem(LS('rooms')); S.rooms = r?JSON.parse(r):initRooms();
   const st=localStorage.getItem(LS('sets')); if(st)S.sets={...S.sets,...JSON.parse(st)};
@@ -490,7 +489,7 @@ async function syncData(){
   if(!S.url){toast('Configure Google Sheets URL in Settings first','err');return;}
   ind('⟳ syncing…');
   try{
-    const r=await fetch(S.url+'?action=readAll'+(S.apiToken?'&token='+encodeURIComponent(S.apiToken):''));
+    const tk=getToken(); const r=await fetch(S.url+'?action=readAll'+(tk?'&token='+encodeURIComponent(tk):''));
     const d=await r.json();
     if(d.success){
       const x=d.data;
@@ -512,7 +511,7 @@ async function syncData(){
 async function push(sheet,action,data){
   if(!S.url) return;
   try{
-    const p=new URLSearchParams({action,sheet,id:(data&&data.id)||'',data:JSON.stringify(data||{}),...(S.apiToken?{token:S.apiToken}:{})});
+    const tk2=getToken(); const p=new URLSearchParams({action,sheet,id:(data&&data.id)||'',data:JSON.stringify(data||{}),...(tk2?{token:tk2}:{})});
     await fetch(S.url+'?'+p);
   }catch(e){console.warn('Sheet push failed',e.message);}
 }
@@ -903,7 +902,7 @@ function openSettings(){
   document.getElementById('s-venue').value=st.venue||'';
   document.getElementById('s-parent').value=st.parent||'';
   document.getElementById('s-url').value=S.url||'';
-  document.getElementById('s-token').value=S.apiToken||'';
+
   document.getElementById('set-ov').classList.add('open');
 }
 function cs(){document.getElementById('set-ov').classList.remove('open');}
@@ -914,7 +913,7 @@ function saveSets(){
   S.sets.venue=document.getElementById('s-venue').value;
   S.sets.parent=document.getElementById('s-parent').value;
   S.url=document.getElementById('s-url').value.trim();
-  S.apiToken=document.getElementById('s-token').value.trim();
+
   const curPwd = document.getElementById('s-pwd-cur').value;
   const newPwd = document.getElementById('s-pwd-new').value;
   if(newPwd){
