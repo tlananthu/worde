@@ -184,9 +184,23 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
       <div id="g_id_signin"></div>
     </div>
     <div class="gsi-err" id="gsi-err"></div>
-    <div id="gsi-setup" class="gsi-setup">
-      <strong>⚙ First-time setup:</strong> A Google Client ID is required.<br>
-      Open ⚙ Settings after configuring and enter your Client ID, then reload.
+
+    <!-- Inline Client ID setup — shown when no Client ID is stored -->
+    <div id="gsi-setup" style="margin-top:14px;display:none">
+      <div style="font-size:.82rem;color:var(--tl);margin-bottom:8px;">⚙ First-time setup — enter your Google OAuth Client ID:</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="text" id="gsi-clientid-input"
+          placeholder="xxxx.apps.googleusercontent.com"
+          style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--td);outline:none;"
+          onkeydown="if(event.key==='Enter')saveClientIdFromOverlay()">
+        <button onclick="saveClientIdFromOverlay()"
+          style="padding:9px 16px;background:var(--mr);color:white;border:none;border-radius:8px;font-family:'Crimson Pro',serif;font-size:.88rem;cursor:pointer;white-space:nowrap;">
+          Save &amp; Init
+        </button>
+      </div>
+      <div style="font-size:.75rem;color:var(--tl);margin-top:6px;">
+        Get this from <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--mr)">Google Cloud Console → Credentials</a>
+      </div>
     </div>
     <hr class="gsi-divider">
     <div class="gsi-note">Only Google accounts with access to the spreadsheet can sign in.<br>Contact the organiser to request access.</div>
@@ -454,11 +468,22 @@ function gsiHandleCredential(response){
       err.textContent = '⚠ Could not verify — check your internet connection.';
     });
 }
+function saveClientIdFromOverlay(){
+  const val = document.getElementById('gsi-clientid-input').value.trim();
+  if(!val){ document.getElementById('gsi-err').textContent = 'Please paste your Client ID first.'; return; }
+  localStorage.setItem('upa_client_id', val);
+  // Also update settings field if accessible
+  const sf = document.getElementById('s-clientid');
+  if(sf) sf.value = val;
+  document.getElementById('gsi-err').textContent = '';
+  initGSI(); // re-initialise with the new Client ID
+}
+
 function initGSI(){
   const clientId = getClientId();
   if(!clientId){
     document.getElementById('gsi-setup').style.display = 'block';
-    document.getElementById('gsi-err').textContent = '⚙ No Client ID configured. Open Settings and add your Google OAuth Client ID.';
+    document.getElementById('gsi-err').textContent = '';
     return;
   }
   google.accounts.id.initialize({
