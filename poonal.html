@@ -443,8 +443,31 @@ function decodeJwtPayload(token){
 }
 function gsiSignOut(){
   sessionStorage.removeItem('upa_user');
-  google.accounts.id.disableAutoSelect();
+  if(window.google && google.accounts) google.accounts.id.disableAutoSelect();
   location.reload();
+}
+function forceSignOut(reason){
+  // Clear session and show the sign-in overlay with an error — no reload flash
+  sessionStorage.removeItem('upa_user');
+  if(window.google && google.accounts) google.accounts.id.disableAutoSelect();
+  // Blank out all tab content so nothing is visible
+  document.querySelectorAll('.tab-content').forEach(el => el.innerHTML = '');
+  document.querySelector('.nav') && (document.querySelector('.nav').style.display='none');
+  document.querySelector('.hdr') && (document.querySelector('.hdr').style.display='none');
+  // Show the sign-in overlay with the reason
+  const overlay = document.getElementById('gsi-overlay');
+  if(overlay){
+    overlay.style.display = 'flex';
+    const err = document.getElementById('gsi-err');
+    if(err) err.textContent = '⛔ ' + (reason || 'Access denied. Please sign in with an authorised account.');
+    // Re-render the Google button for a fresh sign-in
+    const btnDiv = document.getElementById('g_id_signin');
+    if(btnDiv) btnDiv.innerHTML = '';
+    if(window.google && google.accounts && getClientId()){
+      google.accounts.id.initialize({ client_id: getClientId(), callback: gsiHandleCredential, cancel_on_tap_outside: false });
+      google.accounts.id.renderButton(btnDiv, { theme:'outline', size:'large', width:280 });
+    }
+  }
 }
 function gsiShowUser(name, email){
   document.getElementById('gsi-overlay').style.display = 'none';
@@ -574,7 +597,13 @@ async function syncData(){
         x.rooms.forEach(sr=>{const lr=S.rooms.find(r=>r.id===sr.id);if(lr)Object.assign(lr,sr);});
       }
       save(); renderAll(); toast('Synced from Google Sheets!','ok');
-    } else toast('Sync failed: '+(d.error||'Unknown'),'err');
+    } else {
+      if(d.error && d.error.toLowerCase().includes('unauthori')){
+        forceSignOut(d.error);
+      } else {
+        toast('Sync failed: '+(d.error||'Unknown'),'err');
+      }
+    }
   }catch(e){toast('Sync error: '+e.message,'err');}
   ind('');
 }
@@ -582,7 +611,10 @@ async function syncData(){
 async function push(sheet,action,data){
   if(!S.url) return;
   try{
-    await jsonpRequest({action, sheet, id:(data&&data.id)||'', data:JSON.stringify(data||{})});
+    const d = await jsonpRequest({action, sheet, id:(data&&data.id)||'', data:JSON.stringify(data||{})});
+    if(d && d.success===false && d.error && d.error.toLowerCase().includes('unauthori')){
+      forceSignOut(d.error);
+    }
   }catch(e){console.warn('Sheet push failed',e.message);}
 }
 
