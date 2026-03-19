@@ -191,6 +191,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" id="gsi-clientid-input"
           placeholder="xxxx.apps.googleusercontent.com"
+          readonly
           style="flex:1;padding:9px 11px;border:1.5px solid var(--bd);border-radius:8px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--td);outline:none;"
           onkeydown="if(event.key==='Enter')saveClientIdFromOverlay()">
         <button onclick="saveClientIdFromOverlay()"
@@ -429,8 +430,9 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 //  3. Every Apps Script request sends the email. Apps Script checks sheet access.
 //  This avoids the CORS issue caused by the server-side tokeninfo API call.
 
+const OAUTH_CLIENT_ID = '858859798548-vn15mgjqmk2bi31kb3j9vjp5a0jtlfas.apps.googleusercontent.com';
 function getClientId(){
-  return localStorage.getItem('upa_client_id') || '';
+  return OAUTH_CLIENT_ID;
 }
 // Returns { email, name } stored in sessionStorage after sign-in
 function getUser(){
@@ -552,7 +554,7 @@ function initGSI(){
   const setupEl = document.getElementById('gsi-setup');
   if(setupEl) setupEl.style.display = 'block';
   const inputEl = document.getElementById('gsi-clientid-input');
-  if(inputEl && clientId) inputEl.value = clientId;
+  if(inputEl) inputEl.value = clientId;
   if(!clientId){
     document.getElementById('gsi-err').textContent = 'Enter your Google OAuth Client ID above to enable sign-in.';
     return;
@@ -571,7 +573,7 @@ function initGSI(){
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 
 const DATA_KEYS = ['guests','shopping','expenses','overflow','payments'];
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvfxUxVHua7xHtZ0FvfOTNBA0GvjLzHcOVOH5YBY86C1VczuSB9Hlpy_h8e_LGg2uerw/exec';
