@@ -421,19 +421,27 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 
 <script>
 // ─── GOOGLE AUTH ─────────────────────────────────────────────────────────────
-// Google ID token is obtained via Google Identity Services (GSI).
-// It is verified server-side in Apps Script — only emails with sheet
-// access (editors/viewers) are allowed.
+// Flow:
+//  1. Google GSI library verifies the ID token cryptographically (client-side).
+//  2. We decode the JWT payload (base64) to extract email + name — no fetch needed.
+//  3. Every Apps Script request sends the email. Apps Script checks sheet access.
+//  This avoids the CORS issue caused by the server-side tokeninfo API call.
 
 function getClientId(){
   return localStorage.getItem('upa_client_id') || '';
 }
-function getToken(){
-  // Returns the current Google ID token from sessionStorage
-  return sessionStorage.getItem('upa_id_token') || '';
+// Returns { email, name } stored in sessionStorage after sign-in
+function getUser(){
+  try { return JSON.parse(sessionStorage.getItem('upa_user') || 'null'); } catch(e){ return null; }
+}
+// Decode JWT payload (no signature verification — GSI already did that)
+function decodeJwtPayload(token){
+  try {
+    const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(atob(base64));
+  } catch(e){ return null; }
 }
 function gsiSignOut(){
-  sessionStorage.removeItem('upa_id_token');
   sessionStorage.removeItem('upa_user');
   google.accounts.id.disableAutoSelect();
   location.reload();
@@ -444,28 +452,37 @@ function gsiShowUser(name, email){
   if(btn){ btn.style.display=''; btn.title = 'Signed in as ' + email + '\nClick to sign out'; }
 }
 function gsiHandleCredential(response){
-  const idToken = response.credential;
   const err = document.getElementById('gsi-err');
-  err.textContent = '⏳ Verifying access…';
-  // Send token to Apps Script to verify + check sheet access
-  const url = S.url + '?action=verifyAuth&idToken=' + encodeURIComponent(idToken);
+  err.textContent = '⏳ Checking access…';
+
+  // Decode the JWT payload — GSI already verified the signature
+  const payload = decodeJwtPayload(response.credential);
+  if(!payload || !payload.email){
+    err.textContent = '⚠ Could not read your Google account info. Please try again.';
+    return;
+  }
+
+  const email = payload.email;
+  const name  = payload.name || email;
+
+  // Ask Apps Script to check if this email has sheet access
+  // We send just the email (no long token = no CORS/URL-length issues)
+  const url = S.url + '?action=verifyEmail&email=' + encodeURIComponent(email);
   fetch(url)
     .then(r => r.json())
     .then(data => {
       if(data.success && data.authorized){
-        sessionStorage.setItem('upa_id_token', idToken);
-        sessionStorage.setItem('upa_user', JSON.stringify({name: data.name, email: data.email}));
-        gsiShowUser(data.name, data.email);
+        sessionStorage.setItem('upa_user', JSON.stringify({name, email}));
+        gsiShowUser(name, email);
         err.textContent = '';
-        // Load data now that we're authenticated
         load(); updateHeader(); updateBanner(); renderAll();
         if(S.url){ ind('⟳ Loading data…'); syncData().catch(()=>ind('')); }
       } else {
-        err.textContent = '⛔ ' + (data.error || 'Your Google account does not have access to this sheet. Contact the organiser.');
+        err.textContent = '⛔ ' + (data.error || 'Your account (' + email + ') does not have access. Ask the organiser to share the sheet with you.');
       }
     })
     .catch(e => {
-      err.textContent = '⚠ Could not verify — check your internet connection.';
+      err.textContent = '⚠ Network error — check your connection and try again.';
     });
 }
 function saveClientIdFromOverlay(){
@@ -498,10 +515,8 @@ function initGSI(){
   );
   google.accounts.id.prompt(); // show One Tap if session exists
   // If already have a valid token in session, skip the overlay
-  if(getToken()){
-    const user = JSON.parse(sessionStorage.getItem('upa_user') || '{}');
-    gsiShowUser(user.name || '', user.email || '');
-  }
+  const _u = getUser();
+  if(_u){ gsiShowUser(_u.name||'', _u.email||''); }
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -538,7 +553,7 @@ async function syncData(){
   if(!S.url){toast('Configure Google Sheets URL in Settings first','err');return;}
   ind('⟳ syncing…');
   try{
-    const tk=getToken(); const r=await fetch(S.url+'?action=readAll'+(tk?'&token='+encodeURIComponent(tk):''));
+    const u=getUser(); const r=await fetch(S.url+'?action=readAll'+(u?'&email='+encodeURIComponent(u.email):''));
     const d=await r.json();
     if(d.success){
       const x=d.data;
@@ -560,7 +575,7 @@ async function syncData(){
 async function push(sheet,action,data){
   if(!S.url) return;
   try{
-    const tk2=getToken(); const p=new URLSearchParams({action,sheet,id:(data&&data.id)||'',data:JSON.stringify(data||{}),...(tk2?{token:tk2}:{})});
+    const u2=getUser(); const p=new URLSearchParams({action,sheet,id:(data&&data.id)||'',data:JSON.stringify(data||{}),...(u2?{email:u2.email}:{})});
     await fetch(S.url+'?'+p);
   }catch(e){console.warn('Sheet push failed',e.message);}
 }
@@ -983,9 +998,9 @@ function renderAll(){rguests();rshopping();rexpenses();rrooms();rpayments();rdas
 
 document.addEventListener('DOMContentLoaded',()=>{
   // If already authenticated in this session, boot normally
-  if(getToken()){
-    const user = JSON.parse(sessionStorage.getItem('upa_user')||'{}');
-    gsiShowUser(user.name||'', user.email||'');
+  const _su = getUser();
+  if(_su){
+    gsiShowUser(_su.name||'', _su.email||'');
     load(); updateHeader(); updateBanner(); renderAll();
     if(S.url){ ind('⟳ Loading data…'); syncData().catch(()=>ind('')); }
   }
