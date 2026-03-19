@@ -465,11 +465,8 @@ function gsiHandleCredential(response){
   const email = payload.email;
   const name  = payload.name || email;
 
-  // Ask Apps Script to check if this email has sheet access
-  // We send just the email (no long token = no CORS/URL-length issues)
-  const url = S.url + '?action=verifyEmail&email=' + encodeURIComponent(email);
-  fetch(url)
-    .then(r => r.json())
+  // Use JSONP to ask Apps Script if this email has sheet access (avoids CORS)
+  jsonpRequest({action:'verifyEmail', email})
     .then(data => {
       if(data.success && data.authorized){
         sessionStorage.setItem('upa_user', JSON.stringify({name, email}));
@@ -481,7 +478,7 @@ function gsiHandleCredential(response){
         err.textContent = '⛔ ' + (data.error || 'Your account (' + email + ') does not have access. Ask the organiser to share the sheet with you.');
       }
     })
-    .catch(e => {
+    .catch(() => {
       err.textContent = '⚠ Network error — check your connection and try again.';
     });
 }
@@ -549,15 +546,32 @@ function load(){
 }
 
 // ─── SHEETS SYNC ─────────────────────────────────────────────────────────────
+function jsonpRequest(params){
+  return new Promise((resolve, reject) => {
+    const cbName = 'gs_cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+    const script = document.createElement('script');
+    const u = getUser();
+    if(u) params.email = u.email;
+    params.callback = cbName;
+    const qs = Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    window[cbName] = function(data){
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+    script.onerror = () => { delete window[cbName]; script.remove(); reject(new Error('Script load failed')); };
+    script.src = S.url + '?' + qs;
+    document.head.appendChild(script);
+  });
+}
+
 async function syncData(){
   if(!S.url){toast('Configure Google Sheets URL in Settings first','err');return;}
   ind('⟳ syncing…');
   try{
-    const u=getUser(); const r=await fetch(S.url+'?action=readAll'+(u?'&email='+encodeURIComponent(u.email):''));
-    const d=await r.json();
+    const d = await jsonpRequest({action:'readAll'});
     if(d.success){
       const x=d.data;
-      // Always overwrite local with Sheets data (so new browsers get full data)
       S.guests   = x.guests   ?? S.guests;
       S.shopping = x.shopping ?? S.shopping;
       S.expenses = x.expenses ?? S.expenses;
@@ -575,8 +589,7 @@ async function syncData(){
 async function push(sheet,action,data){
   if(!S.url) return;
   try{
-    const u2=getUser(); const p=new URLSearchParams({action,sheet,id:(data&&data.id)||'',data:JSON.stringify(data||{}),...(u2?{email:u2.email}:{})});
-    await fetch(S.url+'?'+p);
+    await jsonpRequest({action, sheet, id:(data&&data.id)||'', data:JSON.stringify(data||{})});
   }catch(e){console.warn('Sheet push failed',e.message);}
 }
 
