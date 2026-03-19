@@ -453,9 +453,8 @@ function gsiShowUser(name, email){
 }
 function gsiHandleCredential(response){
   const err = document.getElementById('gsi-err');
-  err.textContent = '⏳ Checking access…';
 
-  // Decode the JWT payload — GSI already verified the signature
+  // GSI has already cryptographically verified the token — safe to decode payload
   const payload = decodeJwtPayload(response.credential);
   if(!payload || !payload.email){
     err.textContent = '⚠ Could not read your Google account info. Please try again.';
@@ -465,22 +464,16 @@ function gsiHandleCredential(response){
   const email = payload.email;
   const name  = payload.name || email;
 
-  // Use JSONP to ask Apps Script if this email has sheet access (avoids CORS)
-  jsonpRequest({action:'verifyEmail', email})
-    .then(data => {
-      if(data.success && data.authorized){
-        sessionStorage.setItem('upa_user', JSON.stringify({name, email}));
-        gsiShowUser(name, email);
-        err.textContent = '';
-        load(); updateHeader(); updateBanner(); renderAll();
-        if(S.url){ ind('⟳ Loading data…'); syncData().catch(()=>ind('')); }
-      } else {
-        err.textContent = '⛔ ' + (data.error || 'Your account (' + email + ') does not have access. Ask the organiser to share the sheet with you.');
-      }
-    })
-    .catch(() => {
-      err.textContent = '⚠ Network error — check your connection and try again.';
-    });
+  // Sign in immediately — no extra network call needed.
+  // Apps Script will reject data requests if this email lacks sheet access.
+  sessionStorage.setItem('upa_user', JSON.stringify({name, email}));
+  gsiShowUser(name, email);
+  err.textContent = '';
+  load(); updateHeader(); updateBanner(); renderAll();
+  if(S.url){
+    ind('⟳ Loading data…');
+    syncData().catch(()=>ind(''));
+  }
 }
 function saveClientIdFromOverlay(){
   const val = document.getElementById('gsi-clientid-input').value.trim();
