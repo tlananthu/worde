@@ -34,7 +34,7 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--iv);color:var(--td
 .gsi-err{color:#B91C1C;font-size:.84rem;margin-top:12px;min-height:18px;font-weight:500}
 .gsi-divider{border:none;border-top:1px solid var(--bd);margin:20px 0}
 .gsi-note{font-size:.76rem;color:var(--tl);line-height:1.5}
-.gsi-setup{background:#FFFBEB;border:1px solid var(--sf);border-radius:8px;padding:12px 14px;font-size:.8rem;color:var(--td);text-align:left;margin-top:14px;display:none}
+.gsi-setup{background:#FFFBEB;border:1px solid var(--sf);border-radius:8px;padding:12px 14px;font-size:.8rem;color:var(--td);text-align:left;margin-top:14px}
 .gsi-setup code{background:#FAF0D7;padding:1px 4px;border-radius:3px;font-size:.78rem}
 /* ── LOCK SCREEN ─────────────────────────────────────────────────────────── */
 .lock-input-wrap{position:relative;margin-bottom:16px}
@@ -186,8 +186,8 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
     <div class="gsi-err" id="gsi-err"></div>
 
     <!-- Inline Client ID setup — shown when no Client ID is stored -->
-    <div id="gsi-setup" style="margin-top:14px;display:none">
-      <div style="font-size:.82rem;color:var(--tl);margin-bottom:8px;">⚙ First-time setup — enter your Google OAuth Client ID:</div>
+    <div id="gsi-setup" style="margin-top:14px">
+      <div style="font-size:.82rem;color:var(--tl);margin-bottom:8px;">🔑 Google OAuth Client ID</div>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="text" id="gsi-clientid-input"
           placeholder="xxxx.apps.googleusercontent.com"
@@ -204,6 +204,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
     </div>
     <hr class="gsi-divider">
     <div class="gsi-note">Only Google accounts with access to the spreadsheet can sign in.<br>Contact the organiser to request access.</div>
+    <div style="margin-top:10px;font-size:.72rem;opacity:.45;letter-spacing:.3px">v<span id="login-version"></span></div>
   </div>
 </div>
 
@@ -211,6 +212,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
   <div>
     <h1 id="hdr-title">🪶 Upanayanam Manager</h1>
     <div class="sub" id="hdr-sub">22 Apr (Naandi) · 23 Apr (Upanayanam) 2026</div>
+    <div style="font-size:.65rem;opacity:.55;margin-top:2px;letter-spacing:.3px">v<span id="app-version"></span></div>
   </div>
   <div class="hdr-right">
     <span id="sync-ind" style="font-size:.78rem;opacity:.8;"></span>
@@ -546,9 +548,13 @@ function saveClientIdFromOverlay(){
 
 function initGSI(){
   const clientId = getClientId();
+  // Always show the Client ID input, pre-filled with any stored value
+  const setupEl = document.getElementById('gsi-setup');
+  if(setupEl) setupEl.style.display = 'block';
+  const inputEl = document.getElementById('gsi-clientid-input');
+  if(inputEl && clientId) inputEl.value = clientId;
   if(!clientId){
-    document.getElementById('gsi-setup').style.display = 'block';
-    document.getElementById('gsi-err').textContent = '';
+    document.getElementById('gsi-err').textContent = 'Enter your Google OAuth Client ID above to enable sign-in.';
     return;
   }
   google.accounts.id.initialize({
@@ -565,6 +571,8 @@ function initGSI(){
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
+const APP_VERSION = '1.0.0';
+
 const DATA_KEYS = ['guests','shopping','expenses','overflow','payments'];
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvfxUxVHua7xHtZ0FvfOTNBA0GvjLzHcOVOH5YBY86C1VczuSB9Hlpy_h8e_LGg2uerw/exec';
 const S = {
