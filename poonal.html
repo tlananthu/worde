@@ -391,7 +391,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
       <div class="fr s">
         <div class="fg">
           <label>Google Apps Script Web App URL</label>
-          <input type="url" id="s-url" placeholder="https://script.google.com/macros/s/..." value="https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec">
+          <input type="url" id="s-url" placeholder="https://script.google.com/macros/s/.../exec" readonly>
           <small style="margin-top:5px;display:block;color:var(--tl)">
             <a href="#" onclick="toggleHelp()" style="color:var(--mr)">📋 How to set up Google Sheets sync →</a>
           </small>
@@ -406,7 +406,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
         &nbsp;&nbsp;<code>SPREADSHEET_ID</code> = your spreadsheet ID<br>
         5. Run <code>initializeSheets()</code> once (click ▶ Run in Apps Script)<br>
         6. Deploy → New Deployment → Web App<br>
-        &nbsp;&nbsp;Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong><br>
+        &nbsp;&nbsp;Execute as: <strong>Me</strong> | Who has access: <strong>Anyone with Google account</strong><br>
         7. Copy the Web App URL → paste above → Save → click "⟳ Sync Sheets"
       </div>
     </div>
@@ -437,9 +437,17 @@ function getUser(){
 // Decode JWT payload (no signature verification — GSI already did that)
 function decodeJwtPayload(token){
   try {
-    const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
-    return JSON.parse(atob(base64));
+    const payloadPart = token.split('.')[1];
+    if(!payloadPart) return null;
+    const base64 = payloadPart.replace(/-/g,'+').replace(/_/g,'/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    return JSON.parse(atob(padded));
   } catch(e){ return null; }
+}
+function setAppShellVisible(visible){
+  document.querySelector('.hdr')?.style.setProperty('display', visible ? '' : 'none');
+  document.querySelector('.nav')?.style.setProperty('display', visible ? '' : 'none');
+  document.querySelector('.main')?.style.setProperty('display', visible ? '' : 'none');
 }
 function gsiSignOut(){
   sessionStorage.removeItem('upa_user');
@@ -450,10 +458,9 @@ function forceSignOut(reason){
   // Clear session and show the sign-in overlay with an error — no reload flash
   sessionStorage.removeItem('upa_user');
   if(window.google && google.accounts) google.accounts.id.disableAutoSelect();
-  // Blank out all tab content so nothing is visible
-  document.querySelectorAll('.tab-content').forEach(el => el.innerHTML = '');
-  document.querySelector('.nav') && (document.querySelector('.nav').style.display='none');
-  document.querySelector('.hdr') && (document.querySelector('.hdr').style.display='none');
+  setAppShellVisible(false);
+  const signoutBtn = document.getElementById('signout-btn');
+  if(signoutBtn) signoutBtn.style.display = 'none';
   // Show the sign-in overlay with the reason
   const overlay = document.getElementById('gsi-overlay');
   if(overlay){
@@ -470,11 +477,46 @@ function forceSignOut(reason){
   }
 }
 function gsiShowUser(name, email){
+  setAppShellVisible(true);
   document.getElementById('gsi-overlay').style.display = 'none';
   const btn = document.getElementById('signout-btn');
   if(btn){ btn.style.display=''; btn.title = 'Signed in as ' + email + '\nClick to sign out'; }
 }
-function gsiHandleCredential(response){
+async function verifyAccessThenEnter(user){
+  const err = document.getElementById('gsi-err');
+  setAppShellVisible(false);
+  document.getElementById('gsi-overlay').style.display = 'flex';
+  if(err) err.textContent = 'Checking sheet access…';
+
+  load();
+  updateHeader();
+  updateBanner();
+
+  DATA_KEYS.forEach(k => { S[k] = []; });
+  S.rooms = initRooms();
+  renderAll();
+
+  const res = await syncData({quiet:true});
+  if(res && res.success){
+    if(err) err.textContent = '';
+    gsiShowUser(user.name || '', user.email || '');
+    return true;
+  }
+
+  // Unauthorized branch is already handled inside syncData via forceSignOut().
+  if(!getUser()){
+    return false;
+  }
+
+  if(res && /(unauthori|does not have access|access denied)/i.test(res.error || '')){
+    forceSignOut(res.error);
+    return false;
+  }
+
+  forceSignOut('Could not sync data from Google Sheets. Please try again.');
+  return false;
+}
+async function gsiHandleCredential(response){
   const err = document.getElementById('gsi-err');
 
   // GSI has already cryptographically verified the token — safe to decode payload
@@ -487,16 +529,9 @@ function gsiHandleCredential(response){
   const email = payload.email;
   const name  = payload.name || email;
 
-  // Sign in immediately — no extra network call needed.
-  // Apps Script will reject data requests if this email lacks sheet access.
   sessionStorage.setItem('upa_user', JSON.stringify({name, email}));
-  gsiShowUser(name, email);
-  err.textContent = '';
-  load(); updateHeader(); updateBanner(); renderAll();
-  if(S.url){
-    ind('⟳ Loading data…');
-    syncData().catch(()=>ind(''));
-  }
+  if(err) err.textContent = '';
+  await verifyAccessThenEnter({name, email});
 }
 function saveClientIdFromOverlay(){
   const val = document.getElementById('gsi-clientid-input').value.trim();
@@ -527,14 +562,13 @@ function initGSI(){
     { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
   );
   google.accounts.id.prompt(); // show One Tap if session exists
-  // If already have a valid token in session, skip the overlay
-  const _u = getUser();
-  if(_u){ gsiShowUser(_u.name||'', _u.email||''); }
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
+const DATA_KEYS = ['guests','shopping','expenses','overflow','payments'];
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxvfxUxVHua7xHtZ0FvfOTNBA0GvjLzHcOVOH5YBY86C1VczuSB9Hlpy_h8e_LGg2uerw/exec';
 const S = {
-  url:'https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec', activeTab:'dashboard',
+  url:WEB_APP_URL, activeTab:'dashboard',
   gf:'all', shf:'all', exf:'all',
   modal:null, eid:null,
   guests:[], shopping:[], expenses:[],
@@ -545,77 +579,138 @@ const S = {
 function initRooms(){
   return [1,2,3,4,5].map(n=>({id:'room'+n,name:'Room '+n,guestName:'',relation:'',checkin:'',checkout:'',pax:'',notes:''}));
 }
-
-// ─── STORAGE ─────────────────────────────────────────────────────────────────
-const LS = k => 'upan_'+k;
-function save(){
-  ['guests','shopping','expenses','rooms','overflow','payments','sets'].forEach(k=>localStorage.setItem(LS(k),JSON.stringify(S[k])));
-  localStorage.setItem(LS('url'),S.url);
-
-}
-function load(){
-  S.url = localStorage.getItem(LS('url'))||'https://script.google.com/macros/s/AKfycbzZCyGI0Z8GMCbgV_wttBBTU2nAiR0faq2hHNabBkx37wWceJhDBmoZEj7b2HpVsug5/exec';
-
-  ['guests','shopping','expenses','overflow','payments'].forEach(k=>{const d=localStorage.getItem(LS(k));if(d)S[k]=JSON.parse(d);});
-  const r=localStorage.getItem(LS('rooms')); S.rooms = r?JSON.parse(r):initRooms();
-  const st=localStorage.getItem(LS('sets')); if(st)S.sets={...S.sets,...JSON.parse(st)};
-}
-
-// ─── SHEETS SYNC ─────────────────────────────────────────────────────────────
-function jsonpRequest(params){
-  return new Promise((resolve, reject) => {
-    const cbName = 'gs_cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
-    const script = document.createElement('script');
-    const u = getUser();
-    if(u) params.email = u.email;
-    params.callback = cbName;
-    const qs = Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
-    window[cbName] = function(data){
-      delete window[cbName];
-      script.remove();
-      resolve(data);
-    };
-    script.onerror = () => { delete window[cbName]; script.remove(); reject(new Error('Script load failed')); };
-    script.src = S.url + '?' + qs;
-    document.head.appendChild(script);
+function normalizeRooms(rows){
+  const base = initRooms();
+  if(!Array.isArray(rows) || !rows.length) return base;
+  return base.map(room => {
+    const found = rows.find(r => r.id === room.id);
+    return found ? {...room, ...found} : room;
   });
 }
 
-async function syncData(){
-  if(!S.url){toast('Configure Google Sheets URL in Settings first','err');return;}
-  ind('⟳ syncing…');
-  try{
-    const d = await jsonpRequest({action:'readAll'});
-    if(d.success){
-      const x=d.data;
-      S.guests   = x.guests   ?? S.guests;
-      S.shopping = x.shopping ?? S.shopping;
-      S.expenses = x.expenses ?? S.expenses;
-      S.overflow = x.overflow ?? S.overflow;
-      S.payments = x.payments ?? S.payments;
-      if(x.rooms?.length){
-        x.rooms.forEach(sr=>{const lr=S.rooms.find(r=>r.id===sr.id);if(lr)Object.assign(lr,sr);});
-      }
-      save(); renderAll(); toast('Synced from Google Sheets!','ok');
-    } else {
-      if(d.error && d.error.toLowerCase().includes('unauthori')){
-        forceSignOut(d.error);
-      } else {
-        toast('Sync failed: '+(d.error||'Unknown'),'err');
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+const LS = k => 'upan_'+k;
+function parseJSON(raw, fallback){
+  try { return JSON.parse(raw); } catch { return fallback; }
+}
+function save(){
+  [...DATA_KEYS,'rooms','sets'].forEach(k=>localStorage.setItem(LS(k),JSON.stringify(S[k])));
+
+}
+function load(){
+  S.url = WEB_APP_URL;
+
+  DATA_KEYS.forEach(k=>{
+    const d = parseJSON(localStorage.getItem(LS(k)) || '[]', []);
+    S[k] = Array.isArray(d) ? d : [];
+  });
+  const r = parseJSON(localStorage.getItem(LS('rooms')) || '[]', []);
+  S.rooms = normalizeRooms(r);
+  const st = parseJSON(localStorage.getItem(LS('sets')) || '{}', {});
+  S.sets = {...S.sets, ...st};
+}
+
+// ─── SHEETS SYNC ─────────────────────────────────────────────────────────────
+async function apiRequest(params){
+  if(!S.url){
+    throw new Error('Configure Google Sheets URL in Settings first.');
+  }
+  const u = getUser();
+  if(!u || !u.email){
+    throw new Error('Please sign in with Google first.');
+  }
+
+  const query = new URLSearchParams({
+    ...params,
+    email: u.email
+  }).toString();
+
+  const response = await fetch(`${S.url}?${query}`, {
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'omit',
+    cache: 'no-store',
+    redirect: 'follow'
+  });
+
+  if(!response.ok){
+    throw new Error(`Sheet request failed (HTTP ${response.status})`);
+  }
+
+  const bodyText = await response.text();
+  try {
+    return JSON.parse(bodyText);
+  } catch {
+    // Fallback for unexpected JSONP-style payloads.
+    const m = bodyText.match(/^[A-Za-z_$][0-9A-Za-z_$\\.]*\\(([\s\\S]*)\\);?\\s*$/);
+    if(m){
+      try {
+        return JSON.parse(m[1]);
+      } catch {
+        // handled below
       }
     }
-  }catch(e){toast('Sync error: '+e.message,'err');}
-  ind('');
+  }
+
+  throw new Error('Invalid response from Apps Script endpoint.');
+}
+
+async function syncData(opts={}){
+  const quiet = !!opts.quiet;
+  if(!S.url){
+    if(!quiet) toast('Configure Google Sheets URL in Settings first','err');
+    return {success:false, error:'No Sheets URL configured'};
+  }
+  if(!getUser()){
+    if(!quiet) toast('Please sign in with Google first','err');
+    return {success:false, error:'Not signed in'};
+  }
+  if(!quiet) ind('⟳ syncing…');
+  try{
+    const d = await apiRequest({action:'readAll'});
+    if(d && d.success){
+      const x=d.data || {};
+      S.guests = Array.isArray(x.guests) ? x.guests : [];
+      S.shopping = Array.isArray(x.shopping) ? x.shopping : [];
+      S.expenses = Array.isArray(x.expenses) ? x.expenses : [];
+      S.overflow = Array.isArray(x.overflow) ? x.overflow : [];
+      S.payments = Array.isArray(x.payments) ? x.payments : [];
+      S.rooms = normalizeRooms(Array.isArray(x.rooms) ? x.rooms : []);
+      save();
+      renderAll();
+      if(!quiet) toast('Synced from Google Sheets!','ok');
+      return {success:true};
+    } else {
+      const err = (d && d.error) ? d.error : 'Unknown';
+      if(/(unauthori|does not have access|access denied)/i.test(err)){
+        forceSignOut(err);
+      } else {
+        if(!quiet) toast('Sync failed: '+err,'err');
+      }
+      return {success:false, error:err};
+    }
+  }catch(e){
+    if(!quiet) toast('Sync error: '+e.message,'err');
+    return {success:false, error:e.message};
+  } finally {
+    if(!quiet) ind('');
+  }
 }
 
 async function push(sheet,action,data){
-  if(!S.url) return;
+  if(!S.url){
+    return {success:false, error:'No Sheets URL configured'};
+  }
   try{
-    const d = await jsonpRequest({action, sheet, id:(data&&data.id)||'', data:JSON.stringify(data||{})});
-    if(d && d.success===false && d.error && d.error.toLowerCase().includes('unauthori')){
+    const d = await apiRequest({action, sheet, id:(data&&data.id)||'', data:JSON.stringify(data||{})});
+    if(d && d.success===false && d.error && /(unauthori|does not have access|access denied)/i.test(d.error)){
       forceSignOut(d.error);
     }
-  }catch(e){console.warn('Sheet push failed',e.message);}
+    return d || {success:true};
+  }catch(e){
+    console.warn('Sheet push failed',e.message);
+    return {success:false, error:e.message};
+  }
 }
 
 function ind(msg){document.getElementById('sync-ind').textContent=msg;}
@@ -625,6 +720,18 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=n=>(+n||0).toLocaleString('en-IN');
 const b=v=>v===true||v==='true'||v===1||v==='1';
 const gv=id=>{const e=document.getElementById(id);return e?e.type==='checkbox'?e.checked:e.value:'';}
+function ensureSheetsReady(){
+  if(!getUser()){
+    toast('Please sign in with Google first','err');
+    forceSignOut('Please sign in with your authorised Google account.');
+    return false;
+  }
+  if(!S.url){
+    toast('Configure Google Sheets URL in Settings first','err');
+    return false;
+  }
+  return true;
+}
 
 function toast(msg,type='inf'){
   const t=document.getElementById('toast');
@@ -811,11 +918,21 @@ function rrooms(){
     </tr>`).join(''):`<tr><td colspan="9" class="es">No overflow rooms booked</td></tr>`;
 }
 
-function clrRoom(id){
+async function clrRoom(id){
+  if(!ensureSheetsReady()) return;
   const r=S.rooms.find(x=>x.id===id);
   if(r&&confirm(`Clear ${r.name}?`)){
     Object.assign(r,{guestName:'',relation:'',checkin:'',checkout:'',pax:'',notes:''});
-    save();push('Rooms','update',r);rrooms();toast('Room cleared','inf');
+    save();
+    rrooms();
+    const rs = await push('Rooms','update',r);
+    if(rs && rs.success===false){
+      toast('Room clear failed: '+(rs.error||'Unknown error'),'err');
+      await syncData({quiet:true});
+      return;
+    }
+    await syncData({quiet:true});
+    toast('Room cleared','inf');
   }
 }
 
@@ -936,7 +1053,8 @@ function calcBal(){
 
 function cm(){document.getElementById('modal-ov').classList.remove('open');S.modal=null;S.eid=null;}
 
-function sm(){
+async function sm(){
+  if(!ensureSheetsReady()) return;
   const type=S.modal,id=S.eid;
   const g=f=>{const el=document.getElementById('f-'+f);return el?el.type==='checkbox'?el.checked:el.value:'';};
 
@@ -975,17 +1093,33 @@ function sm(){
 
   save();
   const SM={guest:'Guests',shopping:'Shopping',expense:'Expenses',room:'Rooms',overflow:'Overflow',payment:'Payments'};
-  push(SM[type],id?'update':'write',data);
-  cm();toast(id?'Updated!':'Added!','ok');
+  const rs = await push(SM[type],id?'update':'write',data);
+  if(rs && rs.success===false){
+    toast('Save failed: '+(rs.error||'Unknown error'),'err');
+    await syncData({quiet:true});
+    return;
+  }
+  await syncData({quiet:true});
+  cm();
+  toast(id?'Updated!':'Added!','ok');
   if(S.activeTab==='dashboard')rdash();
 }
 
-function del(col,id){
+async function del(col,id){
+  if(!ensureSheetsReady()) return;
   if(!confirm('Delete this item?'))return;
   S[col]=S[col].filter(x=>x.id!==id);
   save();
   const SM={guests:'Guests',shopping:'Shopping',expenses:'Expenses',overflow:'Overflow',payments:'Payments'};
-  if(SM[col])push(SM[col],'delete',{id});
+  if(SM[col]){
+    const rs = await push(SM[col],'delete',{id});
+    if(rs && rs.success===false){
+      toast('Delete failed: '+(rs.error||'Unknown error'),'err');
+      await syncData({quiet:true});
+      return;
+    }
+    await syncData({quiet:true});
+  }
   if(col==='guests')rguests();
   else if(col==='shopping')rshopping();
   else if(col==='expenses')rexpenses();
@@ -999,11 +1133,11 @@ function del(col,id){
 function openSettings(){
   const st=S.sets;
   document.getElementById('s-child').value=st.childName||'';
-  document.getElementById('s-d1').value=st.date1||'22 Mar 2026';
-  document.getElementById('s-d2').value=st.date2||'23 Mar 2026';
+  document.getElementById('s-d1').value=st.date1||'22 Apr 2026';
+  document.getElementById('s-d2').value=st.date2||'23 Apr 2026';
   document.getElementById('s-venue').value=st.venue||'';
   document.getElementById('s-parent').value=st.parent||'';
-  document.getElementById('s-url').value=S.url||'';
+  document.getElementById('s-url').value=WEB_APP_URL;
   document.getElementById('s-clientid').value=getClientId();
 
   document.getElementById('set-ov').classList.add('open');
@@ -1011,15 +1145,22 @@ function openSettings(){
 function cs(){document.getElementById('set-ov').classList.remove('open');}
 function saveSets(){
   S.sets.childName=document.getElementById('s-child').value;
-  S.sets.date1=document.getElementById('s-d1').value||'22 Mar 2026';
-  S.sets.date2=document.getElementById('s-d2').value||'23 Mar 2026';
+  S.sets.date1=document.getElementById('s-d1').value||'22 Apr 2026';
+  S.sets.date2=document.getElementById('s-d2').value||'23 Apr 2026';
   S.sets.venue=document.getElementById('s-venue').value;
   S.sets.parent=document.getElementById('s-parent').value;
-  S.url=document.getElementById('s-url').value.trim();
+  S.url=WEB_APP_URL;
   const cid=document.getElementById('s-clientid').value.trim();
   if(cid) localStorage.setItem('upa_client_id',cid);
+  else localStorage.removeItem('upa_client_id');
 
   save();updateHeader();updateBanner();cs();toast('Settings saved!','ok');
+  if(window.google && google.accounts){
+    initGSI();
+  }
+  if(getUser() && S.url){
+    syncData().catch(()=>ind(''));
+  }
 }
 
 function updateHeader(){
@@ -1035,12 +1176,18 @@ function updateBanner(){
 function renderAll(){rguests();rshopping();rexpenses();rrooms();rpayments();rdash();}
 
 document.addEventListener('DOMContentLoaded',()=>{
-  // If already authenticated in this session, boot normally
+  load();
+  updateHeader();
+  updateBanner();
+
+  // If already authenticated in this session, validate access before showing app
   const _su = getUser();
   if(_su){
-    gsiShowUser(_su.name||'', _su.email||'');
-    load(); updateHeader(); updateBanner(); renderAll();
-    if(S.url){ ind('⟳ Loading data…'); syncData().catch(()=>ind('')); }
+    verifyAccessThenEnter(_su).catch(() => {
+      forceSignOut('Could not sync data from Google Sheets. Please sign in again.');
+    });
+  } else {
+    setAppShellVisible(false);
   }
   // Wait for GSI script to load, then init sign-in
   const waitForGSI = setInterval(()=>{
