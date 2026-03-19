@@ -24,21 +24,22 @@ body{font-family:'Crimson Pro',Georgia,serif;background:var(--iv);color:var(--td
 .setup-banner{background:#FFFBEB;border-left:4px solid var(--sf);padding:10px 20px;font-size:.88rem;color:var(--td);display:flex;align-items:center;gap:8px}
 .setup-banner a{color:var(--mr);cursor:pointer;text-decoration:underline}
 .hidden{display:none!important}
+/* ── GOOGLE SIGN-IN OVERLAY ──────────────────────────────────────────────── */
+#gsi-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,var(--mr) 0%,#3B0A18 45%,var(--gd) 100%);display:flex;align-items:center;justify-content:center;padding:20px}
+.gsi-card{background:rgba(253,246,227,.97);border-radius:18px;padding:44px 38px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.gsi-icon{font-size:3rem;margin-bottom:8px}
+.gsi-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--mr);margin-bottom:6px}
+.gsi-sub{font-size:.88rem;color:var(--tl);margin-bottom:28px;line-height:1.5}
+.gsi-btn-wrap{display:flex;justify-content:center;margin-bottom:16px}
+.gsi-err{color:#B91C1C;font-size:.84rem;margin-top:12px;min-height:18px;font-weight:500}
+.gsi-divider{border:none;border-top:1px solid var(--bd);margin:20px 0}
+.gsi-note{font-size:.76rem;color:var(--tl);line-height:1.5}
+.gsi-setup{background:#FFFBEB;border:1px solid var(--sf);border-radius:8px;padding:12px 14px;font-size:.8rem;color:var(--td);text-align:left;margin-top:14px;display:none}
+.gsi-setup code{background:#FAF0D7;padding:1px 4px;border-radius:3px;font-size:.78rem}
 /* ── LOCK SCREEN ─────────────────────────────────────────────────────────── */
-#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,var(--mr) 0%,#3B0A18 45%,var(--gd) 100%);display:flex;align-items:center;justify-content:center;padding:20px}
-.lock-card{background:rgba(253,246,227,.97);border-radius:18px;padding:40px 36px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.45)}
-.lock-om{font-size:2.8rem;margin-bottom:6px}
-.lock-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--mr);margin-bottom:4px}
-.lock-sub{font-size:.88rem;color:var(--tl);margin-bottom:28px}
 .lock-input-wrap{position:relative;margin-bottom:16px}
-.lock-input{width:100%;padding:13px 44px 13px 16px;border:2px solid var(--bd);border-radius:10px;font-family:'Crimson Pro',serif;font-size:1.1rem;color:var(--td);background:white;outline:none;transition:border .2s;letter-spacing:2px}
 .lock-input:focus{border-color:var(--sf)}
-.lock-eye{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--tl)}
-.lock-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--mr),var(--mr2));color:white;border:none;border-radius:10px;font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;cursor:pointer;transition:opacity .2s;letter-spacing:.5px}
 .lock-btn:hover{opacity:.88}
-.lock-err{color:#B91C1C;font-size:.85rem;margin-top:10px;min-height:18px;font-weight:500}
-.lock-divider{border:none;border-top:1px solid var(--bd);margin:22px 0}
-.lock-hint{font-size:.78rem;color:var(--tl)}
 
 /* NAV */
 .nav{background:white;border-bottom:2px solid var(--bd);padding:0 12px;display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -166,26 +167,29 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .helpbox code{background:#FEF9C3;padding:1px 5px;border-radius:3px;font-size:.8rem}
 @media(max-width:600px){.fr{grid-template-columns:1fr}.fr.t{grid-template-columns:1fr 1fr}.stats-grid{grid-template-columns:1fr 1fr}.main{padding:10px}.hdr h1{font-size:1.15rem}}
 </style>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div id="app">
 
 <!-- HEADER -->
-<!-- LOCK SCREEN -->
-<div id="lock-screen">
-  <div class="lock-card">
-    <div class="lock-om">&#x1FAF6;</div>
-    <div class="lock-title">Upanayanam Manager</div>
-    <div class="lock-sub">Advaith &amp; Anirudh &middot; Apr 2026<br><small style="opacity:.7">Enter password to continue</small></div>
-    <div class="lock-input-wrap">
-      <input class="lock-input" type="password" id="lock-pwd" placeholder="Password"
-        onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password">
-      <button class="lock-eye" onclick="toggleLockEye()" title="Show/hide">&#128065;</button>
+<!-- GOOGLE SIGN-IN OVERLAY -->
+<div id="gsi-overlay">
+  <div class="gsi-card">
+    <div class="gsi-icon">🪶</div>
+    <div class="gsi-title">Upanayanam Manager</div>
+    <div class="gsi-sub">Advaith &amp; Anirudh &middot; Apr 2026<br>Sign in with the Google account that has access to the event sheet</div>
+    <div class="gsi-btn-wrap">
+      <div id="g_id_signin"></div>
     </div>
-    <button class="lock-btn" onclick="doLogin()">&#x1F513; Enter</button>
-    <div class="lock-err" id="lock-err"></div>
-    <hr class="lock-divider">
-    <div class="lock-hint">Family event management &middot; Contact the organiser for the password</div>
+    <div class="gsi-err" id="gsi-err"></div>
+    <div id="gsi-setup" class="gsi-setup">
+      <strong>⚙ First-time setup:</strong> A Google Client ID is required.<br>
+      Open ⚙ Settings after configuring and enter your Client ID, then reload.
+    </div>
+    <hr class="gsi-divider">
+    <div class="gsi-note">Only Google accounts with access to the spreadsheet can sign in.<br>Contact the organiser to request access.</div>
   </div>
 </div>
 
@@ -197,7 +201,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
   <div class="hdr-right">
     <span id="sync-ind" style="font-size:.78rem;opacity:.8;"></span>
     <button class="hbtn" onclick="syncData()">⟳ Sync Sheets</button>
-    <button class="hbtn" onclick="doLogout()" title="Logout" style="padding:6px 10px;">🔒</button><button class="hbtn" onclick="openSettings()">⚙</button>
+    <button class="hbtn" id="signout-btn" onclick="gsiSignOut()" title="Sign out" style="display:none;padding:6px 11px;">Sign out</button><button class="hbtn" onclick="openSettings()">⚙</button>
   </div>
 </header>
 
@@ -362,12 +366,13 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
         <div class="fg"><label>Venue Name</label><input type="text" id="s-venue" placeholder="e.g., Sri Kalyana Mantapa" value="Sarada Sankara Mandapam"></div>
         <div class="fg"><label>Father's Name</label><input type="text" id="s-parent" placeholder="Ananthanarayanan" value="Ananthanarayanan"></div>
       </div>
-      <hr class="sep">
-      <div class="fr">
-        <div class="fg"><label>Current Password (to change)</label><input type="password" id="s-pwd-cur" placeholder="Current password" autocomplete="current-password"></div>
-        <div class="fg"><label>New Password</label><input type="password" id="s-pwd-new" placeholder="New password (min 4 chars)" autocomplete="new-password"></div>
+      <div class="fr s">
+        <div class="fg">
+          <label>Google OAuth Client ID</label>
+          <input type="text" id="s-clientid" placeholder="xxxx.apps.googleusercontent.com">
+          <small style="margin-top:4px;display:block;color:var(--tl)">Required for Google Sign-In. <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--mr)">Get one from Google Cloud Console →</a></small>
+        </div>
       </div>
-      <div style="font-size:.8rem;color:var(--tl);margin-top:-6px;margin-bottom:4px">Leave blank to keep existing password &middot; Default: <code>poonal2026</code></div>
       <hr class="sep">
       <div class="fr s">
         <div class="fg">
@@ -401,58 +406,77 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── AUTH ───────────────────────────────────────────────────────────────────────
-const AUTH_KEY = 'upa_auth_hash';
-// SHA-256 of "poonal2026"
-const DEFAULT_HASH = '98ab2816a10d8bd1507b8cb84f760e6f08018db75492ddaad4f5b733a741870d';
+// ─── GOOGLE AUTH ─────────────────────────────────────────────────────────────
+// Google ID token is obtained via Google Identity Services (GSI).
+// It is verified server-side in Apps Script — only emails with sheet
+// access (editors/viewers) are allowed.
 
-async function sha256(str){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+function getClientId(){
+  return localStorage.getItem('upa_client_id') || '';
 }
-function getStoredHash(){ return localStorage.getItem(AUTH_KEY) || DEFAULT_HASH; }
-
-async function doLogin(){
-  const pwd = document.getElementById('lock-pwd').value;
-  const err = document.getElementById('lock-err');
-  if(!pwd){ err.textContent = 'Please enter the password.'; return; }
-  const h = await sha256(pwd);
-  if(h === getStoredHash()){
-    sessionStorage.setItem('upa_session','1');
-    sessionStorage.setItem('upa_token', pwd); // password doubles as API token
-    document.getElementById('lock-screen').style.display = 'none';
-    err.textContent = '';
-  } else {
-    err.textContent = '❌ Incorrect password. Please try again.';
-    document.getElementById('lock-pwd').value = '';
-    document.getElementById('lock-pwd').focus();
-  }
+function getToken(){
+  // Returns the current Google ID token from sessionStorage
+  return sessionStorage.getItem('upa_id_token') || '';
 }
-function doLogout(){
-  if(!confirm('Log out? You will need to enter the password again.')) return;
-  sessionStorage.removeItem('upa_session');
-  sessionStorage.removeItem('upa_token');
+function gsiSignOut(){
+  sessionStorage.removeItem('upa_id_token');
+  sessionStorage.removeItem('upa_user');
+  google.accounts.id.disableAutoSelect();
   location.reload();
 }
-function toggleLockEye(){
-  const inp = document.getElementById('lock-pwd');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
+function gsiShowUser(name, email){
+  document.getElementById('gsi-overlay').style.display = 'none';
+  const btn = document.getElementById('signout-btn');
+  if(btn){ btn.style.display=''; btn.title = 'Signed in as ' + email + '\nClick to sign out'; }
 }
-function getToken(){ return sessionStorage.getItem('upa_token')||''; }
-function checkAuth(){
-  if(sessionStorage.getItem('upa_session') === '1'){
-    document.getElementById('lock-screen').style.display = 'none';
+function gsiHandleCredential(response){
+  const idToken = response.credential;
+  const err = document.getElementById('gsi-err');
+  err.textContent = '⏳ Verifying access…';
+  // Send token to Apps Script to verify + check sheet access
+  const url = S.url + '?action=verifyAuth&idToken=' + encodeURIComponent(idToken);
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if(data.success && data.authorized){
+        sessionStorage.setItem('upa_id_token', idToken);
+        sessionStorage.setItem('upa_user', JSON.stringify({name: data.name, email: data.email}));
+        gsiShowUser(data.name, data.email);
+        err.textContent = '';
+        // Load data now that we're authenticated
+        load(); updateHeader(); updateBanner(); renderAll();
+        if(S.url){ ind('⟳ Loading data…'); syncData().catch(()=>ind('')); }
+      } else {
+        err.textContent = '⛔ ' + (data.error || 'Your Google account does not have access to this sheet. Contact the organiser.');
+      }
+    })
+    .catch(e => {
+      err.textContent = '⚠ Could not verify — check your internet connection.';
+    });
+}
+function initGSI(){
+  const clientId = getClientId();
+  if(!clientId){
+    document.getElementById('gsi-setup').style.display = 'block';
+    document.getElementById('gsi-err').textContent = '⚙ No Client ID configured. Open Settings and add your Google OAuth Client ID.';
+    return;
   }
-  // else lock screen stays visible (it's shown by default in HTML)
-}
-async function changePassword(cur, nw){
-  const curH = await sha256(cur);
-  if(curH !== getStoredHash()){ toast('Current password is incorrect','err'); return false; }
-  if(nw.length < 4){ toast('New password must be at least 4 characters','err'); return false; }
-  const newH = await sha256(nw);
-  localStorage.setItem(AUTH_KEY, newH);
-  toast('Password changed! Use new password next login.','ok');
-  return true;
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: gsiHandleCredential,
+    auto_select: true,          // silently re-authenticates returning users
+    cancel_on_tap_outside: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g_id_signin'),
+    { theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 280 }
+  );
+  google.accounts.id.prompt(); // show One Tap if session exists
+  // If already have a valid token in session, skip the overlay
+  if(getToken()){
+    const user = JSON.parse(sessionStorage.getItem('upa_user') || '{}');
+    gsiShowUser(user.name || '', user.email || '');
+  }
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -902,6 +926,7 @@ function openSettings(){
   document.getElementById('s-venue').value=st.venue||'';
   document.getElementById('s-parent').value=st.parent||'';
   document.getElementById('s-url').value=S.url||'';
+  document.getElementById('s-clientid').value=getClientId();
 
   document.getElementById('set-ov').classList.add('open');
 }
@@ -913,14 +938,9 @@ function saveSets(){
   S.sets.venue=document.getElementById('s-venue').value;
   S.sets.parent=document.getElementById('s-parent').value;
   S.url=document.getElementById('s-url').value.trim();
+  const cid=document.getElementById('s-clientid').value.trim();
+  if(cid) localStorage.setItem('upa_client_id',cid);
 
-  const curPwd = document.getElementById('s-pwd-cur').value;
-  const newPwd = document.getElementById('s-pwd-new').value;
-  if(newPwd){
-    changePassword(curPwd, newPwd).then(ok => {
-      if(ok){ document.getElementById('s-pwd-cur').value=''; document.getElementById('s-pwd-new').value=''; }
-    });
-  }
   save();updateHeader();updateBanner();cs();toast('Settings saved!','ok');
 }
 
@@ -937,14 +957,20 @@ function updateBanner(){
 function renderAll(){rguests();rshopping();rexpenses();rrooms();rpayments();rdash();}
 
 document.addEventListener('DOMContentLoaded',()=>{
-  checkAuth(); // Show lock screen or grant access based on session
-  checkAuth();
-  load();updateHeader();updateBanner();renderAll();
-  // Auto-sync from Google Sheets on load so new browsers always get fresh data
-  if(S.url){
-    ind('⟳ Loading data from Google Sheets…');
-    syncData().catch(()=>ind(''));
+  // If already authenticated in this session, boot normally
+  if(getToken()){
+    const user = JSON.parse(sessionStorage.getItem('upa_user')||'{}');
+    gsiShowUser(user.name||'', user.email||'');
+    load(); updateHeader(); updateBanner(); renderAll();
+    if(S.url){ ind('⟳ Loading data…'); syncData().catch(()=>ind('')); }
   }
+  // Wait for GSI script to load, then init sign-in
+  const waitForGSI = setInterval(()=>{
+    if(window.google && google.accounts){
+      clearInterval(waitForGSI);
+      initGSI();
+    }
+  }, 100);
 });
 </script>
 </body>
