@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Hub - Persistent Feed</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+        }
+        .screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .active {
+            display: flex;
+            flex-direction: column;
+        }
+        #main-screen {
+            padding: 20px;
+            align-items: center;
+            overflow-y: auto;
+        }
+        h2 {
+            margin-top: 10px;
+            color: #222;
+        }
+        .content-area {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-bottom: 95px; 
+        }
+        .shorts-card {
+            width: 100%;
+            max-width: 300px;
+            background: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            touch-action: pan-y; 
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .shorts-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            display: block;
+            pointer-events: none; 
+        }
+        .shorts-card .card-name {
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+        }
+        .video-row-item {
+            width: 100%;
+            max-width: 450px;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            cursor: pointer;
+            display: flex; 
+            align-items: center;
+            position: relative;
+            touch-action: pan-y; 
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .video-row-item img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+        }
+        .video-row-item .row-name {
+            padding: 0 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+            flex: 1;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ff0000;
+            display: flex;
+            height: 65px;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        .nav-item {
+            flex: 1;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .nav-item:hover, .nav-item:active {
+            background-color: #cc0000;
+        }
+        #creator-screen {
+            background-color: #ffffff;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        .action-btn {
+            width: 85%;
+            max-width: 320px;
+            padding: 16px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .action-btn:active { background-color: #e0e0e0; }
+        .status-mark {
+            color: #4CAF50;
+            font-weight: bold;
+            display: none;
+        }
+        .name-container {
+            width: 85%;
+            max-width: 320px;
+            margin-top: 10px;
+        }
+        .name-container label {
+            display: block;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .name-container input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .decision-row {
+            display: flex;
+            justify-content: space-between;
+            width: 85%;
+            max-width: 320px;
+            margin-top: 15px;
+        }
+        .decision-btn {
+            width: 45%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-cancel { background-color: #f44336; color: white; }
+        .btn-ok { background-color: #4CAF50; color: white; }
+        input[type="file"] { display: none; }
+        #fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 1);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            touch-action: none;
+        }
+        #fullscreen-image, #fullscreen-video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            pointer-events: auto;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-screen" class="screen active">
+        <h2>Media Hub Dashboard</h2>
+        <p style="color:#777; font-size:14px; text-align:center;">Swipe items horizontally left/right to delete them.</p>
+        <div class="content-area" id="card-output-zone"></div>
+        <nav class="bottom-nav">
+            <div class="nav-item" onclick="openCreatorMode('Shorts')">+Shorts</div>
+            <div class="nav-item" onclick="openCreatorMode('Videos')">+Videos</div>
+        </nav>
+    </div>
+
+    <div id="creator-screen" class="screen">
+        <button class="action-btn" onclick="openPicker('video-file')">
+            +Select video <span id="v-check" class="status-mark">✓ Ready</span>
+        </button>
+        <button class="action-btn" onclick="openPicker('image-file')">
+            +Select image <span id="i-check" class="status-mark">✓ Ready</span>
+        </button>
+        <button class="action-btn" onclick="openPicker('voice-file')">
+            +Select voice <span id="a-check" class="status-mark">✓ Ready</span>
+        </button>
+
+        <input type="file" id="video-file" accept="video/*,image/*" onchange="fileSelected('v-check')">
+        <input type="file" id="image-file" accept="image/*" onchange="fileSelected('i-check')">
+        <input type="file" id="voice-file" accept="audio/*" onchange="fileSelected('a-check')">
+
+        <div class="name-container">
+            <label for="input-text-name">Name.....</label>
+            <input type="text" id="input-text-name" placeholder="Type name entry here...">
+        </div>
+
+        <div class="decision-row">
+            <button class="decision-btn btn-cancel" onclick="exitToMain()">Cancel</button>
+            <button class="decision-btn btn-ok" onclick="processAndRender()">Ok</button>
+        </div>
+    </div>
+
+    <div id="fullscreen-overlay">
+        <img id="fullscreen-image" src="" alt="Viewer Frame">
+        <video id="fullscreen-video" loop playsinline controls></video>
+    </div>
+
+    <script>
+        let activeCreationMode = ""; 
+        let mediaDatabase = [];
+        let dbInstance = null;
+
+        function openDatabase() {
+            try {
+                const request = indexedDB.open("MediaHubSandboxStorage", 1);
+                request.onupgradeneeded = function(e) {
+                    let db = e.target.result;
+                    if (!db.objectStoreNames.contains("mediaItems")) {
+                        db.createObjectStore("mediaItems", { keyPath: "id" });
+                    }
+                };
+                request.onsuccess = function(e) {
+                    dbInstance = e.target.result;
+                    loadItemsFromStorage();
+                };
+            } catch (err) {
+                console.log("IndexedDB status offline.");
+            }
+        }
+        openDatabase();
+
+        function openCreatorMode(mode) {
+            activeCreationMode = mode;
+            document.getElementById('main-screen').classList.remove('active');
+            document.getElementById('creator-screen').classList.add('active');
+        }
+
+        function exitToMain() {
+            clearFormFields();
+            document.getElementById('creator-screen').classList.remove('active');
+            document.getElementById('main-screen').classList.add('active');
+        }
+
+        function openPicker(id) {
+            document.getElementById(id).click();
+        }
+
+        function fileSelected(checkId) {
+            document.getElementById(checkId).style.display = 'block';
+        }
+
+        function clearFormFields() {
+            document.getElementById('input-text-name').value = '';
+            document.getElementById('video-file').value = '';
+            document.getElementById('image-file').value = '';
+            document.getElementById('voice-file').value = '';
+            document.getElementById('v-check').style.display = 'none';
+            document.getElementById('i-check').style.display = 'none';
+            document.getElementById('a-check').style.display = 'none';
+        }
+
+        function processAndRender() {
+            const nameValue = document.getElementById('input-text-name').value.trim() || `Untitled ${activeCreationMode}`;
+            const imageFileEl = document.getElementById('image-file');
+            const videoFileEl = document.getElementById('video-file');
+            const voiceFileEl = document.getElementById('voice-file');
+
+            if (imageFileEl.files && imageFileEl.files[0]) {
+                const imgBlob = imageFileEl.files[0];
+                const vidBlob = videoFileEl.files && videoFileEl.files[0] ? videoFileEl.files[0] : null;
+                const voiceBlob = voiceFileEl.files && voiceFileEl.files[0] ? voiceFileEl.files[0] : null;
+
+                const itemRecord = {
+                    id: Date.now(),
+                    type: activeCreationMode,
+                    name: nameValue,
+                    imageFile: imgBlob,
+                    videoFile: vidBlob,
+                    voiceFile: voiceBlob
+                };
+                saveItem(itemRecord);
+            } else {
+                alert("Error: Please select an image via '+Select image' before pressing Ok.");
+            }
+        }
+
+        function saveItem(record) {
+            if (dbInstance) {
+                const transaction = dbInstance.transaction(["mediaItems"], "readwrite");
+                const store = transaction.objectStore("mediaItems");
+                store.add(record).onsuccess = function() {
+                    instantiateUrlsAndAppend(record);
+                };
+            } else {
+                instantiateUrlsAndAppend(record);
+            }
+            exitToMain();
+        }
+
+        function instantiateUrlsAndAppend(record) {
+            record.imageSrc = URL.createObjectURL(record.imageFile);
+            record.videoSrc = record.videoFile ? URL.createObjectURL(record.videoFile) : "";
+            record.voiceSrc = record.voiceFile ? URL.createObjectURL(record.voiceFile) : "";
+            mediaDatabase.push(record);
+            appendItemToUI(record);
+        }
+
+        function loadItemsFromStorage() {
+            if (!dbInstance) return;
+            const transaction = dbInstance.transaction(["mediaItems"], "readonly");
+            transaction.objectStore("mediaItems").getAll().onsuccess = function(e) {
+                const records = e.target.result || [];
+                records.forEach(record => instantiateUrlsAndAppend(record));
+            };
+        }
+
+        function deleteItemFromStorage(id) {
+            if (!dbInstance) return;
+            const transaction = dbInstance.transaction(["mediaItems"], "readwrite");
+            transaction.objectStore("mediaItems").delete(id);
+        }
+
+        function appendItemToUI(item) {
+            const displayZone = document.getElementById('card-output-zone');
+            const itemWrapper = document.createElement('div');
+            
+            if (item.type === "Shorts") {
+                itemWrapper.className = "shorts-card";
+                itemWrapper.innerHTML = `<img src="${item.imageSrc}" alt="Media"><div class="card-name">${item.name}</div>`;
+            } else if (item.type === "Videos") {
+                itemWrapper.className = "video-row-item";
+                itemWrapper.innerHTML = `<img src="${item.imageSrc}" alt="Media"><div class="row-name">${item.name}</div>`;
+            }
+
+            let startX = 0, currentX = 0, isSwiping = false;
+
+            itemWrapper.addEventListener('mousedown', startSwipe);
+            itemWrapper.addEventListener('mousemove', moveSwipe);
+            itemWrapper.addEventListener('mouseup', endSwipe);
+            itemWrapper.addEventListener('touchstart', (e) => startSwipe(e.touches[0]), {passive: true});
+            itemWrapper.addEventListener('touchmove', (e) => moveSwipe(e.touches[0]), {passive: true});
+            itemWrapper.addEventListener('touchend', endSwipe);
+
+            function startSwipe(e) {
+                startX = e.clientX;
+                isSwiping = true;
+                itemWrapper.style.transition = 'none';
+            }
+            function moveSwipe(e) {
+                if (!isSwiping) return;
+                currentX = e.clientX;
+                let deltaX = currentX - startX;
+                itemWrapper.style.transform = `translateX(${deltaX}px)`;
+                itemWrapper.style.opacity = Math.max(1 - (Math.abs(deltaX) / window.innerWidth), 0.2);
+            }
+            function endSwipe() {
+                if (!isSwiping) return;
+                isSwiping = false;
+                let deltaX = currentX - startX;
+
+                if (Math.abs(deltaX) > 110) {
+                    let throwOut = deltaX > 0 ? window.innerWidth : -window.innerWidth;
+                    itemWrapper.style.transition = 'transform 0.25s ease-out, opacity 0.25s ease-out';
+                    itemWrapper.style.transform = `translateX(${throwOut}px)`;
+                    itemWrapper.style.opacity = '0';
+                    setTimeout(() => {
+                        deleteItemFromStorage(item.id);
+                        mediaDatabase = mediaDatabase.filter(d => d.id !== item.id);
+                        itemWrapper.remove();
+                    }, 250);
+                } else {
+                    if (Math.abs(deltaX) < 6 || isNaN(deltaX)) {
+                        triggerViewer(item.imageSrc, item.videoSrc, item.videoFile);
+                    }
+                    itemWrapper.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+                    itemWrapper.style.transform = 'translateX(0px)';
+                    itemWrapper.style.opacity = '1';
+                }
+                startX = 0; currentX = 0;
+            }
+            displayZone.appendChild(itemWrapper);
+        }
+
+        const overlayNode = document.getElementById('fullscreen-overlay');
+        const previewImageNode = document.getElementById('fullscreen-image');
+        const previewVideoNode = document.getElementById('fullscreen-video');
+        let touchStartY = 0, currentTouchY = 0, activeGesture = false, activeTargetNode = null;
+
+        function triggerViewer(imageSrc, videoSrc, rawVideoFile) {
+            document.getElementById('main-screen').classList.remove('active');
+            overlayNode.style.display = 'flex';
+            overlayNode.style.backgroundColor = 'rgba(0, 0, 0, 1)';
+            
+            if (videoSrc && rawVideoFile && rawVideoFile.type.startsWith('video/')) {
+                previewImageNode.style.display = 'none';
+                previewVideoNode.style.display = 'block';
+                previewVideoNode.src = videoSrc;
+                previewVideoNode.style.transform = 'translateY(0px)';
+                activeTargetNode = previewVideoNode;
+                previewVideoNode.play().catch(() => {});
+            } else {
+                previewVideoNode.style.display = 'none';
+                previewVideoNode.pause();
+                previewImageNode.style.display = 'block';
+                previewImageNode.src = (videoSrc && rawVideoFile && rawVideoFile.type.startsWith('image/')) ? videoSrc : imageSrc;
+                previewImageNode.style.transform = 'translateY(0px)';
+                activeTargetNode = previewImageNode;
+            }
+        }
+
+        overlayNode.addEventListener('mousedown', pointerStart);
+        window.addEventListener('mousemove', pointerMove);
+        window.addEventListener('mouseup', pointerEnd);
+        overlayNode.addEventListener('touchstart', (e) => pointerStart(e.touches[0]), {passive: true});
+        window.addEventListener('touchmove', (e) => { if(activeGesture) pointerMove(e.touches[0]); }, {passive: false});
+        window.addEventListener('touchend', pointerEnd);
+
+        function pointerStart(e) {
+            if (e.target === previewVideoNode && previewVideoNode.controls) {
+                if (e.clientY > window.innerHeight - 80) return;
+            }
+            if (!activeTargetNode) return;
+            touchStartY = e.clientY;
+            activeGesture = true;
+            activeTargetNode.style.transition = 'none'; 
+        }
+
+        function pointerMove(e) {
+            if (!activeGesture || !activeTargetNode) return;
+            currentTouchY = e.clientY;
+            let travelDistance = currentTouchY - touchStartY;
+            if (travelDistance > 0) {
+                activeTargetNode.style.transform = `translateY(${travelDistance}px)`;
+                overlayNode.style.backgroundColor = `rgba(0, 0, 0, ${1 - (travelDistance / window.innerHeight)})`;
+            }
+        }
+
+        function pointerEnd() {
+            if (!activeGesture || !activeTargetNode) return;
+            activeGesture = false;
+            let finalTravelDistance = currentTouchY - touchStartY;
+
+            if (finalTravelDistance > 150) {
+                overlayNode.style.display = 'none';
+                previewVideoNode.pause();
+                previewVideoNode.src = "";
+                activeTargetNode.style.transform = 'translateY(0px)';
+                activeTargetNode = null;
+                document.getElementById('main-screen').classList.add('active');
+            } else {
+                activeTargetNode.style.transition = 'transform 0.2s ease-out';
+                activeTargetNode.style.transform = 'translateY(0px)';
+                overlayNode.style.backgroundColor = 'rgba(0, 0, 0, 1)';
+            }
+            touchStartY = 0; currentTouchY = 0;
+        }
+    </script>
+</body>
+</html>
