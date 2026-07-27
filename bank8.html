@@ -520,41 +520,59 @@
 
   function renderRemarksSummary() {
     const card = document.getElementById("remarksSummaryCard");
-    
-    // Create a summary object to tally amounts
-    const summary = {};
+    const keywordSummary = {};
     let hasRemarks = false;
+
+    // Common words to ignore when extracting keywords
+    const stopWords = new Set(["and", "the", "for", "from", "with", "into", "this", "that", "via", "got", "paid"]);
 
     transactions.forEach(t => {
       const remark = (t.remarks || "").trim();
-      if (!remark) return; // Skip transactions with no remarks
+      if (!remark) return;
+
+      // Extract alphanumeric words and convert to lowercase
+      const words = remark.toLowerCase().match(/[a-z0-9]+/g) || [];
       
-      if (!summary[remark]) summary[remark] = 0;
-      summary[remark] += t.amount;
-      hasRemarks = true;
+      // Use a Set to ensure a word is only counted once per transaction 
+      // (e.g., "Amazon refund for Amazon purchase" only counts 'Amazon' once)
+      const uniqueWords = new Set(words);
+
+      uniqueWords.forEach(word => {
+        // Skip short words (<= 2 chars) and defined stop words
+        if (word.length <= 2 || stopWords.has(word)) return;
+        
+        // Capitalize the first letter for clean display
+        const displayWord = word.charAt(0).toUpperCase() + word.slice(1);
+        
+        if (!keywordSummary[displayWord]) keywordSummary[displayWord] = 0;
+        keywordSummary[displayWord] += t.amount;
+        hasRemarks = true;
+      });
     });
 
-    // Hide the card if there are no remarks to summarize
     if (!hasRemarks) {
       card.style.display = "none";
       return;
     }
 
-    // Sort remarks by total amount (highest to lowest)
-    const sortedRemarks = Object.keys(summary).sort((a, b) => summary[b] - summary[a]);
+    // Sort keywords by highest monetary volume (absolute value)
+    const sortedKeywords = Object.keys(keywordSummary).sort((a, b) => 
+      Math.abs(keywordSummary[b]) - Math.abs(keywordSummary[a])
+    );
 
-    // Build the HTML using your existing guide-card styles
-    let html = `<div class="guide-title">Remarks Summary</div>`;
+    // Limit to the top 10 keywords to keep the UI clean
+    const topKeywords = sortedKeywords.slice(0, 10);
+
+    let html = `<div class="guide-title">Keyword Summary</div>`;
     
-    sortedRemarks.forEach(remark => {
-      const total = summary[remark];
-      // Use green badge (bg) for positive, red badge (br) for negative
+    topKeywords.forEach(word => {
+      const total = keywordSummary[word];
       const badgeClass = total >= 0 ? "bg" : "br";
       const sign = total >= 0 ? "₹" : "−₹";
       
       html += `
         <div class="guide-row">
-          <span>${escapeHtml(remark)}</span>
+          <span>${escapeHtml(word)}</span>
           <span class="badge ${badgeClass}">${sign}${Math.abs(total).toLocaleString("en-IN")}</span>
         </div>`;
     });
