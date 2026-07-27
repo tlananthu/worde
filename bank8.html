@@ -738,22 +738,48 @@
     const d=Object.fromEntries(new FormData(e.target)), uid=Number(d.userId);
     const u=users.find(u=>u.id===uid); if(!u) return;
     const trs=transactions.filter(t=>(t.from===uid||t.to===uid)&&t.date>=d.from&&t.date<=d.to);
-    const totalCr = trs.filter(t=>t.from!==uid).reduce((s,t)=>s+t.amount,0);
-    const totalDr = trs.filter(t=>t.from===uid).reduce((s,t)=>s+t.amount,0);
+    
+    // 1. Calculate true totals based on the actual impact (positive or negative)
+    let totalCr = 0;
+    let totalDr = 0;
+    
+    trs.forEach(t => {
+      // Impact is positive if they received money, negative if they sent it
+      const impact = (t.from !== uid) ? t.amount : -t.amount;
+      if (impact >= 0) totalCr += impact;
+      else totalDr += Math.abs(impact);
+    });
+
+    // 2. Generate the rows
     let rows=trs.map(t=>{
-      const cr=t.from!==uid;
-      const other=t.from===null?"Deposit":(users.find(u=>u.id===(cr?t.from:t.to))?.name||"—");
+      const impact = (t.from !== uid) ? t.amount : -t.amount;
+      const isCredit = impact >= 0;
+      const absAmount = Math.abs(impact);
+      
+      let other = "—";
+      if (t.from === null) {
+        // Fix: Label as Withdrawal if the deposit amount is negative
+        other = t.amount < 0 ? "Withdrawal" : "Deposit";
+      } else {
+        const otherId = (t.from !== uid) ? t.from : t.to;
+        other = users.find(u => u.id === otherId)?.name || "—";
+      }
+
       return `<tr>
         <td>${t.date}</td>
-        <td><span class="tag ${cr?"tcr":"tdr"}">${cr?"Credit":"Debit"}</span></td>
+        <td><span class="tag ${isCredit?"tcr":"tdr"}">${isCredit?"Credit":"Debit"}</span></td>
         <td>${escapeHtml(other)}</td>
-        <td style="font-weight:600;color:${cr?"var(--green)":"var(--red)"}">
-          ${cr?"+":"−"}₹${t.amount.toLocaleString("en-IN")}
+        <td style="font-weight:600;color:${isCredit?"var(--green)":"var(--red)"}">
+          ${isCredit?"+":"−"}₹${absAmount.toLocaleString("en-IN")}
         </td>
         <td style="color:var(--txt3)">${escapeHtml(t.remarks||"")}</td>
       </tr>`;
     }).join("");
+    
     if(!rows) rows=`<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:16px">No transactions in this period</td></tr>`;
+    
+    // 3. Render the UI
+    const netBalance = totalCr - totalDr;
     e.target.nextElementSibling.innerHTML=`
       <div class="stmt-summary">
         <div class="stmt-chip">
@@ -766,7 +792,7 @@
         </div>
         <div class="stmt-chip">
           <div class="sc-label">Net</div>
-          <div class="sc-val" style="color:var(--blue)">₹${(totalCr-totalDr).toLocaleString("en-IN")}</div>
+          <div class="sc-val" style="color:var(--blue)">${netBalance >= 0 ? '₹' : '−₹'}${Math.abs(netBalance).toLocaleString("en-IN")}</div>
         </div>
       </div>
       <div class="stmt-wrap">
