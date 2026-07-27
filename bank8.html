@@ -608,7 +608,6 @@
   function submitDeposit(e,uid) {
     e.preventDefault();
     const d=Object.fromEntries(new FormData(e.target)), amt=Number(d.amount);
-    if(amt<=0) return alert("Enter a valid amount.");
     const u=users.find(u=>u.id===uid); if(!u) return;
     u.balance+=amt;
     transactions.push({from:null,to:uid,date:d.date,amount:amt,remarks:d.remarks});
