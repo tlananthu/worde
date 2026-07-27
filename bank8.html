@@ -770,30 +770,30 @@
 
   function showStatementReport(e) {
     e.preventDefault();
-    const d=Object.fromEntries(new FormData(e.target)), uid=Number(d.userId);
-    const u=users.find(u=>u.id===uid); if(!u) return;
-    const trs=transactions.filter(t=>(t.from===uid||t.to===uid)&&t.date>=d.from&&t.date<=d.to);
+    const d = Object.fromEntries(new FormData(e.target)), uid = Number(d.userId);
+    const u = users.find(u => u.id === uid); if(!u) return;
     
-    // 1. Calculate true totals based on the actual impact (positive or negative)
+    // Map with original index before filtering, so we know which transaction to edit
+    const trs = transactions
+      .map((t, index) => ({ t, index }))
+      .filter(({t}) => (t.from === uid || t.to === uid) && t.date >= d.from && t.date <= d.to);
+    
     let totalCr = 0;
     let totalDr = 0;
     
-    trs.forEach(t => {
-      // Impact is positive if they received money, negative if they sent it
+    trs.forEach(({t}) => {
       const impact = (t.from !== uid) ? t.amount : -t.amount;
       if (impact >= 0) totalCr += impact;
       else totalDr += Math.abs(impact);
     });
 
-    // 2. Generate the rows
-    let rows=trs.map(t=>{
+    let rows = trs.map(({t, index}) => {
       const impact = (t.from !== uid) ? t.amount : -t.amount;
       const isCredit = impact >= 0;
       const absAmount = Math.abs(impact);
       
       let other = "—";
       if (t.from === null) {
-        // Fix: Label as Withdrawal if the deposit amount is negative
         other = t.amount < 0 ? "Withdrawal" : "Deposit";
       } else {
         const otherId = (t.from !== uid) ? t.from : t.to;
@@ -802,20 +802,22 @@
 
       return `<tr>
         <td>${t.date}</td>
-        <td><span class="tag ${isCredit?"tcr":"tdr"}">${isCredit?"Credit":"Debit"}</span></td>
+        <td><span class="tag ${isCredit ? "tcr" : "tdr"}">${isCredit ? "Credit" : "Debit"}</span></td>
         <td>${escapeHtml(other)}</td>
-        <td style="font-weight:600;color:${isCredit?"var(--green)":"var(--red)"}">
-          ${isCredit?"+":"−"}₹${absAmount.toLocaleString("en-IN")}
+        <td style="font-weight:600;color:${isCredit ? "var(--green)" : "var(--red)"}">
+          ${isCredit ? "+" : "−"}₹${absAmount.toLocaleString("en-IN")}
         </td>
-        <td style="color:var(--txt3)">${escapeHtml(t.remarks||"")}</td>
+        <td style="color:var(--txt3)">${escapeHtml(t.remarks || "")}</td>
+        <td>
+          <button style="background:transparent;border:none;cursor:pointer;font-size:1.1rem;opacity:0.7;" onclick="openEditPopup(${index})" title="Edit Transaction">✏️</button>
+        </td>
       </tr>`;
     }).join("");
     
-    if(!rows) rows=`<tr><td colspan="5" style="text-align:center;color:var(--txt3);padding:16px">No transactions in this period</td></tr>`;
+    if(!rows) rows = `<tr><td colspan="6" style="text-align:center;color:var(--txt3);padding:16px">No transactions in this period</td></tr>`;
     
-    // 3. Render the UI
     const netBalance = totalCr - totalDr;
-    e.target.nextElementSibling.innerHTML=`
+    e.target.nextElementSibling.innerHTML = `
       <div class="stmt-summary">
         <div class="stmt-chip">
           <div class="sc-label">Credits</div>
@@ -832,10 +834,62 @@
       </div>
       <div class="stmt-wrap">
         <table class="statement-table">
-          <thead><tr><th>Date</th><th>Type</th><th>With</th><th>Amount</th><th>Note</th></tr></thead>
+          <thead><tr><th>Date</th><th>Type</th><th>With</th><th>Amount</th><th>Note</th><th>Act</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
+  }
+
+  function openEditPopup(index) {
+    const t = transactions[index];
+    if (!t) return;
+    
+    // Note: t.amount shows the true underlying database value (e.g., negative for withdrawals)
+    showPopup(`
+      <div class="popup-header"><h2>Edit Transaction</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" onsubmit="submitEditTransaction(event, ${index})">
+        <div class="fr">
+          <div><label>Date</label><input type="date" name="date" required value="${t.date}"/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" required value="${t.amount}"/></div>
+        </div>
+        <label>Remarks</label>
+        <textarea name="remarks" rows="2">${escapeHtml(t.remarks || "")}</textarea>
+        <button class="btn-p blue" type="submit">Save Changes</button>
+      </form>
+    `);
+  }
+
+  function submitEditTransaction(e, index) {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    const newAmt = Number(d.amount);
+    const t = transactions[index];
+    if (!t) return;
+
+    // 1. Calculate the mathematical difference to correct the balances
+    const difference = newAmt - t.amount;
+
+    if (t.from === null) {
+      // It was a Deposit or Withdrawal (System -> User)
+      const uTo = users.find(u => u.id === t.to);
+      if (uTo) uTo.balance += difference;
+    } else {
+      // It was a Transfer (User -> User)
+      const uFrom = users.find(u => u.id === t.from);
+      const uTo = users.find(u => u.id === t.to);
+      if (uFrom) uFrom.balance -= difference; // Sender loses the extra amount
+      if (uTo) uTo.balance += difference;     // Receiver gains the extra amount
+    }
+
+    // 2. Update the transaction record
+    t.date = d.date;
+    t.amount = newAmt;
+    t.remarks = d.remarks;
+
+    // 3. Save, close, and refresh the UI
+    saveData();
+    closePopup();
+    renderUsers();
   }
 
   function importAndUpload(event) {
