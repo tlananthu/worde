@@ -574,7 +574,7 @@
         <select name="to" required>${opts}</select>
         <div class="fr">
           <div><label>Date</label><input type="date" name="date" required value="${todayStr()}"/></div>
-          <div><label>Amount (₹)</label><input type="number" name="amount" min="-100000" required/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" required/></div>
         </div>
         <label>Remarks</label>
         <textarea name="remarks" rows="2" placeholder="Optional"></textarea>
@@ -598,7 +598,7 @@
       <form class="popup-form" onsubmit="submitDeposit(event,${uid})">
         <div class="fr">
           <div><label>Date</label><input type="date" name="date" required value="${todayStr()}" autofocus/></div>
-          <div><label>Amount (₹)</label><input type="number" name="amount" min="1" required/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" required/></div>
         </div>
         <label>Remarks</label>
         <textarea name="remarks" rows="2" placeholder="Optional"></textarea>
