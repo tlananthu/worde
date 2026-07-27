@@ -199,6 +199,8 @@
     .icon-btn.tr:hover { background: #dbeafe; }
     .icon-btn.dp { background: #ecfdf3; color: var(--green); }
     .icon-btn.dp:hover { background: #d1fae5; }
+    .icon-btn.wd { background: #fef3f2; color: var(--red); }
+    .icon-btn.wd:hover { background: #fee4e2; }
 
     /* Toolbar */
     .toolbar {
@@ -511,6 +513,7 @@
           <div class="card-actions">
             <button class="icon-btn rn" onclick="openRenamePopup(${u.id})" title="Rename">✎</button>
             <button class="icon-btn tr" onclick="openTransaction(${u.id})" title="Transfer">⇄</button>
+            <button class="icon-btn wd" onclick="openWithdrawPopup(${u.id})" title="Withdraw">－</button>
             <button class="icon-btn dp" onclick="openDepositPopup(${u.id})" title="Deposit">＋</button>
           </div>
         </div>`;
@@ -676,6 +679,38 @@
     const u=users.find(u=>u.id===uid); if(!u) return;
     u.balance+=amt;
     transactions.push({from:null,to:uid,date:d.date,amount:amt,remarks:d.remarks});
+    saveData(); closePopup(); renderUsers();
+  }
+  function openWithdrawPopup(uid) {
+    const u=users.find(u=>u.id===uid); if(!u) return;
+    showPopup(`
+      <div class="popup-header"><h2>Withdraw — ${escapeHtml(u.name)}</h2><button class="popup-close" onclick="closePopup()">✕</button></div>
+      <form class="popup-form" onsubmit="submitWithdraw(event,${uid})">
+        <div class="fr">
+          <div><label>Date</label><input type="date" name="date" required value="${todayStr()}" autofocus/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" min="1" required/></div>
+        </div>
+        <label>Remarks</label>
+        <textarea name="remarks" rows="2" placeholder="Optional"></textarea>
+        <button class="btn-p red" type="submit">Withdraw</button>
+      </form>`);
+  }
+
+  function submitWithdraw(e,uid) {
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target));
+    // Math.abs ensures it's positive before we force it to be negative
+    const amt = Math.abs(Number(d.amount)); 
+    if(amt <= 0) return alert("Enter a valid amount.");
+    
+    const u=users.find(u=>u.id===uid); if(!u) return;
+    
+    const negativeAmt = -amt; // Multiply by -1
+    u.balance += negativeAmt; // Deduct from user's balance
+    
+    // Log in transactions with from: null and a negative amount
+    transactions.push({from:null,to:uid,date:d.date,amount:negativeAmt,remarks:d.remarks});
+    
     saveData(); closePopup(); renderUsers();
   }
 
