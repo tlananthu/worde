@@ -403,6 +403,7 @@
       <div class="guide-row"><span>Weapons</span><span class="badge br">−₹5</span></div>
     </div>
   </div>-->
+  <div id="remarksSummaryCard" class="guide-card" style="display: none;"></div>
 
   <div class="toolbar">
     <button class="tb-btn c-amber" onclick="openStatementReport()"><span class="ti">📋</span>Statement</button>
@@ -514,6 +515,52 @@
           </div>
         </div>`;
     });
+    renderRemarksSummary();
+  }
+
+  function renderRemarksSummary() {
+    const card = document.getElementById("remarksSummaryCard");
+    
+    // Create a summary object to tally amounts
+    const summary = {};
+    let hasRemarks = false;
+
+    transactions.forEach(t => {
+      const remark = (t.remarks || "").trim();
+      if (!remark) return; // Skip transactions with no remarks
+      
+      if (!summary[remark]) summary[remark] = 0;
+      summary[remark] += t.amount;
+      hasRemarks = true;
+    });
+
+    // Hide the card if there are no remarks to summarize
+    if (!hasRemarks) {
+      card.style.display = "none";
+      return;
+    }
+
+    // Sort remarks by total amount (highest to lowest)
+    const sortedRemarks = Object.keys(summary).sort((a, b) => summary[b] - summary[a]);
+
+    // Build the HTML using your existing guide-card styles
+    let html = `<div class="guide-title">Remarks Summary</div>`;
+    
+    sortedRemarks.forEach(remark => {
+      const total = summary[remark];
+      // Use green badge (bg) for positive, red badge (br) for negative
+      const badgeClass = total >= 0 ? "bg" : "br";
+      const sign = total >= 0 ? "₹" : "−₹";
+      
+      html += `
+        <div class="guide-row">
+          <span>${escapeHtml(remark)}</span>
+          <span class="badge ${badgeClass}">${sign}${Math.abs(total).toLocaleString("en-IN")}</span>
+        </div>`;
+    });
+
+    card.innerHTML = html;
+    card.style.display = "block";
   }
 
   function addUser() {
