@@ -574,7 +574,7 @@
         <select name="to" required>${opts}</select>
         <div class="fr">
           <div><label>Date</label><input type="date" name="date" required value="${todayStr()}"/></div>
-          <div><label>Amount (₹)</label><input type="number" name="amount" min="1" required/></div>
+          <div><label>Amount (₹)</label><input type="number" name="amount" min="-100000" required/></div>
         </div>
         <label>Remarks</label>
         <textarea name="remarks" rows="2" placeholder="Optional"></textarea>
@@ -584,7 +584,6 @@
   function submitTransaction(e,fromId) {
     e.preventDefault();
     const d=Object.fromEntries(new FormData(e.target)), amt=Number(d.amount);
-    if(amt<=0) return alert("Enter a valid amount.");
     const from=users.find(u=>u.id===fromId), to=users.find(u=>u.id==d.to);
     if(!from||!to) return;
     from.balance-=amt; to.balance+=amt;
