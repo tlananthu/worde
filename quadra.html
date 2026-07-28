@@ -110,7 +110,7 @@
         .overlay h3 { margin-bottom: 12px; font-size: 22px; }
         .overlay p { color: var(--text-muted); margin-bottom: 24px; max-width: 450px; line-height: 1.5; }
 
-        /* Modals (Settings & Task Edit) */
+        /* Modals */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;
@@ -172,11 +172,9 @@
             flex-grow: 1; cursor: pointer; padding: 2px 0; white-space: pre-wrap; word-break: break-word;
         }
 
-        /* Hashtags */
         .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
         .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
 
-        /* Action Buttons */
         .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; flex-shrink: 0; }
         .note:hover .note-actions { opacity: 1; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; font-weight: bold; }
@@ -200,7 +198,13 @@
         .closed-tray-content.open { height: 250px; padding: 16px 32px; border-top: 1px solid var(--border-color); }
         #list-closed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; height: 100%; overflow-y: auto; padding-right: 8px; }
 
-        /* Responsive stack */
+        /* Sync Banner */
+        #sync-banner {
+            display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text-main); 
+            color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
+        }
+
         @media (max-width: 768px) {
             header { flex-direction: column; align-items: stretch; }
             .header-left { max-width: 100%; }
@@ -248,6 +252,9 @@
             <button class="btn btn-outline" onclick="openSettings()">⚙️ Settings</button>
         </div>
     </header>
+
+    <!-- Sync Indicator -->
+    <div id="sync-banner">↻ Syncing with Google...</div>
 
     <!-- Inbox Tray -->
     <div class="inbox-tray">
@@ -382,9 +389,22 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
         const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
+        // Local State
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => ({ ...note, status: note.status || 'active' }));
+        
         let tokenClient;
+        let isGoogleSynced = false;
+        
+        // Maps local quadrant keys to Google Task List titles and IDs
+        const GAPI_LIST_NAMES = {
+            'inbox': 'Quadra: Inbox',
+            'q1': 'Quadra: Do First',
+            'q2': 'Quadra: Schedule',
+            'q3': 'Quadra: Delegate',
+            'q4': 'Quadra: Later'
+        };
+        let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null };
 
         function checkConfigState() {
             const actionsContainer = document.getElementById('overlay-actions');
@@ -419,6 +439,9 @@
         function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
 
         // --- Google API Logic ---
+        function showSync() { document.getElementById('sync-banner').style.display = 'block'; }
+        function hideSync() { document.getElementById('sync-banner').style.display = 'none'; }
+
         function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
         async function initializeGapiClient() {
             try {
@@ -426,9 +449,7 @@
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     gapi.client.setToken({ access_token: savedTokenData.token });
-                    document.getElementById('authorize_button').style.display = 'none';
-                    document.getElementById('signout_button').style.display = 'inline-block';
-                    dismissOverlay();
+                    await initGoogleSync();
                 }
             } catch(e) { console.error("GAPI Error:", e); }
         }
@@ -439,15 +460,13 @@
                     tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: appConfig.clientId,
                         scope: SCOPES,
-                        callback: (resp) => {
+                        callback: async (resp) => {
                             if (resp.error !== undefined) { throw (resp); }
                             localStorage.setItem('quadra_gapi_token', JSON.stringify({
                                 token: resp.access_token,
                                 expires_at: Date.now() + (resp.expires_in * 1000)
                             }));
-                            document.getElementById('authorize_button').style.display = 'none';
-                            document.getElementById('signout_button').style.display = 'inline-block';
-                            dismissOverlay();
+                            await initGoogleSync();
                         },
                     });
                 } catch(e) { console.error("GIS Error:", e); }
@@ -464,10 +483,69 @@
             const token = gapi.client.getToken();
             if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
             localStorage.removeItem('quadra_gapi_token');
+            isGoogleSynced = false;
             document.getElementById('authorize_button').style.display = 'inline-block';
             document.getElementById('signout_button').style.display = 'none';
             document.getElementById('auth-overlay').style.display = 'flex';
         }
+
+        // Complete 2-way Google Sync Initialization
+        async function initGoogleSync() {
+            showSync();
+            try {
+                // 1. Fetch existing Google Task Lists
+                const response = await gapi.client.tasks.tasklists.list();
+                const remoteLists = response.result.items || [];
+
+                // 2. Map or Create Lists for the App
+                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
+                    const expectedName = GAPI_LIST_NAMES[quadKey];
+                    const existingList = remoteLists.find(l => l.title === expectedName);
+                    
+                    if (existingList) {
+                        gapiListIds[quadKey] = existingList.id;
+                    } else {
+                        // Create the list if it doesn't exist
+                        const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName });
+                        gapiListIds[quadKey] = newListReq.result.id;
+                    }
+                }
+
+                // 3. Fetch Tasks from all 5 lists
+                let syncedNotes = [];
+                for (const quadKey of Object.keys(gapiListIds)) {
+                    const listId = gapiListIds[quadKey];
+                    const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true });
+                    const remoteTasks = tasksReq.result.items || [];
+                    
+                    remoteTasks.forEach(task => {
+                        syncedNotes.push({
+                            id: task.id,
+                            text: task.title || '',
+                            quadrant: quadKey,
+                            status: task.status === 'completed' ? 'closed' : 'active'
+                        });
+                    });
+                }
+
+                // Replace local storage with the truth from Google
+                notes = syncedNotes;
+                saveNotes();
+                isGoogleSynced = true;
+
+                document.getElementById('authorize_button').style.display = 'none';
+                document.getElementById('signout_button').style.display = 'inline-block';
+                dismissOverlay();
+
+            } catch (e) {
+                console.error("Sync Initialization Error:", e);
+                alert("Failed to sync with Google Tasks. Falling back to local storage.");
+            }
+            hideSync();
+        }
+
+        // --- App Logic & API Wrapping ---
+        function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
         // --- Drag and Drop Logic ---
         function allowDrop(ev) {
@@ -481,17 +559,44 @@
                 ev.currentTarget.classList.remove('drag-over');
             }
         }
-        function drop(ev, newQuadrant) {
+        async function drop(ev, newQuadrant) {
             ev.preventDefault();
             if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') {
                 ev.currentTarget.classList.remove('drag-over');
             }
+            
             const noteId = ev.dataTransfer.getData("text/plain");
             const noteIndex = notes.findIndex(n => n.id === noteId);
+            
             if (noteIndex > -1 && notes[noteIndex].status === 'active' && notes[noteIndex].quadrant !== newQuadrant) {
-                notes[noteIndex].quadrant = newQuadrant;
+                const note = notes[noteIndex];
+                const oldQuadrant = note.quadrant;
+                
+                // Optimistic UI Update
+                note.quadrant = newQuadrant;
                 saveNotes();
                 handleSearch();
+
+                // Google API Update (Move requires recreating the task in the new list)
+                if (isGoogleSynced) {
+                    showSync();
+                    try {
+                        // Insert to new list
+                        const res = await gapi.client.tasks.tasks.insert({
+                            tasklist: gapiListIds[newQuadrant],
+                            title: note.text
+                        });
+                        // Delete from old list
+                        await gapi.client.tasks.tasks.delete({
+                            tasklist: gapiListIds[oldQuadrant],
+                            task: note.id
+                        });
+                        // Update local ID to match the newly generated Google ID
+                        note.id = res.result.id;
+                        saveNotes();
+                    } catch (e) { console.error("Error moving task:", e); }
+                    hideSync();
+                }
             }
         }
 
@@ -507,13 +612,11 @@
             const title = document.getElementById('taskModalTitle');
             
             if (noteId) {
-                // Edit Mode
                 currentEditingId = noteId;
                 const note = notes.find(n => n.id === noteId);
                 title.innerText = 'Edit Task';
                 input.value = note.text;
             } else {
-                // Add Mode
                 currentEditingId = null;
                 currentAddingQuadrant = quadrant;
                 title.innerText = 'Add Task';
@@ -528,34 +631,62 @@
             document.getElementById('taskModal').style.display = 'none';
         }
 
-        function saveTaskModal() {
+        async function saveTaskModal() {
             const text = document.getElementById('taskInput').value.trim();
-            if (!text) {
-                closeTaskModal();
-                return;
-            }
+            if (!text) { closeTaskModal(); return; }
 
             if (currentEditingId) {
+                // EDIT EXISTING
                 const note = notes.find(n => n.id === currentEditingId);
-                if (note) note.text = text;
+                if (note && note.text !== text) {
+                    note.text = text;
+                    saveNotes();
+                    handleSearch();
+
+                    if (isGoogleSynced) {
+                        showSync();
+                        try {
+                            await gapi.client.tasks.tasks.patch({
+                                tasklist: gapiListIds[note.quadrant],
+                                task: note.id,
+                                title: text
+                            });
+                        } catch(e) { console.error("Edit Sync Error", e); }
+                        hideSync();
+                    }
+                }
             } else {
-                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active' });
+                // ADD NEW
+                const tempId = Date.now().toString();
+                const newNote = { id: tempId, text: text, quadrant: currentAddingQuadrant, status: 'active' };
+                notes.push(newNote);
+                saveNotes();
+                handleSearch();
+
+                if (isGoogleSynced) {
+                    showSync();
+                    try {
+                        const res = await gapi.client.tasks.tasks.insert({
+                            tasklist: gapiListIds[currentAddingQuadrant],
+                            title: text
+                        });
+                        // Replace temp ID with actual Google Task ID
+                        const addedNote = notes.find(n => n.id === tempId);
+                        if (addedNote) {
+                            addedNote.id = res.result.id;
+                            saveNotes();
+                        }
+                    } catch(e) { console.error("Add Sync Error", e); }
+                    hideSync();
+                }
             }
             
-            saveNotes();
-            handleSearch();
             closeTaskModal();
         }
 
-        // Allow Ctrl+Enter to save in the textarea
         document.getElementById('taskInput').addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                saveTaskModal();
-            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveTaskModal();
         });
-
-        // --- App Logic ---
-        function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
         function escapeHTML(str) { 
             return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); 
@@ -563,12 +694,11 @@
 
         function parseTags(str) {
             const escaped = escapeHTML(str);
-            // Replace hashtags with clickable spans
             return escaped.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
         }
 
         function searchTag(tag, event) {
-            event.stopPropagation(); // Prevent opening the edit modal or dragging
+            event.stopPropagation();
             const searchInput = document.getElementById('searchInput');
             searchInput.value = tag;
             handleSearch();
@@ -583,14 +713,11 @@
 
         function handleSearch() {
             const query = document.getElementById('searchInput').value;
-            
-            // Toggle clear button visibility
             const clearBtn = document.getElementById('clearSearchBtn');
             clearBtn.style.display = query.length > 0 ? 'block' : 'none';
 
             renderNotes(query);
             
-            // Expand closed tray if matches found
             const closedMatches = notes.filter(n => n.status === 'closed' && n.text.toLowerCase().includes(query.toLowerCase()));
             const closedTray = document.getElementById('closed-tray-content');
             if (query.trim() !== '' && closedMatches.length > 0) {
@@ -598,7 +725,6 @@
                 document.getElementById('closed-chevron').innerText = '▲';
             }
 
-            // Expand inbox tray if matches found
             const inboxMatches = notes.filter(n => n.status === 'active' && n.quadrant === 'inbox' && n.text.toLowerCase().includes(query.toLowerCase()));
             const inboxTray = document.getElementById('inbox-tray-content');
             if (query.trim() !== '' && inboxMatches.length > 0) {
@@ -611,7 +737,6 @@
             ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
             
             const filteredNotes = notes.filter(note => note.text.toLowerCase().includes(searchQuery.toLowerCase()));
-            
             let inboxCount = 0;
 
             filteredNotes.forEach(note => {
@@ -631,11 +756,11 @@
 
                     const textSpan = document.createElement('span');
                     textSpan.className = 'note-text';
-                    textSpan.innerHTML = parseTags(note.text); // Render text with formatted tags and line breaks
+                    textSpan.innerHTML = parseTags(note.text); 
                     
                     if (note.status === 'active') {
-                        textSpan.title = "Double-click to edit";
-                        textSpan.ondblclick = (e) => openTaskModal(null, note.id, e);
+                        textSpan.title = "Click to edit";
+                        textSpan.onclick = (e) => openTaskModal(null, note.id, e);
                     }
 
                     const actionsDiv = document.createElement('div');
@@ -671,25 +796,70 @@
                 }
             });
 
-            // Update Counts
             document.getElementById('closed-count').innerText = notes.filter(n => n.status === 'closed').length;
             document.getElementById('inbox-count').innerText = notes.filter(n => n.status === 'active' && n.quadrant === 'inbox').length;
         }
 
-        function completeTask(id) {
+        async function completeTask(id) {
             const note = notes.find(n => n.id === id);
-            if (note) { note.status = 'closed'; saveNotes(); handleSearch(); }
+            if (note) { 
+                note.status = 'closed'; 
+                saveNotes(); 
+                handleSearch(); 
+                
+                if(isGoogleSynced) {
+                    showSync();
+                    try {
+                        await gapi.client.tasks.tasks.patch({
+                            tasklist: gapiListIds[note.quadrant],
+                            task: note.id,
+                            status: 'completed'
+                        });
+                    } catch(e) { console.error("Complete Sync Error", e); }
+                    hideSync();
+                }
+            }
         }
 
-        function restoreTask(id) {
+        async function restoreTask(id) {
             const note = notes.find(n => n.id === id);
-            if (note) { note.status = 'active'; saveNotes(); handleSearch(); }
+            if (note) { 
+                note.status = 'active'; 
+                saveNotes(); 
+                handleSearch(); 
+                
+                if(isGoogleSynced) {
+                    showSync();
+                    try {
+                        await gapi.client.tasks.tasks.patch({
+                            tasklist: gapiListIds[note.quadrant],
+                            task: note.id,
+                            status: 'needsAction'
+                        });
+                    } catch(e) { console.error("Restore Sync Error", e); }
+                    hideSync();
+                }
+            }
         }
 
-        function deleteTask(id) {
-            notes = notes.filter(note => note.id !== id);
-            saveNotes();
-            handleSearch();
+        async function deleteTask(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                notes = notes.filter(n => n.id !== id);
+                saveNotes();
+                handleSearch();
+
+                if(isGoogleSynced) {
+                    showSync();
+                    try {
+                        await gapi.client.tasks.tasks.delete({
+                            tasklist: gapiListIds[note.quadrant],
+                            task: note.id
+                        });
+                    } catch(e) { console.error("Delete Sync Error", e); }
+                    hideSync();
+                }
+            }
         }
 
         // Toggle Trays
