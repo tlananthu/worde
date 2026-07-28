@@ -142,13 +142,32 @@
 
         .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
+        /* Note Styling */
         .note {
             background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
             margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
-            align-items: flex-start; word-break: break-word; font-size: 14px; line-height: 1.5; cursor: grab;
+            align-items: center; word-break: break-word; font-size: 14px; line-height: 1.5; cursor: grab;
         }
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
+        
+        .note-text {
+            flex-grow: 1;
+            cursor: text; /* Indicates double-click to edit */
+            padding: 2px 0;
+        }
+
+        .note-edit-input {
+            flex-grow: 1;
+            border: 1px solid var(--brand-primary);
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            background: #fff;
+            margin-right: 8px;
+        }
 
         .delete-btn { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 20px; opacity: 0; padding-left: 12px; }
         .note:hover .delete-btn { opacity: 1; }
@@ -162,7 +181,7 @@
         @media (max-width: 768px) {
             .matrix-container { display: flex; flex-direction: column; overflow-y: auto; }
             .quadrant { min-height: 400px; }
-            .view-toggle { display: none; /* Hide toggle on small screens since they stack anyway */ }
+            .view-toggle { display: none; }
         }
     </style>
 </head>
@@ -415,10 +434,54 @@
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note';
                     
+                    // Enable Dragging
                     noteEl.draggable = true;
                     noteEl.ondragstart = (e) => { e.dataTransfer.setData('text/plain', note.id); };
 
-                    noteEl.innerHTML = `<span>${escapeHTML(note.text)}</span><button class="delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
+                    // Span for Displaying Text
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'note-text';
+                    textSpan.innerHTML = escapeHTML(note.text);
+                    textSpan.title = "Double-click to edit";
+
+                    // Double Click to Edit Logic
+                    textSpan.ondblclick = () => {
+                        noteEl.draggable = false; // Disable drag while editing
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'note-edit-input';
+                        input.value = note.text;
+                        
+                        // Save changes function
+                        const saveEdit = () => {
+                            const newText = input.value.trim();
+                            if (newText && newText !== note.text) {
+                                note.text = newText;
+                                saveNotes();
+                            }
+                            renderNotes(); // Re-render to restore normal state
+                        };
+
+                        input.onblur = saveEdit;
+                        input.onkeydown = (e) => {
+                            if (e.key === 'Enter') saveEdit();
+                            if (e.key === 'Escape') renderNotes(); // Cancel edit
+                        };
+
+                        noteEl.replaceChild(input, textSpan);
+                        input.focus();
+                    };
+
+                    // Delete Button
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'delete-btn';
+                    delBtn.innerHTML = '×';
+                    delBtn.title = "Delete Task";
+                    delBtn.onclick = () => deleteTask(note.id);
+
+                    noteEl.appendChild(textSpan);
+                    noteEl.appendChild(delBtn);
                     list.appendChild(noteEl);
                 }
             });
