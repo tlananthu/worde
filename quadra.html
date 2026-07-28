@@ -152,25 +152,25 @@
 
         <!-- Quadrants -->
         <div class="quadrant" id="q1">
-            <div class="q-header"><h2>Do First</h2><button class="expand-btn" onclick="toggleFullscreen('q1')">⛶</button></div>
+            <div class="q-header"><h2>Do First</h2><button class="expand-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q1"></div>
             <div class="input-group"><input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')"><button onclick="addTask('q1')">+</button></div>
         </div>
 
         <div class="quadrant" id="q2">
-            <div class="q-header"><h2>Schedule</h2><button class="expand-btn" onclick="toggleFullscreen('q2')">⛶</button></div>
+            <div class="q-header"><h2>Schedule</h2><button class="expand-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q2"></div>
             <div class="input-group"><input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')"><button onclick="addTask('q2')">+</button></div>
         </div>
 
         <div class="quadrant" id="q3">
-            <div class="q-header"><h2>Delegate</h2><button class="expand-btn" onclick="toggleFullscreen('q3')">⛶</button></div>
+            <div class="q-header"><h2>Delegate</h2><button class="expand-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q3"></div>
             <div class="input-group"><input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')"><button onclick="addTask('q3')">+</button></div>
         </div>
 
         <div class="quadrant" id="q4">
-            <div class="q-header"><h2>Eliminate</h2><button class="expand-btn" onclick="toggleFullscreen('q4')">⛶</button></div>
+            <div class="q-header"><h2>Eliminate</h2><button class="expand-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q4"></div>
             <div class="input-group"><input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')"><button onclick="addTask('q4')">+</button></div>
         </div>
@@ -250,7 +250,7 @@
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
             localStorage.setItem('quadra_config', JSON.stringify(appConfig));
             closeSettings();
-            location.reload(); // Reload to re-initialize Google libraries with new keys
+            location.reload(); 
         }
 
         function dismissOverlay() {
@@ -280,7 +280,6 @@
                             document.getElementById('authorize_button').style.display = 'none';
                             document.getElementById('signout_button').style.display = 'inline-block';
                             dismissOverlay();
-                            // Logic to fetch from Google Tasks API would go here
                         },
                     });
                 } catch(e) { console.error("GIS Error:", e); }
@@ -331,7 +330,6 @@
                 saveNotes();
                 renderNotes();
                 inputEl.value = ''; 
-                // Google Tasks sync logic (gapi.client.tasks.tasks.insert) would go here
             }
         }
 
@@ -341,7 +339,6 @@
             notes = notes.filter(note => note.id !== id);
             saveNotes();
             renderNotes();
-            // Google Tasks sync logic (gapi.client.tasks.tasks.delete) would go here
         }
 
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
@@ -349,12 +346,22 @@
         // --- UI Navigation ---
         const matrix = document.getElementById('matrix');
         const backBtn = document.getElementById('backBtn');
+        
         function toggleFullscreen(quadrantId) {
-            document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
-            document.getElementById(quadrantId).classList.add('active');
-            matrix.classList.add('fullscreen');
-            backBtn.style.display = 'inline-block';
+            const targetQuadrant = document.getElementById(quadrantId);
+            
+            // If it's already fullscreen, clicking the button again will collapse it
+            if (targetQuadrant.classList.contains('active')) {
+                exitFullscreen();
+            } else {
+                // Otherwise, expand it
+                document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
+                targetQuadrant.classList.add('active');
+                matrix.classList.add('fullscreen');
+                backBtn.style.display = 'inline-block';
+            }
         }
+        
         function exitFullscreen() {
             matrix.classList.remove('fullscreen');
             document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
