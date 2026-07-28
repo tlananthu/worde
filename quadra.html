@@ -400,6 +400,7 @@
         };
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
 
+        // Pull existing local notes to render immediately
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
             let n = { ...note, status: note.status || 'active' };
@@ -423,7 +424,16 @@
                 title.innerText = "Google Tasks Sync";
                 text.innerText = "Sign in securely with your Google account to keep your matrix synced across devices.";
                 actionsContainer.innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
-                document.getElementById('authorize_button').style.display = 'inline-block';
+                
+                // OPTIMISTIC LOAD: Hide overlay instantly if we have a valid token
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    document.getElementById('authorize_button').style.display = 'none';
+                    document.getElementById('signout_button').style.display = 'inline-block';
+                } else {
+                    document.getElementById('authorize_button').style.display = 'inline-block';
+                }
             }
         }
 
@@ -453,7 +463,8 @@
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     gapi.client.setToken({ access_token: savedTokenData.token });
-                    await initGoogleSync();
+                    // Run sync in background (do not await)
+                    initGoogleSync();
                 }
             } catch(e) { console.error("GAPI Error:", e); }
         }
@@ -470,7 +481,10 @@
                                 token: resp.access_token,
                                 expires_at: Date.now() + (resp.expires_in * 1000)
                             }));
-                            await initGoogleSync();
+                            document.getElementById('auth-overlay').style.display = 'none';
+                            document.getElementById('authorize_button').style.display = 'none';
+                            document.getElementById('signout_button').style.display = 'inline-block';
+                            initGoogleSync();
                         },
                     });
                 } catch(e) { console.error("GIS Error:", e); }
@@ -528,11 +542,11 @@
                     });
                 }
 
-                // SMART MERGE: Push local tasks that aren't in Google yet to prevent data loss
-                const localNotes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+                // SMART MERGE: Read live 'notes' array (in case user edited while sync was happening)
+                // Push local tasks that aren't in Google yet to prevent data loss.
                 const remoteIds = new Set(syncedNotes.map(n => n.id));
                 
-                for (const localNote of localNotes) {
+                for (const localNote of notes) {
                     if (!remoteIds.has(localNote.id)) {
                         try {
                             const targetQuad = gapiListIds[localNote.quadrant] ? localNote.quadrant : 'inbox';
@@ -558,14 +572,12 @@
                 notes = syncedNotes;
                 saveNotes();
                 isGoogleSynced = true;
-
-                document.getElementById('authorize_button').style.display = 'none';
-                document.getElementById('signout_button').style.display = 'inline-block';
-                dismissOverlay();
+                
+                // Re-render silently to show synced data without interrupting the user
+                handleSearch();
 
             } catch (e) {
                 console.error("Sync Initialization Error:", e);
-                alert("Failed to sync with Google Tasks. Falling back to local storage.");
             }
             hideSync();
         }
@@ -934,7 +946,7 @@
             backBtn.style.display = 'none';
         }
 
-        // Init
+        // Init: Instantly render local notes
         setLayout(currentLayout);
         checkConfigState();
         renderNotes(); 
