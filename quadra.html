@@ -389,22 +389,27 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
         const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
-        // Local State
-        let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
-        notes = notes.map(note => ({ ...note, status: note.status || 'active' }));
-        
-        let tokenClient;
-        let isGoogleSynced = false;
-        
-        // Maps local quadrant keys to Google Task List titles and IDs
+        // Mappings for Google Task Lists
         const GAPI_LIST_NAMES = {
             'inbox': 'Quadra: Inbox',
             'q1': 'Quadra: Do First',
             'q2': 'Quadra: Schedule',
             'q3': 'Quadra: Delegate',
-            'q4': 'Quadra: Later'
+            'q4': 'Quadra: Later',
+            'closed': 'Quadra: Completed'
         };
-        let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null };
+        let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
+
+        let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+        // Local Migration: Ensure tasks have a status, and locally completed tasks point to the 'closed' quadrant.
+        notes = notes.map(note => {
+            let n = { ...note, status: note.status || 'active' };
+            if (n.status === 'closed' && n.quadrant !== 'closed') n.quadrant = 'closed';
+            return n;
+        });
+        
+        let tokenClient;
+        let isGoogleSynced = false;
 
         function checkConfigState() {
             const actionsContainer = document.getElementById('overlay-actions');
@@ -489,15 +494,12 @@
             document.getElementById('auth-overlay').style.display = 'flex';
         }
 
-        // Complete 2-way Google Sync Initialization
         async function initGoogleSync() {
             showSync();
             try {
-                // 1. Fetch existing Google Task Lists
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
 
-                // 2. Map or Create Lists for the App
                 for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
                     const expectedName = GAPI_LIST_NAMES[quadKey];
                     const existingList = remoteLists.find(l => l.title === expectedName);
@@ -505,13 +507,11 @@
                     if (existingList) {
                         gapiListIds[quadKey] = existingList.id;
                     } else {
-                        // Create the list if it doesn't exist
                         const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName });
                         gapiListIds[quadKey] = newListReq.result.id;
                     }
                 }
 
-                // 3. Fetch Tasks from all 5 lists
                 let syncedNotes = [];
                 for (const quadKey of Object.keys(gapiListIds)) {
                     const listId = gapiListIds[quadKey];
@@ -519,16 +519,16 @@
                     const remoteTasks = tasksReq.result.items || [];
                     
                     remoteTasks.forEach(task => {
+                        let status = quadKey === 'closed' ? 'closed' : (task.status === 'completed' ? 'closed' : 'active');
                         syncedNotes.push({
                             id: task.id,
                             text: task.title || '',
-                            quadrant: quadKey,
-                            status: task.status === 'completed' ? 'closed' : 'active'
+                            quadrant: quadKey, 
+                            status: status
                         });
                     });
                 }
 
-                // Replace local storage with the truth from Google
                 notes = syncedNotes;
                 saveNotes();
                 isGoogleSynced = true;
@@ -572,26 +572,21 @@
                 const note = notes[noteIndex];
                 const oldQuadrant = note.quadrant;
                 
-                // Optimistic UI Update
                 note.quadrant = newQuadrant;
                 saveNotes();
                 handleSearch();
 
-                // Google API Update (Move requires recreating the task in the new list)
                 if (isGoogleSynced) {
                     showSync();
                     try {
-                        // Insert to new list
                         const res = await gapi.client.tasks.tasks.insert({
                             tasklist: gapiListIds[newQuadrant],
                             title: note.text
                         });
-                        // Delete from old list
                         await gapi.client.tasks.tasks.delete({
                             tasklist: gapiListIds[oldQuadrant],
                             task: note.id
                         });
-                        // Update local ID to match the newly generated Google ID
                         note.id = res.result.id;
                         saveNotes();
                     } catch (e) { console.error("Error moving task:", e); }
@@ -636,7 +631,6 @@
             if (!text) { closeTaskModal(); return; }
 
             if (currentEditingId) {
-                // EDIT EXISTING
                 const note = notes.find(n => n.id === currentEditingId);
                 if (note && note.text !== text) {
                     note.text = text;
@@ -656,7 +650,6 @@
                     }
                 }
             } else {
-                // ADD NEW
                 const tempId = Date.now().toString();
                 const newNote = { id: tempId, text: text, quadrant: currentAddingQuadrant, status: 'active' };
                 notes.push(newNote);
@@ -670,7 +663,6 @@
                             tasklist: gapiListIds[currentAddingQuadrant],
                             title: text
                         });
-                        // Replace temp ID with actual Google Task ID
                         const addedNote = notes.find(n => n.id === tempId);
                         if (addedNote) {
                             addedNote.id = res.result.id;
@@ -803,18 +795,26 @@
         async function completeTask(id) {
             const note = notes.find(n => n.id === id);
             if (note) { 
-                note.status = 'closed'; 
+                const oldQuadrant = note.quadrant;
+                note.status = 'closed';
+                note.quadrant = 'closed'; 
                 saveNotes(); 
                 handleSearch(); 
                 
                 if(isGoogleSynced) {
                     showSync();
                     try {
-                        await gapi.client.tasks.tasks.patch({
-                            tasklist: gapiListIds[note.quadrant],
-                            task: note.id,
+                        const res = await gapi.client.tasks.tasks.insert({
+                            tasklist: gapiListIds['closed'],
+                            title: note.text,
                             status: 'completed'
                         });
+                        await gapi.client.tasks.tasks.delete({
+                            tasklist: gapiListIds[oldQuadrant],
+                            task: note.id
+                        });
+                        note.id = res.result.id;
+                        saveNotes();
                     } catch(e) { console.error("Complete Sync Error", e); }
                     hideSync();
                 }
@@ -824,18 +824,26 @@
         async function restoreTask(id) {
             const note = notes.find(n => n.id === id);
             if (note) { 
-                note.status = 'active'; 
+                const oldQuadrant = note.quadrant;
+                note.status = 'active';
+                note.quadrant = 'inbox'; 
                 saveNotes(); 
                 handleSearch(); 
                 
                 if(isGoogleSynced) {
                     showSync();
                     try {
-                        await gapi.client.tasks.tasks.patch({
-                            tasklist: gapiListIds[note.quadrant],
-                            task: note.id,
+                        const res = await gapi.client.tasks.tasks.insert({
+                            tasklist: gapiListIds['inbox'],
+                            title: note.text,
                             status: 'needsAction'
                         });
+                        await gapi.client.tasks.tasks.delete({
+                            tasklist: gapiListIds[oldQuadrant],
+                            task: note.id
+                        });
+                        note.id = res.result.id;
+                        saveNotes();
                     } catch(e) { console.error("Restore Sync Error", e); }
                     hideSync();
                 }
@@ -845,6 +853,7 @@
         async function deleteTask(id) {
             const note = notes.find(n => n.id === id);
             if (note) {
+                const quad = note.quadrant;
                 notes = notes.filter(n => n.id !== id);
                 saveNotes();
                 handleSearch();
@@ -853,7 +862,7 @@
                     showSync();
                     try {
                         await gapi.client.tasks.tasks.delete({
-                            tasklist: gapiListIds[note.quadrant],
+                            tasklist: gapiListIds[quad],
                             task: note.id
                         });
                     } catch(e) { console.error("Delete Sync Error", e); }
