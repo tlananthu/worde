@@ -72,6 +72,16 @@
         
         #backBtn, #signout_button, #authorize_button { display: none; }
 
+        /* Inbox Tray (Un-prioritized) */
+        .inbox-tray { background-color: #ffffff; border-bottom: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
+        .inbox-tray-header { padding: 12px 32px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; transition: background 0.2s; }
+        .inbox-tray-header:hover { background: #F1F5F9; }
+        .inbox-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--brand-primary); }
+        .inbox-tray-content { height: 0; overflow: hidden; background: #ffffff; padding: 0 32px; transition: height 0.3s ease, padding 0.3s ease; display: flex; flex-direction: column; }
+        .inbox-tray-content.open { height: 220px; padding: 16px 32px; }
+        .inbox-tray-content.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
+        #list-inbox { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-top: 12px; }
+
         /* Matrix Layout - Base */
         .matrix-container {
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
@@ -175,7 +185,7 @@
         .closed-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--text-muted); }
         .closed-tray-content { height: 0; overflow: hidden; background: #F8FAFC; padding: 0 32px; transition: height 0.3s ease, padding 0.3s ease; }
         .closed-tray-content.open { height: 250px; padding: 16px 32px; border-top: 1px solid var(--border-color); }
-        #list-closed { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-content: flex-start; height: 100%; overflow-y: auto; padding-right: 8px; }
+        #list-closed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; height: 100%; overflow-y: auto; padding-right: 8px; }
 
         /* Responsive stack for mobile */
         @media (max-width: 768px) {
@@ -184,8 +194,9 @@
             .matrix-container { display: flex; flex-direction: column; overflow-y: auto; }
             .quadrant { min-height: 400px; }
             .view-toggle { display: none; }
+            .inbox-tray-content.open { height: 300px; }
             .closed-tray-content.open { height: 350px; }
-            #list-closed { grid-template-columns: 1fr; }
+            #list-closed, #list-inbox { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -213,12 +224,10 @@
         </div>
         
         <div class="header-actions">
-            <!-- Layout Toggle -->
             <div class="view-toggle">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Grid</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
             </div>
-            
             <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
@@ -226,8 +235,23 @@
         </div>
     </header>
 
+    <!-- Inbox Tray (Un-prioritized Tasks) -->
+    <div class="inbox-tray">
+        <div class="inbox-tray-header" onclick="toggleInboxTray()">
+            <h3>Inbox (Un-prioritized) (<span id="inbox-count">0</span>)</h3>
+            <span id="inbox-chevron">▲</span>
+        </div>
+        <!-- Note: Adding drop event listeners here so users can drag notes back to the inbox -->
+        <div class="inbox-tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
+            <div class="input-group" style="margin-top: 0;">
+                <input type="text" id="input-inbox" placeholder="Dump a task here to prioritize it later..." onkeypress="handleEnter(event, 'inbox')">
+                <button onclick="addTask('inbox')">+</button>
+            </div>
+            <div class="task-list" id="list-inbox"></div>
+        </div>
+    </div>
+
     <div id="matrix" class="matrix-container layout-grid">
-        <!-- Auth / Setup Overlay -->
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
             <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
@@ -291,7 +315,6 @@
         </div>
     </div>
 
-    <!-- Google API Scripts -->
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
@@ -309,21 +332,15 @@
             document.getElementById('btnKanban').classList.toggle('active', layout === 'kanban');
         }
 
-        // --- Configuration Management ---
+        // --- Configuration & Initialization ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
         const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
-        // Local State
-        // Data format: { id, text, quadrant, status: 'active' | 'closed' }
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
-        
-        // Migrate old notes to include status if missing
         notes = notes.map(note => ({ ...note, status: note.status || 'active' }));
-        
         let tokenClient;
 
-        // Initialization Check
         function checkConfigState() {
             const actionsContainer = document.getElementById('overlay-actions');
             const title = document.getElementById('overlay-title');
@@ -341,7 +358,7 @@
             }
         }
 
-        // --- Settings UI ---
+        // Settings
         function openSettings() {
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
@@ -411,17 +428,22 @@
         // --- Drag and Drop Logic ---
         function allowDrop(ev) {
             ev.preventDefault(); 
-            if(ev.currentTarget.classList.contains('quadrant')) ev.currentTarget.classList.add('drag-over');
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') {
+                ev.currentTarget.classList.add('drag-over');
+            }
         }
         function dragLeave(ev) {
-            if(ev.currentTarget.classList.contains('quadrant')) ev.currentTarget.classList.remove('drag-over');
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') {
+                ev.currentTarget.classList.remove('drag-over');
+            }
         }
         function drop(ev, newQuadrant) {
             ev.preventDefault();
-            if(ev.currentTarget.classList.contains('quadrant')) ev.currentTarget.classList.remove('drag-over');
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') {
+                ev.currentTarget.classList.remove('drag-over');
+            }
             const noteId = ev.dataTransfer.getData("text/plain");
             const noteIndex = notes.findIndex(n => n.id === noteId);
-            // Only allow dragging active tasks
             if (noteIndex > -1 && notes[noteIndex].status === 'active' && notes[noteIndex].quadrant !== newQuadrant) {
                 notes[noteIndex].quadrant = newQuadrant;
                 saveNotes();
@@ -429,37 +451,43 @@
             }
         }
 
-        // --- App Logic (Local Storage) ---
+        // --- App Logic ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
-        // Search Trigger
         function handleSearch() {
             const query = document.getElementById('searchInput').value;
             renderNotes(query);
             
-            // Auto-expand closed tray if searching and there are matches in closed tasks
+            // Expand closed tray if matches found
             const closedMatches = notes.filter(n => n.status === 'closed' && n.text.toLowerCase().includes(query.toLowerCase()));
-            const trayContent = document.getElementById('closed-tray-content');
+            const closedTray = document.getElementById('closed-tray-content');
             if (query.trim() !== '' && closedMatches.length > 0) {
-                trayContent.classList.add('open');
+                closedTray.classList.add('open');
                 document.getElementById('closed-chevron').innerText = '▲';
+            }
+
+            // Expand inbox tray if matches found
+            const inboxMatches = notes.filter(n => n.status === 'active' && n.quadrant === 'inbox' && n.text.toLowerCase().includes(query.toLowerCase()));
+            const inboxTray = document.getElementById('inbox-tray-content');
+            if (query.trim() !== '' && inboxMatches.length > 0) {
+                inboxTray.classList.add('open');
+                document.getElementById('inbox-chevron').innerText = '▲';
             }
         }
 
-        // Modifed renderNotes to handle active vs closed tasks
         function renderNotes(searchQuery = '') {
-            ['q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
+            ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
             
             const filteredNotes = notes.filter(note => note.text.toLowerCase().includes(searchQuery.toLowerCase()));
             
-            let closedCount = 0;
+            let inboxCount = 0;
 
             filteredNotes.forEach(note => {
                 const listId = note.status === 'closed' ? 'list-closed' : `list-${note.quadrant}`;
                 const list = document.getElementById(listId);
                 
                 if (list) {
-                    if (note.status === 'closed') closedCount++;
+                    if (note.status === 'active' && note.quadrant === 'inbox') inboxCount++;
 
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
@@ -531,9 +559,9 @@
                 }
             });
 
-            // Update Total Closed Count based on ALL notes (not just filtered)
-            const totalClosed = notes.filter(n => n.status === 'closed').length;
-            document.getElementById('closed-count').innerText = totalClosed;
+            // Update Counts
+            document.getElementById('closed-count').innerText = notes.filter(n => n.status === 'closed').length;
+            document.getElementById('inbox-count').innerText = notes.filter(n => n.status === 'active' && n.quadrant === 'inbox').length;
         }
 
         function addTask(quadrant) {
@@ -563,22 +591,25 @@
             handleSearch();
         }
 
+        // Toggle Trays
         function toggleClosedTray() {
             const content = document.getElementById('closed-tray-content');
             const chevron = document.getElementById('closed-chevron');
-            if (content.classList.contains('open')) {
-                content.classList.remove('open');
-                chevron.innerText = '▼';
-            } else {
-                content.classList.add('open');
-                chevron.innerText = '▲';
-            }
+            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } 
+            else { content.classList.add('open'); chevron.innerText = '▲'; }
+        }
+
+        function toggleInboxTray() {
+            const content = document.getElementById('inbox-tray-content');
+            const chevron = document.getElementById('inbox-chevron');
+            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } 
+            else { content.classList.add('open'); chevron.innerText = '▲'; }
         }
 
         function handleEnter(event, quadrant) { if (event.key === 'Enter') addTask(quadrant); }
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
 
-        // --- UI Navigation ---
+        // --- Fullscreen Navigation ---
         const matrix = document.getElementById('matrix');
         const backBtn = document.getElementById('backBtn');
         
