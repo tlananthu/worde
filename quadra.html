@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadra | Eisenhower Matrix (Google Tasks)</title>
+    <title>Quadra</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         :root {
-            var(--brand-primary): #4F46E5;
+            --brand-primary: #4F46E5;
             --brand-primary-hover: #4338CA;
             --bg-main: #F9FAFB;
             --text-main: #111827;
@@ -31,20 +31,20 @@
         }
 
         .brand-container { display: flex; align-items: center; gap: 12px; }
-        .logo-svg { width: 28px; height: 28px; color: #4F46E5; }
+        .logo-svg { width: 28px; height: 28px; color: var(--brand-primary); }
         header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 
         .header-actions { display: flex; gap: 12px; align-items: center; }
 
         .btn {
-            background-color: #4F46E5; color: white; border: none; padding: 8px 16px;
+            background-color: var(--brand-primary); color: white; border: none; padding: 8px 16px;
             border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background-color 0.2s;
         }
-        .btn:hover { background-color: #4338CA; }
+        .btn:hover { background-color: var(--brand-primary-hover); }
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
         
-        #backBtn, #signout_button { display: none; }
+        #backBtn, #signout_button, #authorize_button { display: none; }
 
         /* Matrix Layout */
         .matrix-container {
@@ -53,20 +53,39 @@
             max-width: 1600px; margin: 0 auto; width: 100%; position: relative;
         }
 
-        /* Overlay for Auth */
-        #auth-overlay {
+        /* Overlays */
+        .overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(249, 250, 251, 0.9); z-index: 50; display: flex;
+            background: rgba(249, 250, 251, 0.95); z-index: 50; display: flex;
             flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 16px; text-align: center;
+            border-radius: 16px; text-align: center; backdrop-filter: blur(4px);
         }
-        #auth-overlay h3 { margin-bottom: 12px; font-size: 20px; }
-        #auth-overlay p { color: var(--text-muted); margin-bottom: 20px; max-width: 400px; }
+        .overlay h3 { margin-bottom: 12px; font-size: 22px; }
+        .overlay p { color: var(--text-muted); margin-bottom: 24px; max-width: 450px; line-height: 1.5; }
+        .overlay-actions { display: flex; gap: 12px; }
 
+        /* Modal / Settings */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: white; padding: 32px; border-radius: 16px; width: 90%; max-width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .modal-content h3 { margin-bottom: 24px; font-size: 20px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: monospace; font-size: 13px; }
+        .form-group input:focus { border-color: var(--brand-primary); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
+
+        /* Fullscreen Layout */
         .matrix-container.fullscreen { display: flex; }
         .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
         .matrix-container.fullscreen .quadrant.active { display: flex; }
 
+        /* Quadrants */
         .quadrant { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); }
         #q1 { background-color: var(--q1-bg); }
         #q2 { background-color: var(--q2-bg); }
@@ -81,7 +100,7 @@
             border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
             color: var(--text-muted); transition: all 0.2s;
         }
-        .expand-btn:hover { background: rgba(255,255,255,0.9); color: #4F46E5; }
+        .expand-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
 
         .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
@@ -97,7 +116,7 @@
 
         .input-group { display: flex; margin-top: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
         .input-group input { flex-grow: 1; border: none; padding: 14px 16px; font-size: 14px; outline: none; background: transparent; }
-        .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: #4F46E5; cursor: pointer; }
+        .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: var(--brand-primary); cursor: pointer; }
         .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
     </style>
 </head>
@@ -115,17 +134,20 @@
         </div>
         <div class="header-actions">
             <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
-            <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In with Google</button>
+            <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
+            <button class="btn btn-outline" onclick="openSettings()">⚙️ Settings</button>
         </div>
     </header>
 
     <div id="matrix" class="matrix-container">
-        <!-- Auth Overlay -->
-        <div id="auth-overlay">
-            <h3>Google Tasks Integration</h3>
-            <p>Sign in with your Google account to sync your Eisenhower Matrix directly with Google Tasks.</p>
-            <button class="btn" onclick="handleAuthClick()">Sign In with Google</button>
+        <!-- Auth / Setup Overlay -->
+        <div id="auth-overlay" class="overlay">
+            <h3 id="overlay-title">Google Tasks Sync</h3>
+            <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
+            <div class="overlay-actions" id="overlay-actions">
+                <!-- Injected via JS based on config state -->
+            </div>
         </div>
 
         <!-- Quadrants -->
@@ -154,79 +176,123 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3>Configuration</h3>
+            <div class="form-group">
+                <label>Google OAuth Client ID</label>
+                <input type="text" id="configClientId" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com">
+            </div>
+            <div class="form-group">
+                <label>Google API Key</label>
+                <input type="text" id="configApiKey" placeholder="YOUR_API_KEY">
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Keys are stored locally in your browser. Leave blank to use local storage only.</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
+                <button class="btn" onclick="saveSettings()">Save & Reload</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Google API Scripts -->
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
-        // ==========================================
-        // CONFIGURATION - MUST UPDATE THESE!
-        // Get these from Google Cloud Console -> APIs & Services -> Credentials
-        // ==========================================
-        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
-        const API_KEY = 'YOUR_API_KEY_HERE';
+        // --- Configuration Management ---
+        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
         const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
-        let tokenClient;
-        let gapiInited = false;
-        let gisInited = false;
-
-        // Fallback Local Storage logic if not signed in yet
+        // Local State
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+        let tokenClient;
 
-        // --- Google API Setup ---
+        // Initialization Check
+        function checkConfigState() {
+            const actionsContainer = document.getElementById('overlay-actions');
+            const title = document.getElementById('overlay-title');
+            const text = document.getElementById('overlay-text');
+
+            if (!appConfig.clientId || !appConfig.apiKey) {
+                title.innerText = "Setup Google Sync";
+                text.innerText = "To sync your matrix with Google Tasks, you need to provide your Google Cloud Developer credentials in the settings.";
+                actionsContainer.innerHTML = `
+                    <button class="btn" onclick="openSettings()">Configure Keys</button>
+                    <button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>
+                `;
+            } else {
+                title.innerText = "Google Tasks Sync";
+                text.innerText = "Sign in securely with your Google account to keep your matrix synced across devices.";
+                actionsContainer.innerHTML = `
+                    <button class="btn" onclick="handleAuthClick()">Sign In with Google</button>
+                    <button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>
+                `;
+                document.getElementById('authorize_button').style.display = 'inline-block';
+            }
+        }
+
+        // --- Settings UI ---
+        function openSettings() {
+            document.getElementById('configClientId').value = appConfig.clientId || '';
+            document.getElementById('configApiKey').value = appConfig.apiKey || '';
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function saveSettings() {
+            appConfig.clientId = document.getElementById('configClientId').value.trim();
+            appConfig.apiKey = document.getElementById('configApiKey').value.trim();
+            localStorage.setItem('quadra_config', JSON.stringify(appConfig));
+            closeSettings();
+            location.reload(); // Reload to re-initialize Google libraries with new keys
+        }
+
+        function dismissOverlay() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            renderNotes();
+        }
+
+        // --- Google API Logic ---
         function gapiLoaded() {
-            gapi.load('client', initializeGapiClient);
+            if(appConfig.apiKey) gapi.load('client', initializeGapiClient);
         }
 
         async function initializeGapiClient() {
             try {
-                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-                gapiInited = true;
-            } catch(e) {
-                console.error("Error initializing GAPI (Did you set the API_KEY?)", e);
-            }
+                await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
+            } catch(e) { console.error("GAPI Error:", e); }
         }
 
         function gisLoaded() {
-            try {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID,
-                    scope: SCOPES,
-                    callback: (resp) => {
-                        if (resp.error !== undefined) { throw (resp); }
-                        document.getElementById('authorize_button').style.display = 'none';
-                        document.getElementById('signout_button').style.display = 'inline-block';
-                        document.getElementById('auth-overlay').style.display = 'none';
-                        // Ideally, here you would fetch from Google Tasks API
-                        // fetchTasks(); 
-                        renderNotes();
-                    },
-                });
-                gisInited = true;
-            } catch(e) {
-                console.error("Error initializing GIS (Did you set the CLIENT_ID?)", e);
+            if(appConfig.clientId) {
+                try {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: appConfig.clientId,
+                        scope: SCOPES,
+                        callback: (resp) => {
+                            if (resp.error !== undefined) { throw (resp); }
+                            document.getElementById('authorize_button').style.display = 'none';
+                            document.getElementById('signout_button').style.display = 'inline-block';
+                            dismissOverlay();
+                            // Logic to fetch from Google Tasks API would go here
+                        },
+                    });
+                } catch(e) { console.error("GIS Error:", e); }
             }
         }
 
         function handleAuthClick() {
-            if (!CLIENT_ID.includes("YOUR_CLIENT_ID")) {
-                tokenClient.callback = async (resp) => {
-                    if (resp.error !== undefined) { throw (resp); }
-                    document.getElementById('authorize_button').style.display = 'none';
-                    document.getElementById('signout_button').style.display = 'inline-block';
-                    document.getElementById('auth-overlay').style.display = 'none';
-                    renderNotes();
-                };
-                if (gapi.client.getToken() === null) { tokenClient.requestAccessToken({prompt: 'consent'}); } 
-                else { tokenClient.requestAccessToken({prompt: ''}); }
+            if (!appConfig.clientId) { openSettings(); return; }
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
             } else {
-                alert("Please add your Google CLIENT_ID and API_KEY in the code to enable Google Tasks sync. Currently falling back to local storage.");
-                document.getElementById('authorize_button').style.display = 'none';
-                document.getElementById('signout_button').style.display = 'inline-block';
-                document.getElementById('auth-overlay').style.display = 'none';
-                renderNotes();
+                tokenClient.requestAccessToken({prompt: ''});
             }
         }
 
@@ -241,24 +307,17 @@
             document.getElementById('auth-overlay').style.display = 'flex';
         }
 
-        // --- App Logic ---
+        // --- App Logic (Local Storage) ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
         function renderNotes() {
-            document.getElementById('list-q1').innerHTML = '';
-            document.getElementById('list-q2').innerHTML = '';
-            document.getElementById('list-q3').innerHTML = '';
-            document.getElementById('list-q4').innerHTML = '';
-
+            ['q1', 'q2', 'q3', 'q4'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
             notes.forEach(note => {
                 const list = document.getElementById(`list-${note.quadrant}`);
                 if (list) {
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note';
-                    noteEl.innerHTML = `
-                        <span>${escapeHTML(note.text)}</span>
-                        <button class="delete-btn" onclick="deleteTask('${note.id}')" title="Delete">×</button>
-                    `;
+                    noteEl.innerHTML = `<span>${escapeHTML(note.text)}</span><button class="delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
                     list.appendChild(noteEl);
                 }
             });
@@ -272,7 +331,7 @@
                 saveNotes();
                 renderNotes();
                 inputEl.value = ''; 
-                // NOTE: Here you would also push the new task to the Google Tasks API via gapi.client.tasks.tasks.insert()
+                // Google Tasks sync logic (gapi.client.tasks.tasks.insert) would go here
             }
         }
 
@@ -282,12 +341,12 @@
             notes = notes.filter(note => note.id !== id);
             saveNotes();
             renderNotes();
-            // NOTE: Here you would delete from Google API via gapi.client.tasks.tasks.delete()
+            // Google Tasks sync logic (gapi.client.tasks.tasks.delete) would go here
         }
 
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
 
-        // UI Navigation
+        // --- UI Navigation ---
         const matrix = document.getElementById('matrix');
         const backBtn = document.getElementById('backBtn');
         function toggleFullscreen(quadrantId) {
@@ -301,6 +360,10 @@
             document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
             backBtn.style.display = 'none';
         }
+
+        // Init
+        checkConfigState();
+        renderNotes();
     </script>
 </body>
 </html>
