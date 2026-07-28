@@ -250,10 +250,20 @@
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
+        /* Mobile Adjustments */
         @media (max-width: 768px) {
-            header { flex-direction: column; align-items: stretch; }
+            header { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
             .header-left { max-width: 100%; }
-            .view-toggle { display: none; }
+            
+            .header-actions { flex-direction: column; align-items: stretch; gap: 12px; }
+            /* Expand View Toggle buttons to row */
+            .view-toggle { display: flex; width: 100%; margin: 0; justify-content: space-between; order: -1; }
+            .view-toggle button { flex: 1; padding: 8px 0; text-align: center; }
+            
+            /* Stack Grid view vertically on mobile */
+            .matrix-container.layout-grid { display: flex; flex-direction: column; }
+            .quadrant { min-height: 400px; }
+            
             .inbox-tray-content.open { height: 300px; }
             .closed-tray-content.open { height: 350px; }
             #list-closed, #list-inbox { grid-template-columns: 1fr; }
@@ -435,10 +445,14 @@
 
     <script>
         // --- Layout Management ---
-        let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
+        let isMobileInit = window.innerWidth <= 768;
+        let currentLayout = localStorage.getItem(isMobileInit ? 'quadra_layout_mob' : 'quadra_layout');
+        if (!currentLayout) currentLayout = isMobileInit ? 'kanban' : 'grid';
+
         function setLayout(layout) {
             currentLayout = layout;
-            localStorage.setItem('quadra_layout', layout);
+            let isMob = window.innerWidth <= 768;
+            localStorage.setItem(isMob ? 'quadra_layout_mob' : 'quadra_layout', layout);
             
             const matrix = document.getElementById('matrix');
             const calView = document.getElementById('calendar-view');
