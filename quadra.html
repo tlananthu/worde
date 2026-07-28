@@ -38,7 +38,7 @@
         /* Search Box */
         .search-container { flex-grow: 1; position: relative; }
         .search-container input {
-            width: 100%; padding: 10px 16px 10px 40px; border-radius: 20px;
+            width: 100%; padding: 10px 36px 10px 40px; border-radius: 20px;
             border: 1px solid var(--border-color); background: var(--bg-main);
             font-size: 14px; outline: none; transition: all 0.2s;
         }
@@ -50,6 +50,12 @@
             position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
             color: var(--text-muted); width: 16px; height: 16px;
         }
+        .clear-search {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; font-size: 18px; color: var(--text-muted);
+            cursor: pointer; display: none; line-height: 1; padding: 0 4px;
+        }
+        .clear-search:hover { color: var(--text-main); }
 
         .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
 
@@ -227,6 +233,7 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
                 <input type="text" id="searchInput" placeholder="Search tasks or #tags..." oninput="handleSearch()">
+                <button class="clear-search" id="clearSearchBtn" onclick="clearSearch()" title="Clear search">×</button>
             </div>
         </div>
         
@@ -567,8 +574,20 @@
             handleSearch();
         }
 
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = '';
+            handleSearch();
+            searchInput.focus();
+        }
+
         function handleSearch() {
             const query = document.getElementById('searchInput').value;
+            
+            // Toggle clear button visibility
+            const clearBtn = document.getElementById('clearSearchBtn');
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+
             renderNotes(query);
             
             // Expand closed tray if matches found
