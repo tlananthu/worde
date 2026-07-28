@@ -36,6 +36,24 @@
 
         .header-actions { display: flex; gap: 12px; align-items: center; }
 
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            background-color: #F1F5F9;
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+            margin-right: 8px;
+        }
+        .view-toggle button {
+            background: transparent; border: none; padding: 6px 12px; border-radius: 6px;
+            font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+        }
+        .view-toggle button:hover { color: var(--text-main); }
+        .view-toggle button.active {
+            background-color: white; color: var(--brand-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
         .btn {
             background-color: var(--brand-primary); color: white; border: none; padding: 8px 16px;
             border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background-color 0.2s;
@@ -46,11 +64,25 @@
         
         #backBtn, #signout_button, #authorize_button { display: none; }
 
-        /* Matrix Layout */
+        /* Matrix Layout - Base */
         .matrix-container {
-            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
-            gap: 24px; padding: 24px; flex-grow: 1; overflow: hidden; transition: all 0.3s ease;
+            display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
             max-width: 1600px; margin: 0 auto; width: 100%; position: relative;
+        }
+
+        /* Grid View Layout */
+        .matrix-container.layout-grid {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            overflow: hidden;
+        }
+
+        /* Kanban View Layout */
+        .matrix-container.layout-kanban {
+            grid-template-columns: repeat(4, minmax(300px, 1fr));
+            grid-template-rows: 1fr;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
         /* Overlays */
@@ -80,26 +112,18 @@
         .form-group input:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
 
-        /* Fullscreen Layout */
-        .matrix-container.fullscreen { display: flex; }
+        /* Fullscreen Layout Overrides */
+        .matrix-container.fullscreen { display: flex; overflow: hidden; }
         .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
         .matrix-container.fullscreen .quadrant.active { display: flex; }
 
         /* Quadrants */
         .quadrant { 
-            border-radius: 16px; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            border: 1px solid rgba(0,0,0,0.05); 
-            min-height: 0; 
-            transition: box-shadow 0.2s;
+            border-radius: 16px; padding: 20px; display: flex; flex-direction: column; 
+            border: 1px solid rgba(0,0,0,0.05); min-height: 0; transition: box-shadow 0.2s;
         }
         
-        /* Highlight quadrant when dragging over it */
-        .quadrant.drag-over {
-            box-shadow: 0 0 0 2px var(--brand-primary) inset;
-        }
+        .quadrant.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
 
         #q1 { background-color: var(--q1-bg); }
         #q2 { background-color: var(--q2-bg); }
@@ -121,8 +145,7 @@
         .note {
             background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
             margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
-            align-items: flex-start; word-break: break-word; font-size: 14px; line-height: 1.5;
-            cursor: grab; /* Indicate draggable */
+            align-items: flex-start; word-break: break-word; font-size: 14px; line-height: 1.5; cursor: grab;
         }
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
@@ -134,6 +157,13 @@
         .input-group input { flex-grow: 1; border: none; padding: 14px 16px; font-size: 14px; outline: none; background: transparent; }
         .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: var(--brand-primary); cursor: pointer; }
         .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
+
+        /* Responsive stack for mobile */
+        @media (max-width: 768px) {
+            .matrix-container { display: flex; flex-direction: column; overflow-y: auto; }
+            .quadrant { min-height: 400px; }
+            .view-toggle { display: none; /* Hide toggle on small screens since they stack anyway */ }
+        }
     </style>
 </head>
 <body>
@@ -149,6 +179,12 @@
             <h1>Quadra</h1>
         </div>
         <div class="header-actions">
+            <!-- Layout Toggle -->
+            <div class="view-toggle">
+                <button id="btnGrid" onclick="setLayout('grid')">⊞ Grid</button>
+                <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
+            </div>
+            
             <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
@@ -156,7 +192,7 @@
         </div>
     </header>
 
-    <div id="matrix" class="matrix-container">
+    <div id="matrix" class="matrix-container layout-grid">
         <!-- Auth / Setup Overlay -->
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
@@ -166,7 +202,7 @@
             </div>
         </div>
 
-        <!-- Quadrants with Drag & Drop Event Listeners added -->
+        <!-- Quadrants -->
         <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
             <div class="q-header"><h2>Do First</h2><button class="expand-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q1"></div>
@@ -217,6 +253,21 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
+        // --- Layout Management ---
+        let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
+
+        function setLayout(layout) {
+            currentLayout = layout;
+            localStorage.setItem('quadra_layout', layout);
+            
+            const matrix = document.getElementById('matrix');
+            matrix.classList.remove('layout-grid', 'layout-kanban');
+            matrix.classList.add(`layout-${layout}`);
+            
+            document.getElementById('btnGrid').classList.toggle('active', layout === 'grid');
+            document.getElementById('btnKanban').classList.toggle('active', layout === 'kanban');
+        }
+
         // --- Configuration Management ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
@@ -324,15 +375,13 @@
 
         // --- Drag and Drop Logic ---
         function allowDrop(ev) {
-            ev.preventDefault(); // Necessary to allow dropping
-            // Add visual feedback class to the quadrant
+            ev.preventDefault(); 
             if(ev.currentTarget.classList.contains('quadrant')) {
                 ev.currentTarget.classList.add('drag-over');
             }
         }
 
         function dragLeave(ev) {
-            // Remove visual feedback class
             if(ev.currentTarget.classList.contains('quadrant')) {
                 ev.currentTarget.classList.remove('drag-over');
             }
@@ -341,7 +390,6 @@
         function drop(ev, newQuadrant) {
             ev.preventDefault();
             
-            // Cleanup visual feedback
             if(ev.currentTarget.classList.contains('quadrant')) {
                 ev.currentTarget.classList.remove('drag-over');
             }
@@ -349,14 +397,12 @@
             const noteId = ev.dataTransfer.getData("text/plain");
             const noteIndex = notes.findIndex(n => n.id === noteId);
             
-            // If the note exists and is moving to a new quadrant
             if (noteIndex > -1 && notes[noteIndex].quadrant !== newQuadrant) {
                 notes[noteIndex].quadrant = newQuadrant;
                 saveNotes();
                 renderNotes();
             }
         }
-
 
         // --- App Logic (Local Storage) ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
@@ -368,11 +414,9 @@
                 if (list) {
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note';
-                    // Enable dragging and set data transfer payload
+                    
                     noteEl.draggable = true;
-                    noteEl.ondragstart = (e) => {
-                        e.dataTransfer.setData('text/plain', note.id);
-                    };
+                    noteEl.ondragstart = (e) => { e.dataTransfer.setData('text/plain', note.id); };
 
                     noteEl.innerHTML = `<span>${escapeHTML(note.text)}</span><button class="delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
                     list.appendChild(noteEl);
@@ -425,6 +469,7 @@
         }
 
         // Init
+        setLayout(currentLayout);
         checkConfigState();
         renderNotes();
     </script>
