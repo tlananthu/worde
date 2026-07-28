@@ -72,22 +72,22 @@
         
         #backBtn, #signout_button, #authorize_button { display: none; }
 
-        /* Inbox Tray (Un-prioritized) */
+        /* Inbox Tray */
         .inbox-tray { background-color: #ffffff; border-bottom: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
         .inbox-tray-header { padding: 12px 32px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; transition: background 0.2s; }
         .inbox-tray-header:hover { background: #F1F5F9; }
-        .inbox-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--brand-primary); }
+        .inbox-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--brand-primary); display: flex; align-items: center; gap: 8px; }
+        
         .inbox-tray-content { height: 0; overflow: hidden; background: #ffffff; padding: 0 32px; transition: height 0.3s ease, padding 0.3s ease; display: flex; flex-direction: column; }
-        .inbox-tray-content.open { height: 220px; padding: 16px 32px; }
+        .inbox-tray-content.open { height: 220px; padding: 0 32px 16px 32px; }
         .inbox-tray-content.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
         #list-inbox { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-top: 12px; }
 
-        /* Matrix Layout - Base */
+        /* Matrix Layout */
         .matrix-container {
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
             max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow: hidden;
         }
-
         .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
         .matrix-container.fullscreen { display: flex; overflow: hidden; }
@@ -103,23 +103,29 @@
         }
         .overlay h3 { margin-bottom: 12px; font-size: 22px; }
         .overlay p { color: var(--text-muted); margin-bottom: 24px; max-width: 450px; line-height: 1.5; }
-        .overlay-actions { display: flex; gap: 12px; }
 
-        /* Settings Modal */
+        /* Modals (Settings & Task Edit) */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: white; padding: 32px; border-radius: 16px; width: 90%; max-width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            background: white; padding: 32px; border-radius: 16px; width: 90%; max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px;
         }
-        .modal-content h3 { margin-bottom: 24px; font-size: 20px; }
-        .form-group { margin-bottom: 20px; text-align: left; }
+        .modal-content h3 { font-size: 20px; }
+        .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
         .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: monospace; font-size: 13px; }
         .form-group input:focus { border-color: var(--brand-primary); }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+
+        #taskInput {
+            width: 100%; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); 
+            font-family: inherit; font-size: 15px; outline: none; resize: vertical; line-height: 1.5;
+            background: #F9FAFB;
+        }
+        #taskInput:focus { background: #ffffff; border-color: var(--brand-primary); }
 
         /* Quadrants */
         .quadrant { 
@@ -135,12 +141,16 @@
 
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .q-header h2 { font-size: 16px; font-weight: 600; }
-        .expand-btn {
+        
+        .header-buttons { display: flex; gap: 8px; align-items: center; }
+        
+        .icon-btn {
             background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px;
             border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            color: var(--text-muted); transition: all 0.2s;
+            color: var(--text-muted); transition: all 0.2s; font-size: 16px; font-weight: bold;
         }
-        .expand-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
+        .icon-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
+        .add-btn { color: var(--brand-primary); font-size: 20px; }
 
         .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
@@ -148,35 +158,32 @@
         .note {
             background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
             margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
-            align-items: center; word-break: break-word; font-size: 14px; line-height: 1.5; cursor: grab;
+            align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab;
         }
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
-        .note-text { flex-grow: 1; cursor: text; padding: 2px 0; }
-        .note-edit-input {
-            flex-grow: 1; border: 1px solid var(--brand-primary); border-radius: 6px; padding: 4px 8px;
-            font-size: 14px; font-family: inherit; outline: none; background: #fff; margin-right: 8px;
+        .note-text { 
+            flex-grow: 1; cursor: pointer; padding: 2px 0; white-space: pre-wrap; word-break: break-word;
         }
 
+        /* Hashtags */
+        .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
+        .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
+
         /* Action Buttons */
-        .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; }
+        .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; flex-shrink: 0; }
         .note:hover .note-actions { opacity: 1; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; font-weight: bold; }
-        .complete-btn { color: #10B981; } /* Green */
+        .complete-btn { color: #10B981; } 
         .complete-btn:hover { color: #059669; }
-        .delete-btn { color: #EF4444; }   /* Red */
+        .delete-btn { color: #EF4444; }   
         .delete-btn:hover { color: #DC2626; }
-        .restore-btn { color: #3B82F6; }  /* Blue */
+        .restore-btn { color: #3B82F6; }  
         .restore-btn:hover { color: #2563EB; }
 
         .closed-note { opacity: 0.6; box-shadow: none; cursor: default; }
         .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
         .closed-note .note-text { text-decoration: line-through; cursor: default; }
-
-        .input-group { display: flex; margin-top: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); flex-shrink: 0; }
-        .input-group input { flex-grow: 1; border: none; padding: 14px 16px; font-size: 14px; outline: none; background: transparent; }
-        .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: var(--brand-primary); cursor: pointer; }
-        .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
 
         /* Closed Tasks Tray */
         .closed-tray { background-color: #ffffff; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
@@ -187,7 +194,7 @@
         .closed-tray-content.open { height: 250px; padding: 16px 32px; border-top: 1px solid var(--border-color); }
         #list-closed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; height: 100%; overflow-y: auto; padding-right: 8px; }
 
-        /* Responsive stack for mobile */
+        /* Responsive stack */
         @media (max-width: 768px) {
             header { flex-direction: column; align-items: stretch; }
             .header-left { max-width: 100%; }
@@ -219,7 +226,7 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="searchInput" placeholder="Search tasks..." oninput="handleSearch()">
+                <input type="text" id="searchInput" placeholder="Search tasks or #tags..." oninput="handleSearch()">
             </div>
         </div>
         
@@ -235,22 +242,21 @@
         </div>
     </header>
 
-    <!-- Inbox Tray (Un-prioritized Tasks) -->
+    <!-- Inbox Tray -->
     <div class="inbox-tray">
         <div class="inbox-tray-header" onclick="toggleInboxTray()">
             <h3>Inbox (Un-prioritized) (<span id="inbox-count">0</span>)</h3>
-            <span id="inbox-chevron">▼</span> <!-- Collapsed arrow by default -->
-        </div>
-        <!-- Removed "open" class so it starts collapsed -->
-        <div class="inbox-tray-content" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
-            <div class="input-group" style="margin-top: 0;">
-                <input type="text" id="input-inbox" placeholder="Dump a task here to prioritize it later..." onkeypress="handleEnter(event, 'inbox')">
-                <button onclick="addTask('inbox')">+</button>
+            <div class="header-buttons" onclick="event.stopPropagation()">
+                <button class="icon-btn add-btn" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
+                <span id="inbox-chevron" style="margin-left: 8px; color: var(--text-muted); cursor: pointer;" onclick="toggleInboxTray()">▼</span>
             </div>
+        </div>
+        <div class="inbox-tray-content" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
             <div class="task-list" id="list-inbox"></div>
         </div>
     </div>
 
+    <!-- Matrix -->
     <div id="matrix" class="matrix-container layout-grid">
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
@@ -258,29 +264,48 @@
             <div class="overlay-actions" id="overlay-actions"></div>
         </div>
 
-        <!-- Quadrants -->
         <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
-            <div class="q-header"><h2>Do First</h2><button class="expand-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button></div>
+            <div class="q-header">
+                <h2>Do First</h2>
+                <div class="header-buttons">
+                    <button class="icon-btn add-btn" onclick="openTaskModal('q1', null, event)" title="Add Task">+</button>
+                    <button class="icon-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button>
+                </div>
+            </div>
             <div class="task-list" id="list-q1"></div>
-            <div class="input-group"><input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')"><button onclick="addTask('q1')">+</button></div>
         </div>
 
         <div class="quadrant" id="q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q2')">
-            <div class="q-header"><h2>Schedule</h2><button class="expand-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button></div>
+            <div class="q-header">
+                <h2>Schedule</h2>
+                <div class="header-buttons">
+                    <button class="icon-btn add-btn" onclick="openTaskModal('q2', null, event)" title="Add Task">+</button>
+                    <button class="icon-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button>
+                </div>
+            </div>
             <div class="task-list" id="list-q2"></div>
-            <div class="input-group"><input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')"><button onclick="addTask('q2')">+</button></div>
         </div>
 
         <div class="quadrant" id="q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q3')">
-            <div class="q-header"><h2>Delegate</h2><button class="expand-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button></div>
+            <div class="q-header">
+                <h2>Delegate</h2>
+                <div class="header-buttons">
+                    <button class="icon-btn add-btn" onclick="openTaskModal('q3', null, event)" title="Add Task">+</button>
+                    <button class="icon-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button>
+                </div>
+            </div>
             <div class="task-list" id="list-q3"></div>
-            <div class="input-group"><input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')"><button onclick="addTask('q3')">+</button></div>
         </div>
 
         <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
-            <div class="q-header"><h2>Later</h2><button class="expand-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button></div>
+            <div class="q-header">
+                <h2>Later</h2>
+                <div class="header-buttons">
+                    <button class="icon-btn add-btn" onclick="openTaskModal('q4', null, event)" title="Add Task">+</button>
+                    <button class="icon-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button>
+                </div>
+            </div>
             <div class="task-list" id="list-q4"></div>
-            <div class="input-group"><input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')"><button onclick="addTask('q4')">+</button></div>
         </div>
     </div>
 
@@ -292,6 +317,19 @@
         </div>
         <div class="closed-tray-content" id="closed-tray-content">
             <div class="task-list" id="list-closed"></div>
+        </div>
+    </div>
+
+    <!-- Task Add/Edit Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <h3 id="taskModalTitle">Add Task</h3>
+            <textarea id="taskInput" rows="5" placeholder="Enter your task details... Use #hashtags to categorize!"></textarea>
+            <div style="font-size: 12px; color: var(--text-muted);">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save</div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
+                <button class="btn" onclick="saveTaskModal()">Save Task</button>
+            </div>
         </div>
     </div>
 
@@ -358,7 +396,6 @@
             }
         }
 
-        // Settings
         function openSettings() {
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
@@ -447,12 +484,88 @@
             if (noteIndex > -1 && notes[noteIndex].status === 'active' && notes[noteIndex].quadrant !== newQuadrant) {
                 notes[noteIndex].quadrant = newQuadrant;
                 saveNotes();
-                renderNotes(document.getElementById('searchInput').value);
+                handleSearch();
             }
         }
 
+        // --- Task Modal (Add / Edit) Logic ---
+        let currentEditingId = null;
+        let currentAddingQuadrant = null;
+
+        function openTaskModal(quadrant = null, noteId = null, event = null) {
+            if (event) event.stopPropagation();
+            
+            const modal = document.getElementById('taskModal');
+            const input = document.getElementById('taskInput');
+            const title = document.getElementById('taskModalTitle');
+            
+            if (noteId) {
+                // Edit Mode
+                currentEditingId = noteId;
+                const note = notes.find(n => n.id === noteId);
+                title.innerText = 'Edit Task';
+                input.value = note.text;
+            } else {
+                // Add Mode
+                currentEditingId = null;
+                currentAddingQuadrant = quadrant;
+                title.innerText = 'Add Task';
+                input.value = '';
+            }
+            
+            modal.style.display = 'flex';
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').style.display = 'none';
+        }
+
+        function saveTaskModal() {
+            const text = document.getElementById('taskInput').value.trim();
+            if (!text) {
+                closeTaskModal();
+                return;
+            }
+
+            if (currentEditingId) {
+                const note = notes.find(n => n.id === currentEditingId);
+                if (note) note.text = text;
+            } else {
+                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active' });
+            }
+            
+            saveNotes();
+            handleSearch();
+            closeTaskModal();
+        }
+
+        // Allow Ctrl+Enter to save in the textarea
+        document.getElementById('taskInput').addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                saveTaskModal();
+            }
+        });
+
         // --- App Logic ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
+
+        function escapeHTML(str) { 
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); 
+        }
+
+        function parseTags(str) {
+            const escaped = escapeHTML(str);
+            // Replace hashtags with clickable spans
+            return escaped.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
+        }
+
+        function searchTag(tag, event) {
+            event.stopPropagation(); // Prevent opening the edit modal or dragging
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = tag;
+            handleSearch();
+        }
 
         function handleSearch() {
             const query = document.getElementById('searchInput').value;
@@ -499,31 +612,11 @@
 
                     const textSpan = document.createElement('span');
                     textSpan.className = 'note-text';
-                    textSpan.innerHTML = escapeHTML(note.text);
+                    textSpan.innerHTML = parseTags(note.text); // Render text with formatted tags and line breaks
                     
                     if (note.status === 'active') {
                         textSpan.title = "Double-click to edit";
-                        textSpan.ondblclick = () => {
-                            noteEl.draggable = false;
-                            const input = document.createElement('input');
-                            input.type = 'text';
-                            input.className = 'note-edit-input';
-                            input.value = note.text;
-                            
-                            const saveEdit = () => {
-                                const newText = input.value.trim();
-                                if (newText && newText !== note.text) { note.text = newText; saveNotes(); }
-                                handleSearch(); 
-                            };
-
-                            input.onblur = saveEdit;
-                            input.onkeydown = (e) => {
-                                if (e.key === 'Enter') saveEdit();
-                                if (e.key === 'Escape') handleSearch();
-                            };
-                            noteEl.replaceChild(input, textSpan);
-                            input.focus();
-                        };
+                        textSpan.ondblclick = (e) => openTaskModal(null, note.id, e);
                     }
 
                     const actionsDiv = document.createElement('div');
@@ -564,17 +657,6 @@
             document.getElementById('inbox-count').innerText = notes.filter(n => n.status === 'active' && n.quadrant === 'inbox').length;
         }
 
-        function addTask(quadrant) {
-            const inputEl = document.getElementById(`input-${quadrant}`);
-            const text = inputEl.value.trim();
-            if (text) {
-                notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant, status: 'active' });
-                saveNotes();
-                handleSearch();
-                inputEl.value = ''; 
-            }
-        }
-
         function completeTask(id) {
             const note = notes.find(n => n.id === id);
             if (note) { note.status = 'closed'; saveNotes(); handleSearch(); }
@@ -605,9 +687,6 @@
             if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } 
             else { content.classList.add('open'); chevron.innerText = '▲'; }
         }
-
-        function handleEnter(event, quadrant) { if (event.key === 'Enter') addTask(quadrant); }
-        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
 
         // --- Fullscreen Navigation ---
         const matrix = document.getElementById('matrix');
