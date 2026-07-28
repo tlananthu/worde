@@ -92,8 +92,15 @@
             display: flex; 
             flex-direction: column; 
             border: 1px solid rgba(0,0,0,0.05); 
-            min-height: 0; /* This line ensures the flex container doesn't overflow its grid cell, allowing inner scroll */
+            min-height: 0; 
+            transition: box-shadow 0.2s;
         }
+        
+        /* Highlight quadrant when dragging over it */
+        .quadrant.drag-over {
+            box-shadow: 0 0 0 2px var(--brand-primary) inset;
+        }
+
         #q1 { background-color: var(--q1-bg); }
         #q2 { background-color: var(--q2-bg); }
         #q3 { background-color: var(--q3-bg); }
@@ -115,7 +122,9 @@
             background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
             margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
             align-items: flex-start; word-break: break-word; font-size: 14px; line-height: 1.5;
+            cursor: grab; /* Indicate draggable */
         }
+        .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
 
         .delete-btn { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 20px; opacity: 0; padding-left: 12px; }
@@ -157,26 +166,26 @@
             </div>
         </div>
 
-        <!-- Quadrants -->
-        <div class="quadrant" id="q1">
+        <!-- Quadrants with Drag & Drop Event Listeners added -->
+        <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
             <div class="q-header"><h2>Do First</h2><button class="expand-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q1"></div>
             <div class="input-group"><input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')"><button onclick="addTask('q1')">+</button></div>
         </div>
 
-        <div class="quadrant" id="q2">
+        <div class="quadrant" id="q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q2')">
             <div class="q-header"><h2>Schedule</h2><button class="expand-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q2"></div>
             <div class="input-group"><input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')"><button onclick="addTask('q2')">+</button></div>
         </div>
 
-        <div class="quadrant" id="q3">
+        <div class="quadrant" id="q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q3')">
             <div class="q-header"><h2>Delegate</h2><button class="expand-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q3"></div>
             <div class="input-group"><input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')"><button onclick="addTask('q3')">+</button></div>
         </div>
 
-        <div class="quadrant" id="q4">
+        <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
             <div class="q-header"><h2>Eliminate</h2><button class="expand-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q4"></div>
             <div class="input-group"><input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')"><button onclick="addTask('q4')">+</button></div>
@@ -313,6 +322,42 @@
             document.getElementById('auth-overlay').style.display = 'flex';
         }
 
+        // --- Drag and Drop Logic ---
+        function allowDrop(ev) {
+            ev.preventDefault(); // Necessary to allow dropping
+            // Add visual feedback class to the quadrant
+            if(ev.currentTarget.classList.contains('quadrant')) {
+                ev.currentTarget.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(ev) {
+            // Remove visual feedback class
+            if(ev.currentTarget.classList.contains('quadrant')) {
+                ev.currentTarget.classList.remove('drag-over');
+            }
+        }
+
+        function drop(ev, newQuadrant) {
+            ev.preventDefault();
+            
+            // Cleanup visual feedback
+            if(ev.currentTarget.classList.contains('quadrant')) {
+                ev.currentTarget.classList.remove('drag-over');
+            }
+
+            const noteId = ev.dataTransfer.getData("text/plain");
+            const noteIndex = notes.findIndex(n => n.id === noteId);
+            
+            // If the note exists and is moving to a new quadrant
+            if (noteIndex > -1 && notes[noteIndex].quadrant !== newQuadrant) {
+                notes[noteIndex].quadrant = newQuadrant;
+                saveNotes();
+                renderNotes();
+            }
+        }
+
+
         // --- App Logic (Local Storage) ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
@@ -323,6 +368,12 @@
                 if (list) {
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note';
+                    // Enable dragging and set data transfer payload
+                    noteEl.draggable = true;
+                    noteEl.ondragstart = (e) => {
+                        e.dataTransfer.setData('text/plain', note.id);
+                    };
+
                     noteEl.innerHTML = `<span>${escapeHTML(note.text)}</span><button class="delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
                     list.appendChild(noteEl);
                 }
@@ -357,11 +408,9 @@
         function toggleFullscreen(quadrantId) {
             const targetQuadrant = document.getElementById(quadrantId);
             
-            // If it's already fullscreen, clicking the button again will collapse it
             if (targetQuadrant.classList.contains('active')) {
                 exitFullscreen();
             } else {
-                // Otherwise, expand it
                 document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
                 targetQuadrant.classList.add('active');
                 matrix.classList.add('fullscreen');
