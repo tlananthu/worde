@@ -27,23 +27,42 @@
         /* Header & Logo */
         header {
             background-color: #ffffff; padding: 16px 32px; border-bottom: 1px solid var(--border-color);
-            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+            display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 24px;
         }
 
-        .brand-container { display: flex; align-items: center; gap: 12px; }
+        .header-left {
+            display: flex; align-items: center; gap: 24px; flex-grow: 1; max-width: 600px;
+        }
+
+        .brand-container { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
         .logo-svg { width: 28px; height: 28px; color: var(--brand-primary); }
         header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 
-        .header-actions { display: flex; gap: 12px; align-items: center; }
+        /* Search Box */
+        .search-container {
+            flex-grow: 1;
+            position: relative;
+        }
+        .search-container input {
+            width: 100%; padding: 10px 16px 10px 40px; border-radius: 20px;
+            border: 1px solid var(--border-color); background: var(--bg-main);
+            font-size: 14px; outline: none; transition: all 0.2s;
+        }
+        .search-container input:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            background: #ffffff;
+        }
+        .search-icon {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: var(--text-muted); width: 16px; height: 16px;
+        }
+
+        .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
 
         /* View Toggle */
         .view-toggle {
-            display: flex;
-            background-color: #F1F5F9;
-            border-radius: 8px;
-            padding: 4px;
-            gap: 4px;
-            margin-right: 8px;
+            display: flex; background-color: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; margin-right: 8px;
         }
         .view-toggle button {
             background: transparent; border: none; padding: 6px 12px; border-radius: 6px;
@@ -72,17 +91,13 @@
 
         /* Grid View Layout */
         .matrix-container.layout-grid {
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            overflow: hidden;
+            grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; overflow: hidden;
         }
 
         /* Kanban View Layout */
         .matrix-container.layout-kanban {
-            grid-template-columns: repeat(4, minmax(300px, 1fr));
-            grid-template-rows: 1fr;
-            overflow-x: auto;
-            overflow-y: hidden;
+            grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr;
+            overflow-x: auto; overflow-y: hidden;
         }
 
         /* Overlays */
@@ -151,22 +166,11 @@
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         
-        .note-text {
-            flex-grow: 1;
-            cursor: text; /* Indicates double-click to edit */
-            padding: 2px 0;
-        }
+        .note-text { flex-grow: 1; cursor: text; padding: 2px 0; }
 
         .note-edit-input {
-            flex-grow: 1;
-            border: 1px solid var(--brand-primary);
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 14px;
-            font-family: inherit;
-            outline: none;
-            background: #fff;
-            margin-right: 8px;
+            flex-grow: 1; border: 1px solid var(--brand-primary); border-radius: 6px; padding: 4px 8px;
+            font-size: 14px; font-family: inherit; outline: none; background: #fff; margin-right: 8px;
         }
 
         .delete-btn { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 20px; opacity: 0; padding-left: 12px; }
@@ -179,6 +183,8 @@
 
         /* Responsive stack for mobile */
         @media (max-width: 768px) {
+            header { flex-direction: column; align-items: stretch; }
+            .header-left { max-width: 100%; }
             .matrix-container { display: flex; flex-direction: column; overflow-y: auto; }
             .quadrant { min-height: 400px; }
             .view-toggle { display: none; }
@@ -188,15 +194,26 @@
 <body>
 
     <header>
-        <div class="brand-container">
-            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"></rect>
-                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-            </svg>
-            <h1>Quadra</h1>
+        <div class="header-left">
+            <div class="brand-container">
+                <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"></rect>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                </svg>
+                <h1>Quadra</h1>
+            </div>
+            
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Search tasks..." oninput="handleSearch()">
+            </div>
         </div>
+        
         <div class="header-actions">
             <!-- Layout Toggle -->
             <div class="view-toggle">
@@ -426,9 +443,23 @@
         // --- App Logic (Local Storage) ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
-        function renderNotes() {
+        // Search Trigger
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value;
+            renderNotes(query);
+        }
+
+        // Modifed renderNotes to accept a query string
+        function renderNotes(searchQuery = '') {
+            // Clear all lists first
             ['q1', 'q2', 'q3', 'q4'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
-            notes.forEach(note => {
+            
+            // Filter notes based on the search query (case-insensitive)
+            const filteredNotes = notes.filter(note => 
+                note.text.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            filteredNotes.forEach(note => {
                 const list = document.getElementById(`list-${note.quadrant}`);
                 if (list) {
                     const noteEl = document.createElement('div');
@@ -460,13 +491,14 @@
                                 note.text = newText;
                                 saveNotes();
                             }
-                            renderNotes(); // Re-render to restore normal state
+                            // Re-render, preserving search state
+                            handleSearch(); 
                         };
 
                         input.onblur = saveEdit;
                         input.onkeydown = (e) => {
                             if (e.key === 'Enter') saveEdit();
-                            if (e.key === 'Escape') renderNotes(); // Cancel edit
+                            if (e.key === 'Escape') handleSearch(); // Cancel edit
                         };
 
                         noteEl.replaceChild(input, textSpan);
@@ -493,7 +525,8 @@
             if (text) {
                 notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant });
                 saveNotes();
-                renderNotes();
+                // Persist current search context when adding a note
+                handleSearch();
                 inputEl.value = ''; 
             }
         }
@@ -503,7 +536,7 @@
         function deleteTask(id) {
             notes = notes.filter(note => note.id !== id);
             saveNotes();
-            renderNotes();
+            handleSearch();
         }
 
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
@@ -534,7 +567,7 @@
         // Init
         setLayout(currentLayout);
         checkConfigState();
-        renderNotes();
+        renderNotes(); // Initial render without query
     </script>
 </body>
 </html>
