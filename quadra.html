@@ -27,22 +27,16 @@
         /* Header & Logo */
         header {
             background-color: #ffffff; padding: 16px 32px; border-bottom: 1px solid var(--border-color);
-            display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 24px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 24px; flex-shrink: 0;
         }
 
-        .header-left {
-            display: flex; align-items: center; gap: 24px; flex-grow: 1; max-width: 600px;
-        }
-
+        .header-left { display: flex; align-items: center; gap: 24px; flex-grow: 1; max-width: 600px; }
         .brand-container { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
         .logo-svg { width: 28px; height: 28px; color: var(--brand-primary); }
         header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 
         /* Search Box */
-        .search-container {
-            flex-grow: 1;
-            position: relative;
-        }
+        .search-container { flex-grow: 1; position: relative; }
         .search-container input {
             width: 100%; padding: 10px 16px 10px 40px; border-radius: 20px;
             border: 1px solid var(--border-color); background: var(--bg-main);
@@ -50,8 +44,7 @@
         }
         .search-container input:focus {
             border-color: var(--brand-primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); background: #ffffff;
         }
         .search-icon {
             position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -61,17 +54,13 @@
         .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
 
         /* View Toggle */
-        .view-toggle {
-            display: flex; background-color: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; margin-right: 8px;
-        }
+        .view-toggle { display: flex; background-color: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; margin-right: 8px; }
         .view-toggle button {
             background: transparent; border: none; padding: 6px 12px; border-radius: 6px;
             font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
         }
         .view-toggle button:hover { color: var(--text-main); }
-        .view-toggle button.active {
-            background-color: white; color: var(--brand-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+        .view-toggle button.active { background-color: white; color: var(--brand-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
         .btn {
             background-color: var(--brand-primary); color: white; border: none; padding: 8px 16px;
@@ -86,19 +75,14 @@
         /* Matrix Layout - Base */
         .matrix-container {
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
-            max-width: 1600px; margin: 0 auto; width: 100%; position: relative;
+            max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow: hidden;
         }
 
-        /* Grid View Layout */
-        .matrix-container.layout-grid {
-            grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; overflow: hidden;
-        }
-
-        /* Kanban View Layout */
-        .matrix-container.layout-kanban {
-            grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr;
-            overflow-x: auto; overflow-y: hidden;
-        }
+        .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
+        .matrix-container.fullscreen { display: flex; overflow: hidden; }
+        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
+        .matrix-container.fullscreen .quadrant.active { display: flex; }
 
         /* Overlays */
         .overlay {
@@ -111,7 +95,7 @@
         .overlay p { color: var(--text-muted); margin-bottom: 24px; max-width: 450px; line-height: 1.5; }
         .overlay-actions { display: flex; gap: 12px; }
 
-        /* Modal / Settings */
+        /* Settings Modal */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center;
@@ -127,17 +111,11 @@
         .form-group input:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
 
-        /* Fullscreen Layout Overrides */
-        .matrix-container.fullscreen { display: flex; overflow: hidden; }
-        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
-        .matrix-container.fullscreen .quadrant.active { display: flex; }
-
         /* Quadrants */
         .quadrant { 
             border-radius: 16px; padding: 20px; display: flex; flex-direction: column; 
             border: 1px solid rgba(0,0,0,0.05); min-height: 0; transition: box-shadow 0.2s;
         }
-        
         .quadrant.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
 
         #q1 { background-color: var(--q1-bg); }
@@ -147,7 +125,6 @@
 
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .q-header h2 { font-size: 16px; font-weight: 600; }
-        
         .expand-btn {
             background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px;
             border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -165,21 +142,40 @@
         }
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
-        
         .note-text { flex-grow: 1; cursor: text; padding: 2px 0; }
-
         .note-edit-input {
             flex-grow: 1; border: 1px solid var(--brand-primary); border-radius: 6px; padding: 4px 8px;
             font-size: 14px; font-family: inherit; outline: none; background: #fff; margin-right: 8px;
         }
 
-        .delete-btn { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 20px; opacity: 0; padding-left: 12px; }
-        .note:hover .delete-btn { opacity: 1; }
+        /* Action Buttons */
+        .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; }
+        .note:hover .note-actions { opacity: 1; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; font-weight: bold; }
+        .complete-btn { color: #10B981; } /* Green */
+        .complete-btn:hover { color: #059669; }
+        .delete-btn { color: #EF4444; }   /* Red */
+        .delete-btn:hover { color: #DC2626; }
+        .restore-btn { color: #3B82F6; }  /* Blue */
+        .restore-btn:hover { color: #2563EB; }
+
+        .closed-note { opacity: 0.6; box-shadow: none; cursor: default; }
+        .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
+        .closed-note .note-text { text-decoration: line-through; cursor: default; }
 
         .input-group { display: flex; margin-top: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); flex-shrink: 0; }
         .input-group input { flex-grow: 1; border: none; padding: 14px 16px; font-size: 14px; outline: none; background: transparent; }
         .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: var(--brand-primary); cursor: pointer; }
         .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
+
+        /* Closed Tasks Tray */
+        .closed-tray { background-color: #ffffff; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
+        .closed-tray-header { padding: 12px 32px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; transition: background 0.2s; }
+        .closed-tray-header:hover { background: #F1F5F9; }
+        .closed-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .closed-tray-content { height: 0; overflow: hidden; background: #F8FAFC; padding: 0 32px; transition: height 0.3s ease, padding 0.3s ease; }
+        .closed-tray-content.open { height: 250px; padding: 16px 32px; border-top: 1px solid var(--border-color); }
+        #list-closed { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-content: flex-start; height: 100%; overflow-y: auto; padding-right: 8px; }
 
         /* Responsive stack for mobile */
         @media (max-width: 768px) {
@@ -188,6 +184,8 @@
             .matrix-container { display: flex; flex-direction: column; overflow-y: auto; }
             .quadrant { min-height: 400px; }
             .view-toggle { display: none; }
+            .closed-tray-content.open { height: 350px; }
+            #list-closed { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -233,9 +231,7 @@
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
             <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
-            <div class="overlay-actions" id="overlay-actions">
-                <!-- Injected via JS based on config state -->
-            </div>
+            <div class="overlay-actions" id="overlay-actions"></div>
         </div>
 
         <!-- Quadrants -->
@@ -261,6 +257,17 @@
             <div class="q-header"><h2>Eliminate</h2><button class="expand-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q4"></div>
             <div class="input-group"><input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')"><button onclick="addTask('q4')">+</button></div>
+        </div>
+    </div>
+
+    <!-- Closed Tasks Tray -->
+    <div class="closed-tray">
+        <div class="closed-tray-header" onclick="toggleClosedTray()">
+            <h3>Completed Tasks (<span id="closed-count">0</span>)</h3>
+            <span id="closed-chevron">▼</span>
+        </div>
+        <div class="closed-tray-content" id="closed-tray-content">
+            <div class="task-list" id="list-closed"></div>
         </div>
     </div>
 
@@ -295,11 +302,9 @@
         function setLayout(layout) {
             currentLayout = layout;
             localStorage.setItem('quadra_layout', layout);
-            
             const matrix = document.getElementById('matrix');
             matrix.classList.remove('layout-grid', 'layout-kanban');
             matrix.classList.add(`layout-${layout}`);
-            
             document.getElementById('btnGrid').classList.toggle('active', layout === 'grid');
             document.getElementById('btnKanban').classList.toggle('active', layout === 'kanban');
         }
@@ -310,7 +315,12 @@
         const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
         // Local State
+        // Data format: { id, text, quadrant, status: 'active' | 'closed' }
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+        
+        // Migrate old notes to include status if missing
+        notes = notes.map(note => ({ ...note, status: note.status || 'active' }));
+        
         let tokenClient;
 
         // Initialization Check
@@ -322,17 +332,11 @@
             if (!appConfig.clientId || !appConfig.apiKey) {
                 title.innerText = "Setup Google Sync";
                 text.innerText = "To sync your matrix with Google Tasks, you need to provide your Google Cloud Developer credentials in the settings.";
-                actionsContainer.innerHTML = `
-                    <button class="btn" onclick="openSettings()">Configure Keys</button>
-                    <button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>
-                `;
+                actionsContainer.innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
                 title.innerText = "Google Tasks Sync";
                 text.innerText = "Sign in securely with your Google account to keep your matrix synced across devices.";
-                actionsContainer.innerHTML = `
-                    <button class="btn" onclick="handleAuthClick()">Sign In with Google</button>
-                    <button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>
-                `;
+                actionsContainer.innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
                 document.getElementById('authorize_button').style.display = 'inline-block';
             }
         }
@@ -343,11 +347,7 @@
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             document.getElementById('settingsModal').style.display = 'flex';
         }
-
-        function closeSettings() {
-            document.getElementById('settingsModal').style.display = 'none';
-        }
-
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
         function saveSettings() {
             appConfig.clientId = document.getElementById('configClientId').value.trim();
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
@@ -355,22 +355,13 @@
             closeSettings();
             location.reload(); 
         }
-
-        function dismissOverlay() {
-            document.getElementById('auth-overlay').style.display = 'none';
-            renderNotes();
-        }
+        function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
 
         // --- Google API Logic ---
-        function gapiLoaded() {
-            if(appConfig.apiKey) gapi.load('client', initializeGapiClient);
-        }
-
+        function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
         async function initializeGapiClient() {
             try {
                 await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
-                
-                // CHECK FOR SAVED SESSION TOKEN
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     gapi.client.setToken({ access_token: savedTokenData.token });
@@ -378,7 +369,6 @@
                     document.getElementById('signout_button').style.display = 'inline-block';
                     dismissOverlay();
                 }
-
             } catch(e) { console.error("GAPI Error:", e); }
         }
 
@@ -390,13 +380,10 @@
                         scope: SCOPES,
                         callback: (resp) => {
                             if (resp.error !== undefined) { throw (resp); }
-                            
-                            // SAVE SESSION TOKEN TO LOCAL STORAGE
                             localStorage.setItem('quadra_gapi_token', JSON.stringify({
                                 token: resp.access_token,
                                 expires_at: Date.now() + (resp.expires_in * 1000)
                             }));
-
                             document.getElementById('authorize_button').style.display = 'none';
                             document.getElementById('signout_button').style.display = 'inline-block';
                             dismissOverlay();
@@ -408,23 +395,14 @@
 
         function handleAuthClick() {
             if (!appConfig.clientId) { openSettings(); return; }
-            if (gapi.client.getToken() === null) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                tokenClient.requestAccessToken({prompt: ''});
-            }
+            if (gapi.client.getToken() === null) { tokenClient.requestAccessToken({prompt: 'consent'}); } 
+            else { tokenClient.requestAccessToken({prompt: ''}); }
         }
 
         function handleSignoutClick() {
             const token = gapi.client.getToken();
-            if (token !== null) {
-                google.accounts.oauth2.revoke(token.access_token);
-                gapi.client.setToken('');
-            }
-            
-            // WIPE SAVED SESSION TOKEN
+            if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
             localStorage.removeItem('quadra_gapi_token');
-
             document.getElementById('authorize_button').style.display = 'inline-block';
             document.getElementById('signout_button').style.display = 'none';
             document.getElementById('auth-overlay').style.display = 'flex';
@@ -433,31 +411,21 @@
         // --- Drag and Drop Logic ---
         function allowDrop(ev) {
             ev.preventDefault(); 
-            if(ev.currentTarget.classList.contains('quadrant')) {
-                ev.currentTarget.classList.add('drag-over');
-            }
+            if(ev.currentTarget.classList.contains('quadrant')) ev.currentTarget.classList.add('drag-over');
         }
-
         function dragLeave(ev) {
-            if(ev.currentTarget.classList.contains('quadrant')) {
-                ev.currentTarget.classList.remove('drag-over');
-            }
+            if(ev.currentTarget.classList.contains('quadrant')) ev.currentTarget.classList.remove('drag-over');
         }
-
         function drop(ev, newQuadrant) {
             ev.preventDefault();
-            
-            if(ev.currentTarget.classList.contains('quadrant')) {
-                ev.currentTarget.classList.remove('drag-over');
-            }
-
+            if(ev.currentTarget.classList.contains('quadrant')) ev.currentTarget.classList.remove('drag-over');
             const noteId = ev.dataTransfer.getData("text/plain");
             const noteIndex = notes.findIndex(n => n.id === noteId);
-            
-            if (noteIndex > -1 && notes[noteIndex].quadrant !== newQuadrant) {
+            // Only allow dragging active tasks
+            if (noteIndex > -1 && notes[noteIndex].status === 'active' && notes[noteIndex].quadrant !== newQuadrant) {
                 notes[noteIndex].quadrant = newQuadrant;
                 saveNotes();
-                renderNotes();
+                renderNotes(document.getElementById('searchInput').value);
             }
         }
 
@@ -468,91 +436,126 @@
         function handleSearch() {
             const query = document.getElementById('searchInput').value;
             renderNotes(query);
+            
+            // Auto-expand closed tray if searching and there are matches in closed tasks
+            const closedMatches = notes.filter(n => n.status === 'closed' && n.text.toLowerCase().includes(query.toLowerCase()));
+            const trayContent = document.getElementById('closed-tray-content');
+            if (query.trim() !== '' && closedMatches.length > 0) {
+                trayContent.classList.add('open');
+                document.getElementById('closed-chevron').innerText = '▲';
+            }
         }
 
-        // Modifed renderNotes to accept a query string
+        // Modifed renderNotes to handle active vs closed tasks
         function renderNotes(searchQuery = '') {
-            // Clear all lists first
-            ['q1', 'q2', 'q3', 'q4'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
+            ['q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
             
-            // Filter notes based on the search query (case-insensitive)
-            const filteredNotes = notes.filter(note => 
-                note.text.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+            const filteredNotes = notes.filter(note => note.text.toLowerCase().includes(searchQuery.toLowerCase()));
+            
+            let closedCount = 0;
 
             filteredNotes.forEach(note => {
-                const list = document.getElementById(`list-${note.quadrant}`);
+                const listId = note.status === 'closed' ? 'list-closed' : `list-${note.quadrant}`;
+                const list = document.getElementById(listId);
+                
                 if (list) {
-                    const noteEl = document.createElement('div');
-                    noteEl.className = 'note';
-                    
-                    // Enable Dragging
-                    noteEl.draggable = true;
-                    noteEl.ondragstart = (e) => { e.dataTransfer.setData('text/plain', note.id); };
+                    if (note.status === 'closed') closedCount++;
 
-                    // Span for Displaying Text
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
+                    
+                    if (note.status === 'active') {
+                        noteEl.draggable = true;
+                        noteEl.ondragstart = (e) => { e.dataTransfer.setData('text/plain', note.id); };
+                    }
+
                     const textSpan = document.createElement('span');
                     textSpan.className = 'note-text';
                     textSpan.innerHTML = escapeHTML(note.text);
-                    textSpan.title = "Double-click to edit";
+                    
+                    if (note.status === 'active') {
+                        textSpan.title = "Double-click to edit";
+                        textSpan.ondblclick = () => {
+                            noteEl.draggable = false;
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.className = 'note-edit-input';
+                            input.value = note.text;
+                            
+                            const saveEdit = () => {
+                                const newText = input.value.trim();
+                                if (newText && newText !== note.text) { note.text = newText; saveNotes(); }
+                                handleSearch(); 
+                            };
 
-                    // Double Click to Edit Logic
-                    textSpan.ondblclick = () => {
-                        noteEl.draggable = false; // Disable drag while editing
-                        
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.className = 'note-edit-input';
-                        input.value = note.text;
-                        
-                        // Save changes function
-                        const saveEdit = () => {
-                            const newText = input.value.trim();
-                            if (newText && newText !== note.text) {
-                                note.text = newText;
-                                saveNotes();
-                            }
-                            // Re-render, preserving search state
-                            handleSearch(); 
+                            input.onblur = saveEdit;
+                            input.onkeydown = (e) => {
+                                if (e.key === 'Enter') saveEdit();
+                                if (e.key === 'Escape') handleSearch();
+                            };
+                            noteEl.replaceChild(input, textSpan);
+                            input.focus();
                         };
+                    }
 
-                        input.onblur = saveEdit;
-                        input.onkeydown = (e) => {
-                            if (e.key === 'Enter') saveEdit();
-                            if (e.key === 'Escape') handleSearch(); // Cancel edit
-                        };
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'note-actions';
 
-                        noteEl.replaceChild(input, textSpan);
-                        input.focus();
-                    };
-
-                    // Delete Button
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'delete-btn';
-                    delBtn.innerHTML = '×';
-                    delBtn.title = "Delete Task";
-                    delBtn.onclick = () => deleteTask(note.id);
+                    if (note.status === 'active') {
+                        const completeBtn = document.createElement('button');
+                        completeBtn.className = 'action-btn complete-btn';
+                        completeBtn.innerHTML = '✓';
+                        completeBtn.title = "Complete Task";
+                        completeBtn.onclick = () => completeTask(note.id);
+                        actionsDiv.appendChild(completeBtn);
+                    } else {
+                        const restoreBtn = document.createElement('button');
+                        restoreBtn.className = 'action-btn restore-btn';
+                        restoreBtn.innerHTML = '↺';
+                        restoreBtn.title = "Restore Task";
+                        restoreBtn.onclick = () => restoreTask(note.id);
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'action-btn delete-btn';
+                        deleteBtn.innerHTML = '×';
+                        deleteBtn.title = "Permanently Delete";
+                        deleteBtn.onclick = () => deleteTask(note.id);
+                        
+                        actionsDiv.appendChild(restoreBtn);
+                        actionsDiv.appendChild(deleteBtn);
+                    }
 
                     noteEl.appendChild(textSpan);
-                    noteEl.appendChild(delBtn);
+                    noteEl.appendChild(actionsDiv);
                     list.appendChild(noteEl);
                 }
             });
+
+            // Update Total Closed Count based on ALL notes (not just filtered)
+            const totalClosed = notes.filter(n => n.status === 'closed').length;
+            document.getElementById('closed-count').innerText = totalClosed;
         }
 
         function addTask(quadrant) {
             const inputEl = document.getElementById(`input-${quadrant}`);
             const text = inputEl.value.trim();
             if (text) {
-                notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant });
+                notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant, status: 'active' });
                 saveNotes();
-                // Persist current search context when adding a note
                 handleSearch();
                 inputEl.value = ''; 
             }
         }
 
-        function handleEnter(event, quadrant) { if (event.key === 'Enter') addTask(quadrant); }
+        function completeTask(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) { note.status = 'closed'; saveNotes(); handleSearch(); }
+        }
+
+        function restoreTask(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) { note.status = 'active'; saveNotes(); handleSearch(); }
+        }
 
         function deleteTask(id) {
             notes = notes.filter(note => note.id !== id);
@@ -560,6 +563,19 @@
             handleSearch();
         }
 
+        function toggleClosedTray() {
+            const content = document.getElementById('closed-tray-content');
+            const chevron = document.getElementById('closed-chevron');
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                chevron.innerText = '▼';
+            } else {
+                content.classList.add('open');
+                chevron.innerText = '▲';
+            }
+        }
+
+        function handleEnter(event, quadrant) { if (event.key === 'Enter') addTask(quadrant); }
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
 
         // --- UI Navigation ---
@@ -568,7 +584,6 @@
         
         function toggleFullscreen(quadrantId) {
             const targetQuadrant = document.getElementById(quadrantId);
-            
             if (targetQuadrant.classList.contains('active')) {
                 exitFullscreen();
             } else {
@@ -588,7 +603,7 @@
         // Init
         setLayout(currentLayout);
         checkConfigState();
-        renderNotes(); // Initial render without query
+        renderNotes(); 
     </script>
 </body>
 </html>
