@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadra | Eisenhower Matrix</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            /* Brand Colors */
+            --brand-primary: #4F46E5;
+            --brand-primary-hover: #4338CA;
+            --bg-main: #F9FAFB;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+
+            /* Quadrant Colors */
+            --q1-bg: #FFE4E6; /* Urgent & Important */
+            --q2-bg: #E0F2FE; /* Not Urgent & Important */
+            --q3-bg: #FEF3C7; /* Urgent & Not Important */
+            --q4-bg: #F1F5F9; /* Not Urgent & Not Important */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header & Logo */
+        header {
+            background-color: #ffffff;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-svg {
+            width: 28px;
+            height: 28px;
+            color: var(--brand-primary);
+        }
+
+        header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+
+        .back-btn {
+            display: none;
+            background-color: var(--brand-primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover { background-color: var(--brand-primary-hover); }
+
+        /* Matrix Layout */
+        .matrix-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 24px;
+            padding: 24px;
+            flex-grow: 1;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .matrix-container.fullscreen { display: flex; }
+        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
+        .matrix-container.fullscreen .quadrant.active { display: flex; }
+
+        .quadrant {
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        #q1 { background-color: var(--q1-bg); }
+        #q2 { background-color: var(--q2-bg); }
+        #q3 { background-color: var(--q3-bg); }
+        #q4 { background-color: var(--q4-bg); }
+
+        .q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .q-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .expand-btn {
+            background: rgba(255,255,255,0.5);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .expand-btn:hover {
+            background: rgba(255,255,255,0.9);
+            color: var(--brand-primary);
+        }
+
+        .task-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+        }
+
+        /* Note Styling */
+        .note {
+            background-color: #ffffff;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            word-break: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: box-shadow 0.2s, transform 0.1s;
+        }
+
+        .note:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transform: translateY(-1px);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #EF4444;
+            cursor: pointer;
+            font-size: 20px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding-left: 12px;
+            line-height: 1;
+        }
+
+        .note:hover .delete-btn { opacity: 1; }
+
+        /* Input Area */
+        .input-group {
+            display: flex;
+            margin-top: 12px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .input-group input {
+            flex-grow: 1;
+            border: none;
+            padding: 14px 16px;
+            font-size: 14px;
+            outline: none;
+            background: transparent;
+        }
+
+        .input-group input::placeholder { color: #9CA3AF; }
+
+        .input-group button {
+            background: transparent;
+            border: none;
+            padding: 0 20px;
+            font-size: 22px;
+            color: var(--brand-primary);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
+
+        @media (max-width: 768px) {
+            .matrix-container { display: flex; flex-direction: column; overflow-y: auto; padding: 16px; }
+            body { height: auto; overflow: auto; }
+            .quadrant { min-height: 400px; }
+            .matrix-container.fullscreen .quadrant.active { min-height: calc(100vh - 100px); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-container">
+            <!-- Quadra Logo SVG -->
+            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <h1>Quadra</h1>
+        </div>
+        <button id="backBtn" class="back-btn" onclick="exitFullscreen()">← Back to Matrix</button>
+    </header>
+
+    <div id="matrix" class="matrix-container">
+        <!-- Q1 -->
+        <div class="quadrant" id="q1">
+            <div class="q-header">
+                <h2>Do First</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q1')" title="Expand">⛶</button>
+            </div>
+            <div class="task-list" id="list-q1"></div>
+            <div class="input-group">
+                <input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')">
+                <button onclick="addTask('q1')">+</button>
+            </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quadrant" id="q2">
+            <div class="q-header">
+                <h2>Schedule</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q2')" title="Expand">⛶</button>
+            </div>
+            <div class="task-list" id="list-q2"></div>
+            <div class="input-group">
+                <input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')">
+                <button onclick="addTask('q2')">+</button>
+            </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quadrant" id="q3">
+            <div class="q-header">
+                <h2>Delegate</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q3')" title="Expand">⛶</button>
+            </div>
+            <div class="task-list" id="list-q3"></div>
+            <div class="input-group">
+                <input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')">
+                <button onclick="addTask('q3')">+</button>
+            </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quadrant" id="q4">
+            <div class="q-header">
+                <h2>Eliminate</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q4')" title="Expand">⛶</button>
+            </div>
+            <div class="task-list" id="list-q4"></div>
+            <div class="input-group">
+                <input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')">
+                <button onclick="addTask('q4')">+</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LocalStorage State Management
+        let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+
+        function saveNotes() {
+            localStorage.setItem('quadra_notes', JSON.stringify(notes));
+        }
+
+        function renderNotes() {
+            document.getElementById('list-q1').innerHTML = '';
+            document.getElementById('list-q2').innerHTML = '';
+            document.getElementById('list-q3').innerHTML = '';
+            document.getElementById('list-q4').innerHTML = '';
+
+            notes.forEach(note => {
+                const list = document.getElementById(`list-${note.quadrant}`);
+                if (list) {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note';
+                    noteEl.innerHTML = `
+                        <span>${escapeHTML(note.text)}</span>
+                        <button class="delete-btn" onclick="deleteTask('${note.id}')" title="Delete">×</button>
+                    `;
+                    list.appendChild(noteEl);
+                }
+            });
+        }
+
+        function addTask(quadrant) {
+            const inputEl = document.getElementById(`input-${quadrant}`);
+            const text = inputEl.value.trim();
+            
+            if (text) {
+                notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant });
+                saveNotes();
+                renderNotes();
+                inputEl.value = ''; 
+            }
+        }
+
+        function handleEnter(event, quadrant) {
+            if (event.key === 'Enter') addTask(quadrant);
+        }
+
+        function deleteTask(id) {
+            notes = notes.filter(note => note.id !== id);
+            saveNotes();
+            renderNotes();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        // UI Navigation
+        const matrix = document.getElementById('matrix');
+        const backBtn = document.getElementById('backBtn');
+
+        function toggleFullscreen(quadrantId) {
+            document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
+            document.getElementById(quadrantId).classList.add('active');
+            matrix.classList.add('fullscreen');
+            backBtn.style.display = 'block';
+        }
+
+        function exitFullscreen() {
+            matrix.classList.remove('fullscreen');
+            document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
+            backBtn.style.display = 'none';
+        }
+
+        // Init
+        renderNotes();
+    </script>
+</body>
+</html>
