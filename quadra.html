@@ -116,13 +116,13 @@
             background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: white; padding: 32px; border-radius: 16px; width: 90%; max-width: 500px;
+            background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; /* Increased from 500px */
             box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px;
         }
         .modal-content h3 { font-size: 20px; }
         .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: monospace; font-size: 13px; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
         .form-group input:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
@@ -164,13 +164,12 @@
         .note {
             background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
             margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
-            align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab;
+            align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab; transition: transform 0.2s, box-shadow 0.2s;
         }
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
-        .note-text { 
-            flex-grow: 1; cursor: pointer; padding: 2px 0; white-space: pre-wrap; word-break: break-word;
-        }
+        .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
+        .note-text { white-space: pre-wrap; word-break: break-word; }
 
         .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
         .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
@@ -341,8 +340,15 @@
     <div id="taskModal" class="modal">
         <div class="modal-content">
             <h3 id="taskModalTitle">Add Task</h3>
-            <textarea id="taskInput" rows="5" placeholder="Enter your task details... Use #hashtags to categorize!"></textarea>
-            <div style="font-size: 12px; color: var(--text-muted);">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save</div>
+            <textarea id="taskInput" rows="8" placeholder="Enter your task details... Use #hashtags to categorize!"></textarea>
+            
+            <div class="form-group" style="margin-top: -8px;">
+                <label for="taskDueDate">Due Date (Links to Google Calendar)</label>
+                <input type="date" id="taskDueDate">
+            </div>
+
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: -4px;">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save</div>
+            
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
                 <button class="btn" onclick="saveTaskModal()">Save Task</button>
@@ -352,15 +358,15 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 500px;">
             <h3>Configuration</h3>
             <div class="form-group">
                 <label>Google OAuth Client ID</label>
-                <input type="text" id="configClientId" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com">
+                <input type="text" id="configClientId" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com" style="font-family: monospace;">
             </div>
             <div class="form-group">
                 <label>Google API Key</label>
-                <input type="text" id="configApiKey" placeholder="YOUR_API_KEY">
+                <input type="text" id="configApiKey" placeholder="YOUR_API_KEY" style="font-family: monospace;">
             </div>
             <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Keys are stored locally in your browser. Leave blank to use local storage only.</p>
             <div class="modal-actions">
@@ -397,10 +403,10 @@
         };
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
 
-        // Note schema: { id, text, quadrant, status, dirty, deleted }
+        // Note schema: { id, text, quadrant, status, dueDate, dirty, deleted }
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
-            let n = { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false };
+            let n = { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, dueDate: note.dueDate || null };
             if (n.status === 'closed' && n.quadrant !== 'closed') n.quadrant = 'closed';
             return n;
         });
@@ -544,21 +550,28 @@
                         const targetListId = gapiListIds[sn.quadrant];
                         const remoteObj = remoteTaskMap[sn.id];
                         const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction';
+                        
+                        const payload = { tasklist: targetListId, title: sn.text, status: gStatus };
+                        if (sn.dueDate) payload.due = sn.dueDate;
+                        else payload.due = null;
 
                         if (remoteObj) {
                             if (remoteObj.listId !== targetListId) { // Move between lists
                                 try {
                                     await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id });
-                                    const res = await gapi.client.tasks.tasks.insert({ tasklist: targetListId, title: sn.text, status: gStatus });
-                                    sn.tempId = sn.id; sn.id = res.result.id; // Map new ID
+                                    const res = await gapi.client.tasks.tasks.insert(payload);
+                                    sn.tempId = sn.id; sn.id = res.result.id; 
                                 } catch(e){}
                             } else { // In-place update
-                                try { await gapi.client.tasks.tasks.patch({ tasklist: targetListId, task: sn.id, title: sn.text, status: gStatus }); } catch(e){}
+                                try { 
+                                    payload.task = sn.id;
+                                    await gapi.client.tasks.tasks.patch(payload); 
+                                } catch(e){}
                             }
                             delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
                         } else { // New insert
                             try {
-                                const res = await gapi.client.tasks.tasks.insert({ tasklist: targetListId, title: sn.text, status: gStatus });
+                                const res = await gapi.client.tasks.tasks.insert(payload);
                                 sn.tempId = sn.id; sn.id = res.result.id;
                             } catch(e){}
                         }
@@ -571,6 +584,7 @@
                             sn.text = remoteObj.task.title || '';
                             sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active';
                             sn.quadrant = remoteObj.quadKey;
+                            sn.dueDate = remoteObj.task.due || null;
                             delete remoteTaskMap[sn.id];
                         }
                     }
@@ -580,25 +594,27 @@
                 Object.values(remoteTaskMap).forEach(remoteObj => {
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
-                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dirty: false, deleted: false
+                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active',
+                        dueDate: remoteObj.task.due || null,
+                        dirty: false, deleted: false
                     });
                 });
 
-                // 5. Smart Merge with live `notes` array (in case user edited UI during background sync)
+                // 5. Smart Merge with live `notes` array
                 let newNotesArray = [];
                 let syncedIds = new Set();
 
                 syncSnapshot.forEach(sn => {
-                    if (sn.deleted && !sn.dirty) return; // Drop fully synced deletions
+                    if (sn.deleted && !sn.dirty) return; 
                     
                     const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
                     if (liveNote) {
                         if (liveNote.dirty) {
-                            if (sn.tempId) liveNote.id = sn.id; // Upgrade ID but keep live text
+                            if (sn.tempId) liveNote.id = sn.id; 
                             newNotesArray.push(liveNote);
                         } else { newNotesArray.push(sn); }
                         syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId);
-                    } else { newNotesArray.push(sn); } // Was added from remote
+                    } else { newNotesArray.push(sn); } 
                 });
 
                 notes.forEach(liveNote => {
@@ -607,7 +623,7 @@
 
                 notes = newNotesArray;
                 saveNotes();
-                handleSearch(); // Refresh UI silently
+                handleSearch(); 
 
             } catch (e) { console.error("Sync Initialization Error:", e); }
             document.getElementById('sync-banner').style.display = 'none';
@@ -639,26 +655,59 @@
 
         function openTaskModal(quadrant = null, noteId = null, event = null) {
             if (event) event.stopPropagation();
-            const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
+            const modal = document.getElementById('taskModal');
+            const input = document.getElementById('taskInput');
+            const dateInput = document.getElementById('taskDueDate');
+            const title = document.getElementById('taskModalTitle');
+            
             if (noteId) {
-                currentEditingId = noteId; const note = notes.find(n => n.id === noteId);
-                title.innerText = 'Edit Task'; input.value = note.text;
+                currentEditingId = noteId; 
+                const note = notes.find(n => n.id === noteId);
+                title.innerText = 'Edit Task'; 
+                input.value = note.text;
+                dateInput.value = note.dueDate ? note.dueDate.substring(0, 10) : '';
             } else {
-                currentEditingId = null; currentAddingQuadrant = quadrant;
-                title.innerText = 'Add Task'; input.value = '';
+                currentEditingId = null; 
+                currentAddingQuadrant = quadrant;
+                title.innerText = 'Add Task'; 
+                input.value = '';
+                dateInput.value = '';
             }
-            modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
+            modal.style.display = 'flex'; 
+            setTimeout(() => input.focus(), 100);
         }
+        
         function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
 
         function saveTaskModal() {
             const text = document.getElementById('taskInput').value.trim();
             if (!text) return closeTaskModal();
+            
+            const dueDateVal = document.getElementById('taskDueDate').value;
+            let isoDate = null;
+            if (dueDateVal) {
+                // Create strict ISO string suitable for Google Tasks API
+                isoDate = new Date(dueDateVal).toISOString(); 
+            }
+
             if (currentEditingId) {
                 const note = notes.find(n => n.id === currentEditingId);
-                if (note && note.text !== text) { note.text = text; note.dirty = true; saveNotes(); handleSearch(); }
+                if (note && (note.text !== text || note.dueDate !== isoDate)) { 
+                    note.text = text; 
+                    note.dueDate = isoDate;
+                    note.dirty = true; 
+                    saveNotes(); handleSearch(); 
+                }
             } else {
-                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', dirty: true, deleted: false });
+                notes.push({ 
+                    id: Date.now().toString(), 
+                    text: text, 
+                    quadrant: currentAddingQuadrant, 
+                    status: 'active', 
+                    dueDate: isoDate,
+                    dirty: true, 
+                    deleted: false 
+                });
                 saveNotes(); handleSearch();
             }
             closeTaskModal();
@@ -717,9 +766,30 @@
                     noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
                     if (note.status === 'active') { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
 
-                    const textSpan = document.createElement('span'); textSpan.className = 'note-text';
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'note-content-wrapper';
+                    
+                    const textSpan = document.createElement('div'); 
+                    textSpan.className = 'note-text';
                     textSpan.innerHTML = parseTags(note.text); 
-                    if (note.status === 'active') { textSpan.title = "Click to edit"; textSpan.onclick = (e) => openTaskModal(null, note.id, e); }
+                    contentWrapper.appendChild(textSpan);
+
+                    if (note.dueDate) {
+                        const d = new Date(note.dueDate);
+                        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const dateSpan = document.createElement('div');
+                        dateSpan.style.fontSize = '12px';
+                        dateSpan.style.color = 'var(--brand-primary)';
+                        dateSpan.style.marginTop = '6px';
+                        dateSpan.style.fontWeight = '500';
+                        dateSpan.innerHTML = `🗓️ Due: ${dateStr}`;
+                        contentWrapper.appendChild(dateSpan);
+                    }
+
+                    if (note.status === 'active') { 
+                        contentWrapper.title = "Click to edit"; 
+                        contentWrapper.onclick = (e) => openTaskModal(null, note.id, e); 
+                    }
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
                     if (note.status === 'active') {
@@ -727,7 +797,9 @@
                     } else {
                         actionsDiv.innerHTML = `<button class="action-btn restore-btn" title="Restore" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" title="Delete" onclick="deleteTask('${note.id}')">×</button>`;
                     }
-                    noteEl.append(textSpan, actionsDiv); list.appendChild(noteEl);
+                    
+                    noteEl.append(contentWrapper, actionsDiv); 
+                    list.appendChild(noteEl);
                 }
             });
 
