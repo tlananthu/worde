@@ -369,6 +369,16 @@
         async function initializeGapiClient() {
             try {
                 await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
+                
+                // CHECK FOR SAVED SESSION TOKEN
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
+                    gapi.client.setToken({ access_token: savedTokenData.token });
+                    document.getElementById('authorize_button').style.display = 'none';
+                    document.getElementById('signout_button').style.display = 'inline-block';
+                    dismissOverlay();
+                }
+
             } catch(e) { console.error("GAPI Error:", e); }
         }
 
@@ -380,6 +390,13 @@
                         scope: SCOPES,
                         callback: (resp) => {
                             if (resp.error !== undefined) { throw (resp); }
+                            
+                            // SAVE SESSION TOKEN TO LOCAL STORAGE
+                            localStorage.setItem('quadra_gapi_token', JSON.stringify({
+                                token: resp.access_token,
+                                expires_at: Date.now() + (resp.expires_in * 1000)
+                            }));
+
                             document.getElementById('authorize_button').style.display = 'none';
                             document.getElementById('signout_button').style.display = 'inline-block';
                             dismissOverlay();
@@ -404,6 +421,10 @@
                 google.accounts.oauth2.revoke(token.access_token);
                 gapi.client.setToken('');
             }
+            
+            // WIPE SAVED SESSION TOKEN
+            localStorage.removeItem('quadra_gapi_token');
+
             document.getElementById('authorize_button').style.display = 'inline-block';
             document.getElementById('signout_button').style.display = 'none';
             document.getElementById('auth-overlay').style.display = 'flex';
