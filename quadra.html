@@ -239,7 +239,7 @@
     <div class="inbox-tray">
         <div class="inbox-tray-header" onclick="toggleInboxTray()">
             <h3>Inbox (Un-prioritized) (<span id="inbox-count">0</span>)</h3>
-            <span id="inbox-chevron">▼</span> <!-- Changed to collapsed arrow -->
+            <span id="inbox-chevron">▼</span> <!-- Collapsed arrow by default -->
         </div>
         <!-- Removed "open" class so it starts collapsed -->
         <div class="inbox-tray-content" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
@@ -278,7 +278,7 @@
         </div>
 
         <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
-            <div class="q-header"><h2>Eliminate</h2><button class="expand-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button></div>
+            <div class="q-header"><h2>Later</h2><button class="expand-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button></div>
             <div class="task-list" id="list-q4"></div>
             <div class="input-group"><input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')"><button onclick="addTask('q4')">+</button></div>
         </div>
