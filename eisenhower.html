@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eisenhower Keep Notes</title>
+    <style>
+        :root {
+            --q1-bg: #fce8e6; /* Urgent & Important - Light Red */
+            --q2-bg: #e8f0fe; /* Not Urgent & Important - Light Blue */
+            --q3-bg: #fef7e0; /* Urgent & Not Important - Light Yellow */
+            --q4-bg: #e6f4ea; /* Not Urgent & Not Important - Light Green */
+            --text-main: #202124;
+            --text-muted: #5f6368;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: #ffffff;
+            padding: 16px 24px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .back-btn {
+            display: none;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .back-btn:hover { background-color: #1557b0; }
+
+        .matrix-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 16px;
+            padding: 16px;
+            flex-grow: 1;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Fullscreen Mode Overrides */
+        .matrix-container.fullscreen {
+            display: flex;
+        }
+        
+        .matrix-container.fullscreen .quadrant {
+            display: none; 
+            width: 100%;
+            height: 100%;
+        }
+
+        .matrix-container.fullscreen .quadrant.active {
+            display: flex;
+        }
+
+        .quadrant {
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #q1 { background-color: var(--q1-bg); }
+        #q2 { background-color: var(--q2-bg); }
+        #q3 { background-color: var(--q3-bg); }
+        #q4 { background-color: var(--q4-bg); }
+
+        .q-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .q-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .expand-btn {
+            background: rgba(0,0,0,0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        .expand-btn:hover {
+            background: rgba(0,0,0,0.1);
+            color: var(--text-main);
+        }
+
+        .task-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+        }
+
+        /* Keep-style note */
+        .note {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            word-break: break-word;
+            transition: box-shadow 0.2s;
+        }
+
+        .note:hover {
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #d93025;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding-left: 8px;
+        }
+
+        .note:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .input-group {
+            display: flex;
+            margin-top: 10px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .input-group input {
+            flex-grow: 1;
+            border: none;
+            padding: 12px 16px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-group button {
+            background: none;
+            border: none;
+            padding: 0 16px;
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .input-group button:hover {
+            color: #1a73e8;
+        }
+
+        /* Responsive stack for mobile */
+        @media (max-width: 768px) {
+            .matrix-container {
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+            }
+            body { height: auto; overflow: auto; }
+            .quadrant { min-height: 350px; }
+            .matrix-container.fullscreen .quadrant.active { min-height: calc(100vh - 80px); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Eisenhower Matrix Notes</h1>
+        <button id="backBtn" class="back-btn" onclick="exitFullscreen()">← Back to Dashboard</button>
+    </header>
+
+    <div id="matrix" class="matrix-container">
+        <!-- Quadrant 1 -->
+        <div class="quadrant" id="q1">
+            <div class="q-header">
+                <h2>Urgent & Important (Do)</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q1')" title="View Full Screen">⛶</button>
+            </div>
+            <div class="task-list" id="list-q1"></div>
+            <div class="input-group">
+                <input type="text" id="input-q1" placeholder="Take a note..." onkeypress="handleEnter(event, 'q1')">
+                <button onclick="addTask('q1')">+</button>
+            </div>
+        </div>
+
+        <!-- Quadrant 2 -->
+        <div class="quadrant" id="q2">
+            <div class="q-header">
+                <h2>Not Urgent & Important (Schedule)</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q2')" title="View Full Screen">⛶</button>
+            </div>
+            <div class="task-list" id="list-q2"></div>
+            <div class="input-group">
+                <input type="text" id="input-q2" placeholder="Take a note..." onkeypress="handleEnter(event, 'q2')">
+                <button onclick="addTask('q2')">+</button>
+            </div>
+        </div>
+
+        <!-- Quadrant 3 -->
+        <div class="quadrant" id="q3">
+            <div class="q-header">
+                <h2>Urgent & Not Important (Delegate)</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q3')" title="View Full Screen">⛶</button>
+            </div>
+            <div class="task-list" id="list-q3"></div>
+            <div class="input-group">
+                <input type="text" id="input-q3" placeholder="Take a note..." onkeypress="handleEnter(event, 'q3')">
+                <button onclick="addTask('q3')">+</button>
+            </div>
+        </div>
+
+        <!-- Quadrant 4 -->
+        <div class="quadrant" id="q4">
+            <div class="q-header">
+                <h2>Not Urgent & Not Important (Delete)</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q4')" title="View Full Screen">⛶</button>
+            </div>
+            <div class="task-list" id="list-q4"></div>
+            <div class="input-group">
+                <input type="text" id="input-q4" placeholder="Take a note..." onkeypress="handleEnter(event, 'q4')">
+                <button onclick="addTask('q4')">+</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management with LocalStorage
+        let notes = JSON.parse(localStorage.getItem('eisenhower_notes')) || [];
+
+        function saveNotes() {
+            localStorage.setItem('eisenhower_notes', JSON.stringify(notes));
+        }
+
+        // Render notes to the DOM
+        function renderNotes() {
+            // Clear all lists
+            document.getElementById('list-q1').innerHTML = '';
+            document.getElementById('list-q2').innerHTML = '';
+            document.getElementById('list-q3').innerHTML = '';
+            document.getElementById('list-q4').innerHTML = '';
+
+            // Populate lists
+            notes.forEach(note => {
+                const list = document.getElementById(`list-${note.quadrant}`);
+                if (list) {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note';
+                    noteEl.innerHTML = `
+                        <span>${escapeHTML(note.text)}</span>
+                        <button class="delete-btn" onclick="deleteTask('${note.id}')" title="Delete Note">×</button>
+                    `;
+                    list.appendChild(noteEl);
+                }
+            });
+        }
+
+        // Add a new note
+        function addTask(quadrant) {
+            const inputEl = document.getElementById(`input-${quadrant}`);
+            const text = inputEl.value.trim();
+            
+            if (text) {
+                const newNote = {
+                    id: Date.now().toString(),
+                    text: text,
+                    quadrant: quadrant
+                };
+                notes.push(newNote);
+                saveNotes();
+                renderNotes();
+                inputEl.value = ''; // Clear input
+            }
+        }
+
+        // Handle Enter key for inputs
+        function handleEnter(event, quadrant) {
+            if (event.key === 'Enter') {
+                addTask(quadrant);
+            }
+        }
+
+        // Delete a note
+        function deleteTask(id) {
+            notes = notes.filter(note => note.id !== id);
+            saveNotes();
+            renderNotes();
+        }
+
+        // Security against XSS
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Fullscreen Navigation Logic
+        const matrix = document.getElementById('matrix');
+        const backBtn = document.getElementById('backBtn');
+
+        function toggleFullscreen(quadrantId) {
+            // Remove active class from all
+            document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
+            
+            // Add active class to target
+            document.getElementById(quadrantId).classList.add('active');
+            
+            // Toggle container layout
+            matrix.classList.add('fullscreen');
+            
+            // Show Back button
+            backBtn.style.display = 'block';
+        }
+
+        function exitFullscreen() {
+            matrix.classList.remove('fullscreen');
+            document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
+            backBtn.style.display = 'none';
+        }
+
+        // Initial render
+        renderNotes();
+    </script>
+</body>
+</html>
