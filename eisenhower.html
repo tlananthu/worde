@@ -3,26 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eisenhower Keep Notes</title>
+    <title>Quadra | Eisenhower Matrix</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         :root {
-            --q1-bg: #fce8e6; /* Urgent & Important - Light Red */
-            --q2-bg: #e8f0fe; /* Not Urgent & Important - Light Blue */
-            --q3-bg: #fef7e0; /* Urgent & Not Important - Light Yellow */
-            --q4-bg: #e6f4ea; /* Not Urgent & Not Important - Light Green */
-            --text-main: #202124;
-            --text-muted: #5f6368;
+            /* Brand Colors */
+            --brand-primary: #4F46E5;
+            --brand-primary-hover: #4338CA;
+            --bg-main: #F9FAFB;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+
+            /* Quadrant Colors */
+            --q1-bg: #FFE4E6; /* Urgent & Important */
+            --q2-bg: #E0F2FE; /* Not Urgent & Important */
+            --q3-bg: #FEF3C7; /* Urgent & Not Important */
+            --q4-bg: #F1F5F9; /* Not Urgent & Not Important */
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background-color: #f0f2f5;
+            background-color: var(--bg-main);
             color: var(--text-main);
             height: 100vh;
             display: flex;
@@ -30,69 +39,76 @@
             overflow: hidden;
         }
 
+        /* Header & Logo */
         header {
             background-color: #ffffff;
-            padding: 16px 24px;
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
         }
 
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-svg {
+            width: 28px;
+            height: 28px;
+            color: var(--brand-primary);
+        }
+
         header h1 {
-            font-size: 20px;
-            font-weight: 500;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
             color: var(--text-main);
         }
 
         .back-btn {
             display: none;
-            background-color: #1a73e8;
+            background-color: var(--brand-primary);
             color: white;
             border: none;
             padding: 8px 16px;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: 500;
             font-size: 14px;
+            transition: background-color 0.2s;
         }
 
-        .back-btn:hover { background-color: #1557b0; }
+        .back-btn:hover { background-color: var(--brand-primary-hover); }
 
+        /* Matrix Layout */
         .matrix-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 16px;
-            padding: 16px;
+            gap: 24px;
+            padding: 24px;
             flex-grow: 1;
             overflow: hidden;
             transition: all 0.3s ease;
-        }
-
-        /* Fullscreen Mode Overrides */
-        .matrix-container.fullscreen {
-            display: flex;
-        }
-        
-        .matrix-container.fullscreen .quadrant {
-            display: none; 
+            max-width: 1600px;
+            margin: 0 auto;
             width: 100%;
-            height: 100%;
         }
 
-        .matrix-container.fullscreen .quadrant.active {
-            display: flex;
-        }
+        .matrix-container.fullscreen { display: flex; }
+        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
+        .matrix-container.fullscreen .quadrant.active { display: flex; }
 
         .quadrant {
-            border-radius: 12px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
             position: relative;
         }
 
@@ -105,31 +121,32 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .q-header h2 {
             font-size: 16px;
             font-weight: 600;
+            color: var(--text-main);
         }
 
         .expand-btn {
-            background: rgba(0,0,0,0.05);
+            background: rgba(255,255,255,0.5);
             border: none;
             width: 32px;
             height: 32px;
-            border-radius: 50%;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
             color: var(--text-muted);
+            transition: all 0.2s;
         }
 
         .expand-btn:hover {
-            background: rgba(0,0,0,0.1);
-            color: var(--text-main);
+            background: rgba(255,255,255,0.9);
+            color: var(--brand-primary);
         }
 
         .task-list {
@@ -139,161 +156,168 @@
             scrollbar-width: thin;
         }
 
-        /* Keep-style note */
+        /* Note Styling */
         .note {
             background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             word-break: break-word;
-            transition: box-shadow 0.2s;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: box-shadow 0.2s, transform 0.1s;
         }
 
         .note:hover {
-            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transform: translateY(-1px);
         }
 
         .delete-btn {
             background: none;
             border: none;
-            color: #d93025;
+            color: #EF4444;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 20px;
             opacity: 0;
             transition: opacity 0.2s;
-            padding-left: 8px;
+            padding-left: 12px;
+            line-height: 1;
         }
 
-        .note:hover .delete-btn {
-            opacity: 1;
-        }
+        .note:hover .delete-btn { opacity: 1; }
 
+        /* Input Area */
         .input-group {
             display: flex;
-            margin-top: 10px;
+            margin-top: 12px;
             background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             overflow: hidden;
+            border: 1px solid var(--border-color);
         }
 
         .input-group input {
             flex-grow: 1;
             border: none;
-            padding: 12px 16px;
+            padding: 14px 16px;
             font-size: 14px;
             outline: none;
+            background: transparent;
         }
+
+        .input-group input::placeholder { color: #9CA3AF; }
 
         .input-group button {
-            background: none;
+            background: transparent;
             border: none;
-            padding: 0 16px;
-            font-size: 20px;
-            color: var(--text-muted);
+            padding: 0 20px;
+            font-size: 22px;
+            color: var(--brand-primary);
             cursor: pointer;
+            transition: background-color 0.2s;
         }
 
-        .input-group button:hover {
-            color: #1a73e8;
-        }
+        .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
 
-        /* Responsive stack for mobile */
         @media (max-width: 768px) {
-            .matrix-container {
-                display: flex;
-                flex-direction: column;
-                overflow-y: auto;
-            }
+            .matrix-container { display: flex; flex-direction: column; overflow-y: auto; padding: 16px; }
             body { height: auto; overflow: auto; }
-            .quadrant { min-height: 350px; }
-            .matrix-container.fullscreen .quadrant.active { min-height: calc(100vh - 80px); }
+            .quadrant { min-height: 400px; }
+            .matrix-container.fullscreen .quadrant.active { min-height: calc(100vh - 100px); }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Eisenhower Matrix Notes</h1>
-        <button id="backBtn" class="back-btn" onclick="exitFullscreen()">← Back to Dashboard</button>
+        <div class="brand-container">
+            <!-- Quadra Logo SVG -->
+            <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <h1>Quadra</h1>
+        </div>
+        <button id="backBtn" class="back-btn" onclick="exitFullscreen()">← Back to Matrix</button>
     </header>
 
     <div id="matrix" class="matrix-container">
-        <!-- Quadrant 1 -->
+        <!-- Q1 -->
         <div class="quadrant" id="q1">
             <div class="q-header">
-                <h2>Urgent & Important (Do)</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q1')" title="View Full Screen">⛶</button>
+                <h2>Do First</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q1')" title="Expand">⛶</button>
             </div>
             <div class="task-list" id="list-q1"></div>
             <div class="input-group">
-                <input type="text" id="input-q1" placeholder="Take a note..." onkeypress="handleEnter(event, 'q1')">
+                <input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')">
                 <button onclick="addTask('q1')">+</button>
             </div>
         </div>
 
-        <!-- Quadrant 2 -->
+        <!-- Q2 -->
         <div class="quadrant" id="q2">
             <div class="q-header">
-                <h2>Not Urgent & Important (Schedule)</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q2')" title="View Full Screen">⛶</button>
+                <h2>Schedule</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q2')" title="Expand">⛶</button>
             </div>
             <div class="task-list" id="list-q2"></div>
             <div class="input-group">
-                <input type="text" id="input-q2" placeholder="Take a note..." onkeypress="handleEnter(event, 'q2')">
+                <input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')">
                 <button onclick="addTask('q2')">+</button>
             </div>
         </div>
 
-        <!-- Quadrant 3 -->
+        <!-- Q3 -->
         <div class="quadrant" id="q3">
             <div class="q-header">
-                <h2>Urgent & Not Important (Delegate)</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q3')" title="View Full Screen">⛶</button>
+                <h2>Delegate</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q3')" title="Expand">⛶</button>
             </div>
             <div class="task-list" id="list-q3"></div>
             <div class="input-group">
-                <input type="text" id="input-q3" placeholder="Take a note..." onkeypress="handleEnter(event, 'q3')">
+                <input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')">
                 <button onclick="addTask('q3')">+</button>
             </div>
         </div>
 
-        <!-- Quadrant 4 -->
+        <!-- Q4 -->
         <div class="quadrant" id="q4">
             <div class="q-header">
-                <h2>Not Urgent & Not Important (Delete)</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q4')" title="View Full Screen">⛶</button>
+                <h2>Eliminate</h2>
+                <button class="expand-btn" onclick="toggleFullscreen('q4')" title="Expand">⛶</button>
             </div>
             <div class="task-list" id="list-q4"></div>
             <div class="input-group">
-                <input type="text" id="input-q4" placeholder="Take a note..." onkeypress="handleEnter(event, 'q4')">
+                <input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')">
                 <button onclick="addTask('q4')">+</button>
             </div>
         </div>
     </div>
 
     <script>
-        // State management with LocalStorage
-        let notes = JSON.parse(localStorage.getItem('eisenhower_notes')) || [];
+        // LocalStorage State Management
+        let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
 
         function saveNotes() {
-            localStorage.setItem('eisenhower_notes', JSON.stringify(notes));
+            localStorage.setItem('quadra_notes', JSON.stringify(notes));
         }
 
-        // Render notes to the DOM
         function renderNotes() {
-            // Clear all lists
             document.getElementById('list-q1').innerHTML = '';
             document.getElementById('list-q2').innerHTML = '';
             document.getElementById('list-q3').innerHTML = '';
             document.getElementById('list-q4').innerHTML = '';
 
-            // Populate lists
             notes.forEach(note => {
                 const list = document.getElementById(`list-${note.quadrant}`);
                 if (list) {
@@ -301,73 +325,49 @@
                     noteEl.className = 'note';
                     noteEl.innerHTML = `
                         <span>${escapeHTML(note.text)}</span>
-                        <button class="delete-btn" onclick="deleteTask('${note.id}')" title="Delete Note">×</button>
+                        <button class="delete-btn" onclick="deleteTask('${note.id}')" title="Delete">×</button>
                     `;
                     list.appendChild(noteEl);
                 }
             });
         }
 
-        // Add a new note
         function addTask(quadrant) {
             const inputEl = document.getElementById(`input-${quadrant}`);
             const text = inputEl.value.trim();
             
             if (text) {
-                const newNote = {
-                    id: Date.now().toString(),
-                    text: text,
-                    quadrant: quadrant
-                };
-                notes.push(newNote);
+                notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant });
                 saveNotes();
                 renderNotes();
-                inputEl.value = ''; // Clear input
+                inputEl.value = ''; 
             }
         }
 
-        // Handle Enter key for inputs
         function handleEnter(event, quadrant) {
-            if (event.key === 'Enter') {
-                addTask(quadrant);
-            }
+            if (event.key === 'Enter') addTask(quadrant);
         }
 
-        // Delete a note
         function deleteTask(id) {
             notes = notes.filter(note => note.id !== id);
             saveNotes();
             renderNotes();
         }
 
-        // Security against XSS
         function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag] || tag));
         }
 
-        // Fullscreen Navigation Logic
+        // UI Navigation
         const matrix = document.getElementById('matrix');
         const backBtn = document.getElementById('backBtn');
 
         function toggleFullscreen(quadrantId) {
-            // Remove active class from all
             document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
-            
-            // Add active class to target
             document.getElementById(quadrantId).classList.add('active');
-            
-            // Toggle container layout
             matrix.classList.add('fullscreen');
-            
-            // Show Back button
             backBtn.style.display = 'block';
         }
 
@@ -377,7 +377,7 @@
             backBtn.style.display = 'none';
         }
 
-        // Initial render
+        // Init
         renderNotes();
     </script>
 </body>
