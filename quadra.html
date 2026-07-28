@@ -401,7 +401,6 @@
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
-        // Local Migration: Ensure tasks have a status, and locally completed tasks point to the 'closed' quadrant.
         notes = notes.map(note => {
             let n = { ...note, status: note.status || 'active' };
             if (n.status === 'closed' && n.quadrant !== 'closed') n.quadrant = 'closed';
@@ -527,6 +526,33 @@
                             status: status
                         });
                     });
+                }
+
+                // SMART MERGE: Push local tasks that aren't in Google yet to prevent data loss
+                const localNotes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+                const remoteIds = new Set(syncedNotes.map(n => n.id));
+                
+                for (const localNote of localNotes) {
+                    if (!remoteIds.has(localNote.id)) {
+                        try {
+                            const targetQuad = gapiListIds[localNote.quadrant] ? localNote.quadrant : 'inbox';
+                            const res = await gapi.client.tasks.tasks.insert({
+                                tasklist: gapiListIds[targetQuad],
+                                title: localNote.text,
+                                status: localNote.status === 'closed' ? 'completed' : 'needsAction'
+                            });
+                            
+                            syncedNotes.push({
+                                id: res.result.id,
+                                text: localNote.text,
+                                quadrant: targetQuad,
+                                status: localNote.status
+                            });
+                        } catch (err) {
+                            console.error("Failed to migrate local task to Google:", err);
+                            syncedNotes.push(localNote); // Keep local if upload fails
+                        }
+                    }
                 }
 
                 notes = syncedNotes;
