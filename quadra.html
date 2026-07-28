@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadra</title>
+    <title>Quadra | Eisenhower Matrix</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -86,7 +86,14 @@
         .matrix-container.fullscreen .quadrant.active { display: flex; }
 
         /* Quadrants */
-        .quadrant { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); }
+        .quadrant { 
+            border-radius: 16px; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            border: 1px solid rgba(0,0,0,0.05); 
+            min-height: 0; /* This line ensures the flex container doesn't overflow its grid cell, allowing inner scroll */
+        }
         #q1 { background-color: var(--q1-bg); }
         #q2 { background-color: var(--q2-bg); }
         #q3 { background-color: var(--q3-bg); }
@@ -114,7 +121,7 @@
         .delete-btn { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 20px; opacity: 0; padding-left: 12px; }
         .note:hover .delete-btn { opacity: 1; }
 
-        .input-group { display: flex; margin-top: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
+        .input-group { display: flex; margin-top: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); flex-shrink: 0; }
         .input-group input { flex-grow: 1; border: none; padding: 14px 16px; font-size: 14px; outline: none; background: transparent; }
         .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: var(--brand-primary); cursor: pointer; }
         .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
