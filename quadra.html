@@ -3,242 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadra | Eisenhower Matrix</title>
+    <title>Quadra | Eisenhower Matrix (Google Tasks)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         :root {
-            /* Brand Colors */
-            --brand-primary: #4F46E5;
+            var(--brand-primary): #4F46E5;
             --brand-primary-hover: #4338CA;
             --bg-main: #F9FAFB;
             --text-main: #111827;
             --text-muted: #6B7280;
             --border-color: #E5E7EB;
 
-            /* Quadrant Colors */
-            --q1-bg: #FFE4E6; /* Urgent & Important */
-            --q2-bg: #E0F2FE; /* Not Urgent & Important */
-            --q3-bg: #FEF3C7; /* Urgent & Not Important */
-            --q4-bg: #F1F5F9; /* Not Urgent & Not Important */
+            --q1-bg: #FFE4E6; 
+            --q2-bg: #E0F2FE; 
+            --q3-bg: #FEF3C7; 
+            --q4-bg: #F1F5F9; 
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
         /* Header & Logo */
         header {
-            background-color: #ffffff;
-            padding: 16px 32px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
+            background-color: #ffffff; padding: 16px 32px; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
         }
 
-        .brand-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .brand-container { display: flex; align-items: center; gap: 12px; }
+        .logo-svg { width: 28px; height: 28px; color: #4F46E5; }
+        header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 
-        .logo-svg {
-            width: 28px;
-            height: 28px;
-            color: var(--brand-primary);
-        }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
 
-        header h1 {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: var(--text-main);
+        .btn {
+            background-color: #4F46E5; color: white; border: none; padding: 8px 16px;
+            border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background-color 0.2s;
         }
-
-        .back-btn {
-            display: none;
-            background-color: var(--brand-primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-
-        .back-btn:hover { background-color: var(--brand-primary-hover); }
+        .btn:hover { background-color: #4338CA; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background-color: var(--bg-main); }
+        
+        #backBtn, #signout_button { display: none; }
 
         /* Matrix Layout */
         .matrix-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 24px;
-            padding: 24px;
-            flex-grow: 1;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
+            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+            gap: 24px; padding: 24px; flex-grow: 1; overflow: hidden; transition: all 0.3s ease;
+            max-width: 1600px; margin: 0 auto; width: 100%; position: relative;
         }
+
+        /* Overlay for Auth */
+        #auth-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(249, 250, 251, 0.9); z-index: 50; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 16px; text-align: center;
+        }
+        #auth-overlay h3 { margin-bottom: 12px; font-size: 20px; }
+        #auth-overlay p { color: var(--text-muted); margin-bottom: 20px; max-width: 400px; }
 
         .matrix-container.fullscreen { display: flex; }
         .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
         .matrix-container.fullscreen .quadrant.active { display: flex; }
 
-        .quadrant {
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid rgba(0,0,0,0.05);
-            position: relative;
-        }
-
+        .quadrant { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); }
         #q1 { background-color: var(--q1-bg); }
         #q2 { background-color: var(--q2-bg); }
         #q3 { background-color: var(--q3-bg); }
         #q4 { background-color: var(--q4-bg); }
 
-        .q-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .q-header h2 {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
+        .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .q-header h2 { font-size: 16px; font-weight: 600; }
+        
         .expand-btn {
-            background: rgba(255,255,255,0.5);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-muted);
-            transition: all 0.2s;
+            background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px;
+            border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); transition: all 0.2s;
         }
+        .expand-btn:hover { background: rgba(255,255,255,0.9); color: #4F46E5; }
 
-        .expand-btn:hover {
-            background: rgba(255,255,255,0.9);
-            color: var(--brand-primary);
-        }
-
-        .task-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-bottom: 10px;
-            scrollbar-width: thin;
-        }
-
-        /* Note Styling */
+        .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
+        
         .note {
-            background-color: #ffffff;
-            border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 10px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            word-break: break-word;
-            font-size: 14px;
-            line-height: 1.5;
-            transition: box-shadow 0.2s, transform 0.1s;
+            background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
+            margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
+            align-items: flex-start; word-break: break-word; font-size: 14px; line-height: 1.5;
         }
+        .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
 
-        .note:hover {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transform: translateY(-1px);
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #EF4444;
-            cursor: pointer;
-            font-size: 20px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            padding-left: 12px;
-            line-height: 1;
-        }
-
+        .delete-btn { background: none; border: none; color: #EF4444; cursor: pointer; font-size: 20px; opacity: 0; padding-left: 12px; }
         .note:hover .delete-btn { opacity: 1; }
 
-        /* Input Area */
-        .input-group {
-            display: flex;
-            margin-top: 12px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-        }
-
-        .input-group input {
-            flex-grow: 1;
-            border: none;
-            padding: 14px 16px;
-            font-size: 14px;
-            outline: none;
-            background: transparent;
-        }
-
-        .input-group input::placeholder { color: #9CA3AF; }
-
-        .input-group button {
-            background: transparent;
-            border: none;
-            padding: 0 20px;
-            font-size: 22px;
-            color: var(--brand-primary);
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
+        .input-group { display: flex; margin-top: 12px; background: #fff; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
+        .input-group input { flex-grow: 1; border: none; padding: 14px 16px; font-size: 14px; outline: none; background: transparent; }
+        .input-group button { background: transparent; border: none; padding: 0 20px; font-size: 22px; color: #4F46E5; cursor: pointer; }
         .input-group button:hover { background: rgba(79, 70, 229, 0.1); }
-
-        @media (max-width: 768px) {
-            .matrix-container { display: flex; flex-direction: column; overflow-y: auto; padding: 16px; }
-            body { height: auto; overflow: auto; }
-            .quadrant { min-height: 400px; }
-            .matrix-container.fullscreen .quadrant.active { min-height: calc(100vh - 100px); }
-        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="brand-container">
-            <!-- Quadra Logo SVG -->
             <svg class="logo-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
                 <rect x="14" y="3" width="7" height="7" rx="1.5" fill="currentColor"></rect>
@@ -247,70 +113,136 @@
             </svg>
             <h1>Quadra</h1>
         </div>
-        <button id="backBtn" class="back-btn" onclick="exitFullscreen()">← Back to Matrix</button>
+        <div class="header-actions">
+            <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
+            <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In with Google</button>
+            <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
+        </div>
     </header>
 
     <div id="matrix" class="matrix-container">
-        <!-- Q1 -->
+        <!-- Auth Overlay -->
+        <div id="auth-overlay">
+            <h3>Google Tasks Integration</h3>
+            <p>Sign in with your Google account to sync your Eisenhower Matrix directly with Google Tasks.</p>
+            <button class="btn" onclick="handleAuthClick()">Sign In with Google</button>
+        </div>
+
+        <!-- Quadrants -->
         <div class="quadrant" id="q1">
-            <div class="q-header">
-                <h2>Do First</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q1')" title="Expand">⛶</button>
-            </div>
+            <div class="q-header"><h2>Do First</h2><button class="expand-btn" onclick="toggleFullscreen('q1')">⛶</button></div>
             <div class="task-list" id="list-q1"></div>
-            <div class="input-group">
-                <input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')">
-                <button onclick="addTask('q1')">+</button>
-            </div>
+            <div class="input-group"><input type="text" id="input-q1" placeholder="Add urgent & important task..." onkeypress="handleEnter(event, 'q1')"><button onclick="addTask('q1')">+</button></div>
         </div>
 
-        <!-- Q2 -->
         <div class="quadrant" id="q2">
-            <div class="q-header">
-                <h2>Schedule</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q2')" title="Expand">⛶</button>
-            </div>
+            <div class="q-header"><h2>Schedule</h2><button class="expand-btn" onclick="toggleFullscreen('q2')">⛶</button></div>
             <div class="task-list" id="list-q2"></div>
-            <div class="input-group">
-                <input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')">
-                <button onclick="addTask('q2')">+</button>
-            </div>
+            <div class="input-group"><input type="text" id="input-q2" placeholder="Add important task..." onkeypress="handleEnter(event, 'q2')"><button onclick="addTask('q2')">+</button></div>
         </div>
 
-        <!-- Q3 -->
         <div class="quadrant" id="q3">
-            <div class="q-header">
-                <h2>Delegate</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q3')" title="Expand">⛶</button>
-            </div>
+            <div class="q-header"><h2>Delegate</h2><button class="expand-btn" onclick="toggleFullscreen('q3')">⛶</button></div>
             <div class="task-list" id="list-q3"></div>
-            <div class="input-group">
-                <input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')">
-                <button onclick="addTask('q3')">+</button>
-            </div>
+            <div class="input-group"><input type="text" id="input-q3" placeholder="Add urgent task..." onkeypress="handleEnter(event, 'q3')"><button onclick="addTask('q3')">+</button></div>
         </div>
 
-        <!-- Q4 -->
         <div class="quadrant" id="q4">
-            <div class="q-header">
-                <h2>Eliminate</h2>
-                <button class="expand-btn" onclick="toggleFullscreen('q4')" title="Expand">⛶</button>
-            </div>
+            <div class="q-header"><h2>Eliminate</h2><button class="expand-btn" onclick="toggleFullscreen('q4')">⛶</button></div>
             <div class="task-list" id="list-q4"></div>
-            <div class="input-group">
-                <input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')">
-                <button onclick="addTask('q4')">+</button>
-            </div>
+            <div class="input-group"><input type="text" id="input-q4" placeholder="Add unimportant task..." onkeypress="handleEnter(event, 'q4')"><button onclick="addTask('q4')">+</button></div>
         </div>
     </div>
 
+    <!-- Google API Scripts -->
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
     <script>
-        // LocalStorage State Management
+        // ==========================================
+        // CONFIGURATION - MUST UPDATE THESE!
+        // Get these from Google Cloud Console -> APIs & Services -> Credentials
+        // ==========================================
+        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
+        const API_KEY = 'YOUR_API_KEY_HERE';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/tasks';
+
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+
+        // Fallback Local Storage logic if not signed in yet
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
 
-        function saveNotes() {
-            localStorage.setItem('quadra_notes', JSON.stringify(notes));
+        // --- Google API Setup ---
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
         }
+
+        async function initializeGapiClient() {
+            try {
+                await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+                gapiInited = true;
+            } catch(e) {
+                console.error("Error initializing GAPI (Did you set the API_KEY?)", e);
+            }
+        }
+
+        function gisLoaded() {
+            try {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CLIENT_ID,
+                    scope: SCOPES,
+                    callback: (resp) => {
+                        if (resp.error !== undefined) { throw (resp); }
+                        document.getElementById('authorize_button').style.display = 'none';
+                        document.getElementById('signout_button').style.display = 'inline-block';
+                        document.getElementById('auth-overlay').style.display = 'none';
+                        // Ideally, here you would fetch from Google Tasks API
+                        // fetchTasks(); 
+                        renderNotes();
+                    },
+                });
+                gisInited = true;
+            } catch(e) {
+                console.error("Error initializing GIS (Did you set the CLIENT_ID?)", e);
+            }
+        }
+
+        function handleAuthClick() {
+            if (!CLIENT_ID.includes("YOUR_CLIENT_ID")) {
+                tokenClient.callback = async (resp) => {
+                    if (resp.error !== undefined) { throw (resp); }
+                    document.getElementById('authorize_button').style.display = 'none';
+                    document.getElementById('signout_button').style.display = 'inline-block';
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    renderNotes();
+                };
+                if (gapi.client.getToken() === null) { tokenClient.requestAccessToken({prompt: 'consent'}); } 
+                else { tokenClient.requestAccessToken({prompt: ''}); }
+            } else {
+                alert("Please add your Google CLIENT_ID and API_KEY in the code to enable Google Tasks sync. Currently falling back to local storage.");
+                document.getElementById('authorize_button').style.display = 'none';
+                document.getElementById('signout_button').style.display = 'inline-block';
+                document.getElementById('auth-overlay').style.display = 'none';
+                renderNotes();
+            }
+        }
+
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken('');
+            }
+            document.getElementById('authorize_button').style.display = 'inline-block';
+            document.getElementById('signout_button').style.display = 'none';
+            document.getElementById('auth-overlay').style.display = 'flex';
+        }
+
+        // --- App Logic ---
+        function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
         function renderNotes() {
             document.getElementById('list-q1').innerHTML = '';
@@ -335,50 +267,40 @@
         function addTask(quadrant) {
             const inputEl = document.getElementById(`input-${quadrant}`);
             const text = inputEl.value.trim();
-            
             if (text) {
                 notes.push({ id: Date.now().toString(), text: text, quadrant: quadrant });
                 saveNotes();
                 renderNotes();
                 inputEl.value = ''; 
+                // NOTE: Here you would also push the new task to the Google Tasks API via gapi.client.tasks.tasks.insert()
             }
         }
 
-        function handleEnter(event, quadrant) {
-            if (event.key === 'Enter') addTask(quadrant);
-        }
+        function handleEnter(event, quadrant) { if (event.key === 'Enter') addTask(quadrant); }
 
         function deleteTask(id) {
             notes = notes.filter(note => note.id !== id);
             saveNotes();
             renderNotes();
+            // NOTE: Here you would delete from Google API via gapi.client.tasks.tasks.delete()
         }
 
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag] || tag));
-        }
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
 
         // UI Navigation
         const matrix = document.getElementById('matrix');
         const backBtn = document.getElementById('backBtn');
-
         function toggleFullscreen(quadrantId) {
             document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
             document.getElementById(quadrantId).classList.add('active');
             matrix.classList.add('fullscreen');
-            backBtn.style.display = 'block';
+            backBtn.style.display = 'inline-block';
         }
-
         function exitFullscreen() {
             matrix.classList.remove('fullscreen');
             document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
             backBtn.style.display = 'none';
         }
-
-        // Init
-        renderNotes();
     </script>
 </body>
 </html>
