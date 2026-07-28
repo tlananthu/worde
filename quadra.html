@@ -100,7 +100,7 @@
         .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
         .matrix-container.fullscreen .quadrant.active { display: flex; }
 
-        /* Calendar Layout */
+        /* Weekly Calendar Layout */
         #calendar-view { 
             display: none; padding: 24px; flex-grow: 1; max-width: 1600px; 
             margin: 0 auto; width: 100%; overflow-y: auto; overflow-x: auto;
@@ -110,7 +110,7 @@
         .calendar-day-header { font-weight: 600; text-align: center; color: var(--text-muted); font-size: 14px; padding-bottom: 8px; }
         .calendar-cell { 
             background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; 
-            min-height: 140px; padding: 10px; display: flex; flex-direction: column; transition: all 0.2s; 
+            min-height: 400px; padding: 10px; display: flex; flex-direction: column; transition: all 0.2s; 
         }
         .calendar-cell.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; background-color: rgba(79, 70, 229, 0.05); }
         .calendar-cell .day-number { 
@@ -119,10 +119,16 @@
         }
         .calendar-cell.today .day-number { background: var(--brand-primary); color: white; }
         .calendar-cell .task-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        
         .calendar-task { 
             font-size: 12px; font-weight: 500; padding: 6px 8px; border-radius: 6px; cursor: grab; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid rgba(0,0,0,0.05); transition: transform 0.1s; 
+            border: 1px solid rgba(0,0,0,0.05); transition: transform 0.1s; 
+            /* 3 Line limit */
+            white-space: pre-wrap; word-break: break-word; line-height: 1.4;
+            max-height: 4.2em; overflow-y: auto;
         }
+        .calendar-task::-webkit-scrollbar { width: 4px; }
+        .calendar-task::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 4px; }
         .calendar-task:active { cursor: grabbing; transform: scale(0.98); }
         .calendar-task:hover { filter: brightness(0.95); }
 
@@ -198,7 +204,15 @@
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
-        .note-text { white-space: pre-wrap; word-break: break-word; }
+        
+        /* 3 Line limit and scrollbar */
+        .note-text { 
+            white-space: pre-wrap; word-break: break-word;
+            max-height: 4.5em; /* 3 lines at 1.5 line-height */
+            overflow-y: auto; padding-right: 4px;
+        }
+        .note-text::-webkit-scrollbar { width: 4px; }
+        .note-text::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
 
         .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
         .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
@@ -215,7 +229,7 @@
 
         .closed-note { opacity: 0.6; box-shadow: none; cursor: default; }
         .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
-        .closed-note .note-text { text-decoration: line-through; cursor: default; }
+        .closed-note .note-text { text-decoration: line-through; cursor: default; overflow-y: hidden; }
 
         /* Closed Tasks Tray */
         .closed-tray { background-color: #ffffff; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
@@ -353,12 +367,12 @@
         </div>
     </div>
 
-    <!-- Calendar View -->
+    <!-- Weekly Calendar View -->
     <div id="calendar-view">
         <div class="calendar-header">
-            <button class="btn btn-outline" onclick="changeMonth(-1)">← Prev</button>
+            <button class="btn btn-outline" onclick="changeWeek(-1)">← Prev Week</button>
             <h2 id="calendar-month-year" style="font-size: 20px; font-weight: 700;"></h2>
-            <button class="btn btn-outline" onclick="changeMonth(1)">Next →</button>
+            <button class="btn btn-outline" onclick="changeWeek(1)">Next Week →</button>
         </div>
         <div class="calendar-grid" id="calendar-grid">
             <!-- Rendered dynamically -->
@@ -438,7 +452,7 @@
                 calView.style.display = 'block';
                 renderCalendar();
             } else {
-                matrix.style.display = ''; // Reverts to CSS grid definition
+                matrix.style.display = ''; 
                 calView.style.display = 'none';
                 matrix.classList.remove('layout-grid', 'layout-kanban');
                 matrix.classList.add(`layout-${layout}`);
@@ -456,7 +470,6 @@
         };
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
 
-        // Colors for Calendar task mapping
         const quadColors = { 'q1': 'var(--q1-bg)', 'q2': 'var(--q2-bg)', 'q3': 'var(--q3-bg)', 'q4': 'var(--q4-bg)', 'inbox': '#F1F5F9' };
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
@@ -564,7 +577,7 @@
             document.getElementById('sync-banner').style.display = 'block';
             
             try {
-                // 1. Ensure Task Lists Exist
+                // Ensure Task Lists Exist
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
                 for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
@@ -577,7 +590,7 @@
                     }
                 }
 
-                // 2. Fetch all Remote Tasks
+                // Fetch Remote Tasks
                 let remoteTaskMap = {};
                 for (const quadKey of Object.keys(gapiListIds)) {
                     const listId = gapiListIds[quadKey];
@@ -586,7 +599,7 @@
                     rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
                 }
 
-                // 3. Clone Local Notes & Process "Dirty" Changes Up to Google
+                // Process Dirty Changes Up
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 
                 for (let sn of syncSnapshot) {
@@ -608,20 +621,20 @@
                         else payload.due = null;
 
                         if (remoteObj) {
-                            if (remoteObj.listId !== targetListId) { // Move between lists
+                            if (remoteObj.listId !== targetListId) { 
                                 try {
                                     await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id });
                                     const res = await gapi.client.tasks.tasks.insert(payload);
                                     sn.tempId = sn.id; sn.id = res.result.id; 
                                 } catch(e){}
-                            } else { // In-place update
+                            } else { 
                                 try { 
                                     payload.task = sn.id;
                                     await gapi.client.tasks.tasks.patch(payload); 
                                 } catch(e){}
                             }
                             delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
-                        } else { // New insert
+                        } else { 
                             try {
                                 const res = await gapi.client.tasks.tasks.insert(payload);
                                 sn.tempId = sn.id; sn.id = res.result.id;
@@ -641,7 +654,7 @@
                     }
                 }
 
-                // 4. Add pure remote tasks
+                // Add pure remote tasks
                 Object.values(remoteTaskMap).forEach(remoteObj => {
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
@@ -651,7 +664,7 @@
                     });
                 });
 
-                // 5. Smart Merge with live `notes` array
+                // Smart Merge
                 let newNotesArray = [];
                 let syncedIds = new Set();
 
@@ -675,7 +688,7 @@
                 saveNotes();
                 handleSearch(); 
 
-            } catch (e) { console.error("Sync Initialization Error:", e); }
+            } catch (e) { console.error("Sync Error:", e); }
             document.getElementById('sync-banner').style.display = 'none';
         }
 
@@ -831,11 +844,11 @@
             }
         }
 
-        // --- Calendar Rendering ---
+        // --- Weekly Calendar Rendering ---
         let currentDateIndex = new Date();
 
-        function changeMonth(offset) {
-            currentDateIndex.setMonth(currentDateIndex.getMonth() + offset);
+        function changeWeek(offset) {
+            currentDateIndex.setDate(currentDateIndex.getDate() + (offset * 7));
             renderCalendar();
         }
 
@@ -844,10 +857,16 @@
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
             
-            const year = currentDateIndex.getFullYear();
-            const month = currentDateIndex.getMonth();
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+            const startOfWeek = new Date(currentDateIndex);
+            startOfWeek.setDate(currentDateIndex.getDate() - currentDateIndex.getDay());
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const startStr = `${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()}`;
+            const endStr = `${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
+            document.getElementById('calendar-month-year').innerText = `${startStr} - ${endStr}`;
 
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             days.forEach(d => {
@@ -857,32 +876,21 @@
                 grid.appendChild(el);
             });
 
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
             const today = new Date();
             
-            // Empty leading cells
-            for (let i = 0; i < firstDay; i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'calendar-cell';
-                emptyCell.style.background = 'transparent';
-                emptyCell.style.border = 'none';
-                grid.appendChild(emptyCell);
-            }
+            for (let i = 0; i < 7; i++) {
+                const cellDate = new Date(startOfWeek);
+                cellDate.setDate(startOfWeek.getDate() + i);
 
-            // Day cells
-            for (let i = 1; i <= daysInMonth; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'calendar-cell';
-                const cellDate = new Date(year, month, i);
                 
-                // Format YYYY-MM-DD local time for precise drop tracking
                 const y = cellDate.getFullYear();
                 const m = String(cellDate.getMonth() + 1).padStart(2, '0');
-                const d = String(cellDate.getDate()).padStart(2, '0');
-                const dateString = `${y}-${m}-${d}`;
+                const dStr = String(cellDate.getDate()).padStart(2, '0');
+                const dateString = `${y}-${m}-${dStr}`;
                 
-                if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+                if (y === today.getFullYear() && cellDate.getMonth() === today.getMonth() && cellDate.getDate() === today.getDate()) {
                     cell.classList.add('today');
                 }
 
@@ -892,7 +900,7 @@
 
                 const dayNum = document.createElement('div');
                 dayNum.className = 'day-number';
-                dayNum.innerText = i;
+                dayNum.innerText = cellDate.getDate();
                 cell.appendChild(dayNum);
 
                 const taskList = document.createElement('div');
@@ -903,23 +911,23 @@
                 grid.appendChild(cell);
             }
             
-            populateCalendarTasks(year, month);
+            populateCalendarTasks();
         }
 
-        function populateCalendarTasks(year, month) {
+        function populateCalendarTasks() {
             notes.forEach(note => {
                 if (!note.deleted && note.status === 'active' && note.dueDate) {
-                    const noteDateStr = note.dueDate.split('T')[0]; // Extract YYYY-MM-DD
+                    const noteDateStr = note.dueDate.split('T')[0];
                     const list = document.getElementById(`cal-list-${noteDateStr}`);
                     if (list) {
                         const taskEl = document.createElement('div');
                         taskEl.className = 'calendar-task';
                         taskEl.style.backgroundColor = quadColors[note.quadrant] || 'var(--q2-bg)';
                         taskEl.innerText = note.text;
-                        taskEl.title = note.text;
+                        taskEl.title = "Double-click to open full view";
                         taskEl.draggable = true;
                         taskEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
-                        taskEl.onclick = (e) => openTaskModal(null, note.id, e);
+                        taskEl.ondblclick = (e) => openTaskModal(null, note.id, e);
                         list.appendChild(taskEl);
                     }
                 }
@@ -952,19 +960,22 @@
 
                     if (note.dueDate) {
                         const d = new Date(note.dueDate);
-                        const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const yyyy = d.getFullYear();
+
                         const dateSpan = document.createElement('div');
                         dateSpan.style.fontSize = '12px';
                         dateSpan.style.color = 'var(--brand-primary)';
                         dateSpan.style.marginTop = '6px';
                         dateSpan.style.fontWeight = '500';
-                        dateSpan.innerHTML = `🗓️ Due: ${dateStr}`;
+                        dateSpan.innerHTML = `🗓️ Due: ${dd}/${mm}/${yyyy}`;
                         contentWrapper.appendChild(dateSpan);
                     }
 
                     if (note.status === 'active') { 
-                        contentWrapper.title = "Click to edit"; 
-                        contentWrapper.onclick = (e) => openTaskModal(null, note.id, e); 
+                        contentWrapper.title = "Double-click to open full view"; 
+                        contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); 
                     }
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
