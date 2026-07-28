@@ -92,13 +92,39 @@
         /* Matrix Layout */
         .matrix-container {
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
-            max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow: hidden;
+            max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto;
         }
         .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
         .matrix-container.fullscreen { display: flex; overflow: hidden; }
         .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
         .matrix-container.fullscreen .quadrant.active { display: flex; }
+
+        /* Calendar Layout */
+        #calendar-view { 
+            display: none; padding: 24px; flex-grow: 1; max-width: 1600px; 
+            margin: 0 auto; width: 100%; overflow-y: auto; overflow-x: auto;
+        }
+        .calendar-header { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; min-width: 700px; }
+        .calendar-day-header { font-weight: 600; text-align: center; color: var(--text-muted); font-size: 14px; padding-bottom: 8px; }
+        .calendar-cell { 
+            background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; 
+            min-height: 140px; padding: 10px; display: flex; flex-direction: column; transition: all 0.2s; 
+        }
+        .calendar-cell.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; background-color: rgba(79, 70, 229, 0.05); }
+        .calendar-cell .day-number { 
+            font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; 
+            align-self: flex-end; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; 
+        }
+        .calendar-cell.today .day-number { background: var(--brand-primary); color: white; }
+        .calendar-cell .task-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .calendar-task { 
+            font-size: 12px; font-weight: 500; padding: 6px 8px; border-radius: 6px; cursor: grab; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid rgba(0,0,0,0.05); transition: transform 0.1s; 
+        }
+        .calendar-task:active { cursor: grabbing; transform: scale(0.98); }
+        .calendar-task:hover { filter: brightness(0.95); }
 
         /* Overlays */
         .overlay {
@@ -116,7 +142,7 @@
             background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;
         }
         .modal-content {
-            background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; /* Increased from 500px */
+            background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px;
         }
         .modal-content h3 { font-size: 20px; }
@@ -132,6 +158,9 @@
             background: #F9FAFB;
         }
         #taskInput:focus { background: #ffffff; border-color: var(--brand-primary); }
+        
+        /* Compact Date Picker */
+        #taskDueDate { width: auto; min-width: 180px; padding: 10px 14px; cursor: pointer; }
 
         /* Quadrants */
         .quadrant { 
@@ -210,8 +239,6 @@
         @media (max-width: 768px) {
             header { flex-direction: column; align-items: stretch; }
             .header-left { max-width: 100%; }
-            .matrix-container { display: flex; flex-direction: column; overflow-y: auto; }
-            .quadrant { min-height: 400px; }
             .view-toggle { display: none; }
             .inbox-tray-content.open { height: 300px; }
             .closed-tray-content.open { height: 350px; }
@@ -248,6 +275,7 @@
             <div class="view-toggle">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Grid</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
+                <button id="btnCalendar" onclick="setLayout('calendar')">📅 Calendar</button>
             </div>
             <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
@@ -272,7 +300,7 @@
         </div>
     </div>
 
-    <!-- Matrix -->
+    <!-- Matrix View -->
     <div id="matrix" class="matrix-container layout-grid">
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
@@ -322,6 +350,18 @@
                 </div>
             </div>
             <div class="task-list" id="list-q4"></div>
+        </div>
+    </div>
+
+    <!-- Calendar View -->
+    <div id="calendar-view">
+        <div class="calendar-header">
+            <button class="btn btn-outline" onclick="changeMonth(-1)">← Prev</button>
+            <h2 id="calendar-month-year" style="font-size: 20px; font-weight: 700;"></h2>
+            <button class="btn btn-outline" onclick="changeMonth(1)">Next →</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid">
+            <!-- Rendered dynamically -->
         </div>
     </div>
 
@@ -385,11 +425,24 @@
         function setLayout(layout) {
             currentLayout = layout;
             localStorage.setItem('quadra_layout', layout);
+            
             const matrix = document.getElementById('matrix');
-            matrix.classList.remove('layout-grid', 'layout-kanban');
-            matrix.classList.add(`layout-${layout}`);
+            const calView = document.getElementById('calendar-view');
+
             document.getElementById('btnGrid').classList.toggle('active', layout === 'grid');
             document.getElementById('btnKanban').classList.toggle('active', layout === 'kanban');
+            document.getElementById('btnCalendar').classList.toggle('active', layout === 'calendar');
+
+            if (layout === 'calendar') {
+                matrix.style.display = 'none';
+                calView.style.display = 'block';
+                renderCalendar();
+            } else {
+                matrix.style.display = ''; // Reverts to CSS grid definition
+                calView.style.display = 'none';
+                matrix.classList.remove('layout-grid', 'layout-kanban');
+                matrix.classList.add(`layout-${layout}`);
+            }
         }
 
         // --- State Management ---
@@ -403,7 +456,9 @@
         };
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
 
-        // Note schema: { id, text, quadrant, status, dueDate, dirty, deleted }
+        // Colors for Calendar task mapping
+        const quadColors = { 'q1': 'var(--q1-bg)', 'q2': 'var(--q2-bg)', 'q3': 'var(--q3-bg)', 'q4': 'var(--q4-bg)', 'inbox': '#F1F5F9' };
+
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
             let n = { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, dueDate: note.dueDate || null };
@@ -422,7 +477,6 @@
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
                 
-                // Optimistic Load
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     document.getElementById('auth-overlay').style.display = 'none';
@@ -502,7 +556,7 @@
         function initGoogleSync() {
             isGoogleSynced = true;
             performBackgroundSync();
-            syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); // Auto sync every 5 minutes
+            syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); 
         }
 
         async function performBackgroundSync() {
@@ -536,7 +590,6 @@
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 
                 for (let sn of syncSnapshot) {
-                    // Handle Deletions
                     if (sn.deleted && sn.dirty) {
                         if (remoteTaskMap[sn.id]) {
                             try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){}
@@ -545,7 +598,6 @@
                         continue;
                     }
 
-                    // Handle Adds / Edits / Moves
                     if (sn.dirty && !sn.deleted) {
                         const targetListId = gapiListIds[sn.quadrant];
                         const remoteObj = remoteTaskMap[sn.id];
@@ -577,7 +629,6 @@
                         }
                         sn.dirty = false;
                     } 
-                    // Handle downloading external remote changes
                     else if (!sn.dirty && !sn.deleted) {
                         const remoteObj = remoteTaskMap[sn.id];
                         if (remoteObj) {
@@ -590,7 +641,7 @@
                     }
                 }
 
-                // 4. Add remaining pure remote tasks (created on another device)
+                // 4. Add pure remote tasks
                 Object.values(remoteTaskMap).forEach(remoteObj => {
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
@@ -606,7 +657,6 @@
 
                 syncSnapshot.forEach(sn => {
                     if (sn.deleted && !sn.dirty) return; 
-                    
                     const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
                     if (liveNote) {
                         if (liveNote.dirty) {
@@ -632,22 +682,51 @@
         // --- Fast Local Actions ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
+        // Core Drag & Drop
         function allowDrop(ev) {
             ev.preventDefault(); 
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') ev.currentTarget.classList.add('drag-over');
+            if(ev.currentTarget.classList.contains('quadrant') || 
+               ev.currentTarget.id === 'inbox-tray-content' ||
+               ev.currentTarget.classList.contains('calendar-cell')) {
+                ev.currentTarget.classList.add('drag-over');
+            }
         }
         function dragLeave(ev) {
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') ev.currentTarget.classList.remove('drag-over');
+            if(ev.currentTarget.classList.contains('quadrant') || 
+               ev.currentTarget.id === 'inbox-tray-content' ||
+               ev.currentTarget.classList.contains('calendar-cell')) {
+                ev.currentTarget.classList.remove('drag-over');
+            }
         }
         function drop(ev, newQuadrant) {
             ev.preventDefault();
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') ev.currentTarget.classList.remove('drag-over');
-            
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') {
+                ev.currentTarget.classList.remove('drag-over');
+            }
             const noteId = ev.dataTransfer.getData("text/plain");
             const note = notes.find(n => n.id === noteId);
             if (note && note.status === 'active' && note.quadrant !== newQuadrant) {
                 note.quadrant = newQuadrant; note.dirty = true;
                 saveNotes(); handleSearch();
+            }
+        }
+
+        // Calendar Drag & Drop
+        function dropToCalendar(ev, dateString) {
+            ev.preventDefault();
+            if(ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over');
+            
+            const noteId = ev.dataTransfer.getData("text/plain");
+            const note = notes.find(n => n.id === noteId);
+            
+            if (note && note.status === 'active') {
+                const isoDate = new Date(dateString).toISOString(); 
+                if (note.dueDate !== isoDate) {
+                    note.dueDate = isoDate;
+                    note.dirty = true;
+                    saveNotes();
+                    handleSearch(); 
+                }
             }
         }
 
@@ -685,10 +764,7 @@
             
             const dueDateVal = document.getElementById('taskDueDate').value;
             let isoDate = null;
-            if (dueDateVal) {
-                // Create strict ISO string suitable for Google Tasks API
-                isoDate = new Date(dueDateVal).toISOString(); 
-            }
+            if (dueDateVal) isoDate = new Date(dueDateVal).toISOString(); 
 
             if (currentEditingId) {
                 const note = notes.find(n => n.id === currentEditingId);
@@ -755,8 +831,108 @@
             }
         }
 
+        // --- Calendar Rendering ---
+        let currentDateIndex = new Date();
+
+        function changeMonth(offset) {
+            currentDateIndex.setMonth(currentDateIndex.getMonth() + offset);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            if (currentLayout !== 'calendar') return;
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            
+            const year = currentDateIndex.getFullYear();
+            const month = currentDateIndex.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calendar-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            days.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'calendar-day-header';
+                el.innerText = d;
+                grid.appendChild(el);
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            
+            // Empty leading cells
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-cell';
+                emptyCell.style.background = 'transparent';
+                emptyCell.style.border = 'none';
+                grid.appendChild(emptyCell);
+            }
+
+            // Day cells
+            for (let i = 1; i <= daysInMonth; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                const cellDate = new Date(year, month, i);
+                
+                // Format YYYY-MM-DD local time for precise drop tracking
+                const y = cellDate.getFullYear();
+                const m = String(cellDate.getMonth() + 1).padStart(2, '0');
+                const d = String(cellDate.getDate()).padStart(2, '0');
+                const dateString = `${y}-${m}-${d}`;
+                
+                if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+                    cell.classList.add('today');
+                }
+
+                cell.ondragover = allowDrop;
+                cell.ondragleave = dragLeave;
+                cell.ondrop = (e) => dropToCalendar(e, dateString);
+
+                const dayNum = document.createElement('div');
+                dayNum.className = 'day-number';
+                dayNum.innerText = i;
+                cell.appendChild(dayNum);
+
+                const taskList = document.createElement('div');
+                taskList.className = 'task-list';
+                taskList.id = `cal-list-${dateString}`;
+                cell.appendChild(taskList);
+
+                grid.appendChild(cell);
+            }
+            
+            populateCalendarTasks(year, month);
+        }
+
+        function populateCalendarTasks(year, month) {
+            notes.forEach(note => {
+                if (!note.deleted && note.status === 'active' && note.dueDate) {
+                    const noteDateStr = note.dueDate.split('T')[0]; // Extract YYYY-MM-DD
+                    const list = document.getElementById(`cal-list-${noteDateStr}`);
+                    if (list) {
+                        const taskEl = document.createElement('div');
+                        taskEl.className = 'calendar-task';
+                        taskEl.style.backgroundColor = quadColors[note.quadrant] || 'var(--q2-bg)';
+                        taskEl.innerText = note.text;
+                        taskEl.title = note.text;
+                        taskEl.draggable = true;
+                        taskEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
+                        taskEl.onclick = (e) => openTaskModal(null, note.id, e);
+                        list.appendChild(taskEl);
+                    }
+                }
+            });
+        }
+
+        // --- Standard List Rendering ---
         function renderNotes(searchQuery = '') {
-            ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => document.getElementById(`list-${q}`).innerHTML = '');
+            ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => {
+                const el = document.getElementById(`list-${q}`);
+                if (el) el.innerHTML = '';
+            });
+            
             const filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery.toLowerCase()));
 
             filteredNotes.forEach(note => {
@@ -805,6 +981,9 @@
 
             document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed').length;
             document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox').length;
+            
+            // Sync calendar view if active
+            if (currentLayout === 'calendar') renderCalendar();
         }
 
         function toggleClosedTray() {
