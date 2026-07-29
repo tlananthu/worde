@@ -898,7 +898,7 @@
 
         // --- Config Settings & UI ---
         async function loadCalendars() {
-            if (!gapi.client.getToken()) return alert("Please sign in with Google first.");
+            if (!gapi.client.getToken()) return alert("Please sign in first.");
             try {
                 const response = await gapi.client.calendar.calendarList.list();
                 const calendars = response.result.items;
@@ -1067,12 +1067,81 @@
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
         // --- Google API Engine ---
-        function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
-        async function initializeGapiClient() { try { await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: DISCOVERY_DOCS }); const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); if (savedTokenData && savedTokenData.expires_at > Date.now()) { gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync(); } } catch(e) {} }
-        function gisLoaded() { if(appConfig.clientId) { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: appConfig.clientId, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) { throw (resp); } localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('authorize_button').style.display = 'none'; document.getElementById('signout_button').style.display = 'inline-block'; initGoogleSync(); }, }); } catch(e) {} } }
-        function handleAuthClick() { if (!appConfig.clientId) return openSettings(); if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''}); }
-        function handleSignoutClick() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } localStorage.removeItem('quadra_gapi_token'); isGoogleSynced = false; clearInterval(syncIntervalId); document.getElementById('auth-overlay').style.display = 'flex'; document.getElementById('authorize_button').style.display = 'inline-block'; document.getElementById('signout_button').style.display = 'none'; document.getElementById('sidePanel').classList.remove('open'); document.getElementById('sidebarToggleBtn').classList.remove('open'); document.body.classList.remove('sidebar-open'); }
-        function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
+        function gapiLoaded() { 
+            if(appConfig.apiKey) {
+                gapi.load('client', initializeGapiClient); 
+            }
+        }
+        
+        async function initializeGapiClient() { 
+            try { 
+                await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: DISCOVERY_DOCS }); 
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); 
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) { 
+                    gapi.client.setToken({ access_token: savedTokenData.token }); 
+                    initGoogleSync(); 
+                } 
+            } catch(e) { console.error("GAPI Init Error:", e); } 
+        }
+        
+        function gisLoaded() { 
+            if(appConfig.clientId && typeof google !== 'undefined' && google.accounts) { 
+                try { 
+                    tokenClient = google.accounts.oauth2.initTokenClient({ 
+                        client_id: appConfig.clientId, 
+                        scope: SCOPES, 
+                        callback: async (resp) => { 
+                            if (resp.error !== undefined) { throw (resp); } 
+                            localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                            document.getElementById('auth-overlay').style.display = 'none'; 
+                            document.getElementById('authorize_button').style.display = 'none'; 
+                            document.getElementById('signout_button').style.display = 'inline-block'; 
+                            initGoogleSync(); 
+                        }, 
+                    }); 
+                } catch(e) { console.error("GIS Error:", e); } 
+            } 
+        }
+        
+        function handleAuthClick() { 
+            if (!appConfig.clientId) return openSettings(); 
+            
+            // Safety check in case the script hasn't loaded yet
+            if (!tokenClient) {
+                if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+                    gisLoaded(); // Try to initialize it now
+                }
+                if (!tokenClient) {
+                    alert("Google services are still loading. Please wait a moment and try again.");
+                    return;
+                }
+            }
+
+            // Protect against gapi.client not being ready
+            const token = (typeof gapi !== 'undefined' && gapi.client && gapi.client.getToken) ? gapi.client.getToken() : null;
+            if (token === null) tokenClient.requestAccessToken({prompt: 'consent'}); 
+            else tokenClient.requestAccessToken({prompt: ''}); 
+        }
+        
+        function handleSignoutClick() { 
+            const token = gapi.client.getToken(); 
+            if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } 
+            localStorage.removeItem('quadra_gapi_token'); 
+            isGoogleSynced = false; 
+            clearInterval(syncIntervalId); 
+            document.getElementById('auth-overlay').style.display = 'flex'; 
+            document.getElementById('authorize_button').style.display = 'inline-block'; 
+            document.getElementById('signout_button').style.display = 'none'; 
+            document.getElementById('sidePanel').classList.remove('open'); 
+            document.getElementById('sidebarToggleBtn').classList.remove('open'); 
+            document.body.classList.remove('sidebar-open'); 
+        }
+        
+        function initGoogleSync() { 
+            isGoogleSynced = true; 
+            performBackgroundSync(); 
+            syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); 
+        }
 
         async function importCalendarEvents() {
             if (!gapi.client.getToken()) return alert("Please sign in first.");
