@@ -99,6 +99,8 @@
         .btn:hover { background-color: var(--brand-primary-hover); }
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
+        .btn-success { background-color: #10B981; color: white; border: none; }
+        .btn-success:hover { background-color: #059669; }
         
         #backBtn, #signout_button, #authorize_button { display: none; }
 
@@ -159,11 +161,11 @@
         .calendar-task:active { cursor: grabbing; transform: scale(0.98); }
         .calendar-task:hover { filter: brightness(0.95); }
 
-        /* Overlays - Adjusted to cover full main wrapper */
+        /* Overlays */
         .overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(249, 250, 251, 0.95); 
-            z-index: 95; /* Covers tags and sidebar toggle, below header */
+            z-index: 95; 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             text-align: center; backdrop-filter: blur(4px);
         }
@@ -232,10 +234,9 @@
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
         
-        /* 3 Line Limit with precise sizing */
         .note-text { 
             white-space: pre-wrap; word-break: break-word;
-            max-height: 4.5em; /* 3 lines exact */
+            max-height: 4.5em; 
             overflow-y: auto; padding-right: 4px;
         }
         .note-text::-webkit-scrollbar { width: 4px; }
@@ -243,6 +244,10 @@
 
         .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
         .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
+
+        .note-meta { display: flex; gap: 12px; align-items: center; margin-top: 6px; font-size: 12px; font-weight: 500; }
+        .meta-due { color: var(--brand-primary); }
+        .meta-time { color: #8B5CF6; background: rgba(139, 92, 246, 0.1); padding: 2px 6px; border-radius: 4px;}
 
         .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; flex-shrink: 0; }
         .note:hover .note-actions { opacity: 1; }
@@ -253,6 +258,8 @@
         .delete-btn:hover { color: #DC2626; }
         .restore-btn { color: #3B82F6; }  
         .restore-btn:hover { color: #2563EB; }
+        .time-btn { color: #8B5CF6; font-size: 16px; }
+        .time-btn:hover { color: #6D28D9; }
 
         .closed-note { opacity: 0.6; box-shadow: none; cursor: default; }
         .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
@@ -362,13 +369,14 @@
         </div>
         
         <div class="header-actions">
-            <button class="icon-btn" style="display: none;" id="manualSyncBtn" onclick="performBackgroundSync()" title="Force Sync to Google">↻</button>
+            <button class="btn btn-outline" onclick="openTimesheetModal()" title="View Daily Timesheet">📋 Timesheet</button>
             <div class="view-toggle">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Grid</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
                 <button id="btnCalendar" onclick="setLayout('calendar')">📅 Calendar</button>
             </div>
             <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
+            <button class="icon-btn" style="display: none;" id="manualSyncBtn" onclick="performBackgroundSync()" title="Force Sync to Google">↻</button>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
             <button class="btn btn-outline" onclick="openSettings()">⚙️ Settings</button>
@@ -387,9 +395,7 @@
         </div>
 
         <!-- Quick Filter Tags Bar -->
-        <div id="quick-tags-bar" class="tags-bar">
-            <!-- Rendered dynamically -->
-        </div>
+        <div id="quick-tags-bar" class="tags-bar"></div>
 
         <!-- Toggle Sidebar Button -->
         <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
@@ -403,7 +409,6 @@
                 <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close Sidebar">×</button>
             </div>
             
-            <!-- Inbox Tray -->
             <div class="inbox-tray">
                 <div class="tray-header" onclick="toggleInboxTray()">
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -417,7 +422,6 @@
                 </div>
             </div>
 
-            <!-- Completed Tray -->
             <div class="closed-tray">
                 <div class="tray-header" onclick="toggleClosedTray()">
                     <h3>Completed (<span id="closed-count">0</span>)</h3>
@@ -483,25 +487,59 @@
                 <h2 id="calendar-month-year" style="font-size: 20px; font-weight: 700;"></h2>
                 <button class="btn btn-outline" onclick="changeWeek(1)">Next Week →</button>
             </div>
-            <div class="calendar-grid" id="calendar-grid">
-                <!-- Rendered dynamically -->
-            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
         </div>
     </div> <!-- END .main-wrapper -->
+
+    <!-- Time Logging Modal -->
+    <div id="timeLogModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Log Time</h3>
+            <p id="timeLogTaskName" style="color: var(--text-muted); font-size: 13px; margin-top: -8px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></p>
+            <div class="form-group">
+                <label>Date Worked</label>
+                <input type="date" id="timeLogDate" onchange="updateTimeLogInput()">
+            </div>
+            <div class="form-group">
+                <label>Total Hours for this Date</label>
+                <input type="number" id="timeLogHours" placeholder="e.g. 1.5" step="0.25" min="0">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeTimeLogModal()">Cancel</button>
+                <button class="btn" onclick="saveTimeLog()">Save Time</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timesheet Report Modal -->
+    <div id="timesheetModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Daily Timesheet</h3>
+                <input type="date" id="timesheetDate" style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px;" onchange="generateTimesheet()">
+            </div>
+            
+            <div id="timesheetContent" style="background: var(--bg-main); padding: 16px; border-radius: 8px; font-size: 14px; min-height: 150px; max-height: 400px; overflow-y: auto;">
+                <!-- Auto-populated -->
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeTimesheetModal()">Close</button>
+                <button class="btn btn-success" onclick="copyTimesheet()">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Task Add/Edit Modal -->
     <div id="taskModal" class="modal">
         <div class="modal-content">
             <h3 id="taskModalTitle">Add Task</h3>
             <textarea id="taskInput" rows="8" placeholder="Enter your task details... Use #hashtags to categorize!"></textarea>
-            
             <div class="form-group" style="margin-top: -8px;">
                 <label for="taskDueDate">Due Date (Links to Google Calendar)</label>
                 <input type="date" id="taskDueDate">
             </div>
-
             <div style="font-size: 12px; color: var(--text-muted); margin-top: -4px;">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save</div>
-            
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
                 <button class="btn" onclick="saveTaskModal()">Save Task</button>
@@ -551,12 +589,9 @@
             document.getElementById('btnCalendar').classList.toggle('active', layout === 'calendar');
 
             if (layout === 'calendar') {
-                matrix.style.display = 'none';
-                calView.style.display = 'block';
-                renderCalendar();
+                matrix.style.display = 'none'; calView.style.display = 'block'; renderCalendar();
             } else {
-                matrix.style.display = ''; 
-                calView.style.display = 'none';
+                matrix.style.display = ''; calView.style.display = 'none';
                 matrix.classList.remove('layout-grid', 'layout-kanban');
                 matrix.classList.add(`layout-${layout}`);
             }
@@ -564,23 +599,13 @@
 
         // --- Sidebar Management ---
         function toggleSidebar() {
-            const panel = document.getElementById('sidePanel');
-            const btn = document.getElementById('sidebarToggleBtn');
-            panel.classList.toggle('open');
-            btn.classList.toggle('open');
-            document.body.classList.toggle('sidebar-open');
+            const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn');
+            panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open');
         }
-
         function openSidebar() {
-            const panel = document.getElementById('sidePanel');
-            const btn = document.getElementById('sidebarToggleBtn');
-            if (!panel.classList.contains('open')) {
-                panel.classList.add('open');
-                btn.classList.add('open');
-                document.body.classList.add('sidebar-open');
-            }
+            const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn');
+            if (!panel.classList.contains('open')) { panel.classList.add('open'); btn.classList.add('open'); document.body.classList.add('sidebar-open'); }
         }
-
         function toggleClosedTray() {
             const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron');
             if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
@@ -595,23 +620,18 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
         const SCOPES = 'https://www.googleapis.com/auth/tasks';
 
-        const GAPI_LIST_NAMES = {
-            'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule',
-            'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed'
-        };
+        const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
         const quadColors = { 'q1': 'var(--q1-bg)', 'q2': 'var(--q2-bg)', 'q3': 'var(--q3-bg)', 'q4': 'var(--q4-bg)', 'inbox': '#F1F5F9' };
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
-            let n = { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, dueDate: note.dueDate || null };
+            let n = { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, dueDate: note.dueDate || null, timeLogs: note.timeLogs || {} };
             if (n.status === 'closed' && n.quadrant !== 'closed') n.quadrant = 'closed';
             return n;
         });
         
-        let tokenClient;
-        let isGoogleSynced = false;
-        let syncIntervalId;
+        let tokenClient; let isGoogleSynced = false; let syncIntervalId;
 
         // --- Init & Auth ---
         function checkConfigState() {
@@ -625,9 +645,7 @@
                     document.getElementById('authorize_button').style.display = 'none';
                     document.getElementById('signout_button').style.display = 'inline-block';
                     document.getElementById('manualSyncBtn').style.display = 'inline-block';
-                } else {
-                    document.getElementById('authorize_button').style.display = 'inline-block';
-                }
+                } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
             }
         }
 
@@ -652,8 +670,7 @@
                 await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
-                    gapi.client.setToken({ access_token: savedTokenData.token });
-                    initGoogleSync();
+                    gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync();
                 }
             } catch(e) { console.error("GAPI Error:", e); }
         }
@@ -679,8 +696,7 @@
 
         function handleAuthClick() {
             if (!appConfig.clientId) return openSettings();
-            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
-            else tokenClient.requestAccessToken({prompt: ''});
+            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''});
         }
 
         function handleSignoutClick() {
@@ -688,26 +704,16 @@
             if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
             localStorage.removeItem('quadra_gapi_token');
             isGoogleSynced = false; clearInterval(syncIntervalId);
-            
-            // Show Overlay
             document.getElementById('auth-overlay').style.display = 'flex';
-            
-            // Reset header buttons
             document.getElementById('authorize_button').style.display = 'inline-block';
             document.getElementById('signout_button').style.display = 'none';
             document.getElementById('manualSyncBtn').style.display = 'none';
-            
-            // Clean up UI: Close the sidebar explicitly if user signs out while it is open
             document.getElementById('sidePanel').classList.remove('open');
             document.getElementById('sidebarToggleBtn').classList.remove('open');
             document.body.classList.remove('sidebar-open');
         }
 
-        function initGoogleSync() {
-            isGoogleSynced = true;
-            performBackgroundSync();
-            syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); 
-        }
+        function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
 
         async function performBackgroundSync() {
             if (!isGoogleSynced || !gapi.client.getToken()) return;
@@ -719,10 +725,7 @@
                     const expectedName = GAPI_LIST_NAMES[quadKey];
                     const existingList = remoteLists.find(l => l.title === expectedName);
                     if (existingList) { gapiListIds[quadKey] = existingList.id; } 
-                    else {
-                        const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName });
-                        gapiListIds[quadKey] = newListReq.result.id;
-                    }
+                    else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName }); gapiListIds[quadKey] = newListReq.result.id; }
                 }
 
                 let remoteTaskMap = {};
@@ -736,9 +739,7 @@
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 for (let sn of syncSnapshot) {
                     if (sn.deleted && sn.dirty) {
-                        if (remoteTaskMap[sn.id]) {
-                            try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){}
-                        }
+                        if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} }
                         sn.dirty = false; continue;
                     }
                     if (sn.dirty && !sn.deleted) {
@@ -753,28 +754,22 @@
                             if (remoteObj.listId !== targetListId) { 
                                 try {
                                     await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id });
-                                    const res = await gapi.client.tasks.tasks.insert(payload);
-                                    sn.tempId = sn.id; sn.id = res.result.id; 
+                                    const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; 
                                 } catch(e){}
                             } else { 
                                 try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){}
                             }
                             delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
                         } else { 
-                            try {
-                                const res = await gapi.client.tasks.tasks.insert(payload);
-                                sn.tempId = sn.id; sn.id = res.result.id;
-                            } catch(e){}
+                            try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){}
                         }
                         sn.dirty = false;
                     } 
                     else if (!sn.dirty && !sn.deleted) {
                         const remoteObj = remoteTaskMap[sn.id];
                         if (remoteObj) {
-                            sn.text = remoteObj.task.title || '';
-                            sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active';
-                            sn.quadrant = remoteObj.quadKey;
-                            sn.dueDate = remoteObj.task.due || null;
+                            sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active';
+                            sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null;
                             delete remoteTaskMap[sn.id];
                         }
                     }
@@ -784,26 +779,24 @@
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
                         status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null,
+                        timeLogs: {}, // Default empty logs for pure remote tasks
                         dirty: false, deleted: false
                     });
                 });
 
-                let newNotesArray = [];
-                let syncedIds = new Set();
+                let newNotesArray = []; let syncedIds = new Set();
                 syncSnapshot.forEach(sn => {
                     if (sn.deleted && !sn.dirty) return; 
                     const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
                     if (liveNote) {
+                        sn.timeLogs = liveNote.timeLogs || {}; // Protect local time logs during merge!
                         if (liveNote.dirty) {
-                            if (sn.tempId) liveNote.id = sn.id; 
-                            newNotesArray.push(liveNote);
+                            if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote);
                         } else { newNotesArray.push(sn); }
                         syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId);
                     } else { newNotesArray.push(sn); } 
                 });
-                notes.forEach(liveNote => {
-                    if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote);
-                });
+                notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
 
                 notes = newNotesArray; saveNotes(); handleSearch(); 
             } catch (e) { console.error("Sync Error:", e); }
@@ -813,43 +806,22 @@
         // --- Fast Local Actions ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
-        function allowDrop(ev) {
-            ev.preventDefault(); 
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) {
-                ev.currentTarget.classList.add('drag-over');
-            }
-        }
-        function dragLeave(ev) {
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) {
-                ev.currentTarget.classList.remove('drag-over');
-            }
-        }
+        function allowDrop(ev) { ev.preventDefault(); if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.add('drag-over'); }
+        function dragLeave(ev) { if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over'); }
         function drop(ev, newQuadrant) {
             ev.preventDefault();
             if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') ev.currentTarget.classList.remove('drag-over');
-            
-            const noteId = ev.dataTransfer.getData("text/plain");
-            const note = notes.find(n => n.id === noteId);
-            if (note && note.status === 'active' && note.quadrant !== newQuadrant) {
-                note.quadrant = newQuadrant; note.dirty = true;
-                saveNotes(); handleSearch();
-            }
+            const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
+            if (note && note.status === 'active' && note.quadrant !== newQuadrant) { note.quadrant = newQuadrant; note.dirty = true; saveNotes(); handleSearch(); }
         }
 
         function dropToCalendar(ev, dateString) {
-            ev.preventDefault();
-            ev.stopPropagation(); 
+            ev.preventDefault(); ev.stopPropagation(); 
             if(ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over');
-            
-            const noteId = ev.dataTransfer.getData("text/plain");
-            const note = notes.find(n => n.id === noteId);
-            
+            const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
             if (note && note.status === 'active') {
                 const isoDate = `${dateString}T00:00:00.000Z`; 
-                if (note.dueDate !== isoDate) {
-                    note.dueDate = isoDate; note.dirty = true;
-                    saveNotes(); handleSearch(); 
-                }
+                if (note.dueDate !== isoDate) { note.dueDate = isoDate; note.dirty = true; saveNotes(); handleSearch(); }
             }
         }
 
@@ -860,8 +832,7 @@
             const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), dateInput = document.getElementById('taskDueDate'), title = document.getElementById('taskModalTitle');
             if (noteId) {
                 currentEditingId = noteId; const note = notes.find(n => n.id === noteId);
-                title.innerText = 'Edit Task'; input.value = note.text;
-                dateInput.value = note.dueDate ? note.dueDate.substring(0, 10) : '';
+                title.innerText = 'Edit Task'; input.value = note.text; dateInput.value = note.dueDate ? note.dueDate.substring(0, 10) : '';
             } else {
                 currentEditingId = null; currentAddingQuadrant = quadrant;
                 title.innerText = 'Add Task'; input.value = ''; dateInput.value = '';
@@ -873,37 +844,142 @@
         function saveTaskModal() {
             const text = document.getElementById('taskInput').value.trim();
             if (!text) return closeTaskModal();
-            
             const dueDateVal = document.getElementById('taskDueDate').value; 
-            let isoDate = null;
-            if (dueDateVal) isoDate = `${dueDateVal}T00:00:00.000Z`; 
+            let isoDate = null; if (dueDateVal) isoDate = `${dueDateVal}T00:00:00.000Z`; 
 
             if (currentEditingId) {
                 const note = notes.find(n => n.id === currentEditingId);
                 if (note && (note.text !== text || note.dueDate !== isoDate)) { 
-                    note.text = text; note.dueDate = isoDate; note.dirty = true; 
-                    saveNotes(); handleSearch(); 
+                    note.text = text; note.dueDate = isoDate; note.dirty = true; saveNotes(); handleSearch(); 
                 }
             } else {
-                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', dueDate: isoDate, dirty: true, deleted: false });
+                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', dueDate: isoDate, timeLogs: {}, dirty: true, deleted: false });
                 saveNotes(); handleSearch();
             }
             closeTaskModal();
         }
         document.getElementById('taskInput').addEventListener('keydown', function(e) { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveTaskModal(); });
 
-        function completeTask(id) {
+        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
+
+        // --- Time Logging System ---
+        let currentTimeLogId = null;
+
+        function openTimeLogModal(id, e) {
+            e.stopPropagation();
+            currentTimeLogId = id;
             const note = notes.find(n => n.id === id);
-            if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); }
+            document.getElementById('timeLogTaskName').innerText = note.text;
+            
+            // Set date strictly to local YYYY-MM-DD
+            const today = new Date();
+            const y = today.getFullYear(), m = String(today.getMonth() + 1).padStart(2, '0'), d = String(today.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+            
+            document.getElementById('timeLogDate').value = dateStr;
+            document.getElementById('timeLogHours').value = (note.timeLogs && note.timeLogs[dateStr]) ? note.timeLogs[dateStr] : '';
+            document.getElementById('timeLogModal').style.display = 'flex';
         }
-        function restoreTask(id) {
-            const note = notes.find(n => n.id === id);
-            if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); }
+
+        function updateTimeLogInput() {
+            const dateStr = document.getElementById('timeLogDate').value;
+            const note = notes.find(n => n.id === currentTimeLogId);
+            document.getElementById('timeLogHours').value = (note && note.timeLogs && note.timeLogs[dateStr]) ? note.timeLogs[dateStr] : '';
         }
-        function deleteTask(id) {
-            const note = notes.find(n => n.id === id);
-            if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); }
+
+        function closeTimeLogModal() { document.getElementById('timeLogModal').style.display = 'none'; currentTimeLogId = null; }
+
+        function saveTimeLog() {
+            const dateStr = document.getElementById('timeLogDate').value;
+            const hours = parseFloat(document.getElementById('timeLogHours').value);
+            
+            if (dateStr && currentTimeLogId) {
+                const note = notes.find(n => n.id === currentTimeLogId);
+                if (!note.timeLogs) note.timeLogs = {};
+                
+                if (isNaN(hours) || hours <= 0) {
+                    delete note.timeLogs[dateStr]; // Clean up 0 hour entries
+                } else {
+                    note.timeLogs[dateStr] = hours;
+                }
+                
+                note.dirty = true;
+                saveNotes(); handleSearch();
+            }
+            closeTimeLogModal();
         }
+
+        // --- Daily Timesheet Report ---
+        function openTimesheetModal() {
+            const today = new Date();
+            const y = today.getFullYear(), m = String(today.getMonth() + 1).padStart(2, '0'), d = String(today.getDate()).padStart(2, '0');
+            document.getElementById('timesheetDate').value = `${y}-${m}-${d}`;
+            generateTimesheet();
+            document.getElementById('timesheetModal').style.display = 'flex';
+        }
+
+        function closeTimesheetModal() { document.getElementById('timesheetModal').style.display = 'none'; }
+
+        function generateTimesheet() {
+            const dateStr = document.getElementById('timesheetDate').value;
+            const container = document.getElementById('timesheetContent');
+            container.innerHTML = '';
+            
+            let total = 0;
+            let logEntries = [];
+
+            notes.forEach(note => {
+                if (!note.deleted && note.timeLogs && note.timeLogs[dateStr]) {
+                    const hrs = note.timeLogs[dateStr];
+                    total += hrs;
+                    
+                    // Format output
+                    const titleText = note.text.split('\n')[0].substring(0, 60); // First line snippet
+                    logEntries.push(`<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
+                        <span style="padding-right: 16px;">${parseTags(titleText)}</span>
+                        <strong>${hrs}h</strong>
+                    </div>`);
+                }
+            });
+
+            if (logEntries.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 40px 0;">No time logged for this date.</div>`;
+            } else {
+                container.innerHTML = logEntries.join('') + 
+                `<div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; font-weight:bold; font-size:16px; color: var(--brand-primary);">
+                    <span>Total Hours:</span><span>${total}h</span>
+                </div>`;
+            }
+        }
+
+        function copyTimesheet() {
+            const dateStr = document.getElementById('timesheetDate').value;
+            let total = 0;
+            let plainTextLog = `Timesheet: ${dateStr}\n------------------------\n`;
+
+            notes.forEach(note => {
+                if (!note.deleted && note.timeLogs && note.timeLogs[dateStr]) {
+                    const hrs = note.timeLogs[dateStr];
+                    total += hrs;
+                    
+                    // Try to extract only hashtags for the summary, or fallback to first 40 chars
+                    const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
+                    let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
+                    
+                    plainTextLog += `- [${identifier}] ${hrs}h\n`;
+                }
+            });
+            plainTextLog += `------------------------\nTotal: ${total}h`;
+
+            navigator.clipboard.writeText(plainTextLog).then(() => {
+                alert("Timesheet copied to clipboard!");
+            }).catch(err => {
+                console.error("Could not copy text: ", err);
+            });
+        }
+
 
         // --- Utility UI ---
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
@@ -985,41 +1061,28 @@
 
             const tagCounts = {};
             notes.forEach(note => {
-                // Only count tags for active tasks
                 if (!note.deleted && note.status === 'active') {
                     const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     if (matches) {
-                        // Map matches to lowercase so #Jira and #jira count together
                         const uniqueTagsInTask = new Set(matches.map(t => t.toLowerCase()));
-                        uniqueTagsInTask.forEach(tag => {
-                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-                        });
+                        uniqueTagsInTask.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
                     }
                 }
             });
 
             tagsBar.innerHTML = '';
-            
             const sortedTags = Object.keys(tagCounts).sort((a, b) => {
-                if (tagCounts[b] !== tagCounts[a]) {
-                    return tagCounts[b] - tagCounts[a];
-                }
+                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
                 return a.localeCompare(b); 
             });
 
             sortedTags.forEach(tag => {
                 const count = tagCounts[tag];
                 const tagBtn = document.createElement('button');
-                tagBtn.className = 'filter-tag';
-                tagBtn.innerText = `${tag} (${count})`;
-                
+                tagBtn.className = 'filter-tag'; tagBtn.innerText = `${tag} (${count})`;
                 tagBtn.onclick = (e) => {
                     const searchInput = document.getElementById('searchInput');
-                    if (searchInput.value === tag) {
-                        clearSearch(); 
-                    } else {
-                        searchTag(tag, e); 
-                    }
+                    if (searchInput.value === tag) { clearSearch(); } else { searchTag(tag, e); }
                 };
                 tagsBar.appendChild(tagBtn);
             });
@@ -1050,20 +1113,37 @@
                     const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
                     const textSpan = document.createElement('div'); textSpan.className = 'note-text'; textSpan.innerHTML = parseTags(note.text); 
                     contentWrapper.appendChild(textSpan);
-
+                    
+                    const metaDiv = document.createElement('div'); metaDiv.className = 'note-meta';
+                    
                     if (note.dueDate) {
                         const [yyyy, mm, dd] = note.dueDate.split('T')[0].split('-');
-                        const dateSpan = document.createElement('div');
-                        dateSpan.style.fontSize = '12px'; dateSpan.style.color = 'var(--brand-primary)'; dateSpan.style.marginTop = '6px'; dateSpan.style.fontWeight = '500';
-                        dateSpan.innerHTML = `🗓️ Due: ${dd}/${mm}/${yyyy}`;
-                        contentWrapper.appendChild(dateSpan);
+                        const dateSpan = document.createElement('span'); dateSpan.className = 'meta-due';
+                        dateSpan.innerHTML = `🗓️ ${dd}/${mm}/${yyyy}`;
+                        metaDiv.appendChild(dateSpan);
                     }
+
+                    // Calculate total time logged for this specific task
+                    let totalTaskTime = 0;
+                    if (note.timeLogs) {
+                        Object.values(note.timeLogs).forEach(hrs => totalTaskTime += hrs);
+                    }
+                    if (totalTaskTime > 0) {
+                        const timeSpan = document.createElement('span'); timeSpan.className = 'meta-time';
+                        timeSpan.innerHTML = `⏱️ ${totalTaskTime}h`;
+                        metaDiv.appendChild(timeSpan);
+                    }
+                    
+                    if (metaDiv.hasChildNodes()) contentWrapper.appendChild(metaDiv);
 
                     if (note.status === 'active') { contentWrapper.title = "Double-click to edit"; contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); }
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
                     if (note.status === 'active') {
-                        actionsDiv.innerHTML = `<button class="action-btn complete-btn" title="Complete" onclick="completeTask('${note.id}')">✓</button>`;
+                        actionsDiv.innerHTML = `
+                            <button class="action-btn time-btn" title="Log Time" onclick="openTimeLogModal('${note.id}', event)">⏱️</button>
+                            <button class="action-btn complete-btn" title="Complete" onclick="completeTask('${note.id}')">✓</button>
+                        `;
                     } else {
                         actionsDiv.innerHTML = `<button class="action-btn restore-btn" title="Restore" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" title="Delete" onclick="deleteTask('${note.id}')">×</button>`;
                     }
@@ -1076,7 +1156,6 @@
             document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox').length;
             
             if (currentLayout === 'calendar') renderCalendar();
-            
             renderTagsList();
         }
 
