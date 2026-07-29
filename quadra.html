@@ -30,18 +30,29 @@
             display: flex; 
             flex-direction: column; 
             overflow: hidden; 
+        }
+
+        /* --- Main Layout Wrapper --- */
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
             transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         @media (min-width: 769px) {
-            body.sidebar-open { padding-right: 350px; }
+            /* Only compress the main workspace, protecting the header */
+            body.sidebar-open .main-wrapper { padding-right: 350px; }
             body.sidebar-open #sync-banner { right: 374px; }
         }
 
         /* Header & Logo */
         header {
             background-color: #ffffff; padding: 16px 32px; border-bottom: 1px solid var(--border-color);
-            display: flex; justify-content: space-between; align-items: center; z-index: 10; gap: 24px; flex-shrink: 0;
+            display: flex; justify-content: space-between; align-items: center; z-index: 100; gap: 24px; flex-shrink: 0;
+            position: relative;
         }
 
         .header-left { display: flex; align-items: center; gap: 24px; flex-grow: 1; max-width: 600px; }
@@ -206,10 +217,9 @@
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
         
-        /* 3 Line Limit with precise sizing */
         .note-text { 
             white-space: pre-wrap; word-break: break-word;
-            max-height: 4.5em; /* 3 lines exact */
+            max-height: 4.5em; 
             overflow-y: auto; padding-right: 4px;
         }
         .note-text::-webkit-scrollbar { width: 4px; }
@@ -234,7 +244,8 @@
 
         /* --- Sticky Sidebar --- */
         .toggle-sidebar-btn {
-            position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+            position: absolute; 
+            right: 0; top: 50%; transform: translateY(-50%);
             background: var(--brand-primary); color: white; border: none; padding: 16px 8px; 
             border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91;
             display: flex; flex-direction: column; gap: 8px; align-items: center; 
@@ -244,7 +255,8 @@
         .toggle-sidebar-btn span { writing-mode: vertical-rl; text-orientation: mixed; font-weight: 600; letter-spacing: 1px; }
 
         .side-panel {
-            position: fixed; top: 0; right: -350px; width: 350px; height: 100vh;
+            position: absolute; 
+            top: 0; right: -350px; width: 350px; height: 100%; 
             background: #ffffff; z-index: 90; box-shadow: -5px 0 20px rgba(0,0,0,0.1);
             display: flex; flex-direction: column; border-left: 1px solid var(--border-color);
             transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -304,13 +316,14 @@
             .side-panel { width: 320px; right: -320px; max-width: 100vw; }
             .toggle-sidebar-btn.open { right: 320px; }
             
-            body.sidebar-open { padding-right: 0; }
+            body.sidebar-open .main-wrapper { padding-right: 0; } 
             body.sidebar-open #sync-banner { right: 24px; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Header acts natively above the dynamic workspace -->
     <header>
         <div class="header-left">
             <div class="brand-container">
@@ -349,108 +362,112 @@
 
     <div id="sync-banner"><span class="spin">↻</span> Syncing with Google...</div>
 
-    <!-- Toggle Sidebar Button -->
-    <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
-        <span>📥 Trays</span>
-    </button>
-
-    <!-- Side Panel -->
-    <div id="sidePanel" class="side-panel">
-        <div class="side-panel-header">
-            <h2>Trays</h2>
-            <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close Sidebar">×</button>
-        </div>
+    <!-- MAIN WORKSPACE: Handles Side Panel Padding Squeeze -->
+    <div class="main-wrapper">
         
-        <!-- Inbox Tray -->
-        <div class="inbox-tray">
-            <div class="tray-header" onclick="toggleInboxTray()">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <h3>Inbox (<span id="inbox-count">0</span>)</h3>
-                    <button class="icon-btn add-btn" style="width: 24px; height: 24px; font-size: 16px;" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
+        <!-- Toggle Sidebar Button -->
+        <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
+            <span>📥 Trays</span>
+        </button>
+
+        <!-- Side Panel -->
+        <div id="sidePanel" class="side-panel">
+            <div class="side-panel-header">
+                <h2>Trays</h2>
+                <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close Sidebar">×</button>
+            </div>
+            
+            <!-- Inbox Tray -->
+            <div class="inbox-tray">
+                <div class="tray-header" onclick="toggleInboxTray()">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3>Inbox (<span id="inbox-count">0</span>)</h3>
+                        <button class="icon-btn add-btn" style="width: 24px; height: 24px; font-size: 16px;" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
+                    </div>
+                    <span id="inbox-chevron" style="color: var(--text-muted);">▼</span>
                 </div>
-                <span id="inbox-chevron" style="color: var(--text-muted);">▼</span>
-            </div>
-            <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
-                <div class="task-list" id="list-inbox"></div>
-            </div>
-        </div>
-
-        <!-- Completed Tray -->
-        <div class="closed-tray">
-            <div class="tray-header" onclick="toggleClosedTray()">
-                <h3>Completed (<span id="closed-count">0</span>)</h3>
-                <span id="closed-chevron" style="color: var(--text-muted);">▲</span>
-            </div>
-            <div class="tray-content" id="closed-tray-content">
-                <div class="task-list" id="list-closed"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Matrix View -->
-    <div id="matrix" class="matrix-container layout-grid">
-        <div id="auth-overlay" class="overlay">
-            <h3 id="overlay-title">Google Tasks Sync</h3>
-            <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
-            <div class="overlay-actions" id="overlay-actions"></div>
-        </div>
-
-        <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
-            <div class="q-header">
-                <h2>Do First</h2>
-                <div class="header-buttons">
-                    <button class="icon-btn add-btn" onclick="openTaskModal('q1', null, event)" title="Add Task">+</button>
-                    <button class="icon-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button>
+                <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
+                    <div class="task-list" id="list-inbox"></div>
                 </div>
             </div>
-            <div class="task-list" id="list-q1"></div>
-        </div>
 
-        <div class="quadrant" id="q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q2')">
-            <div class="q-header">
-                <h2>Schedule</h2>
-                <div class="header-buttons">
-                    <button class="icon-btn add-btn" onclick="openTaskModal('q2', null, event)" title="Add Task">+</button>
-                    <button class="icon-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button>
+            <!-- Completed Tray -->
+            <div class="closed-tray">
+                <div class="tray-header" onclick="toggleClosedTray()">
+                    <h3>Completed (<span id="closed-count">0</span>)</h3>
+                    <span id="closed-chevron" style="color: var(--text-muted);">▲</span>
+                </div>
+                <div class="tray-content" id="closed-tray-content">
+                    <div class="task-list" id="list-closed"></div>
                 </div>
             </div>
-            <div class="task-list" id="list-q2"></div>
         </div>
 
-        <div class="quadrant" id="q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q3')">
-            <div class="q-header">
-                <h2>Delegate</h2>
-                <div class="header-buttons">
-                    <button class="icon-btn add-btn" onclick="openTaskModal('q3', null, event)" title="Add Task">+</button>
-                    <button class="icon-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button>
-                </div>
+        <!-- Matrix View -->
+        <div id="matrix" class="matrix-container layout-grid">
+            <div id="auth-overlay" class="overlay">
+                <h3 id="overlay-title">Google Tasks Sync</h3>
+                <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
+                <div class="overlay-actions" id="overlay-actions"></div>
             </div>
-            <div class="task-list" id="list-q3"></div>
-        </div>
 
-        <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
-            <div class="q-header">
-                <h2>Later</h2>
-                <div class="header-buttons">
-                    <button class="icon-btn add-btn" onclick="openTaskModal('q4', null, event)" title="Add Task">+</button>
-                    <button class="icon-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button>
+            <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
+                <div class="q-header">
+                    <h2>Do First</h2>
+                    <div class="header-buttons">
+                        <button class="icon-btn add-btn" onclick="openTaskModal('q1', null, event)" title="Add Task">+</button>
+                        <button class="icon-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button>
+                    </div>
                 </div>
+                <div class="task-list" id="list-q1"></div>
             </div>
-            <div class="task-list" id="list-q4"></div>
-        </div>
-    </div>
 
-    <!-- Weekly Calendar View -->
-    <div id="calendar-view">
-        <div class="calendar-header">
-            <button class="btn btn-outline" onclick="changeWeek(-1)">← Prev Week</button>
-            <h2 id="calendar-month-year" style="font-size: 20px; font-weight: 700;"></h2>
-            <button class="btn btn-outline" onclick="changeWeek(1)">Next Week →</button>
+            <div class="quadrant" id="q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q2')">
+                <div class="q-header">
+                    <h2>Schedule</h2>
+                    <div class="header-buttons">
+                        <button class="icon-btn add-btn" onclick="openTaskModal('q2', null, event)" title="Add Task">+</button>
+                        <button class="icon-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button>
+                    </div>
+                </div>
+                <div class="task-list" id="list-q2"></div>
+            </div>
+
+            <div class="quadrant" id="q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q3')">
+                <div class="q-header">
+                    <h2>Delegate</h2>
+                    <div class="header-buttons">
+                        <button class="icon-btn add-btn" onclick="openTaskModal('q3', null, event)" title="Add Task">+</button>
+                        <button class="icon-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button>
+                    </div>
+                </div>
+                <div class="task-list" id="list-q3"></div>
+            </div>
+
+            <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
+                <div class="q-header">
+                    <h2>Later</h2>
+                    <div class="header-buttons">
+                        <button class="icon-btn add-btn" onclick="openTaskModal('q4', null, event)" title="Add Task">+</button>
+                        <button class="icon-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button>
+                    </div>
+                </div>
+                <div class="task-list" id="list-q4"></div>
+            </div>
         </div>
-        <div class="calendar-grid" id="calendar-grid">
-            <!-- Rendered dynamically -->
+
+        <!-- Weekly Calendar View -->
+        <div id="calendar-view">
+            <div class="calendar-header">
+                <button class="btn btn-outline" onclick="changeWeek(-1)">← Prev Week</button>
+                <h2 id="calendar-month-year" style="font-size: 20px; font-weight: 700;"></h2>
+                <button class="btn btn-outline" onclick="changeWeek(1)">Next Week →</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Rendered dynamically -->
+            </div>
         </div>
-    </div>
+    </div> <!-- END .main-wrapper -->
 
     <!-- Task Add/Edit Modal -->
     <div id="taskModal" class="modal">
@@ -792,14 +809,14 @@
 
         function dropToCalendar(ev, dateString) {
             ev.preventDefault();
-            ev.stopPropagation(); // Prevent bubbling 
+            ev.stopPropagation(); 
             if(ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over');
             
             const noteId = ev.dataTransfer.getData("text/plain");
             const note = notes.find(n => n.id === noteId);
             
             if (note && note.status === 'active') {
-                const isoDate = `${dateString}T00:00:00.000Z`; // Hard-mapped timezone string bypasses browser conversion
+                const isoDate = `${dateString}T00:00:00.000Z`; 
                 if (note.dueDate !== isoDate) {
                     note.dueDate = isoDate; note.dirty = true;
                     saveNotes(); handleSearch(); 
@@ -828,7 +845,7 @@
             const text = document.getElementById('taskInput').value.trim();
             if (!text) return closeTaskModal();
             
-            const dueDateVal = document.getElementById('taskDueDate').value; // YYYY-MM-DD
+            const dueDateVal = document.getElementById('taskDueDate').value; 
             let isoDate = null;
             if (dueDateVal) isoDate = `${dueDateVal}T00:00:00.000Z`; 
 
@@ -955,7 +972,6 @@
             
             let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery.toLowerCase()));
 
-            // Smart Sort: No Date comes first, then ascending dates.
             filteredNotes.sort((a, b) => {
                 if (!a.dueDate && !b.dueDate) return 0;
                 if (!a.dueDate) return -1;
@@ -975,7 +991,6 @@
                     contentWrapper.appendChild(textSpan);
 
                     if (note.dueDate) {
-                        // Strict format bypassing browser timezones
                         const [yyyy, mm, dd] = note.dueDate.split('T')[0].split('-');
                         const dateSpan = document.createElement('div');
                         dateSpan.style.fontSize = '12px'; dateSpan.style.color = 'var(--brand-primary)'; dateSpan.style.marginTop = '6px'; dateSpan.style.fontWeight = '500';
