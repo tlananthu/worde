@@ -159,12 +159,13 @@
         .calendar-task:active { cursor: grabbing; transform: scale(0.98); }
         .calendar-task:hover { filter: brightness(0.95); }
 
-        /* Overlays */
+        /* Overlays - Adjusted to cover full main wrapper */
         .overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(249, 250, 251, 0.95); z-index: 50; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
-            border-radius: 16px; text-align: center; backdrop-filter: blur(4px);
+            background: rgba(249, 250, 251, 0.95); 
+            z-index: 95; /* Covers tags and sidebar toggle, below header */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; backdrop-filter: blur(4px);
         }
         .overlay h3 { margin-bottom: 12px; font-size: 22px; }
         .overlay p { color: var(--text-muted); margin-bottom: 24px; max-width: 450px; line-height: 1.5; }
@@ -380,6 +381,13 @@
     <!-- MAIN WORKSPACE: Handles Side Panel Padding Squeeze -->
     <div class="main-wrapper">
         
+        <!-- Auth Overlay now covers the entire workspace wrapper (Tags, Matrix, and Side Panel) -->
+        <div id="auth-overlay" class="overlay">
+            <h3 id="overlay-title">Google Tasks Sync</h3>
+            <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
+            <div class="overlay-actions" id="overlay-actions"></div>
+        </div>
+
         <!-- Quick Filter Tags Bar -->
         <div id="quick-tags-bar" class="tags-bar">
             <!-- Rendered dynamically -->
@@ -425,12 +433,6 @@
 
         <!-- Matrix View -->
         <div id="matrix" class="matrix-container layout-grid">
-            <div id="auth-overlay" class="overlay">
-                <h3 id="overlay-title">Google Tasks Sync</h3>
-                <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
-                <div class="overlay-actions" id="overlay-actions"></div>
-            </div>
-
             <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
                 <div class="q-header">
                     <h2>Do First</h2>
@@ -571,6 +573,16 @@
             document.body.classList.toggle('sidebar-open');
         }
 
+        function openSidebar() {
+            const panel = document.getElementById('sidePanel');
+            const btn = document.getElementById('sidebarToggleBtn');
+            if (!panel.classList.contains('open')) {
+                panel.classList.add('open');
+                btn.classList.add('open');
+                document.body.classList.add('sidebar-open');
+            }
+        }
+
         function toggleClosedTray() {
             const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron');
             if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
@@ -678,10 +690,19 @@
             if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
             localStorage.removeItem('quadra_gapi_token');
             isGoogleSynced = false; clearInterval(syncIntervalId);
+            
+            // Show Overlay
+            document.getElementById('auth-overlay').style.display = 'flex';
+            
+            // Reset header buttons
             document.getElementById('authorize_button').style.display = 'inline-block';
             document.getElementById('signout_button').style.display = 'none';
             document.getElementById('manualSyncBtn').style.display = 'none';
-            document.getElementById('auth-overlay').style.display = 'flex';
+            
+            // Clean up UI: Close the sidebar explicitly if user signs out while it is open
+            document.getElementById('sidePanel').classList.remove('open');
+            document.getElementById('sidebarToggleBtn').classList.remove('open');
+            document.body.classList.remove('sidebar-open');
         }
 
         function initGoogleSync() {
