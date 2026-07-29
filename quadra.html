@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quadra | Eisenhower Matrix</title>
+    <title>Quadra | Eisenhower Matrix & Time Tracker</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -19,6 +19,8 @@
             --q2-bg: #E0F2FE; 
             --q3-bg: #FEF3C7; 
             --q4-bg: #F1F5F9; 
+            
+            --hour-height: 60px; /* 1 pixel = 1 minute */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -32,13 +34,9 @@
             overflow: hidden; 
         }
 
-        /* --- Main Layout Wrapper --- */
         .main-wrapper {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
+            display: flex; flex-direction: column; flex-grow: 1;
+            position: relative; overflow: hidden;
             transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -59,289 +57,136 @@
         .logo-svg { width: 28px; height: 28px; color: var(--brand-primary); }
         header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 
-        /* Search Box */
         .search-container { flex-grow: 1; position: relative; }
         .search-container input {
             width: 100%; padding: 10px 36px 10px 40px; border-radius: 20px;
             border: 1px solid var(--border-color); background: var(--bg-main);
             font-size: 14px; outline: none; transition: all 0.2s;
         }
-        .search-container input:focus {
-            border-color: var(--brand-primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); background: #ffffff;
-        }
-        .search-icon {
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-            color: var(--text-muted); width: 16px; height: 16px;
-        }
-        .clear-search {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; font-size: 18px; color: var(--text-muted);
-            cursor: pointer; display: none; line-height: 1; padding: 0 4px;
-        }
+        .search-container input:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); background: #ffffff; }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; height: 16px; }
+        .clear-search { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; display: none; line-height: 1; padding: 0 4px; }
         .clear-search:hover { color: var(--text-main); }
 
         .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
 
-        /* View Toggle */
         .view-toggle { display: flex; background-color: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; margin-right: 8px; }
-        .view-toggle button {
-            background: transparent; border: none; padding: 6px 12px; border-radius: 6px;
-            font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
-        }
+        .view-toggle button { background: transparent; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
         .view-toggle button:hover { color: var(--text-main); }
         .view-toggle button.active { background-color: white; color: var(--brand-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-        .btn {
-            background-color: var(--brand-primary); color: white; border: none; padding: 8px 16px;
-            border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background-color 0.2s;
-        }
+        .btn { background-color: var(--brand-primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: background-color 0.2s; }
         .btn:hover { background-color: var(--brand-primary-hover); }
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
-        .btn-success { background-color: #10B981; color: white; border: none; }
-        .btn-success:hover { background-color: #059669; }
         
         #backBtn, #signout_button, #authorize_button { display: none; }
 
-        /* Quick Filter Tags Bar */
-        .tags-bar {
-            display: flex; gap: 8px; padding: 12px 32px; background: #ffffff;
-            border-bottom: 1px solid var(--border-color); overflow-x: auto;
-            flex-shrink: 0; scrollbar-width: none; -ms-overflow-style: none;
-        }
+        .tags-bar { display: flex; gap: 8px; padding: 12px 32px; background: #ffffff; border-bottom: 1px solid var(--border-color); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; -ms-overflow-style: none; }
         .tags-bar::-webkit-scrollbar { display: none; }
         .tags-bar:empty { display: none; }
-        .filter-tag {
-            background: rgba(79, 70, 229, 0.08); color: var(--brand-primary);
-            padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600;
-            cursor: pointer; white-space: nowrap; transition: all 0.2s; border: 1px solid transparent;
-        }
+        .filter-tag { background: rgba(79, 70, 229, 0.08); color: var(--brand-primary); padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; border: 1px solid transparent; }
         .filter-tag:hover { background: rgba(79, 70, 229, 0.15); transform: translateY(-1px); }
 
         /* Matrix Layout */
-        .matrix-container {
-            display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
-            max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto;
-        }
+        .matrix-container { display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease; max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto; }
         .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-width: 700px; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
-        .matrix-container.fullscreen { display: flex; overflow: hidden; min-width: 0; }
-        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
-        .matrix-container.fullscreen .quadrant.active { display: flex; }
 
-        /* Weekly Calendar Layout */
-        #calendar-view { 
-            display: none; padding: 24px; flex-grow: 1; max-width: 1600px; 
-            margin: 0 auto; width: 100%; overflow-y: auto; overflow-x: auto;
-        }
-        .calendar-header { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; min-width: 700px; }
-        .calendar-day-header { font-weight: 600; text-align: center; color: var(--text-muted); font-size: 14px; padding-bottom: 8px; }
-        .calendar-cell { 
-            background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; 
-            min-height: 400px; padding: 10px; display: flex; flex-direction: column; transition: all 0.2s; 
-        }
-        .calendar-cell.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; background-color: rgba(79, 70, 229, 0.05); }
-        .calendar-cell .day-number { 
-            font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; 
-            align-self: flex-end; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; 
-        }
-        .calendar-cell.today .day-number { background: var(--brand-primary); color: white; }
-        .calendar-cell .task-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-        
-        .calendar-task { 
-            font-size: 12px; font-weight: 500; padding: 6px 8px; border-radius: 6px; cursor: grab; 
-            border: 1px solid rgba(0,0,0,0.05); transition: transform 0.1s; 
-            white-space: pre-wrap; word-break: break-word; line-height: 1.4;
-            max-height: 4.2em; overflow-y: auto;
-        }
-        .calendar-task::-webkit-scrollbar { width: 4px; }
-        .calendar-task::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 4px; }
-        .calendar-task:active { cursor: grabbing; transform: scale(0.98); }
-        .calendar-task:hover { filter: brightness(0.95); }
-
-        /* Overlays */
-        .overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(249, 250, 251, 0.95); 
-            z-index: 95; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; backdrop-filter: blur(4px);
-        }
-        .overlay h3 { margin-bottom: 12px; font-size: 22px; }
-        .overlay p { color: var(--text-muted); margin-bottom: 24px; max-width: 450px; line-height: 1.5; }
-
-        /* Modals */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center;
-        }
-        .modal-content {
-            background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px;
-        }
-        .modal-content h3 { font-size: 20px; }
-        .form-group { text-align: left; }
-        .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
-        .form-group input:focus { border-color: var(--brand-primary); }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
-
-        #taskInput {
-            width: 100%; padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); 
-            font-family: inherit; font-size: 15px; outline: none; resize: vertical; line-height: 1.5;
-            background: #F9FAFB;
-        }
-        #taskInput:focus { background: #ffffff; border-color: var(--brand-primary); }
-        
-        #taskDueDate { width: auto; min-width: 180px; padding: 10px 14px; cursor: pointer; }
-
-        /* Quadrants */
-        .quadrant { 
-            border-radius: 16px; padding: 20px; display: flex; flex-direction: column; 
-            border: 1px solid rgba(0,0,0,0.05); min-height: 0; transition: box-shadow 0.2s;
-        }
+        .quadrant { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); min-height: 0; transition: box-shadow 0.2s; }
         .quadrant.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
-
-        #q1 { background-color: var(--q1-bg); }
-        #q2 { background-color: var(--q2-bg); }
-        #q3 { background-color: var(--q3-bg); }
-        #q4 { background-color: var(--q4-bg); }
+        #q1 { background-color: var(--q1-bg); } #q2 { background-color: var(--q2-bg); } #q3 { background-color: var(--q3-bg); } #q4 { background-color: var(--q4-bg); }
 
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .q-header h2 { font-size: 16px; font-weight: 600; }
         
         .header-buttons { display: flex; gap: 8px; align-items: center; }
-        
-        .icon-btn {
-            background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px;
-            border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            color: var(--text-muted); transition: all 0.2s; font-size: 16px; font-weight: bold;
-        }
+        .icon-btn { background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; font-size: 16px; font-weight: bold; }
         .icon-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
-        .add-btn { color: var(--brand-primary); font-size: 20px; }
 
         .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
         /* Note Styling */
-        .note {
-            background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px;
-            margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between;
-            align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab; transition: transform 0.2s, box-shadow 0.2s;
-        }
+        .note { background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
         .note:active { cursor: grabbing; }
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
-        
-        .note-text { 
-            white-space: pre-wrap; word-break: break-word;
-            max-height: 4.5em; 
-            overflow-y: auto; padding-right: 4px;
-        }
-        .note-text::-webkit-scrollbar { width: 4px; }
-        .note-text::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
-
+        .note-text { white-space: pre-wrap; word-break: break-word; max-height: 4.5em; overflow-y: auto; padding-right: 4px; }
+        .note-text::-webkit-scrollbar { width: 4px; } .note-text::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
         .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
         .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
-
-        .note-meta { display: flex; gap: 12px; align-items: center; margin-top: 6px; font-size: 12px; font-weight: 500; }
-        .meta-due { color: var(--brand-primary); }
-        .meta-time { color: #8B5CF6; background: rgba(139, 92, 246, 0.1); padding: 2px 6px; border-radius: 4px;}
 
         .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; flex-shrink: 0; }
         .note:hover .note-actions { opacity: 1; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; font-weight: bold; }
-        .complete-btn { color: #10B981; } 
-        .complete-btn:hover { color: #059669; }
-        .delete-btn { color: #EF4444; }   
-        .delete-btn:hover { color: #DC2626; }
-        .restore-btn { color: #3B82F6; }  
-        .restore-btn:hover { color: #2563EB; }
-        .time-btn { color: #8B5CF6; font-size: 16px; }
-        .time-btn:hover { color: #6D28D9; }
-
+        .complete-btn { color: #10B981; } .delete-btn { color: #EF4444; } .restore-btn { color: #3B82F6; }  
         .closed-note { opacity: 0.6; box-shadow: none; cursor: default; }
-        .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
-        .closed-note .note-text { text-decoration: line-through; cursor: default; overflow-y: hidden; }
+        .closed-note .note-text { text-decoration: line-through; }
+
+        /* --- TIME TRACKER VIEW (New) --- */
+        #tracker-view { display: none; flex-grow: 1; width: 100%; overflow: hidden; background: #ffffff; }
+        .tracker-layout { display: flex; height: 100%; }
+        
+        /* Palette Left */
+        .tracker-palette { width: 350px; flex-shrink: 0; border-right: 1px solid var(--border-color); background: var(--bg-main); display: flex; flex-direction: column; overflow: hidden;}
+        .palette-header { padding: 16px; border-bottom: 1px solid var(--border-color); background: #ffffff; }
+        .palette-header h3 { font-size: 15px; margin-bottom: 4px; }
+        .palette-header p { font-size: 12px; color: var(--text-muted); }
+        .palette-list { flex-grow: 1; overflow-y: auto; padding: 16px; }
+        .palette-note { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-size: 13px; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        .palette-note:active { cursor: grabbing; }
+
+        /* Canvas Right */
+        .tracker-canvas-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; }
+        .tracker-toolbar { padding: 16px 24px; background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
+        .tracker-toolbar h2 { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 12px;}
+        .tracker-toolbar input[type="date"] { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; }
+        
+        .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
+        .timeline { position: relative; height: 1440px; /* 24 hours * 60px */ margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        
+        .time-row { position: absolute; width: 100%; border-bottom: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 12px; }
+        .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; transform: translateY(-50%); background: #ffffff; padding: 0 4px;}
+        
+        .schedule-overlay { position: absolute; width: 100%; left: 0; background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px ); pointer-events: none; z-index: 1; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .logged-block { position: absolute; left: 80px; right: 24px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 8px 12px; font-size: 13px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: pointer; transition: transform 0.1s;}
+        .logged-block:hover { transform: translateX(-2px); }
+        .block-title { font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .block-meta { font-size: 11px; opacity: 0.8; }
+
+        /* Drop Target */
+        .timeline.drag-over { background: rgba(79, 70, 229, 0.03); border-color: var(--brand-primary); }
 
         /* --- Sticky Sidebar --- */
-        .toggle-sidebar-btn {
-            position: absolute; 
-            right: 0; top: 50%; transform: translateY(-50%);
-            background: var(--brand-primary); color: white; border: none; padding: 16px 8px; 
-            border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91;
-            display: flex; flex-direction: column; gap: 8px; align-items: center; 
-            box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .toggle-sidebar-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: var(--brand-primary); color: white; border: none; padding: 16px 8px; border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91; display: flex; flex-direction: column; gap: 8px; align-items: center; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .toggle-sidebar-btn.open { right: 350px; }
         .toggle-sidebar-btn span { writing-mode: vertical-rl; text-orientation: mixed; font-weight: 600; letter-spacing: 1px; }
 
-        .side-panel {
-            position: absolute; 
-            top: 0; right: -350px; width: 350px; height: 100%; 
-            background: #ffffff; z-index: 90; box-shadow: -5px 0 20px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; border-left: 1px solid var(--border-color);
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        .side-panel { position: absolute; top: 0; right: -350px; width: 350px; height: 100%; background: #ffffff; z-index: 90; box-shadow: -5px 0 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; border-left: 1px solid var(--border-color); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .side-panel.open { right: 0; }
-        
-        .side-panel-header {
-            padding: 16px 24px; display: flex; justify-content: space-between; 
-            align-items: center; border-bottom: 1px solid var(--border-color);
-            background: #F8FAFC; flex-shrink: 0;
-        }
+        .side-panel-header { padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); background: #F8FAFC; flex-shrink: 0; }
         .side-panel-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
         .close-sidebar-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
-        .close-sidebar-btn:hover { color: var(--text-main); }
-
-        .side-panel .inbox-tray, .side-panel .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
-        .side-panel .closed-tray { border-top: 1px solid var(--border-color); }
         
-        .side-panel .tray-header { 
-            padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; 
-            align-items: center; background: #ffffff; transition: background 0.2s; 
-        }
-        .side-panel .tray-header:hover { background: #F9FAFB; }
-        .side-panel .tray-header h3 { font-size: 14px; font-weight: 600; }
-        .side-panel .inbox-tray h3 { color: var(--brand-primary); }
-        .side-panel .closed-tray h3 { color: var(--text-muted); }
+        .tray-header { padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background 0.2s; border-bottom: 1px solid var(--border-color);}
+        .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
+        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; border-bottom: 1px solid var(--border-color);}
 
-        .side-panel .tray-content { 
-            height: 0; overflow: hidden; display: flex; flex-direction: column; 
-            transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC;
-        }
-        .side-panel .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; }
-        .side-panel .task-list { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; overflow-y: visible; }
+        /* Overlays & Modals */
+        .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; }
+        .form-group { text-align: left; }
+        .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--brand-primary); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
-        /* Sync Banner */
-        #sync-banner {
-            display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text-main); 
-            color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        #sync-banner { display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text-main); color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            header { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
-            .header-left { max-width: 100%; }
-            .header-actions { flex-direction: column; align-items: stretch; gap: 12px; }
-            
-            .view-toggle { display: flex; width: 100%; margin: 0; justify-content: space-between; order: -1; }
-            .view-toggle button { flex: 1; padding: 8px 0; text-align: center; }
-            
-            .matrix-container.layout-grid { display: flex; flex-direction: column; min-width: 0; }
-            .quadrant { min-height: 400px; }
-
-            .side-panel { width: 320px; right: -320px; max-width: 100vw; }
-            .toggle-sidebar-btn.open { right: 320px; }
-            
-            body.sidebar-open .main-wrapper { padding-right: 0; } 
-            body.sidebar-open #sync-banner { right: 24px; }
-        }
     </style>
 </head>
 <body>
@@ -369,24 +214,20 @@
         </div>
         
         <div class="header-actions">
-            <button class="btn btn-outline" onclick="openTimesheetModal()" title="View Daily Timesheet">📋 Timesheet</button>
+            <button class="btn btn-outline" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
             <div class="view-toggle">
-                <button id="btnGrid" onclick="setLayout('grid')">⊞ Grid</button>
-                <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
-                <button id="btnCalendar" onclick="setLayout('calendar')">📅 Calendar</button>
+                <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
+                <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Time Tracker</button>
             </div>
-            <button id="backBtn" class="btn" onclick="exitFullscreen()">← Back to Matrix</button>
-            <button class="icon-btn" style="display: none;" id="manualSyncBtn" onclick="performBackgroundSync()" title="Force Sync to Google">↻</button>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
             <button class="btn btn-outline" onclick="openSettings()">⚙️ Settings</button>
         </div>
     </header>
 
-    <div id="sync-banner"><span class="spin">↻</span> Syncing with Google...</div>
+    <div id="sync-banner"><span class="spin">↻</span> Syncing...</div>
 
     <div class="main-wrapper">
-        
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
             <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
@@ -402,138 +243,89 @@
         <div id="sidePanel" class="side-panel">
             <div class="side-panel-header">
                 <h2>Trays</h2>
-                <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close Sidebar">×</button>
+                <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
             </div>
-            
-            <div class="inbox-tray">
-                <div class="tray-header" onclick="toggleInboxTray()">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <h3>Inbox (<span id="inbox-count">0</span>)</h3>
-                        <button class="icon-btn add-btn" style="width: 24px; height: 24px; font-size: 16px;" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
-                    </div>
-                    <span id="inbox-chevron" style="color: var(--text-muted);">▼</span>
-                </div>
-                <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
-                    <div class="task-list" id="list-inbox"></div>
-                </div>
+            <div class="tray-header" onclick="toggleInboxTray()">
+                <h3>Inbox (<span id="inbox-count">0</span>)</h3>
+                <span id="inbox-chevron">▼</span>
             </div>
-
-            <div class="closed-tray">
-                <div class="tray-header" onclick="toggleClosedTray()">
-                    <h3>Completed (<span id="closed-count">0</span>)</h3>
-                    <span id="closed-chevron" style="color: var(--text-muted);">▲</span>
-                </div>
-                <div class="tray-content" id="closed-tray-content">
-                    <div class="task-list" id="list-closed"></div>
-                </div>
+            <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
+                <div class="task-list" id="list-inbox"></div>
+            </div>
+            <div class="tray-header" onclick="toggleClosedTray()">
+                <h3>Completed (<span id="closed-count">0</span>)</h3>
+                <span id="closed-chevron">▲</span>
+            </div>
+            <div class="tray-content" id="closed-tray-content">
+                <div class="task-list" id="list-closed"></div>
             </div>
         </div>
 
+        <!-- Matrix View -->
         <div id="matrix" class="matrix-container layout-grid">
             <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
-                <div class="q-header">
-                    <h2>Do First</h2>
-                    <div class="header-buttons">
-                        <button class="icon-btn add-btn" onclick="openTaskModal('q1', null, event)" title="Add Task">+</button>
-                        <button class="icon-btn" onclick="toggleFullscreen('q1')" title="Toggle Fullscreen">⛶</button>
-                    </div>
-                </div>
+                <div class="q-header"><h2>Do First</h2><button class="icon-btn add-btn" onclick="openTaskModal('q1')">+</button></div>
                 <div class="task-list" id="list-q1"></div>
             </div>
-
             <div class="quadrant" id="q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q2')">
-                <div class="q-header">
-                    <h2>Schedule</h2>
-                    <div class="header-buttons">
-                        <button class="icon-btn add-btn" onclick="openTaskModal('q2', null, event)" title="Add Task">+</button>
-                        <button class="icon-btn" onclick="toggleFullscreen('q2')" title="Toggle Fullscreen">⛶</button>
-                    </div>
-                </div>
+                <div class="q-header"><h2>Schedule</h2><button class="icon-btn add-btn" onclick="openTaskModal('q2')">+</button></div>
                 <div class="task-list" id="list-q2"></div>
             </div>
-
             <div class="quadrant" id="q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q3')">
-                <div class="q-header">
-                    <h2>Delegate</h2>
-                    <div class="header-buttons">
-                        <button class="icon-btn add-btn" onclick="openTaskModal('q3', null, event)" title="Add Task">+</button>
-                        <button class="icon-btn" onclick="toggleFullscreen('q3')" title="Toggle Fullscreen">⛶</button>
-                    </div>
-                </div>
+                <div class="q-header"><h2>Delegate</h2><button class="icon-btn add-btn" onclick="openTaskModal('q3')">+</button></div>
                 <div class="task-list" id="list-q3"></div>
             </div>
-
             <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
-                <div class="q-header">
-                    <h2>Later</h2>
-                    <div class="header-buttons">
-                        <button class="icon-btn add-btn" onclick="openTaskModal('q4', null, event)" title="Add Task">+</button>
-                        <button class="icon-btn" onclick="toggleFullscreen('q4')" title="Toggle Fullscreen">⛶</button>
-                    </div>
-                </div>
+                <div class="q-header"><h2>Later</h2><button class="icon-btn add-btn" onclick="openTaskModal('q4')">+</button></div>
                 <div class="task-list" id="list-q4"></div>
             </div>
         </div>
 
-        <div id="calendar-view">
-            <div class="calendar-header">
-                <button class="btn btn-outline" onclick="changeWeek(-1)">← Prev Week</button>
-                <h2 id="calendar-month-year" style="font-size: 20px; font-weight: 700;"></h2>
-                <button class="btn btn-outline" onclick="changeWeek(1)">Next Week →</button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid"></div>
-        </div>
-    </div>
-
-    <!-- Time Logging Modal -->
-    <div id="timeLogModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
-            <h3>Log Time</h3>
-            <p id="timeLogTaskName" style="color: var(--text-muted); font-size: 13px; margin-top: -8px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></p>
-            <div class="form-group">
-                <label>Date Worked</label>
-                <input type="date" id="timeLogDate" onchange="updateTimeLogInput()">
-            </div>
-            <div class="form-group">
-                <label>Total Hours for this Date</label>
-                <input type="number" id="timeLogHours" placeholder="e.g. 1.5" step="0.25" min="0">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-outline" onclick="closeTimeLogModal()">Cancel</button>
-                <button class="btn" onclick="saveTimeLog()">Save Time</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Timesheet Report Modal -->
-    <div id="timesheetModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>Daily Timesheet</h3>
-                <input type="date" id="timesheetDate" style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px;" onchange="generateTimesheet()">
-            </div>
-            
-            <div id="timesheetContent" style="background: var(--bg-main); padding: 16px; border-radius: 8px; font-size: 14px; min-height: 150px; max-height: 400px; overflow-y: auto;">
-                <!-- Auto-populated -->
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn btn-outline" onclick="closeTimesheetModal()">Close</button>
-                <button class="btn btn-success" onclick="copyTimesheet()">📋 Copy to Clipboard</button>
+        <!-- Time Tracker View -->
+        <div id="tracker-view">
+            <div class="tracker-layout">
+                <!-- Left Palette -->
+                <div class="tracker-palette">
+                    <div class="palette-header">
+                        <h3>Task Palette</h3>
+                        <p>Drag tasks onto the timeline to log hours.</p>
+                    </div>
+                    <div class="palette-list" id="tracker-palette-list">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Right Canvas -->
+                <div class="tracker-canvas-wrapper">
+                    <div class="tracker-toolbar">
+                        <h2>
+                            <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(-1)">←</button>
+                            <input type="date" id="trackerDate" onchange="renderTrackerTimeline()">
+                            <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
+                        </h2>
+                        <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
+                    </div>
+                    
+                    <div class="timeline-scroll-area" id="timelineScrollArea">
+                        <div class="timeline" id="timelineCanvas" ondragover="allowTrackerDrop(event)" ondragleave="dragLeaveTracker(event)" ondrop="dropToTracker(event)">
+                            <!-- Time blocks and grids render here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Task Add/Edit Modal -->
+    <!-- Modals -->
     <div id="taskModal" class="modal">
         <div class="modal-content">
             <h3 id="taskModalTitle">Add Task</h3>
-            <textarea id="taskInput" rows="8" placeholder="Enter your task details... Use #hashtags to categorize!"></textarea>
+            <textarea id="taskInput" rows="6" placeholder="Enter task details..."></textarea>
             <div class="form-group" style="margin-top: -8px;">
-                <label for="taskDueDate">Due Date (Links to Google Calendar)</label>
+                <label>Due Date</label>
                 <input type="date" id="taskDueDate">
             </div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: -4px;">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to save</div>
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
                 <button class="btn" onclick="saveTaskModal()">Save Task</button>
@@ -541,33 +333,37 @@
         </div>
     </div>
 
-    <!-- Settings Modal with Data Management -->
+    <!-- Edit Time Block Modal -->
+    <div id="editTimeBlockModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>Edit Time Block</h3>
+            <p id="editBlockTaskName" style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></p>
+            <div class="form-group">
+                <label>Hours Worked</label>
+                <input type="number" id="editBlockHours" step="0.25" min="0.25">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" style="margin-right: auto; color: red;" onclick="deleteTimeBlock()">Delete Block</button>
+                <button class="btn btn-outline" onclick="closeEditBlockModal()">Cancel</button>
+                <button class="btn" onclick="saveTimeBlock()">Update</button>
+            </div>
+        </div>
+    </div>
+
     <div id="settingsModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h3>Configuration</h3>
             <div class="form-group">
                 <label>Google OAuth Client ID</label>
-                <input type="text" id="configClientId" placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com" style="font-family: monospace;">
+                <input type="text" id="configClientId" style="font-family: monospace;">
             </div>
             <div class="form-group">
                 <label>Google API Key</label>
-                <input type="text" id="configApiKey" placeholder="YOUR_API_KEY" style="font-family: monospace;">
+                <input type="text" id="configApiKey" style="font-family: monospace;">
             </div>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Keys are stored locally in your browser. Leave blank to use local storage only.</p>
-            
-            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
-            
-            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Data Management</h4>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Backup or restore your tasks and settings locally.</p>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-outline" onclick="exportData()">📤 Export Tasks</button>
-                <button class="btn btn-outline" onclick="triggerImport()">📥 Import Tasks</button>
-                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
-            </div>
-
-            <div class="modal-actions" style="margin-top: 24px;">
+            <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
-                <button class="btn" onclick="saveSettings()">Save Configuration</button>
+                <button class="btn" onclick="saveSettings()">Save & Reload</button>
             </div>
         </div>
     </div>
@@ -576,622 +372,273 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
-        // --- Layout Management ---
-        let isMobileInit = window.innerWidth <= 768;
-        let currentLayout = localStorage.getItem(isMobileInit ? 'quadra_layout_mob' : 'quadra_layout');
-        if (!currentLayout) currentLayout = isMobileInit ? 'kanban' : 'grid';
-
-        function setLayout(layout) {
-            currentLayout = layout;
-            let isMob = window.innerWidth <= 768;
-            localStorage.setItem(isMob ? 'quadra_layout_mob' : 'quadra_layout', layout);
-            
-            const matrix = document.getElementById('matrix');
-            const calView = document.getElementById('calendar-view');
-
-            document.getElementById('btnGrid').classList.toggle('active', layout === 'grid');
-            document.getElementById('btnKanban').classList.toggle('active', layout === 'kanban');
-            document.getElementById('btnCalendar').classList.toggle('active', layout === 'calendar');
-
-            if (layout === 'calendar') {
-                matrix.style.display = 'none'; calView.style.display = 'block'; renderCalendar();
-            } else {
-                matrix.style.display = ''; calView.style.display = 'none';
-                matrix.classList.remove('layout-grid', 'layout-kanban');
-                matrix.classList.add(`layout-${layout}`);
-            }
-        }
-
-        // --- Sidebar Management ---
-        function toggleSidebar() {
-            const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn');
-            panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open');
-        }
-        function openSidebar() {
-            const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn');
-            if (!panel.classList.contains('open')) { panel.classList.add('open'); btn.classList.add('open'); document.body.classList.add('sidebar-open'); }
-        }
-        function toggleClosedTray() {
-            const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron');
-            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
-        }
-        function toggleInboxTray() {
-            const content = document.getElementById('inbox-tray-content'), chevron = document.getElementById('inbox-chevron');
-            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
-        }
-
-        // --- State Management ---
+        // --- Core Settings & Config ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/tasks';
-
-        const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
-        let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
-        const quadColors = { 'q1': 'var(--q1-bg)', 'q2': 'var(--q2-bg)', 'q3': 'var(--q3-bg)', 'q4': 'var(--q4-bg)', 'inbox': '#F1F5F9' };
+        
+        // Configurable Recurring Blocks (Based on typical flexible daily routine)
+        const recurringSchedule = [
+            { title: 'Out of Office', startHour: 19, endHour: 24 },
+            { title: 'Out of Office', startHour: 0, endHour: 8 },
+            { title: '4th Standard Drop-off', startHour: 8, endHour: 9 },
+            { title: 'Lunch', startHour: 13, endHour: 14 },
+            { title: 'School Pick-up', startHour: 15.5, endHour: 16.5 }
+        ];
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
-            let n = { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, dueDate: note.dueDate || null, timeLogs: note.timeLogs || {} };
-            if (n.status === 'closed' && n.quadrant !== 'closed') n.quadrant = 'closed';
-            return n;
+            // Upgrade old timeLogs {} dictionary to structured timeBlocks [] array for visual timeline
+            let blocks = note.timeBlocks || [];
+            if (note.timeLogs && Object.keys(note.timeLogs).length > 0) {
+                Object.keys(note.timeLogs).forEach(date => {
+                    blocks.push({ id: Date.now().toString() + Math.random(), date: date, startHour: 9, duration: note.timeLogs[date] });
+                });
+                delete note.timeLogs; // Migrate schema
+            }
+            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks };
         });
+
+        // --- Layout Management ---
+        let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
         
-        let tokenClient; let isGoogleSynced = false; let syncIntervalId;
+        // Initialize tracker date to today locally
+        const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; // YYYY-MM-DD local
+        document.getElementById('trackerDate').value = todayStr;
 
-        // --- Init & Auth ---
-        function checkConfigState() {
-            if (!appConfig.clientId || !appConfig.apiKey) {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
+        function setLayout(layout) {
+            currentLayout = layout; localStorage.setItem('quadra_layout', layout);
+            const matrix = document.getElementById('matrix'); const tracker = document.getElementById('tracker-view');
+            document.getElementById('btnGrid').classList.toggle('active', layout === 'grid');
+            document.getElementById('btnTracker').classList.toggle('active', layout === 'tracker');
+            
+            if (layout === 'tracker') {
+                matrix.style.display = 'none'; tracker.style.display = 'block'; 
+                document.body.classList.remove('sidebar-open'); // Hide tray sidebar for tracker focus
+                renderTrackerTimeline();
             } else {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
-                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
-                    document.getElementById('auth-overlay').style.display = 'none';
-                    document.getElementById('authorize_button').style.display = 'none';
-                    document.getElementById('signout_button').style.display = 'inline-block';
-                    document.getElementById('manualSyncBtn').style.display = 'inline-block';
-                } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
+                matrix.style.display = ''; tracker.style.display = 'none';
             }
         }
 
-        function openSettings() {
-            document.getElementById('configClientId').value = appConfig.clientId || '';
-            document.getElementById('configApiKey').value = appConfig.apiKey || '';
-            document.getElementById('settingsModal').style.display = 'flex';
-        }
-        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-        function saveSettings() {
-            appConfig.clientId = document.getElementById('configClientId').value.trim();
-            appConfig.apiKey = document.getElementById('configApiKey').value.trim();
-            localStorage.setItem('quadra_config', JSON.stringify(appConfig));
-            closeSettings(); location.reload(); 
-        }
-        function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
-
-        // --- Import/Export ---
-        function exportData() {
-            const dataStr = JSON.stringify(notes, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const date = new Date().toISOString().split('T')[0];
-            a.download = `quadra_backup_${date}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function triggerImport() { document.getElementById('importFile').click(); }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedNotes = JSON.parse(e.target.result);
-                    if (Array.isArray(importedNotes)) {
-                        const noteMap = new Map(notes.map(n => [n.id, n]));
-                        importedNotes.forEach(inNote => {
-                            inNote.dirty = true; // Flag for Google sync if connected
-                            noteMap.set(inNote.id, inNote);
-                        });
-                        notes = Array.from(noteMap.values());
-                        saveNotes();
-                        handleSearch();
-                        alert("Tasks successfully imported and merged!");
-                        closeSettings();
-                    } else {
-                        alert("Invalid backup file format. Expected an array of tasks.");
-                    }
-                } catch (err) {
-                    alert("Error reading backup file.");
-                }
-                event.target.value = ''; // Reset input
-            };
-            reader.readAsText(file);
-        }
-
-        // --- Google Tasks Background Sync ---
-        function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
-        async function initializeGapiClient() {
-            try {
-                await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
-                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
-                    gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync();
-                }
-            } catch(e) { console.error("GAPI Error:", e); }
-        }
-
-        function gisLoaded() {
-            if(appConfig.clientId) {
-                try {
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: appConfig.clientId, scope: SCOPES,
-                        callback: async (resp) => {
-                            if (resp.error !== undefined) { throw (resp); }
-                            localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) }));
-                            document.getElementById('auth-overlay').style.display = 'none';
-                            document.getElementById('authorize_button').style.display = 'none';
-                            document.getElementById('signout_button').style.display = 'inline-block';
-                            document.getElementById('manualSyncBtn').style.display = 'inline-block';
-                            initGoogleSync();
-                        },
-                    });
-                } catch(e) { console.error("GIS Error:", e); }
-            }
-        }
-
-        function handleAuthClick() {
-            if (!appConfig.clientId) return openSettings();
-            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''});
-        }
-
-        function handleSignoutClick() {
-            const token = gapi.client.getToken();
-            if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
-            localStorage.removeItem('quadra_gapi_token');
-            isGoogleSynced = false; clearInterval(syncIntervalId);
-            document.getElementById('auth-overlay').style.display = 'flex';
-            document.getElementById('authorize_button').style.display = 'inline-block';
-            document.getElementById('signout_button').style.display = 'none';
-            document.getElementById('manualSyncBtn').style.display = 'none';
-            document.getElementById('sidePanel').classList.remove('open');
-            document.getElementById('sidebarToggleBtn').classList.remove('open');
-            document.body.classList.remove('sidebar-open');
-        }
-
-        function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
-
-        async function performBackgroundSync() {
-            if (!isGoogleSynced || !gapi.client.getToken()) return;
-            document.getElementById('sync-banner').style.display = 'block';
-            try {
-                const response = await gapi.client.tasks.tasklists.list();
-                const remoteLists = response.result.items || [];
-                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
-                    const expectedName = GAPI_LIST_NAMES[quadKey];
-                    const existingList = remoteLists.find(l => l.title === expectedName);
-                    if (existingList) { gapiListIds[quadKey] = existingList.id; } 
-                    else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName }); gapiListIds[quadKey] = newListReq.result.id; }
-                }
-
-                let remoteTaskMap = {};
-                for (const quadKey of Object.keys(gapiListIds)) {
-                    const listId = gapiListIds[quadKey];
-                    const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 });
-                    const rTasks = tasksReq.result.items || [];
-                    rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
-                }
-
-                const syncSnapshot = JSON.parse(JSON.stringify(notes));
-                for (let sn of syncSnapshot) {
-                    if (sn.deleted && sn.dirty) {
-                        if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} }
-                        sn.dirty = false; continue;
-                    }
-                    if (sn.dirty && !sn.deleted) {
-                        const targetListId = gapiListIds[sn.quadrant];
-                        const remoteObj = remoteTaskMap[sn.id];
-                        const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction';
-                        
-                        const payload = { tasklist: targetListId, title: sn.text, status: gStatus };
-                        if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
-
-                        if (remoteObj) {
-                            if (remoteObj.listId !== targetListId) { 
-                                try {
-                                    await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id });
-                                    const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; 
-                                } catch(e){}
-                            } else { 
-                                try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){}
-                            }
-                            delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
-                        } else { 
-                            try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){}
-                        }
-                        sn.dirty = false;
-                    } 
-                    else if (!sn.dirty && !sn.deleted) {
-                        const remoteObj = remoteTaskMap[sn.id];
-                        if (remoteObj) {
-                            sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active';
-                            sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null;
-                            delete remoteTaskMap[sn.id];
-                        }
-                    }
-                }
-
-                Object.values(remoteTaskMap).forEach(remoteObj => {
-                    syncSnapshot.push({
-                        id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
-                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null,
-                        timeLogs: {}, 
-                        dirty: false, deleted: false
-                    });
-                });
-
-                let newNotesArray = []; let syncedIds = new Set();
-                syncSnapshot.forEach(sn => {
-                    if (sn.deleted && !sn.dirty) return; 
-                    const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
-                    if (liveNote) {
-                        sn.timeLogs = liveNote.timeLogs || {}; 
-                        if (liveNote.dirty) {
-                            if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote);
-                        } else { newNotesArray.push(sn); }
-                        syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId);
-                    } else { newNotesArray.push(sn); } 
-                });
-                notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
-
-                notes = newNotesArray; saveNotes(); handleSearch(); 
-            } catch (e) { console.error("Sync Error:", e); }
-            document.getElementById('sync-banner').style.display = 'none';
-        }
-
-        // --- Fast Local Actions ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
-        function allowDrop(ev) { ev.preventDefault(); if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.add('drag-over'); }
-        function dragLeave(ev) { if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over'); }
-        function drop(ev, newQuadrant) {
-            ev.preventDefault();
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') ev.currentTarget.classList.remove('drag-over');
+        // --- Drag/Drop Routing ---
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        function drop(ev, quadrant) {
+            ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
             const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
-            if (note && note.status === 'active' && note.quadrant !== newQuadrant) { note.quadrant = newQuadrant; note.dirty = true; saveNotes(); handleSearch(); }
+            if (note && note.status === 'active' && note.quadrant !== quadrant) { note.quadrant = quadrant; note.dirty = true; saveNotes(); handleSearch(); }
         }
 
-        function dropToCalendar(ev, dateString) {
-            ev.preventDefault(); ev.stopPropagation(); 
-            if(ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over');
-            const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
-            if (note && note.status === 'active') {
-                const isoDate = `${dateString}T00:00:00.000Z`; 
-                if (note.dueDate !== isoDate) { note.dueDate = isoDate; note.dirty = true; saveNotes(); handleSearch(); }
-            }
+        // --- TIME TRACKER LOGIC ---
+        function changeTrackerDay(offset) {
+            const dateInput = document.getElementById('trackerDate');
+            const d = new Date(dateInput.value);
+            d.setDate(d.getDate() + offset);
+            dateInput.value = d.toLocaleDateString('en-CA').split('T')[0];
+            renderTrackerTimeline();
         }
 
-        let currentEditingId = null, currentAddingQuadrant = null;
-
-        function openTaskModal(quadrant = null, noteId = null, event = null) {
-            if (event) event.stopPropagation();
-            const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), dateInput = document.getElementById('taskDueDate'), title = document.getElementById('taskModalTitle');
-            if (noteId) {
-                currentEditingId = noteId; const note = notes.find(n => n.id === noteId);
-                title.innerText = 'Edit Task'; input.value = note.text; dateInput.value = note.dueDate ? note.dueDate.substring(0, 10) : '';
-            } else {
-                currentEditingId = null; currentAddingQuadrant = quadrant;
-                title.innerText = 'Add Task'; input.value = ''; dateInput.value = '';
-            }
-            modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
-        }
-        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
-
-        function saveTaskModal() {
-            const text = document.getElementById('taskInput').value.trim();
-            if (!text) return closeTaskModal();
-            const dueDateVal = document.getElementById('taskDueDate').value; 
-            let isoDate = null; if (dueDateVal) isoDate = `${dueDateVal}T00:00:00.000Z`; 
-
-            if (currentEditingId) {
-                const note = notes.find(n => n.id === currentEditingId);
-                if (note && (note.text !== text || note.dueDate !== isoDate)) { 
-                    note.text = text; note.dueDate = isoDate; note.dirty = true; saveNotes(); handleSearch(); 
-                }
-            } else {
-                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', dueDate: isoDate, timeLogs: {}, dirty: true, deleted: false });
-                saveNotes(); handleSearch();
-            }
-            closeTaskModal();
-        }
-        document.getElementById('taskInput').addEventListener('keydown', function(e) { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') saveTaskModal(); });
-
-        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
-        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
-        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
-
-        // --- Time Logging System ---
-        let currentTimeLogId = null;
-
-        function openTimeLogModal(id, e) {
-            e.stopPropagation();
-            currentTimeLogId = id;
-            const note = notes.find(n => n.id === id);
-            document.getElementById('timeLogTaskName').innerText = note.text;
+        function renderTrackerTimeline() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const selectedDate = document.getElementById('trackerDate').value;
+            const canvas = document.getElementById('timelineCanvas');
+            const paletteList = document.getElementById('tracker-palette-list');
             
-            const today = new Date();
-            const y = today.getFullYear(), m = String(today.getMonth() + 1).padStart(2, '0'), d = String(today.getDate()).padStart(2, '0');
-            const dateStr = `${y}-${m}-${d}`;
+            // 1. Render Left Palette (All tasks matching search)
+            paletteList.innerHTML = '';
+            const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query));
             
-            document.getElementById('timeLogDate').value = dateStr;
-            document.getElementById('timeLogHours').value = (note.timeLogs && note.timeLogs[dateStr]) ? note.timeLogs[dateStr] : '';
-            document.getElementById('timeLogModal').style.display = 'flex';
-        }
-
-        function updateTimeLogInput() {
-            const dateStr = document.getElementById('timeLogDate').value;
-            const note = notes.find(n => n.id === currentTimeLogId);
-            document.getElementById('timeLogHours').value = (note && note.timeLogs && note.timeLogs[dateStr]) ? note.timeLogs[dateStr] : '';
-        }
-
-        function closeTimeLogModal() { document.getElementById('timeLogModal').style.display = 'none'; currentTimeLogId = null; }
-
-        function saveTimeLog() {
-            const dateStr = document.getElementById('timeLogDate').value;
-            const hours = parseFloat(document.getElementById('timeLogHours').value);
-            
-            if (dateStr && currentTimeLogId) {
-                const note = notes.find(n => n.id === currentTimeLogId);
-                if (!note.timeLogs) note.timeLogs = {};
+            filteredNotes.forEach(note => {
+                const el = document.createElement('div');
+                el.className = 'palette-note'; el.draggable = true;
+                el.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
                 
-                if (isNaN(hours) || hours <= 0) {
-                    delete note.timeLogs[dateStr];
-                } else {
-                    note.timeLogs[dateStr] = hours;
-                }
-                
-                note.dirty = true;
-                saveNotes(); handleSearch();
-            }
-            closeTimeLogModal();
-        }
-
-        // --- Daily Timesheet Report ---
-        function openTimesheetModal() {
-            const today = new Date();
-            const y = today.getFullYear(), m = String(today.getMonth() + 1).padStart(2, '0'), d = String(today.getDate()).padStart(2, '0');
-            document.getElementById('timesheetDate').value = `${y}-${m}-${d}`;
-            generateTimesheet();
-            document.getElementById('timesheetModal').style.display = 'flex';
-        }
-
-        function closeTimesheetModal() { document.getElementById('timesheetModal').style.display = 'none'; }
-
-        function generateTimesheet() {
-            const dateStr = document.getElementById('timesheetDate').value;
-            const container = document.getElementById('timesheetContent');
-            container.innerHTML = '';
-            
-            let total = 0;
-            let logEntries = [];
-
-            notes.forEach(note => {
-                if (!note.deleted && note.timeLogs && note.timeLogs[dateStr]) {
-                    const hrs = note.timeLogs[dateStr];
-                    total += hrs;
-                    
-                    const titleText = note.text.split('\n')[0].substring(0, 60);
-                    logEntries.push(`<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
-                        <span style="padding-right: 16px;">${parseTags(titleText)}</span>
-                        <strong>${hrs}h</strong>
-                    </div>`);
-                }
+                let title = note.text.split('\n')[0].substring(0, 50);
+                el.innerHTML = `<strong>${note.status === 'closed' ? '✓ ' : ''}</strong> ${parseTags(title)}`;
+                if (note.status === 'closed') el.style.opacity = '0.6';
+                paletteList.appendChild(el);
             });
 
-            if (logEntries.length === 0) {
-                container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 40px 0;">No time logged for this date.</div>`;
-            } else {
-                container.innerHTML = logEntries.join('') + 
-                `<div style="display:flex; justify-content:space-between; padding:12px 0; margin-top:8px; font-weight:bold; font-size:16px; color: var(--brand-primary);">
-                    <span>Total Hours:</span><span>${total}h</span>
-                </div>`;
+            // 2. Render Canvas Scale & Overlays
+            canvas.innerHTML = '';
+            for (let i = 0; i <= 24; i++) {
+                const row = document.createElement('div');
+                row.className = 'time-row'; row.style.top = `${i * 60}px`;
+                row.innerHTML = `<span class="time-label">${i}:00</span>`;
+                canvas.appendChild(row);
+            }
+
+            recurringSchedule.forEach(block => {
+                const overlay = document.createElement('div');
+                overlay.className = 'schedule-overlay';
+                overlay.style.top = `${block.startHour * 60}px`;
+                overlay.style.height = `${(block.endHour - block.startHour) * 60}px`;
+                overlay.innerText = block.title;
+                canvas.appendChild(overlay);
+            });
+
+            // 3. Render Logged Blocks for selected date
+            let dailyTotal = 0;
+            notes.forEach(note => {
+                if (note.deleted || !note.timeBlocks) return;
+                note.timeBlocks.forEach(tb => {
+                    if (tb.date === selectedDate) {
+                        dailyTotal += tb.duration;
+                        const blockEl = document.createElement('div');
+                        blockEl.className = 'logged-block';
+                        blockEl.style.top = `${tb.startHour * 60}px`;
+                        blockEl.style.height = `${tb.duration * 60}px`;
+                        
+                        let displayTitle = note.text.split('\n')[0].substring(0, 40);
+                        blockEl.innerHTML = `<div class="block-title">${displayTitle}</div><div class="block-meta">${tb.duration}h</div>`;
+                        
+                        // Click to edit
+                        blockEl.onclick = () => openEditBlockModal(note.id, tb.id);
+                        canvas.appendChild(blockEl);
+                    }
+                });
+            });
+
+            document.getElementById('trackerDailyTotal').innerText = `Total: ${dailyTotal}h`;
+
+            // Auto-scroll to 8am on initial load
+            const scrollArea = document.getElementById('timelineScrollArea');
+            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * 60; // scroll to 7am to see 8am block
+        }
+
+        function allowTrackerDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function dragLeaveTracker(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        
+        function dropToTracker(ev) {
+            ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
+            const noteId = ev.dataTransfer.getData("text/plain");
+            const note = notes.find(n => n.id === noteId);
+            
+            if (note) {
+                // Calculate drop time based on Y coordinate
+                const rect = ev.currentTarget.getBoundingClientRect();
+                const y = ev.clientY - rect.top; 
+                let dropHour = Math.floor(y / 60);
+                
+                // Snap to half hours if near middle
+                const remainder = y % 60;
+                if (remainder > 30) dropHour += 0.5;
+
+                const selectedDate = document.getElementById('trackerDate').value;
+                if (!note.timeBlocks) note.timeBlocks = [];
+                
+                // Default 1 hour block
+                note.timeBlocks.push({ id: Date.now().toString(), date: selectedDate, startHour: dropHour, duration: 1.0 });
+                note.dirty = true;
+                saveNotes(); handleSearch(); // Re-renders
             }
         }
 
-        function copyTimesheet() {
-            const dateStr = document.getElementById('timesheetDate').value;
-            let total = 0;
-            let plainTextLog = `Timesheet: ${dateStr}\n------------------------\n`;
+        let editingBlockState = null;
+        function openEditBlockModal(noteId, blockId) {
+            const note = notes.find(n => n.id === noteId);
+            const block = note.timeBlocks.find(b => b.id === blockId);
+            editingBlockState = { noteId, blockId };
+            
+            document.getElementById('editBlockTaskName').innerText = note.text.split('\n')[0];
+            document.getElementById('editBlockHours').value = block.duration;
+            document.getElementById('editTimeBlockModal').style.display = 'flex';
+        }
+
+        function closeEditBlockModal() { document.getElementById('editTimeBlockModal').style.display = 'none'; editingBlockState = null;}
+
+        function saveTimeBlock() {
+            if(!editingBlockState) return;
+            const newHours = parseFloat(document.getElementById('editBlockHours').value);
+            const note = notes.find(n => n.id === editingBlockState.noteId);
+            const block = note.timeBlocks.find(b => b.id === editingBlockState.blockId);
+            
+            if (newHours > 0) { block.duration = newHours; note.dirty = true; saveNotes(); handleSearch(); }
+            closeEditBlockModal();
+        }
+
+        function deleteTimeBlock() {
+            if(!editingBlockState) return;
+            const note = notes.find(n => n.id === editingBlockState.noteId);
+            note.timeBlocks = note.timeBlocks.filter(b => b.id !== editingBlockState.blockId);
+            note.dirty = true; saveNotes(); handleSearch();
+            closeEditBlockModal();
+        }
+
+        function exportTimesheet() {
+            const dateStr = document.getElementById('trackerDate').value;
+            let total = 0; let plainTextLog = `Timesheet: ${dateStr}\n------------------------\n`;
 
             notes.forEach(note => {
-                if (!note.deleted && note.timeLogs && note.timeLogs[dateStr]) {
-                    const hrs = note.timeLogs[dateStr];
-                    total += hrs;
-                    
+                if (note.deleted || !note.timeBlocks) return;
+                let dailyHrs = 0;
+                note.timeBlocks.forEach(tb => { if(tb.date === dateStr) dailyHrs += tb.duration; });
+                
+                if (dailyHrs > 0) {
+                    total += dailyHrs;
                     const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
-                    
-                    plainTextLog += `- [${identifier}] ${hrs}h\n`;
+                    plainTextLog += `- [${identifier}] ${dailyHrs}h\n`;
                 }
             });
             plainTextLog += `------------------------\nTotal: ${total}h`;
-
-            navigator.clipboard.writeText(plainTextLog).then(() => {
-                alert("Timesheet copied to clipboard!");
-            }).catch(err => {
-                console.error("Could not copy text: ", err);
-            });
+            navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
         }
 
-
-        // --- Utility UI ---
-        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
-        function parseTags(str) { return escapeHTML(str).replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>'); }
-        function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
-        function clearSearch() { const searchInput = document.getElementById('searchInput'); searchInput.value = ''; handleSearch(); searchInput.focus(); }
-
-        function handleSearch() {
-            const query = document.getElementById('searchInput').value;
-            document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
-            renderNotes(query);
-        }
-
-        // --- Weekly Calendar Rendering ---
-        let currentDateIndex = new Date();
-
-        function changeWeek(offset) {
-            currentDateIndex.setDate(currentDateIndex.getDate() + (offset * 7));
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            if (currentLayout !== 'calendar') return;
-            const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
-            
-            const startOfWeek = new Date(currentDateIndex);
-            startOfWeek.setDate(currentDateIndex.getDate() - currentDateIndex.getDay());
-            const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            document.getElementById('calendar-month-year').innerText = `${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()} - ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
-
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            days.forEach(d => {
-                const el = document.createElement('div'); el.className = 'calendar-day-header'; el.innerText = d; grid.appendChild(el);
-            });
-
-            const today = new Date();
-            
-            for (let i = 0; i < 7; i++) {
-                const cellDate = new Date(startOfWeek); cellDate.setDate(startOfWeek.getDate() + i);
-                const cell = document.createElement('div'); cell.className = 'calendar-cell';
-                
-                const y = cellDate.getFullYear(), m = String(cellDate.getMonth() + 1).padStart(2, '0'), dStr = String(cellDate.getDate()).padStart(2, '0');
-                const dateString = `${y}-${m}-${dStr}`;
-                
-                if (y === today.getFullYear() && cellDate.getMonth() === today.getMonth() && cellDate.getDate() === today.getDate()) cell.classList.add('today');
-
-                cell.ondragover = allowDrop; cell.ondragleave = dragLeave; cell.ondrop = (e) => dropToCalendar(e, dateString);
-
-                const dayNum = document.createElement('div'); dayNum.className = 'day-number'; dayNum.innerText = cellDate.getDate(); cell.appendChild(dayNum);
-                const taskList = document.createElement('div'); taskList.className = 'task-list'; taskList.id = `cal-list-${dateString}`; cell.appendChild(taskList);
-                grid.appendChild(cell);
-            }
-            populateCalendarTasks();
-        }
-
-        function populateCalendarTasks() {
-            notes.forEach(note => {
-                if (!note.deleted && note.status === 'active' && note.dueDate) {
-                    const noteDateStr = note.dueDate.split('T')[0];
-                    const list = document.getElementById(`cal-list-${noteDateStr}`);
-                    if (list) {
-                        const taskEl = document.createElement('div'); taskEl.className = 'calendar-task';
-                        taskEl.style.backgroundColor = quadColors[note.quadrant] || 'var(--q2-bg)';
-                        taskEl.innerHTML = parseTags(note.text); taskEl.title = "Double-click to edit";
-                        taskEl.draggable = true;
-                        taskEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
-                        taskEl.ondblclick = (e) => openTaskModal(null, note.id, e);
-                        list.appendChild(taskEl);
-                    }
-                }
-            });
-        }
-
+        // --- Core UI & Search ---
         function renderTagsList() {
-            const tagsBar = document.getElementById('quick-tags-bar');
-            if (!tagsBar) return;
-
+            const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
             const tagCounts = {};
             notes.forEach(note => {
                 if (!note.deleted && note.status === 'active') {
                     const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     if (matches) {
-                        const uniqueTagsInTask = new Set(matches.map(t => t.toLowerCase()));
-                        uniqueTagsInTask.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
+                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
                     }
                 }
             });
-
             tagsBar.innerHTML = '';
-            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
-                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
-                return a.localeCompare(b); 
-            });
-
+            const sortedTags = Object.keys(tagCounts).sort((a, b) => { if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a]; return a.localeCompare(b); });
             sortedTags.forEach(tag => {
-                const count = tagCounts[tag];
-                const tagBtn = document.createElement('button');
-                tagBtn.className = 'filter-tag'; tagBtn.innerText = `${tag} (${count})`;
-                tagBtn.onclick = (e) => {
-                    const searchInput = document.getElementById('searchInput');
-                    if (searchInput.value === tag) { clearSearch(); } else { searchTag(tag, e); }
-                };
-                tagsBar.appendChild(tagBtn);
+                const btn = document.createElement('button'); btn.className = 'filter-tag'; btn.innerText = `${tag} (${tagCounts[tag]})`;
+                btn.onclick = (e) => { const searchInput = document.getElementById('searchInput'); if (searchInput.value === tag) clearSearch(); else searchTag(tag, e); };
+                tagsBar.appendChild(btn);
             });
         }
 
-        // --- Standard List Rendering (Sorted) ---
-        function renderNotes(searchQuery = '') {
-            ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => {
-                const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = '';
-            });
-            
-            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery.toLowerCase()));
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
+        function parseTags(str) { return escapeHTML(str).replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>'); }
+        function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
 
-            filteredNotes.sort((a, b) => {
-                if (!a.dueDate && !b.dueDate) return 0;
-                if (!a.dueDate) return -1;
-                if (!b.dueDate) return 1;
-                return a.dueDate.localeCompare(b.dueDate);
-            });
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
+            renderNotes(query);
+        }
+
+        function renderNotes(searchQuery = '') {
+            ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
+            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
+            filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
 
             filteredNotes.forEach(note => {
                 const list = document.getElementById(note.status === 'closed' ? 'list-closed' : `list-${note.quadrant}`);
                 if (list) {
-                    const noteEl = document.createElement('div');
-                    noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
+                    const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
                     if (note.status === 'active') { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
 
                     const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
-                    const textSpan = document.createElement('div'); textSpan.className = 'note-text'; textSpan.innerHTML = parseTags(note.text); 
-                    contentWrapper.appendChild(textSpan);
+                    contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
                     
-                    const metaDiv = document.createElement('div'); metaDiv.className = 'note-meta';
-                    
-                    if (note.dueDate) {
-                        const [yyyy, mm, dd] = note.dueDate.split('T')[0].split('-');
-                        const dateSpan = document.createElement('span'); dateSpan.className = 'meta-due';
-                        dateSpan.innerHTML = `🗓️ ${dd}/${mm}/${yyyy}`;
-                        metaDiv.appendChild(dateSpan);
-                    }
-
-                    let totalTaskTime = 0;
-                    if (note.timeLogs) {
-                        Object.values(note.timeLogs).forEach(hrs => totalTaskTime += hrs);
-                    }
-                    if (totalTaskTime > 0) {
-                        const timeSpan = document.createElement('span'); timeSpan.className = 'meta-time';
-                        timeSpan.innerHTML = `⏱️ ${totalTaskTime}h`;
-                        metaDiv.appendChild(timeSpan);
-                    }
-                    
-                    if (metaDiv.hasChildNodes()) contentWrapper.appendChild(metaDiv);
-
+                    if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
                     if (note.status === 'active') { contentWrapper.title = "Double-click to edit"; contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); }
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
-                    if (note.status === 'active') {
-                        actionsDiv.innerHTML = `
-                            <button class="action-btn time-btn" title="Log Time" onclick="openTimeLogModal('${note.id}', event)">⏱️</button>
-                            <button class="action-btn complete-btn" title="Complete" onclick="completeTask('${note.id}')">✓</button>
-                        `;
-                    } else {
-                        actionsDiv.innerHTML = `<button class="action-btn restore-btn" title="Restore" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" title="Delete" onclick="deleteTask('${note.id}')">×</button>`;
-                    }
+                    if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
+                    else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
                     
                     noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
                 }
@@ -1200,27 +647,32 @@
             document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed').length;
             document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox').length;
             
-            if (currentLayout === 'calendar') renderCalendar();
+            if (currentLayout === 'tracker') renderTrackerTimeline();
             renderTagsList();
         }
 
-        const matrix = document.getElementById('matrix'), backBtn = document.getElementById('backBtn');
-        function toggleFullscreen(quadrantId) {
-            const targetQuadrant = document.getElementById(quadrantId);
-            if (targetQuadrant.classList.contains('active')) exitFullscreen();
-            else {
-                document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
-                targetQuadrant.classList.add('active'); matrix.classList.add('fullscreen'); backBtn.style.display = 'inline-block';
-            }
+        // Base task modal logic
+        let currentEditingId = null; let currentAddingQuadrant = null;
+        function openTaskModal(quadrant = null, noteId = null, event = null) {
+            if (event) event.stopPropagation();
+            const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
+            if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task'; input.value = note.text; }
+            else { currentEditingId = null; currentAddingQuadrant = quadrant; title.innerText = 'Add Task'; input.value = ''; }
+            modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
         }
-        function exitFullscreen() {
-            matrix.classList.remove('fullscreen'); document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('active'));
-            backBtn.style.display = 'none';
+        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
+        function saveTaskModal() {
+            const text = document.getElementById('taskInput').value.trim(); if (!text) return closeTaskModal();
+            if (currentEditingId) { const note = notes.find(n => n.id === currentEditingId); if (note) { note.text = text; note.dirty = true; saveNotes(); handleSearch(); } } 
+            else { notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', timeBlocks: [], dirty: true, deleted: false }); saveNotes(); handleSearch(); }
+            closeTaskModal();
         }
 
-        setLayout(currentLayout);
-        checkConfigState();
-        renderNotes(); 
+        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
+
+        setLayout(currentLayout); checkConfigState(); renderNotes();
     </script>
 </body>
 </html>
