@@ -147,11 +147,9 @@
         
         .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
         
-        /* Updated Grid Architecture */
         .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
         
         .timeline-bg-lines { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
-        /* Adjusted Y-Axis Lines */
         .time-row { position: absolute; width: 100%; border-top: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 0; }
         .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; position: absolute; left: 8px; top: -8px; background: #ffffff; padding: 0 4px; line-height: 1; }
         
@@ -428,6 +426,10 @@
         // --- Core Settings & Config ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         
+        let tokenClient;
+        let isGoogleSynced = false;
+        let syncIntervalId = null;
+
         const defaultSchedule = [
             { title: 'Out of Office', startHour: 19, endHour: 24 },
             { title: 'Out of Office', startHour: 0, endHour: 8 },
