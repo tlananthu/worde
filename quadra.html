@@ -221,7 +221,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.1</span></h1>
+                <h1>Quadra <span class="version-badge">v2.2</span></h1>
             </div>
             
             <div class="search-container">
@@ -453,7 +453,6 @@
             'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
             'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
         ];
-        // Explicitly requesting both Tasks and Calendar read permissions
         const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
         const defaultSchedule = [
@@ -919,11 +918,7 @@
                 alert("Calendars loaded successfully! Please select one and save.");
             } catch (e) {
                 console.error("Calendar Load Error:", e);
-                if (e.status === 401 || e.status === 403) {
-                    alert("Permission Denied: Please click 'Sign Out' and sign back in to grant Quadra access to your Google Calendar.");
-                } else {
-                    alert("Failed to load calendars. Please check your internet connection and try again.");
-                }
+                alert("Failed to load calendars. Please ensure the Google Calendar API is enabled in your Google Cloud Console project.");
             }
         }
 
@@ -1129,7 +1124,6 @@
                 }
             }
 
-            // Forcing explicit scope consent prompt on sign in to ensure calendar permissions are requested
             tokenClient.requestAccessToken({prompt: 'consent'}); 
         }
         
@@ -1224,11 +1218,7 @@
             } catch(e) {
                 console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
-                if (e.status === 401 || e.status === 403) {
-                    alert("Permission Denied: Please click 'Sign Out' and sign back in to grant Quadra access to your Google Calendar.");
-                } else {
-                    alert("Failed to fetch calendar events. Check your connection.");
-                }
+                alert("Failed to fetch calendar events. Please make sure the Google Calendar API is enabled in your Google Cloud Console project.");
             }
         }
 
