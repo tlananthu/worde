@@ -140,7 +140,7 @@
         .palette-note { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-size: 13px; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .palette-note:active { cursor: grabbing; }
 
-        .tracker-canvas-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; }
+        .tracker-canvas-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; user-select: none; }
         .tracker-toolbar { padding: 16px 24px; background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
         .tracker-toolbar h2 { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 12px;}
         .tracker-toolbar input[type="date"] { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; }
@@ -153,10 +153,16 @@
         
         .schedule-overlay { position: absolute; width: 100%; left: 0; background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px ); pointer-events: none; z-index: 1; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
         
-        .logged-block { position: absolute; left: 80px; right: 24px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 8px 12px; font-size: 13px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: pointer; transition: transform 0.1s;}
-        .logged-block:hover { transform: translateX(-2px); }
-        .block-title { font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .block-meta { font-size: 11px; opacity: 0.8; }
+        /* Updated Block for Resizing */
+        .logged-block { position: absolute; left: 80px; right: 24px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 8px 12px; font-size: 13px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; }
+        .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.5); z-index: 12;}
+        .block-title { font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+        .block-meta { font-size: 11px; opacity: 0.8; pointer-events: none;}
+        
+        .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; cursor: ns-resize; display: flex; justify-content: center; align-items: center; z-index: 11; opacity: 0.5; transition: opacity 0.2s; }
+        .resize-handle:hover { opacity: 1; }
+        .resize-handle::after { content: ''; width: 24px; height: 3px; background: rgba(255,255,255,0.7); border-radius: 2px; }
+
         .timeline.drag-over { background: rgba(79, 70, 229, 0.03); border-color: var(--brand-primary); }
 
         /* --- Sticky Sidebar --- */
@@ -177,7 +183,7 @@
         /* Overlays & Modals */
         .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; }
+        .modal-content { background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
         .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
         .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
@@ -335,7 +341,7 @@
         </div>
     </div>
 
-    <!-- Edit Time Block Modal -->
+    <!-- Edit Time Block Modal (Fallback) -->
     <div id="editTimeBlockModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <h3>Edit Time Block</h3>
@@ -364,15 +370,20 @@
                 <label>Google API Key</label>
                 <input type="text" id="configApiKey" style="font-family: monospace;">
             </div>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Keys are stored locally in your browser. Leave blank to use local storage only.</p>
             
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
             
+            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Recurring Overlays</h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Highlight unavailable time on your tracker.</p>
+            <div id="scheduleConfigList"></div>
+            <button class="btn btn-outline" style="margin-top: 8px; width: 100%;" onclick="addScheduleRow()">+ Add Block</button>
+
+            <hr style="margin: 24px 0 16px 0; border: none; border-top: 1px solid var(--border-color);">
+
             <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Data Management</h4>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Backup or restore your tasks and settings locally.</p>
             <div style="display: flex; gap: 8px;">
-                <button class="btn btn-outline" onclick="exportData()">📤 Export Tasks</button>
-                <button class="btn btn-outline" onclick="triggerImport()">📥 Import Tasks</button>
+                <button class="btn btn-outline" onclick="exportData()">📤 Export Backup</button>
+                <button class="btn btn-outline" onclick="triggerImport()">📥 Import Backup</button>
                 <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
             </div>
 
@@ -390,13 +401,13 @@
         // --- Core Settings & Config ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         
-        const recurringSchedule = [
+        // Dynamic Recurring Schedule
+        const defaultSchedule = [
             { title: 'Out of Office', startHour: 19, endHour: 24 },
             { title: 'Out of Office', startHour: 0, endHour: 8 },
-            { title: '4th Standard Drop-off', startHour: 8, endHour: 9 },
-            { title: 'Lunch', startHour: 13, endHour: 14 },
-            { title: 'School Pick-up', startHour: 15.5, endHour: 16.5 }
+            { title: 'Lunch', startHour: 13, endHour: 14 }
         ];
+        let appSchedule = JSON.parse(localStorage.getItem('quadra_schedule')) || defaultSchedule;
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
@@ -410,7 +421,6 @@
             return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks };
         });
 
-        // Initialize tracker date to today 
         const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
         document.getElementById('trackerDate').value = todayStr;
 
@@ -472,7 +482,6 @@
             const canvas = document.getElementById('timelineCanvas');
             const paletteList = document.getElementById('tracker-palette-list');
             
-            // 1. Render Left Palette 
             paletteList.innerHTML = '';
             const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query));
             
@@ -480,14 +489,12 @@
                 const el = document.createElement('div');
                 el.className = 'palette-note'; el.draggable = true;
                 el.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
-                
                 let title = note.text.split('\n')[0].substring(0, 50);
                 el.innerHTML = `<strong>${note.status === 'closed' ? '✓ ' : ''}</strong> ${parseTags(title)}`;
                 if (note.status === 'closed') el.style.opacity = '0.6';
                 paletteList.appendChild(el);
             });
 
-            // 2. Render Canvas Scale & Overlays
             canvas.innerHTML = '';
             for (let i = 0; i <= 24; i++) {
                 const row = document.createElement('div');
@@ -496,7 +503,7 @@
                 canvas.appendChild(row);
             }
 
-            recurringSchedule.forEach(block => {
+            appSchedule.forEach(block => {
                 const overlay = document.createElement('div');
                 overlay.className = 'schedule-overlay';
                 overlay.style.top = `${block.startHour * 60}px`;
@@ -505,7 +512,6 @@
                 canvas.appendChild(overlay);
             });
 
-            // 3. Render Logged Blocks for selected date
             let dailyTotal = 0;
             notes.forEach(note => {
                 if (note.deleted || !note.timeBlocks) return;
@@ -514,25 +520,90 @@
                         dailyTotal += tb.duration;
                         const blockEl = document.createElement('div');
                         blockEl.className = 'logged-block';
+                        blockEl.id = `block-${tb.id}`;
                         blockEl.style.top = `${tb.startHour * 60}px`;
                         blockEl.style.height = `${tb.duration * 60}px`;
                         
                         let displayTitle = note.text.split('\n')[0].substring(0, 40);
-                        blockEl.innerHTML = `<div class="block-title">${displayTitle}</div><div class="block-meta">${tb.duration}h</div>`;
+                        blockEl.innerHTML = `
+                            <div class="block-title">${displayTitle}</div>
+                            <div class="block-meta">${tb.duration}h</div>
+                            <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
+                        `;
                         
-                        blockEl.onclick = () => openEditBlockModal(note.id, tb.id);
+                        // Drag to move
+                        blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
                         canvas.appendChild(blockEl);
                     }
                 });
             });
 
             document.getElementById('trackerDailyTotal').innerText = `Total: ${dailyTotal}h`;
-
-            // Auto-scroll to 8am on initial load
-            const scrollArea = document.getElementById('timelineScrollArea');
-            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * 60; 
         }
 
+        // --- Drag & Resize Engine ---
+        let dragState = null;
+
+        function startBlockDrag(e, noteId, blockId, isResize) {
+            e.stopPropagation();
+            const note = notes.find(n => n.id === noteId);
+            const block = note.timeBlocks.find(b => b.id === blockId);
+            
+            dragState = {
+                noteId, blockId, isResize,
+                startY: e.clientY,
+                originalStart: block.startHour,
+                originalDuration: block.duration,
+                hasMoved: false
+            };
+            
+            document.addEventListener('mousemove', onBlockDrag);
+            document.addEventListener('mouseup', stopBlockDrag);
+        }
+
+        function onBlockDrag(e) {
+            if (!dragState) return;
+            dragState.hasMoved = true;
+            
+            const dy = e.clientY - dragState.startY;
+            const dHours = Math.round((dy / 60) * 4) / 4; // Snap to 15 mins
+            
+            const note = notes.find(n => n.id === dragState.noteId);
+            const block = note.timeBlocks.find(b => b.id === dragState.blockId);
+            
+            if (dragState.isResize) {
+                block.duration = Math.max(0.25, dragState.originalDuration + dHours);
+            } else {
+                block.startHour = Math.max(0, Math.min(24 - block.duration, dragState.originalStart + dHours));
+            }
+            
+            // Fast UI transform
+            const el = document.getElementById(`block-${dragState.blockId}`);
+            if(el) {
+                el.style.top = `${block.startHour * 60}px`;
+                el.style.height = `${block.duration * 60}px`;
+                el.querySelector('.block-meta').innerText = `${block.duration}h`;
+            }
+        }
+
+        function stopBlockDrag(e) {
+            if (dragState) {
+                document.removeEventListener('mousemove', onBlockDrag);
+                document.removeEventListener('mouseup', stopBlockDrag);
+                
+                if (!dragState.hasMoved && !dragState.isResize) {
+                    // It was just a click, open the modal
+                    openEditBlockModal(dragState.noteId, dragState.blockId);
+                } else if (dragState.hasMoved) {
+                    // Save the new bounds
+                    const note = notes.find(n => n.id === dragState.noteId);
+                    note.dirty = true; saveNotes(); renderTrackerTimeline(); 
+                }
+                dragState = null;
+            }
+        }
+
+        // --- Canvas Drop Creation ---
         function allowTrackerDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
         function dragLeaveTracker(ev) { ev.currentTarget.classList.remove('drag-over'); }
         
@@ -547,17 +618,18 @@
                 let dropHour = Math.floor(y / 60);
                 
                 const remainder = y % 60;
-                if (remainder > 30) dropHour += 0.5;
+                if (remainder > 15 && remainder <= 45) dropHour += 0.5;
+                if (remainder > 45) dropHour += 1.0;
 
                 const selectedDate = document.getElementById('trackerDate').value;
                 if (!note.timeBlocks) note.timeBlocks = [];
                 
                 note.timeBlocks.push({ id: Date.now().toString(), date: selectedDate, startHour: dropHour, duration: 1.0 });
-                note.dirty = true;
-                saveNotes(); handleSearch(); 
+                note.dirty = true; saveNotes(); handleSearch(); 
             }
         }
 
+        // Edit Modal Fallback
         let editingBlockState = null;
         function openEditBlockModal(noteId, blockId) {
             const note = notes.find(n => n.id === noteId);
@@ -568,9 +640,7 @@
             document.getElementById('editBlockHours').value = block.duration;
             document.getElementById('editTimeBlockModal').style.display = 'flex';
         }
-
         function closeEditBlockModal() { document.getElementById('editTimeBlockModal').style.display = 'none'; editingBlockState = null;}
-
         function saveTimeBlock() {
             if(!editingBlockState) return;
             const newHours = parseFloat(document.getElementById('editBlockHours').value);
@@ -580,13 +650,11 @@
             if (newHours > 0) { block.duration = newHours; note.dirty = true; saveNotes(); handleSearch(); }
             closeEditBlockModal();
         }
-
         function deleteTimeBlock() {
             if(!editingBlockState) return;
             const note = notes.find(n => n.id === editingBlockState.noteId);
             note.timeBlocks = note.timeBlocks.filter(b => b.id !== editingBlockState.blockId);
-            note.dirty = true; saveNotes(); handleSearch();
-            closeEditBlockModal();
+            note.dirty = true; saveNotes(); handleSearch(); closeEditBlockModal();
         }
 
         function exportTimesheet() {
@@ -607,6 +675,61 @@
             });
             plainTextLog += `------------------------\nTotal: ${total}h`;
             navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
+        }
+
+        // --- Config Settings & UI ---
+        function renderScheduleSettings() {
+            const container = document.getElementById('scheduleConfigList');
+            container.innerHTML = '';
+            appSchedule.forEach(block => addScheduleRow(block));
+        }
+
+        function formatTimeForInput(decimalHour) {
+            const hrs = Math.floor(decimalHour).toString().padStart(2, '0');
+            const mins = Math.round((decimalHour % 1) * 60).toString().padStart(2, '0');
+            return `${hrs}:${mins}`;
+        }
+
+        function addScheduleRow(block = {title: '', startHour: 9, endHour: 10}) {
+            const div = document.createElement('div');
+            div.className = 'schedule-row';
+            div.style.display = 'flex'; div.style.gap = '8px'; div.style.marginBottom = '8px';
+            div.innerHTML = `
+                <input type="text" class="sched-title" value="${block.title}" placeholder="Label" style="flex:2; padding:8px;">
+                <input type="time" class="sched-start" value="${formatTimeForInput(block.startHour)}" style="padding:8px;">
+                <input type="time" class="sched-end" value="${formatTimeForInput(block.endHour)}" style="padding:8px;">
+                <button class="btn btn-outline" style="color:red; padding:8px 12px;" onclick="this.parentElement.remove()">×</button>
+            `;
+            document.getElementById('scheduleConfigList').appendChild(div);
+        }
+
+        function openSettings() {
+            document.getElementById('configClientId').value = appConfig.clientId || '';
+            document.getElementById('configApiKey').value = appConfig.apiKey || '';
+            renderScheduleSettings();
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        
+        function saveSettings() {
+            appConfig.clientId = document.getElementById('configClientId').value.trim();
+            appConfig.apiKey = document.getElementById('configApiKey').value.trim();
+            localStorage.setItem('quadra_config', JSON.stringify(appConfig));
+            
+            // Extract Schedule Config
+            const rows = document.querySelectorAll('.schedule-row');
+            appSchedule = Array.from(rows).map(row => {
+                const startStr = row.querySelector('.sched-start').value.split(':');
+                const endStr = row.querySelector('.sched-end').value.split(':');
+                return {
+                    title: row.querySelector('.sched-title').value,
+                    startHour: parseInt(startStr[0] || 0) + (parseInt(startStr[1] || 0) / 60),
+                    endHour: parseInt(endStr[0] || 0) + (parseInt(endStr[1] || 0) / 60)
+                };
+            });
+            localStorage.setItem('quadra_schedule', JSON.stringify(appSchedule));
+            
+            closeSettings(); location.reload(); 
         }
 
         // --- Core UI & Search ---
@@ -697,7 +820,6 @@
         function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
         function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
 
-        // --- Init & Auth ---
         function checkConfigState() {
             if (!appConfig.clientId || !appConfig.apiKey) {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
@@ -711,19 +833,6 @@
                 } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
             }
         }
-
-        function openSettings() {
-            document.getElementById('configClientId').value = appConfig.clientId || '';
-            document.getElementById('configApiKey').value = appConfig.apiKey || '';
-            document.getElementById('settingsModal').style.display = 'flex';
-        }
-        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-        function saveSettings() {
-            appConfig.clientId = document.getElementById('configClientId').value.trim();
-            appConfig.apiKey = document.getElementById('configApiKey').value.trim();
-            localStorage.setItem('quadra_config', JSON.stringify(appConfig));
-            closeSettings(); location.reload(); 
-        }
         function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
 
         // --- Import/Export ---
@@ -731,91 +840,39 @@
             const dataStr = JSON.stringify(notes, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const date = new Date().toISOString().split('T')[0];
-            a.download = `quadra_backup_${date}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
+            const a = document.createElement('a'); a.href = url;
+            a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click(); URL.revokeObjectURL(url);
         }
-
         function triggerImport() { document.getElementById('importFile').click(); }
-
         function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const importedNotes = JSON.parse(e.target.result);
                     if (Array.isArray(importedNotes)) {
                         const noteMap = new Map(notes.map(n => [n.id, n]));
-                        importedNotes.forEach(inNote => {
-                            inNote.dirty = true; 
-                            noteMap.set(inNote.id, inNote);
-                        });
-                        notes = Array.from(noteMap.values());
-                        saveNotes();
-                        handleSearch();
-                        alert("Tasks successfully imported and merged!");
-                        closeSettings();
-                    } else {
-                        alert("Invalid backup file format.");
-                    }
-                } catch (err) { alert("Error reading backup file."); }
+                        importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); });
+                        notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings();
+                    } else alert("Invalid format.");
+                } catch (err) { alert("Error reading file."); }
                 event.target.value = ''; 
-            };
-            reader.readAsText(file);
+            }; reader.readAsText(file);
         }
 
-        // --- Google Tasks Background Sync ---
+        // --- Background Sync Engine ---
         function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
         async function initializeGapiClient() {
-            try {
-                await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
-                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
-                    gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync();
-                }
-            } catch(e) { console.error("GAPI Error:", e); }
+            try { await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] }); const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); if (savedTokenData && savedTokenData.expires_at > Date.now()) { gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync(); } } catch(e) {}
         }
-
         function gisLoaded() {
             if(appConfig.clientId) {
-                try {
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: appConfig.clientId, scope: SCOPES,
-                        callback: async (resp) => {
-                            if (resp.error !== undefined) { throw (resp); }
-                            localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) }));
-                            document.getElementById('auth-overlay').style.display = 'none';
-                            document.getElementById('authorize_button').style.display = 'none';
-                            document.getElementById('signout_button').style.display = 'inline-block';
-                            initGoogleSync();
-                        },
-                    });
-                } catch(e) { console.error("GIS Error:", e); }
+                try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: appConfig.clientId, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) { throw (resp); } localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('authorize_button').style.display = 'none'; document.getElementById('signout_button').style.display = 'inline-block'; initGoogleSync(); }, }); } catch(e) {}
             }
         }
-
-        function handleAuthClick() {
-            if (!appConfig.clientId) return openSettings();
-            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''});
-        }
-
-        function handleSignoutClick() {
-            const token = gapi.client.getToken();
-            if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
-            localStorage.removeItem('quadra_gapi_token');
-            isGoogleSynced = false; clearInterval(syncIntervalId);
-            document.getElementById('auth-overlay').style.display = 'flex';
-            document.getElementById('authorize_button').style.display = 'inline-block';
-            document.getElementById('signout_button').style.display = 'none';
-            document.getElementById('sidePanel').classList.remove('open');
-            document.getElementById('sidebarToggleBtn').classList.remove('open');
-            document.body.classList.remove('sidebar-open');
-        }
-
+        function handleAuthClick() { if (!appConfig.clientId) return openSettings(); if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''}); }
+        function handleSignoutClick() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } localStorage.removeItem('quadra_gapi_token'); isGoogleSynced = false; clearInterval(syncIntervalId); document.getElementById('auth-overlay').style.display = 'flex'; document.getElementById('authorize_button').style.display = 'inline-block'; document.getElementById('signout_button').style.display = 'none'; document.getElementById('sidePanel').classList.remove('open'); document.getElementById('sidebarToggleBtn').classList.remove('open'); document.body.classList.remove('sidebar-open'); }
         function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
 
         async function performBackgroundSync() {
@@ -824,86 +881,33 @@
             try {
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
-                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
-                    const expectedName = GAPI_LIST_NAMES[quadKey];
-                    const existingList = remoteLists.find(l => l.title === expectedName);
-                    if (existingList) { gapiListIds[quadKey] = existingList.id; } 
-                    else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName }); gapiListIds[quadKey] = newListReq.result.id; }
-                }
-
+                const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
+                let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
+                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) { const existingList = remoteLists.find(l => l.title === GAPI_LIST_NAMES[quadKey]); if (existingList) { gapiListIds[quadKey] = existingList.id; } else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: GAPI_LIST_NAMES[quadKey] }); gapiListIds[quadKey] = newListReq.result.id; } }
                 let remoteTaskMap = {};
-                for (const quadKey of Object.keys(gapiListIds)) {
-                    const listId = gapiListIds[quadKey];
-                    const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 });
-                    const rTasks = tasksReq.result.items || [];
-                    rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
-                }
-
+                for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 for (let sn of syncSnapshot) {
-                    if (sn.deleted && sn.dirty) {
-                        if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} }
-                        sn.dirty = false; continue;
-                    }
+                    if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
                     if (sn.dirty && !sn.deleted) {
-                        const targetListId = gapiListIds[sn.quadrant];
-                        const remoteObj = remoteTaskMap[sn.id];
-                        const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction';
-                        
-                        const payload = { tasklist: targetListId, title: sn.text, status: gStatus };
-                        if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
-
-                        if (remoteObj) {
-                            if (remoteObj.listId !== targetListId) { 
-                                try {
-                                    await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id });
-                                    const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; 
-                                } catch(e){}
-                            } else { 
-                                try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){}
-                            }
-                            delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
-                        } else { 
-                            try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){}
-                        }
+                        const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
+                        if (remoteObj) { if (remoteObj.listId !== targetListId) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id }); const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} } else { try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){} } delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId]; } else { try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} }
                         sn.dirty = false;
-                    } 
-                    else if (!sn.dirty && !sn.deleted) {
-                        const remoteObj = remoteTaskMap[sn.id];
-                        if (remoteObj) {
-                            sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active';
-                            sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null;
-                            delete remoteTaskMap[sn.id];
-                        }
-                    }
+                    } else if (!sn.dirty && !sn.deleted) { const remoteObj = remoteTaskMap[sn.id]; if (remoteObj) { sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active'; sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null; delete remoteTaskMap[sn.id]; } }
                 }
-
-                Object.values(remoteTaskMap).forEach(remoteObj => {
-                    syncSnapshot.push({
-                        id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
-                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null,
-                        timeBlocks: [], dirty: false, deleted: false
-                    });
-                });
-
+                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], dirty: false, deleted: false }); });
                 let newNotesArray = []; let syncedIds = new Set();
-                syncSnapshot.forEach(sn => {
-                    if (sn.deleted && !sn.dirty) return; 
-                    const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
-                    if (liveNote) {
-                        sn.timeBlocks = liveNote.timeBlocks || []; 
-                        if (liveNote.dirty) {
-                            if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote);
-                        } else { newNotesArray.push(sn); }
-                        syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId);
-                    } else { newNotesArray.push(sn); } 
-                });
+                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
                 notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
-
                 notes = newNotesArray; saveNotes(); handleSearch(); 
-            } catch (e) { console.error("Sync Error:", e); }
-            document.getElementById('sync-banner').style.display = 'none';
+            } catch (e) {} document.getElementById('sync-banner').style.display = 'none';
         }
+
+        // --- Sidebar Management ---
+        function toggleSidebar() { const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
+        function openSidebar() { const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn'); if (!panel.classList.contains('open')) { panel.classList.add('open'); btn.classList.add('open'); document.body.classList.add('sidebar-open'); } }
+        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'), chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         setLayout(currentLayout); checkConfigState(); renderNotes();
     </script>
