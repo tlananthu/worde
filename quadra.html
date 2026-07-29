@@ -20,7 +20,7 @@
             --q3-bg: #FEF3C7; 
             --q4-bg: #F1F5F9; 
             
-            --hour-height: 60px; /* 1 pixel = 1 minute */
+            --hour-height: 60px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -34,6 +34,7 @@
             overflow: hidden; 
         }
 
+        /* --- Main Layout Wrapper --- */
         .main-wrapper {
             display: flex; flex-direction: column; flex-grow: 1;
             position: relative; overflow: hidden;
@@ -92,6 +93,9 @@
         .matrix-container { display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease; max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto; }
         .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-width: 700px; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
+        .matrix-container.fullscreen { display: flex; overflow: hidden; min-width: 0; }
+        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
+        .matrix-container.fullscreen .quadrant.active { display: flex; }
 
         .quadrant { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); min-height: 0; transition: box-shadow 0.2s; }
         .quadrant.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
@@ -103,6 +107,7 @@
         .header-buttons { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; font-size: 16px; font-weight: bold; }
         .icon-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
+        .add-btn { color: var(--brand-primary); font-size: 20px; }
 
         .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
@@ -121,13 +126,12 @@
         .action-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; font-weight: bold; }
         .complete-btn { color: #10B981; } .delete-btn { color: #EF4444; } .restore-btn { color: #3B82F6; }  
         .closed-note { opacity: 0.6; box-shadow: none; cursor: default; }
-        .closed-note .note-text { text-decoration: line-through; }
+        .closed-note .note-text { text-decoration: line-through; cursor: default; overflow-y: hidden; }
 
-        /* --- TIME TRACKER VIEW (New) --- */
+        /* --- TIME TRACKER VIEW --- */
         #tracker-view { display: none; flex-grow: 1; width: 100%; overflow: hidden; background: #ffffff; }
         .tracker-layout { display: flex; height: 100%; }
         
-        /* Palette Left */
         .tracker-palette { width: 350px; flex-shrink: 0; border-right: 1px solid var(--border-color); background: var(--bg-main); display: flex; flex-direction: column; overflow: hidden;}
         .palette-header { padding: 16px; border-bottom: 1px solid var(--border-color); background: #ffffff; }
         .palette-header h3 { font-size: 15px; margin-bottom: 4px; }
@@ -136,14 +140,13 @@
         .palette-note { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-size: 13px; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .palette-note:active { cursor: grabbing; }
 
-        /* Canvas Right */
         .tracker-canvas-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; }
         .tracker-toolbar { padding: 16px 24px; background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
         .tracker-toolbar h2 { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 12px;}
         .tracker-toolbar input[type="date"] { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; }
         
         .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
-        .timeline { position: relative; height: 1440px; /* 24 hours * 60px */ margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         
         .time-row { position: absolute; width: 100%; border-bottom: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 12px; }
         .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; transform: translateY(-50%); background: #ffffff; padding: 0 4px;}
@@ -154,8 +157,6 @@
         .logged-block:hover { transform: translateX(-2px); }
         .block-title { font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .block-meta { font-size: 11px; opacity: 0.8; }
-
-        /* Drop Target */
         .timeline.drag-over { background: rgba(79, 70, 229, 0.03); border-color: var(--brand-primary); }
 
         /* --- Sticky Sidebar --- */
@@ -217,7 +218,8 @@
             <button class="btn btn-outline" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
             <div class="view-toggle">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
-                <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Time Tracker</button>
+                <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
+                <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
             </div>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
@@ -350,6 +352,7 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h3>Configuration</h3>
@@ -361,9 +364,21 @@
                 <label>Google API Key</label>
                 <input type="text" id="configApiKey" style="font-family: monospace;">
             </div>
-            <div class="modal-actions">
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Keys are stored locally in your browser. Leave blank to use local storage only.</p>
+            
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+            
+            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Data Management</h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Backup or restore your tasks and settings locally.</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline" onclick="exportData()">📤 Export Tasks</button>
+                <button class="btn btn-outline" onclick="triggerImport()">📥 Import Tasks</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            </div>
+
+            <div class="modal-actions" style="margin-top: 24px;">
                 <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
-                <button class="btn" onclick="saveSettings()">Save & Reload</button>
+                <button class="btn" onclick="saveSettings()">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -375,7 +390,6 @@
         // --- Core Settings & Config ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         
-        // Configurable Recurring Blocks (Based on typical flexible daily routine)
         const recurringSchedule = [
             { title: 'Out of Office', startHour: 19, endHour: 24 },
             { title: 'Out of Office', startHour: 0, endHour: 8 },
@@ -386,36 +400,48 @@
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
         notes = notes.map(note => {
-            // Upgrade old timeLogs {} dictionary to structured timeBlocks [] array for visual timeline
             let blocks = note.timeBlocks || [];
             if (note.timeLogs && Object.keys(note.timeLogs).length > 0) {
                 Object.keys(note.timeLogs).forEach(date => {
                     blocks.push({ id: Date.now().toString() + Math.random(), date: date, startHour: 9, duration: note.timeLogs[date] });
                 });
-                delete note.timeLogs; // Migrate schema
+                delete note.timeLogs; 
             }
             return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks };
         });
 
+        // Initialize tracker date to today 
+        const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
+        document.getElementById('trackerDate').value = todayStr;
+
         // --- Layout Management ---
         let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
         
-        // Initialize tracker date to today locally
-        const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; // YYYY-MM-DD local
-        document.getElementById('trackerDate').value = todayStr;
-
         function setLayout(layout) {
-            currentLayout = layout; localStorage.setItem('quadra_layout', layout);
-            const matrix = document.getElementById('matrix'); const tracker = document.getElementById('tracker-view');
-            document.getElementById('btnGrid').classList.toggle('active', layout === 'grid');
-            document.getElementById('btnTracker').classList.toggle('active', layout === 'tracker');
+            currentLayout = layout;
+            localStorage.setItem('quadra_layout', layout);
+            
+            const matrix = document.getElementById('matrix');
+            const tracker = document.getElementById('tracker-view');
+            
+            const btnGrid = document.getElementById('btnGrid');
+            const btnKanban = document.getElementById('btnKanban');
+            const btnTracker = document.getElementById('btnTracker');
+
+            if (btnGrid) btnGrid.classList.toggle('active', layout === 'grid');
+            if (btnKanban) btnKanban.classList.toggle('active', layout === 'kanban');
+            if (btnTracker) btnTracker.classList.toggle('active', layout === 'tracker');
             
             if (layout === 'tracker') {
-                matrix.style.display = 'none'; tracker.style.display = 'block'; 
-                document.body.classList.remove('sidebar-open'); // Hide tray sidebar for tracker focus
+                matrix.style.display = 'none'; 
+                tracker.style.display = 'block'; 
+                document.body.classList.remove('sidebar-open');
                 renderTrackerTimeline();
             } else {
-                matrix.style.display = ''; tracker.style.display = 'none';
+                matrix.style.display = ''; 
+                tracker.style.display = 'none';
+                matrix.classList.remove('layout-grid', 'layout-kanban');
+                matrix.classList.add(`layout-${layout}`);
             }
         }
 
@@ -440,12 +466,13 @@
         }
 
         function renderTrackerTimeline() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput ? searchInput.value.toLowerCase() : '';
             const selectedDate = document.getElementById('trackerDate').value;
             const canvas = document.getElementById('timelineCanvas');
             const paletteList = document.getElementById('tracker-palette-list');
             
-            // 1. Render Left Palette (All tasks matching search)
+            // 1. Render Left Palette 
             paletteList.innerHTML = '';
             const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query));
             
@@ -493,7 +520,6 @@
                         let displayTitle = note.text.split('\n')[0].substring(0, 40);
                         blockEl.innerHTML = `<div class="block-title">${displayTitle}</div><div class="block-meta">${tb.duration}h</div>`;
                         
-                        // Click to edit
                         blockEl.onclick = () => openEditBlockModal(note.id, tb.id);
                         canvas.appendChild(blockEl);
                     }
@@ -504,7 +530,7 @@
 
             // Auto-scroll to 8am on initial load
             const scrollArea = document.getElementById('timelineScrollArea');
-            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * 60; // scroll to 7am to see 8am block
+            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * 60; 
         }
 
         function allowTrackerDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
@@ -516,22 +542,19 @@
             const note = notes.find(n => n.id === noteId);
             
             if (note) {
-                // Calculate drop time based on Y coordinate
                 const rect = ev.currentTarget.getBoundingClientRect();
                 const y = ev.clientY - rect.top; 
                 let dropHour = Math.floor(y / 60);
                 
-                // Snap to half hours if near middle
                 const remainder = y % 60;
                 if (remainder > 30) dropHour += 0.5;
 
                 const selectedDate = document.getElementById('trackerDate').value;
                 if (!note.timeBlocks) note.timeBlocks = [];
                 
-                // Default 1 hour block
                 note.timeBlocks.push({ id: Date.now().toString(), date: selectedDate, startHour: dropHour, duration: 1.0 });
                 note.dirty = true;
-                saveNotes(); handleSearch(); // Re-renders
+                saveNotes(); handleSearch(); 
             }
         }
 
@@ -614,7 +637,9 @@
         function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
 
         function handleSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            if(!searchInput) return;
+            const query = searchInput.value.toLowerCase();
             document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
             renderNotes(query);
         }
@@ -671,6 +696,214 @@
         function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
         function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
         function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
+
+        // --- Init & Auth ---
+        function checkConfigState() {
+            if (!appConfig.clientId || !appConfig.apiKey) {
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
+            } else {
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    document.getElementById('authorize_button').style.display = 'none';
+                    document.getElementById('signout_button').style.display = 'inline-block';
+                } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
+            }
+        }
+
+        function openSettings() {
+            document.getElementById('configClientId').value = appConfig.clientId || '';
+            document.getElementById('configApiKey').value = appConfig.apiKey || '';
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
+        function saveSettings() {
+            appConfig.clientId = document.getElementById('configClientId').value.trim();
+            appConfig.apiKey = document.getElementById('configApiKey').value.trim();
+            localStorage.setItem('quadra_config', JSON.stringify(appConfig));
+            closeSettings(); location.reload(); 
+        }
+        function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
+
+        // --- Import/Export ---
+        function exportData() {
+            const dataStr = JSON.stringify(notes, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `quadra_backup_${date}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function triggerImport() { document.getElementById('importFile').click(); }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedNotes = JSON.parse(e.target.result);
+                    if (Array.isArray(importedNotes)) {
+                        const noteMap = new Map(notes.map(n => [n.id, n]));
+                        importedNotes.forEach(inNote => {
+                            inNote.dirty = true; 
+                            noteMap.set(inNote.id, inNote);
+                        });
+                        notes = Array.from(noteMap.values());
+                        saveNotes();
+                        handleSearch();
+                        alert("Tasks successfully imported and merged!");
+                        closeSettings();
+                    } else {
+                        alert("Invalid backup file format.");
+                    }
+                } catch (err) { alert("Error reading backup file."); }
+                event.target.value = ''; 
+            };
+            reader.readAsText(file);
+        }
+
+        // --- Google Tasks Background Sync ---
+        function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
+        async function initializeGapiClient() {
+            try {
+                await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] });
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
+                    gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync();
+                }
+            } catch(e) { console.error("GAPI Error:", e); }
+        }
+
+        function gisLoaded() {
+            if(appConfig.clientId) {
+                try {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: appConfig.clientId, scope: SCOPES,
+                        callback: async (resp) => {
+                            if (resp.error !== undefined) { throw (resp); }
+                            localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) }));
+                            document.getElementById('auth-overlay').style.display = 'none';
+                            document.getElementById('authorize_button').style.display = 'none';
+                            document.getElementById('signout_button').style.display = 'inline-block';
+                            initGoogleSync();
+                        },
+                    });
+                } catch(e) { console.error("GIS Error:", e); }
+            }
+        }
+
+        function handleAuthClick() {
+            if (!appConfig.clientId) return openSettings();
+            if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''});
+        }
+
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
+            localStorage.removeItem('quadra_gapi_token');
+            isGoogleSynced = false; clearInterval(syncIntervalId);
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('authorize_button').style.display = 'inline-block';
+            document.getElementById('signout_button').style.display = 'none';
+            document.getElementById('sidePanel').classList.remove('open');
+            document.getElementById('sidebarToggleBtn').classList.remove('open');
+            document.body.classList.remove('sidebar-open');
+        }
+
+        function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
+
+        async function performBackgroundSync() {
+            if (!isGoogleSynced || !gapi.client.getToken()) return;
+            document.getElementById('sync-banner').style.display = 'block';
+            try {
+                const response = await gapi.client.tasks.tasklists.list();
+                const remoteLists = response.result.items || [];
+                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
+                    const expectedName = GAPI_LIST_NAMES[quadKey];
+                    const existingList = remoteLists.find(l => l.title === expectedName);
+                    if (existingList) { gapiListIds[quadKey] = existingList.id; } 
+                    else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: expectedName }); gapiListIds[quadKey] = newListReq.result.id; }
+                }
+
+                let remoteTaskMap = {};
+                for (const quadKey of Object.keys(gapiListIds)) {
+                    const listId = gapiListIds[quadKey];
+                    const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 });
+                    const rTasks = tasksReq.result.items || [];
+                    rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
+                }
+
+                const syncSnapshot = JSON.parse(JSON.stringify(notes));
+                for (let sn of syncSnapshot) {
+                    if (sn.deleted && sn.dirty) {
+                        if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} }
+                        sn.dirty = false; continue;
+                    }
+                    if (sn.dirty && !sn.deleted) {
+                        const targetListId = gapiListIds[sn.quadrant];
+                        const remoteObj = remoteTaskMap[sn.id];
+                        const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction';
+                        
+                        const payload = { tasklist: targetListId, title: sn.text, status: gStatus };
+                        if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
+
+                        if (remoteObj) {
+                            if (remoteObj.listId !== targetListId) { 
+                                try {
+                                    await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id });
+                                    const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; 
+                                } catch(e){}
+                            } else { 
+                                try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){}
+                            }
+                            delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
+                        } else { 
+                            try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){}
+                        }
+                        sn.dirty = false;
+                    } 
+                    else if (!sn.dirty && !sn.deleted) {
+                        const remoteObj = remoteTaskMap[sn.id];
+                        if (remoteObj) {
+                            sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active';
+                            sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null;
+                            delete remoteTaskMap[sn.id];
+                        }
+                    }
+                }
+
+                Object.values(remoteTaskMap).forEach(remoteObj => {
+                    syncSnapshot.push({
+                        id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
+                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null,
+                        timeBlocks: [], dirty: false, deleted: false
+                    });
+                });
+
+                let newNotesArray = []; let syncedIds = new Set();
+                syncSnapshot.forEach(sn => {
+                    if (sn.deleted && !sn.dirty) return; 
+                    const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
+                    if (liveNote) {
+                        sn.timeBlocks = liveNote.timeBlocks || []; 
+                        if (liveNote.dirty) {
+                            if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote);
+                        } else { newNotesArray.push(sn); }
+                        syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId);
+                    } else { newNotesArray.push(sn); } 
+                });
+                notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
+
+                notes = newNotesArray; saveNotes(); handleSearch(); 
+            } catch (e) { console.error("Sync Error:", e); }
+            document.getElementById('sync-banner').style.display = 'none';
+        }
 
         setLayout(currentLayout); checkConfigState(); renderNotes();
     </script>
