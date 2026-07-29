@@ -107,7 +107,7 @@
         .header-buttons { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; font-size: 16px; font-weight: bold; }
         .icon-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
-        .add-btn { color: var(--brand-primary); font-size: 20px; }
+        .add-btn { color: var(--brand-primary); font-size: 20px; padding: 0; }
 
         .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
@@ -146,26 +146,35 @@
         .tracker-toolbar input[type="date"] { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; }
         
         .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
-        .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         
-        .time-row { position: absolute; width: 100%; border-bottom: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 12px; }
-        .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; transform: translateY(-50%); background: #ffffff; padding: 0 4px;}
+        /* Updated Grid Architecture */
+        .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
         
-        .schedule-overlay { position: absolute; width: 100%; left: 0; background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px ); pointer-events: none; z-index: 1; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
+        .timeline-bg-lines { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
+        /* Adjusted Y-Axis Lines */
+        .time-row { position: absolute; width: 100%; border-top: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 0; }
+        .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; position: absolute; left: 8px; top: -8px; background: #ffffff; padding: 0 4px; line-height: 1; }
         
-        /* Updated Block for Resizing */
-        .logged-block { position: absolute; left: 80px; right: 24px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 8px 12px; font-size: 13px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; }
+        .timeline-cols-container { position: absolute; left: 55px; right: 0; top: 0; bottom: 0; display: flex; z-index: 1; }
+        .time-col { flex: 1; position: relative; border-left: 1px solid var(--border-color); min-height: 1440px; cursor: crosshair; }
+        .time-col:first-child { border-left: none; }
+        .time-col.drag-over { background: rgba(79, 70, 229, 0.03); box-shadow: inset 0 0 0 2px var(--brand-primary); }
+        
+        .col-header { position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); z-index: 20; text-align: center; font-weight: 600; font-size: 13px; padding: 10px 0; border-bottom: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .col-header.today { color: var(--brand-primary); }
+
+        .schedule-overlay { position: absolute; left: 0; right: 0; background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px ); pointer-events: none; z-index: 2; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 6px 10px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; }
         .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.5); z-index: 12;}
-        .block-title { font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
+        .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
         .block-meta { font-size: 11px; opacity: 0.8; pointer-events: none;}
         
         .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; cursor: ns-resize; display: flex; justify-content: center; align-items: center; z-index: 11; opacity: 0.5; transition: opacity 0.2s; }
         .resize-handle:hover { opacity: 1; }
         .resize-handle::after { content: ''; width: 24px; height: 3px; background: rgba(255,255,255,0.7); border-radius: 2px; }
 
-        .timeline.drag-over { background: rgba(79, 70, 229, 0.03); border-color: var(--brand-primary); }
-
-        /* --- Sticky Sidebar --- */
+        /* --- Sticky Sidebar & Trays --- */
         .toggle-sidebar-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: var(--brand-primary); color: white; border: none; padding: 16px 8px; border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91; display: flex; flex-direction: column; gap: 8px; align-items: center; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .toggle-sidebar-btn.open { right: 350px; }
         .toggle-sidebar-btn span { writing-mode: vertical-rl; text-orientation: mixed; font-weight: 600; letter-spacing: 1px; }
@@ -176,9 +185,15 @@
         .side-panel-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
         .close-sidebar-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
         
-        .tray-header { padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background 0.2s; border-bottom: 1px solid var(--border-color);}
+        .inbox-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
+        .closed-tray { border-top: 1px solid var(--border-color); }
+        
+        .tray-header { padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background 0.2s; }
+        .tray-header:hover { background: #F9FAFB; }
+        .tray-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main); }
+        
         .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
-        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; border-bottom: 1px solid var(--border-color);}
+        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; border-bottom: 1px solid var(--border-color); }
 
         /* Overlays & Modals */
         .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
@@ -248,24 +263,34 @@
             <span>📥 Trays</span>
         </button>
 
+        <!-- Trays -->
         <div id="sidePanel" class="side-panel">
             <div class="side-panel-header">
                 <h2>Trays</h2>
                 <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
             </div>
-            <div class="tray-header" onclick="toggleInboxTray()">
-                <h3>Inbox (<span id="inbox-count">0</span>)</h3>
-                <span id="inbox-chevron">▼</span>
+            
+            <div class="inbox-tray">
+                <div class="tray-header" onclick="toggleInboxTray()">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3>Inbox (<span id="inbox-count">0</span>)</h3>
+                        <button class="icon-btn add-btn" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
+                    </div>
+                    <span id="inbox-chevron">▼</span>
+                </div>
+                <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
+                    <div class="task-list" id="list-inbox"></div>
+                </div>
             </div>
-            <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
-                <div class="task-list" id="list-inbox"></div>
-            </div>
-            <div class="tray-header" onclick="toggleClosedTray()">
-                <h3>Completed (<span id="closed-count">0</span>)</h3>
-                <span id="closed-chevron">▲</span>
-            </div>
-            <div class="tray-content" id="closed-tray-content">
-                <div class="task-list" id="list-closed"></div>
+
+            <div class="closed-tray">
+                <div class="tray-header" onclick="toggleClosedTray()">
+                    <h3>Completed (<span id="closed-count">0</span>)</h3>
+                    <span id="closed-chevron">▲</span>
+                </div>
+                <div class="tray-content" id="closed-tray-content">
+                    <div class="task-list" id="list-closed"></div>
+                </div>
             </div>
         </div>
 
@@ -292,7 +317,6 @@
         <!-- Time Tracker View -->
         <div id="tracker-view">
             <div class="tracker-layout">
-                <!-- Left Palette -->
                 <div class="tracker-palette">
                     <div class="palette-header">
                         <h3>Task Palette</h3>
@@ -303,20 +327,25 @@
                     </div>
                 </div>
                 
-                <!-- Right Canvas -->
                 <div class="tracker-canvas-wrapper">
                     <div class="tracker-toolbar">
-                        <h2>
-                            <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(-1)">←</button>
-                            <input type="date" id="trackerDate" onchange="renderTrackerTimeline()">
-                            <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
-                        </h2>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div class="view-toggle" style="margin:0;">
+                                <button id="btnTrackerDay" class="active" onclick="setTrackerMode('day')">Day</button>
+                                <button id="btnTrackerWeek" onclick="setTrackerMode('week')">Week</button>
+                            </div>
+                            <h2>
+                                <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(-1)">←</button>
+                                <input type="date" id="trackerDate" onchange="renderTrackerTimeline()">
+                                <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
+                            </h2>
+                        </div>
                         <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                     </div>
                     
                     <div class="timeline-scroll-area" id="timelineScrollArea">
-                        <div class="timeline" id="timelineCanvas" ondragover="allowTrackerDrop(event)" ondragleave="dragLeaveTracker(event)" ondrop="dropToTracker(event)">
-                            <!-- Time blocks and grids render here -->
+                        <div class="timeline" id="timelineCanvas">
+                            <!-- Background lines, columns, and blocks render here -->
                         </div>
                     </div>
                 </div>
@@ -341,7 +370,6 @@
         </div>
     </div>
 
-    <!-- Edit Time Block Modal (Fallback) -->
     <div id="editTimeBlockModal" class="modal">
         <div class="modal-content" style="max-width: 400px;">
             <h3>Edit Time Block</h3>
@@ -358,7 +386,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h3>Configuration</h3>
@@ -401,7 +428,6 @@
         // --- Core Settings & Config ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
         
-        // Dynamic Recurring Schedule
         const defaultSchedule = [
             { title: 'Out of Office', startHour: 19, endHour: 24 },
             { title: 'Out of Office', startHour: 0, endHour: 8 },
@@ -426,6 +452,7 @@
 
         // --- Layout Management ---
         let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
+        let currentTrackerMode = 'day'; 
         
         function setLayout(layout) {
             currentLayout = layout;
@@ -433,7 +460,6 @@
             
             const matrix = document.getElementById('matrix');
             const tracker = document.getElementById('tracker-view');
-            
             const btnGrid = document.getElementById('btnGrid');
             const btnKanban = document.getElementById('btnKanban');
             const btnTracker = document.getElementById('btnTracker');
@@ -455,6 +481,13 @@
             }
         }
 
+        function setTrackerMode(mode) {
+            currentTrackerMode = mode;
+            document.getElementById('btnTrackerDay').classList.toggle('active', mode === 'day');
+            document.getElementById('btnTrackerWeek').classList.toggle('active', mode === 'week');
+            renderTrackerTimeline();
+        }
+
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
         // --- Drag/Drop Routing ---
@@ -464,6 +497,14 @@
             ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
             const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
             if (note && note.status === 'active' && note.quadrant !== quadrant) { note.quadrant = quadrant; note.dirty = true; saveNotes(); handleSearch(); }
+        }
+
+        // --- TIME FORMAT HELPER ---
+        function decToTime(dec) {
+            let h = Math.floor(dec);
+            let m = Math.round((dec - h) * 60);
+            if (m === 60) { h++; m = 0; }
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
 
         // --- TIME TRACKER LOGIC ---
@@ -478,7 +519,6 @@
         function renderTrackerTimeline() {
             const searchInput = document.getElementById('searchInput');
             const query = searchInput ? searchInput.value.toLowerCase() : '';
-            const selectedDate = document.getElementById('trackerDate').value;
             const canvas = document.getElementById('timelineCanvas');
             const paletteList = document.getElementById('tracker-palette-list');
             
@@ -496,49 +536,108 @@
             });
 
             canvas.innerHTML = '';
+
+            // 1. Render Background Lines (Google Calendar style)
+            const bgLines = document.createElement('div');
+            bgLines.className = 'timeline-bg-lines';
             for (let i = 0; i <= 24; i++) {
                 const row = document.createElement('div');
                 row.className = 'time-row'; row.style.top = `${i * 60}px`;
                 row.innerHTML = `<span class="time-label">${i}:00</span>`;
-                canvas.appendChild(row);
+                bgLines.appendChild(row);
+            }
+            canvas.appendChild(bgLines);
+
+            // 2. Setup Columns based on mode
+            const baseDateStr = document.getElementById('trackerDate').value;
+            const baseDate = new Date(baseDateStr);
+            let datesToRender = [];
+            
+            if (currentTrackerMode === 'day') {
+                datesToRender.push({ date: baseDateStr, label: '' });
+            } else {
+                const dayOfWeek = baseDate.getDay(); // 0 is Sunday
+                const startOfWeek = new Date(baseDate);
+                startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                for(let i=0; i<7; i++) {
+                    let d = new Date(startOfWeek);
+                    d.setDate(startOfWeek.getDate() + i);
+                    datesToRender.push({
+                        date: d.toLocaleDateString('en-CA').split('T')[0],
+                        label: `${dayNames[i]} ${d.getDate()}`
+                    });
+                }
             }
 
-            appSchedule.forEach(block => {
-                const overlay = document.createElement('div');
-                overlay.className = 'schedule-overlay';
-                overlay.style.top = `${block.startHour * 60}px`;
-                overlay.style.height = `${(block.endHour - block.startHour) * 60}px`;
-                overlay.innerText = block.title;
-                canvas.appendChild(overlay);
-            });
+            const colsContainer = document.createElement('div');
+            colsContainer.className = 'timeline-cols-container';
+            canvas.appendChild(colsContainer);
 
-            let dailyTotal = 0;
-            notes.forEach(note => {
-                if (note.deleted || !note.timeBlocks) return;
-                note.timeBlocks.forEach(tb => {
-                    if (tb.date === selectedDate) {
-                        dailyTotal += tb.duration;
-                        const blockEl = document.createElement('div');
-                        blockEl.className = 'logged-block';
-                        blockEl.id = `block-${tb.id}`;
-                        blockEl.style.top = `${tb.startHour * 60}px`;
-                        blockEl.style.height = `${tb.duration * 60}px`;
-                        
-                        let displayTitle = note.text.split('\n')[0].substring(0, 40);
-                        blockEl.innerHTML = `
-                            <div class="block-title">${displayTitle}</div>
-                            <div class="block-meta">${tb.duration}h</div>
-                            <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
-                        `;
-                        
-                        // Drag to move
-                        blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
-                        canvas.appendChild(blockEl);
-                    }
+            let totalTimeRendered = 0;
+
+            datesToRender.forEach(dtObj => {
+                const dateStr = dtObj.date;
+                const col = document.createElement('div');
+                col.className = 'time-col';
+                col.ondragover = allowTrackerDrop;
+                col.ondragleave = dragLeaveTracker;
+                col.ondrop = (e) => dropToTracker(e, dateStr);
+                col.onclick = (e) => handleTimelineClick(e, dateStr);
+
+                if (currentTrackerMode === 'week') {
+                    const header = document.createElement('div');
+                    header.className = 'col-header';
+                    if (dateStr === todayStr) header.classList.add('today');
+                    header.innerText = dtObj.label;
+                    col.appendChild(header);
+                }
+
+                // Render Background Overlays
+                appSchedule.forEach(block => {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'schedule-overlay';
+                    overlay.style.top = `${block.startHour * 60}px`;
+                    overlay.style.height = `${(block.endHour - block.startHour) * 60}px`;
+                    if(currentTrackerMode === 'day') overlay.innerText = block.title;
+                    col.appendChild(overlay);
                 });
+
+                // Render Time Blocks
+                notes.forEach(note => {
+                    if (note.deleted || !note.timeBlocks) return;
+                    note.timeBlocks.forEach(tb => {
+                        if (tb.date === dateStr) {
+                            totalTimeRendered += tb.duration;
+                            const blockEl = document.createElement('div');
+                            blockEl.className = 'logged-block';
+                            blockEl.id = `block-${tb.id}`;
+                            blockEl.style.top = `${tb.startHour * 60}px`;
+                            blockEl.style.height = `${tb.duration * 60}px`;
+                            
+                            let displayTitle = note.text.split('\n')[0].substring(0, 40);
+                            const endHour = tb.startHour + tb.duration;
+                            const timeStr = `${decToTime(tb.startHour)} - ${decToTime(endHour)} (${tb.duration}h)`;
+
+                            blockEl.innerHTML = `
+                                <div class="block-title">${displayTitle}</div>
+                                <div class="block-meta">${timeStr}</div>
+                                <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
+                            `;
+                            
+                            blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
+                            col.appendChild(blockEl);
+                        }
+                    });
+                });
+
+                colsContainer.appendChild(col);
             });
 
-            document.getElementById('trackerDailyTotal').innerText = `Total: ${dailyTotal}h`;
+            document.getElementById('trackerDailyTotal').innerText = `Total: ${totalTimeRendered}h`;
+
+            const scrollArea = document.getElementById('timelineScrollArea');
+            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * 60; 
         }
 
         // --- Drag & Resize Engine ---
@@ -566,7 +665,7 @@
             dragState.hasMoved = true;
             
             const dy = e.clientY - dragState.startY;
-            const dHours = Math.round((dy / 60) * 4) / 4; // Snap to 15 mins
+            const dHours = Math.round((dy / 60) * 4) / 4; 
             
             const note = notes.find(n => n.id === dragState.noteId);
             const block = note.timeBlocks.find(b => b.id === dragState.blockId);
@@ -577,12 +676,12 @@
                 block.startHour = Math.max(0, Math.min(24 - block.duration, dragState.originalStart + dHours));
             }
             
-            // Fast UI transform
             const el = document.getElementById(`block-${dragState.blockId}`);
             if(el) {
                 el.style.top = `${block.startHour * 60}px`;
                 el.style.height = `${block.duration * 60}px`;
-                el.querySelector('.block-meta').innerText = `${block.duration}h`;
+                const endHour = block.startHour + block.duration;
+                el.querySelector('.block-meta').innerText = `${decToTime(block.startHour)} - ${decToTime(endHour)} (${block.duration}h)`;
             }
         }
 
@@ -592,10 +691,8 @@
                 document.removeEventListener('mouseup', stopBlockDrag);
                 
                 if (!dragState.hasMoved && !dragState.isResize) {
-                    // It was just a click, open the modal
                     openEditBlockModal(dragState.noteId, dragState.blockId);
                 } else if (dragState.hasMoved) {
-                    // Save the new bounds
                     const note = notes.find(n => n.id === dragState.noteId);
                     note.dirty = true; saveNotes(); renderTrackerTimeline(); 
                 }
@@ -603,11 +700,27 @@
             }
         }
 
-        // --- Canvas Drop Creation ---
+        // --- Canvas Clicking & Dropping ---
+        let pendingTimelineContext = null;
+
+        function handleTimelineClick(ev, dateStr) {
+            if (ev.target.closest('.logged-block')) return; 
+            
+            const rect = ev.currentTarget.getBoundingClientRect();
+            const y = ev.clientY - rect.top; 
+            let dropHour = Math.floor(y / 60);
+            
+            const remainder = y % 60;
+            if (remainder > 15 && remainder <= 45) dropHour += 0.5;
+            if (remainder > 45) dropHour += 1.0;
+
+            openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
+        }
+
         function allowTrackerDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
         function dragLeaveTracker(ev) { ev.currentTarget.classList.remove('drag-over'); }
         
-        function dropToTracker(ev) {
+        function dropToTracker(ev, dateStr) {
             ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
             const noteId = ev.dataTransfer.getData("text/plain");
             const note = notes.find(n => n.id === noteId);
@@ -621,15 +734,51 @@
                 if (remainder > 15 && remainder <= 45) dropHour += 0.5;
                 if (remainder > 45) dropHour += 1.0;
 
-                const selectedDate = document.getElementById('trackerDate').value;
                 if (!note.timeBlocks) note.timeBlocks = [];
-                
-                note.timeBlocks.push({ id: Date.now().toString(), date: selectedDate, startHour: dropHour, duration: 1.0 });
+                note.timeBlocks.push({ id: Date.now().toString(), date: dateStr, startHour: dropHour, duration: 1.0 });
                 note.dirty = true; saveNotes(); handleSearch(); 
             }
         }
 
-        // Edit Modal Fallback
+        // --- Modals ---
+        let currentEditingId = null; let currentAddingQuadrant = null;
+        
+        function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
+            if (event) event.stopPropagation();
+            pendingTimelineContext = timelineContext;
+
+            const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
+            if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task'; input.value = note.text; }
+            else { currentEditingId = null; currentAddingQuadrant = quadrant; title.innerText = 'Add Task'; input.value = ''; }
+            modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
+        }
+
+        function closeTaskModal() { 
+            document.getElementById('taskModal').style.display = 'none'; 
+            pendingTimelineContext = null; 
+        }
+
+        function saveTaskModal() {
+            const text = document.getElementById('taskInput').value.trim(); if (!text) return closeTaskModal();
+            if (currentEditingId) { 
+                const note = notes.find(n => n.id === currentEditingId); 
+                if (note) { note.text = text; note.dirty = true; saveNotes(); handleSearch(); } 
+            } else { 
+                let newBlocks = [];
+                if (pendingTimelineContext) {
+                    newBlocks.push({
+                        id: Date.now().toString() + Math.random(),
+                        date: pendingTimelineContext.date,
+                        startHour: pendingTimelineContext.startHour,
+                        duration: 1.0
+                    });
+                }
+                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', timeBlocks: newBlocks, dirty: true, deleted: false }); 
+                saveNotes(); handleSearch(); 
+            }
+            closeTaskModal();
+        }
+
         let editingBlockState = null;
         function openEditBlockModal(noteId, blockId) {
             const note = notes.find(n => n.id === noteId);
@@ -657,23 +806,56 @@
             note.dirty = true; saveNotes(); handleSearch(); closeEditBlockModal();
         }
 
+        // --- Export Engine ---
         function exportTimesheet() {
-            const dateStr = document.getElementById('trackerDate').value;
-            let total = 0; let plainTextLog = `Timesheet: ${dateStr}\n------------------------\n`;
-
-            notes.forEach(note => {
-                if (note.deleted || !note.timeBlocks) return;
-                let dailyHrs = 0;
-                note.timeBlocks.forEach(tb => { if(tb.date === dateStr) dailyHrs += tb.duration; });
-                
-                if (dailyHrs > 0) {
-                    total += dailyHrs;
-                    const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
-                    let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
-                    plainTextLog += `- [${identifier}] ${dailyHrs}h\n`;
+            const baseDateStr = document.getElementById('trackerDate').value;
+            const baseDate = new Date(baseDateStr);
+            let datesToExport = [];
+            
+            if (currentTrackerMode === 'day') {
+                datesToExport.push(baseDateStr);
+            } else {
+                const dayOfWeek = baseDate.getDay();
+                const startOfWeek = new Date(baseDate);
+                startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
+                for(let i=0; i<7; i++) {
+                    let d = new Date(startOfWeek);
+                    d.setDate(startOfWeek.getDate() + i);
+                    datesToExport.push(d.toLocaleDateString('en-CA').split('T')[0]);
                 }
+            }
+
+            let plainTextLog = `Timesheet Report\n`;
+            let overallTotal = 0;
+
+            datesToExport.forEach(dateStr => {
+                let dailyHrs = 0;
+                let dailyLog = "";
+                notes.forEach(note => {
+                    if (note.deleted || !note.timeBlocks) return;
+                    note.timeBlocks.forEach(tb => { 
+                        if(tb.date === dateStr) {
+                            dailyHrs += tb.duration;
+                            const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
+                            let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
+                            dailyLog += `- [${identifier}] ${tb.duration}h\n`;
+                        }
+                    });
+                });
+                
+                if (dailyHrs > 0 || currentTrackerMode === 'day') {
+                     plainTextLog += `\nDate: ${dateStr}\n------------------------\n`;
+                     if(dailyHrs > 0) plainTextLog += dailyLog;
+                     else plainTextLog += "No time logged.\n";
+                     plainTextLog += `Total: ${dailyHrs}h\n`;
+                }
+                overallTotal += dailyHrs;
             });
-            plainTextLog += `------------------------\nTotal: ${total}h`;
+            
+            if (currentTrackerMode === 'week') {
+                 plainTextLog += `\n========================\nWeekly Total: ${overallTotal}h\n`;
+            }
+
             navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
         }
 
@@ -716,7 +898,6 @@
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
             localStorage.setItem('quadra_config', JSON.stringify(appConfig));
             
-            // Extract Schedule Config
             const rows = document.querySelectorAll('.schedule-row');
             appSchedule = Array.from(rows).map(row => {
                 const startStr = row.querySelector('.sched-start').value.split(':');
@@ -732,7 +913,7 @@
             closeSettings(); location.reload(); 
         }
 
-        // --- Core UI & Search ---
+        // --- Core UI Tasks & Notes Matrix ---
         function renderTagsList() {
             const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
             const tagCounts = {};
@@ -799,26 +980,13 @@
             renderTagsList();
         }
 
-        // Base task modal logic
-        let currentEditingId = null; let currentAddingQuadrant = null;
-        function openTaskModal(quadrant = null, noteId = null, event = null) {
-            if (event) event.stopPropagation();
-            const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
-            if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task'; input.value = note.text; }
-            else { currentEditingId = null; currentAddingQuadrant = quadrant; title.innerText = 'Add Task'; input.value = ''; }
-            modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
-        }
-        function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
-        function saveTaskModal() {
-            const text = document.getElementById('taskInput').value.trim(); if (!text) return closeTaskModal();
-            if (currentEditingId) { const note = notes.find(n => n.id === currentEditingId); if (note) { note.text = text; note.dirty = true; saveNotes(); handleSearch(); } } 
-            else { notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', timeBlocks: [], dirty: true, deleted: false }); saveNotes(); handleSearch(); }
-            closeTaskModal();
-        }
-
         function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
         function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
         function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
+
+        function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
+        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         function checkConfigState() {
             if (!appConfig.clientId || !appConfig.apiKey) {
@@ -835,42 +1003,13 @@
         }
         function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
 
-        // --- Import/Export ---
-        function exportData() {
-            const dataStr = JSON.stringify(notes, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url;
-            a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`;
-            a.click(); URL.revokeObjectURL(url);
-        }
+        function exportData() { const dataStr = JSON.stringify(notes, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); }
         function triggerImport() { document.getElementById('importFile').click(); }
-        function importData(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedNotes = JSON.parse(e.target.result);
-                    if (Array.isArray(importedNotes)) {
-                        const noteMap = new Map(notes.map(n => [n.id, n]));
-                        importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); });
-                        notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings();
-                    } else alert("Invalid format.");
-                } catch (err) { alert("Error reading file."); }
-                event.target.value = ''; 
-            }; reader.readAsText(file);
-        }
+        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Background Sync Engine ---
         function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
-        async function initializeGapiClient() {
-            try { await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] }); const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); if (savedTokenData && savedTokenData.expires_at > Date.now()) { gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync(); } } catch(e) {}
-        }
-        function gisLoaded() {
-            if(appConfig.clientId) {
-                try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: appConfig.clientId, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) { throw (resp); } localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('authorize_button').style.display = 'none'; document.getElementById('signout_button').style.display = 'inline-block'; initGoogleSync(); }, }); } catch(e) {}
-            }
-        }
+        async function initializeGapiClient() { try { await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] }); const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); if (savedTokenData && savedTokenData.expires_at > Date.now()) { gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync(); } } catch(e) {} }
+        function gisLoaded() { if(appConfig.clientId) { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: appConfig.clientId, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) { throw (resp); } localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('authorize_button').style.display = 'none'; document.getElementById('signout_button').style.display = 'inline-block'; initGoogleSync(); }, }); } catch(e) {} } }
         function handleAuthClick() { if (!appConfig.clientId) return openSettings(); if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''}); }
         function handleSignoutClick() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } localStorage.removeItem('quadra_gapi_token'); isGoogleSynced = false; clearInterval(syncIntervalId); document.getElementById('auth-overlay').style.display = 'flex'; document.getElementById('authorize_button').style.display = 'inline-block'; document.getElementById('signout_button').style.display = 'none'; document.getElementById('sidePanel').classList.remove('open'); document.getElementById('sidebarToggleBtn').classList.remove('open'); document.body.classList.remove('sidebar-open'); }
         function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
@@ -902,12 +1041,6 @@
                 notes = newNotesArray; saveNotes(); handleSearch(); 
             } catch (e) {} document.getElementById('sync-banner').style.display = 'none';
         }
-
-        // --- Sidebar Management ---
-        function toggleSidebar() { const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
-        function openSidebar() { const panel = document.getElementById('sidePanel'), btn = document.getElementById('sidebarToggleBtn'); if (!panel.classList.contains('open')) { panel.classList.add('open'); btn.classList.add('open'); document.body.classList.add('sidebar-open'); } }
-        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
-        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'), chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         setLayout(currentLayout); checkConfigState(); renderNotes();
     </script>
