@@ -387,22 +387,18 @@
 
     <div class="main-wrapper">
         
-        <!-- Auth Overlay now covers the entire workspace wrapper (Tags, Matrix, and Side Panel) -->
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks Sync</h3>
             <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
             <div class="overlay-actions" id="overlay-actions"></div>
         </div>
 
-        <!-- Quick Filter Tags Bar -->
         <div id="quick-tags-bar" class="tags-bar"></div>
 
-        <!-- Toggle Sidebar Button -->
         <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
             <span>📥 Trays</span>
         </button>
 
-        <!-- Side Panel -->
         <div id="sidePanel" class="side-panel">
             <div class="side-panel-header">
                 <h2>Trays</h2>
@@ -433,7 +429,6 @@
             </div>
         </div>
 
-        <!-- Matrix View -->
         <div id="matrix" class="matrix-container layout-grid">
             <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
                 <div class="q-header">
@@ -480,7 +475,6 @@
             </div>
         </div>
 
-        <!-- Weekly Calendar View -->
         <div id="calendar-view">
             <div class="calendar-header">
                 <button class="btn btn-outline" onclick="changeWeek(-1)">← Prev Week</button>
@@ -489,7 +483,7 @@
             </div>
             <div class="calendar-grid" id="calendar-grid"></div>
         </div>
-    </div> <!-- END .main-wrapper -->
+    </div>
 
     <!-- Time Logging Modal -->
     <div id="timeLogModal" class="modal">
@@ -547,7 +541,7 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
+    <!-- Settings Modal with Data Management -->
     <div id="settingsModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h3>Configuration</h3>
@@ -560,9 +554,20 @@
                 <input type="text" id="configApiKey" placeholder="YOUR_API_KEY" style="font-family: monospace;">
             </div>
             <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Keys are stored locally in your browser. Leave blank to use local storage only.</p>
-            <div class="modal-actions">
+            
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+            
+            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Data Management</h4>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Backup or restore your tasks and settings locally.</p>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-outline" onclick="exportData()">📤 Export Tasks</button>
+                <button class="btn btn-outline" onclick="triggerImport()">📥 Import Tasks</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+            </div>
+
+            <div class="modal-actions" style="margin-top: 24px;">
                 <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
-                <button class="btn" onclick="saveSettings()">Save & Reload</button>
+                <button class="btn" onclick="saveSettings()">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -662,6 +667,50 @@
             closeSettings(); location.reload(); 
         }
         function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
+
+        // --- Import/Export ---
+        function exportData() {
+            const dataStr = JSON.stringify(notes, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `quadra_backup_${date}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function triggerImport() { document.getElementById('importFile').click(); }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedNotes = JSON.parse(e.target.result);
+                    if (Array.isArray(importedNotes)) {
+                        const noteMap = new Map(notes.map(n => [n.id, n]));
+                        importedNotes.forEach(inNote => {
+                            inNote.dirty = true; // Flag for Google sync if connected
+                            noteMap.set(inNote.id, inNote);
+                        });
+                        notes = Array.from(noteMap.values());
+                        saveNotes();
+                        handleSearch();
+                        alert("Tasks successfully imported and merged!");
+                        closeSettings();
+                    } else {
+                        alert("Invalid backup file format. Expected an array of tasks.");
+                    }
+                } catch (err) {
+                    alert("Error reading backup file.");
+                }
+                event.target.value = ''; // Reset input
+            };
+            reader.readAsText(file);
+        }
 
         // --- Google Tasks Background Sync ---
         function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
@@ -779,7 +828,7 @@
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
                         status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null,
-                        timeLogs: {}, // Default empty logs for pure remote tasks
+                        timeLogs: {}, 
                         dirty: false, deleted: false
                     });
                 });
@@ -789,7 +838,7 @@
                     if (sn.deleted && !sn.dirty) return; 
                     const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
                     if (liveNote) {
-                        sn.timeLogs = liveNote.timeLogs || {}; // Protect local time logs during merge!
+                        sn.timeLogs = liveNote.timeLogs || {}; 
                         if (liveNote.dirty) {
                             if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote);
                         } else { newNotesArray.push(sn); }
@@ -873,7 +922,6 @@
             const note = notes.find(n => n.id === id);
             document.getElementById('timeLogTaskName').innerText = note.text;
             
-            // Set date strictly to local YYYY-MM-DD
             const today = new Date();
             const y = today.getFullYear(), m = String(today.getMonth() + 1).padStart(2, '0'), d = String(today.getDate()).padStart(2, '0');
             const dateStr = `${y}-${m}-${d}`;
@@ -900,7 +948,7 @@
                 if (!note.timeLogs) note.timeLogs = {};
                 
                 if (isNaN(hours) || hours <= 0) {
-                    delete note.timeLogs[dateStr]; // Clean up 0 hour entries
+                    delete note.timeLogs[dateStr];
                 } else {
                     note.timeLogs[dateStr] = hours;
                 }
@@ -935,8 +983,7 @@
                     const hrs = note.timeLogs[dateStr];
                     total += hrs;
                     
-                    // Format output
-                    const titleText = note.text.split('\n')[0].substring(0, 60); // First line snippet
+                    const titleText = note.text.split('\n')[0].substring(0, 60);
                     logEntries.push(`<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);">
                         <span style="padding-right: 16px;">${parseTags(titleText)}</span>
                         <strong>${hrs}h</strong>
@@ -964,7 +1011,6 @@
                     const hrs = note.timeLogs[dateStr];
                     total += hrs;
                     
-                    // Try to extract only hashtags for the summary, or fallback to first 40 chars
                     const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
                     
@@ -1123,7 +1169,6 @@
                         metaDiv.appendChild(dateSpan);
                     }
 
-                    // Calculate total time logged for this specific task
                     let totalTaskTime = 0;
                     if (note.timeLogs) {
                         Object.values(note.timeLogs).forEach(hrs => totalTaskTime += hrs);
