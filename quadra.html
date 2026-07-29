@@ -221,7 +221,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.0</span></h1>
+                <h1>Quadra <span class="version-badge">v2.1</span></h1>
             </div>
             
             <div class="search-container">
@@ -251,8 +251,8 @@
 
     <div class="main-wrapper">
         <div id="auth-overlay" class="overlay">
-            <h3 id="overlay-title">Google Tasks Sync</h3>
-            <p id="overlay-text">Sync your Eisenhower Matrix directly with your Google Tasks account.</p>
+            <h3 id="overlay-title">Google Tasks & Calendar Sync</h3>
+            <p id="overlay-text">Sync your Eisenhower Matrix and import meetings directly from Google.</p>
             <div class="overlay-actions" id="overlay-actions"></div>
         </div>
 
@@ -412,7 +412,7 @@
                     </select>
                     <button class="btn btn-outline" onclick="loadCalendars()">Load</button>
                 </div>
-                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click 'Load' to authenticate and view your available calendars.</p>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click 'Load' to fetch your available Google calendars.</p>
             </div>
 
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
@@ -453,6 +453,7 @@
             'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
             'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
         ];
+        // Explicitly requesting both Tasks and Calendar read permissions
         const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
         const defaultSchedule = [
@@ -902,7 +903,6 @@
         async function loadCalendars() {
             if (!gapi.client.getToken()) return alert("Please sign in first.");
             try {
-                // Ensure calendar API is loaded before calling
                 if (!gapi.client.calendar) {
                     await gapi.client.load('calendar', 'v3');
                 }
@@ -920,7 +920,7 @@
             } catch (e) {
                 console.error("Calendar Load Error:", e);
                 if (e.status === 401 || e.status === 403) {
-                    alert("Permission Denied: Please click 'Sign Out' and then 'Sign In' again to grant Quadra access to your Google Calendar.");
+                    alert("Permission Denied: Please click 'Sign Out' and sign back in to grant Quadra access to your Google Calendar.");
                 } else {
                     alert("Failed to load calendars. Please check your internet connection and try again.");
                 }
@@ -956,7 +956,7 @@
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             
-            document.getElementById('configCalendar').innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? 'Saved Calendar (Click Load to change)' : '-- Select a Calendar --'}</option>`;
+            document.getElementById('configCalendar').innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? 'Saved Calendar (Click Load to refresh)' : '-- Select a Calendar --'}</option>`;
             
             renderScheduleSettings();
             document.getElementById('settingsModal').style.display = 'flex';
@@ -1065,7 +1065,6 @@
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
                 
-                // Using V2 key to force re-auth for Calendar scopes
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     document.getElementById('auth-overlay').style.display = 'none';
@@ -1090,7 +1089,6 @@
         async function initializeGapiClient() { 
             try { 
                 await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: DISCOVERY_DOCS }); 
-                // V2 Token Check
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2')); 
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) { 
                     gapi.client.setToken({ access_token: savedTokenData.token }); 
@@ -1107,7 +1105,6 @@
                         scope: SCOPES, 
                         callback: async (resp) => { 
                             if (resp.error !== undefined) { throw (resp); } 
-                            // Save V2 Token
                             localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
                             document.getElementById('auth-overlay').style.display = 'none'; 
                             document.getElementById('authorize_button').style.display = 'none'; 
@@ -1132,9 +1129,8 @@
                 }
             }
 
-            const token = (typeof gapi !== 'undefined' && gapi.client && gapi.client.getToken) ? gapi.client.getToken() : null;
-            if (token === null) tokenClient.requestAccessToken({prompt: 'consent'}); 
-            else tokenClient.requestAccessToken({prompt: ''}); 
+            // Forcing explicit scope consent prompt on sign in to ensure calendar permissions are requested
+            tokenClient.requestAccessToken({prompt: 'consent'}); 
         }
         
         function handleSignoutClick() { 
@@ -1229,7 +1225,7 @@
                 console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
                 if (e.status === 401 || e.status === 403) {
-                    alert("Permission Denied: Please click 'Sign Out' and then 'Sign In' again to grant Quadra access to your Google Calendar.");
+                    alert("Permission Denied: Please click 'Sign Out' and sign back in to grant Quadra access to your Google Calendar.");
                 } else {
                     alert("Failed to fetch calendar events. Check your connection.");
                 }
