@@ -23,7 +23,6 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         
-        /* Added transition to padding so the body smoothly squeezes when sidebar opens */
         body { 
             background-color: var(--bg-main); 
             color: var(--text-main); 
@@ -34,14 +33,9 @@
             transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Push the main layout to the left when sidebar is open (Desktop Only) */
         @media (min-width: 769px) {
-            body.sidebar-open {
-                padding-right: 350px;
-            }
-            body.sidebar-open #sync-banner {
-                right: 374px; /* Move banner over to not get covered by sidebar */
-            }
+            body.sidebar-open { padding-right: 350px; }
+            body.sidebar-open #sync-banner { right: 374px; }
         }
 
         /* Header & Logo */
@@ -103,7 +97,6 @@
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
             max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto;
         }
-        /* Min-width ensures if the sidebar squeezes it too small, horizontal scroll appears instead of breaking layout */
         .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-width: 700px; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
         .matrix-container.fullscreen { display: flex; overflow: hidden; min-width: 0; }
@@ -213,9 +206,10 @@
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
         
+        /* 3 Line Limit with precise sizing */
         .note-text { 
             white-space: pre-wrap; word-break: break-word;
-            max-height: 4.5em; 
+            max-height: 4.5em; /* 3 lines exact */
             overflow-y: auto; padding-right: 4px;
         }
         .note-text::-webkit-scrollbar { width: 4px; }
@@ -238,7 +232,7 @@
         .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
         .closed-note .note-text { text-decoration: line-through; cursor: default; overflow-y: hidden; }
 
-        /* --- Sticky Sidebar for Inbox & Closed Tasks --- */
+        /* --- Sticky Sidebar --- */
         .toggle-sidebar-btn {
             position: fixed; right: 0; top: 50%; transform: translateY(-50%);
             background: var(--brand-primary); color: white; border: none; padding: 16px 8px; 
@@ -283,7 +277,6 @@
             transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC;
         }
         .side-panel .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; }
-        
         .side-panel .task-list { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; overflow-y: visible; }
 
         /* Sync Banner */
@@ -311,7 +304,6 @@
             .side-panel { width: 320px; right: -320px; max-width: 100vw; }
             .toggle-sidebar-btn.open { right: 320px; }
             
-            /* Remove padding compression on mobile so UI is overlaid instead */
             body.sidebar-open { padding-right: 0; }
             body.sidebar-open #sync-banner { right: 24px; }
         }
@@ -533,7 +525,7 @@
             }
         }
 
-        // --- Sidebar Management (PUSH EFFECT) ---
+        // --- Sidebar Management ---
         function toggleSidebar() {
             const panel = document.getElementById('sidePanel');
             const btn = document.getElementById('sidebarToggleBtn');
@@ -571,7 +563,6 @@
             'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed'
         };
         let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
-
         const quadColors = { 'q1': 'var(--q1-bg)', 'q2': 'var(--q2-bg)', 'q3': 'var(--q3-bg)', 'q4': 'var(--q4-bg)', 'inbox': '#F1F5F9' };
 
         let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
@@ -591,7 +582,6 @@
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
-                
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     document.getElementById('auth-overlay').style.display = 'none';
@@ -660,8 +650,7 @@
             const token = gapi.client.getToken();
             if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); }
             localStorage.removeItem('quadra_gapi_token');
-            isGoogleSynced = false;
-            clearInterval(syncIntervalId);
+            isGoogleSynced = false; clearInterval(syncIntervalId);
             document.getElementById('authorize_button').style.display = 'inline-block';
             document.getElementById('signout_button').style.display = 'none';
             document.getElementById('manualSyncBtn').style.display = 'none';
@@ -677,9 +666,7 @@
         async function performBackgroundSync() {
             if (!isGoogleSynced || !gapi.client.getToken()) return;
             document.getElementById('sync-banner').style.display = 'block';
-            
             try {
-                // Ensure Task Lists Exist
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
                 for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
@@ -692,7 +679,6 @@
                     }
                 }
 
-                // Fetch Remote Tasks
                 let remoteTaskMap = {};
                 for (const quadKey of Object.keys(gapiListIds)) {
                     const listId = gapiListIds[quadKey];
@@ -701,26 +687,21 @@
                     rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
                 }
 
-                // Process Dirty Changes Up
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
-                
                 for (let sn of syncSnapshot) {
                     if (sn.deleted && sn.dirty) {
                         if (remoteTaskMap[sn.id]) {
                             try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){}
                         }
-                        sn.dirty = false;
-                        continue;
+                        sn.dirty = false; continue;
                     }
-
                     if (sn.dirty && !sn.deleted) {
                         const targetListId = gapiListIds[sn.quadrant];
                         const remoteObj = remoteTaskMap[sn.id];
                         const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction';
                         
                         const payload = { tasklist: targetListId, title: sn.text, status: gStatus };
-                        if (sn.dueDate) payload.due = sn.dueDate;
-                        else payload.due = null;
+                        if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
 
                         if (remoteObj) {
                             if (remoteObj.listId !== targetListId) { 
@@ -730,10 +711,7 @@
                                     sn.tempId = sn.id; sn.id = res.result.id; 
                                 } catch(e){}
                             } else { 
-                                try { 
-                                    payload.task = sn.id;
-                                    await gapi.client.tasks.tasks.patch(payload); 
-                                } catch(e){}
+                                try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){}
                             }
                             delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId];
                         } else { 
@@ -756,20 +734,16 @@
                     }
                 }
 
-                // Add pure remote tasks
                 Object.values(remoteTaskMap).forEach(remoteObj => {
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
-                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active',
-                        dueDate: remoteObj.task.due || null,
+                        status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null,
                         dirty: false, deleted: false
                     });
                 });
 
-                // Smart Merge
                 let newNotesArray = [];
                 let syncedIds = new Set();
-
                 syncSnapshot.forEach(sn => {
                     if (sn.deleted && !sn.dirty) return; 
                     const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId));
@@ -781,15 +755,11 @@
                         syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId);
                     } else { newNotesArray.push(sn); } 
                 });
-
                 notes.forEach(liveNote => {
                     if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote);
                 });
 
-                notes = newNotesArray;
-                saveNotes();
-                handleSearch(); 
-
+                notes = newNotesArray; saveNotes(); handleSearch(); 
             } catch (e) { console.error("Sync Error:", e); }
             document.getElementById('sync-banner').style.display = 'none';
         }
@@ -797,27 +767,21 @@
         // --- Fast Local Actions ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
-        // Core Drag & Drop
         function allowDrop(ev) {
             ev.preventDefault(); 
-            if(ev.currentTarget.classList.contains('quadrant') || 
-               ev.currentTarget.id === 'inbox-tray-content' ||
-               ev.currentTarget.classList.contains('calendar-cell')) {
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) {
                 ev.currentTarget.classList.add('drag-over');
             }
         }
         function dragLeave(ev) {
-            if(ev.currentTarget.classList.contains('quadrant') || 
-               ev.currentTarget.id === 'inbox-tray-content' ||
-               ev.currentTarget.classList.contains('calendar-cell')) {
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content' || ev.currentTarget.classList.contains('calendar-cell')) {
                 ev.currentTarget.classList.remove('drag-over');
             }
         }
         function drop(ev, newQuadrant) {
             ev.preventDefault();
-            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') {
-                ev.currentTarget.classList.remove('drag-over');
-            }
+            if(ev.currentTarget.classList.contains('quadrant') || ev.currentTarget.id === 'inbox-tray-content') ev.currentTarget.classList.remove('drag-over');
+            
             const noteId = ev.dataTransfer.getData("text/plain");
             const note = notes.find(n => n.id === noteId);
             if (note && note.status === 'active' && note.quadrant !== newQuadrant) {
@@ -828,18 +792,17 @@
 
         function dropToCalendar(ev, dateString) {
             ev.preventDefault();
+            ev.stopPropagation(); // Prevent bubbling 
             if(ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over');
             
             const noteId = ev.dataTransfer.getData("text/plain");
             const note = notes.find(n => n.id === noteId);
             
             if (note && note.status === 'active') {
-                const isoDate = new Date(dateString).toISOString(); 
+                const isoDate = `${dateString}T00:00:00.000Z`; // Hard-mapped timezone string bypasses browser conversion
                 if (note.dueDate !== isoDate) {
-                    note.dueDate = isoDate;
-                    note.dirty = true;
-                    saveNotes();
-                    handleSearch(); 
+                    note.dueDate = isoDate; note.dirty = true;
+                    saveNotes(); handleSearch(); 
                 }
             }
         }
@@ -848,56 +811,35 @@
 
         function openTaskModal(quadrant = null, noteId = null, event = null) {
             if (event) event.stopPropagation();
-            const modal = document.getElementById('taskModal');
-            const input = document.getElementById('taskInput');
-            const dateInput = document.getElementById('taskDueDate');
-            const title = document.getElementById('taskModalTitle');
-            
+            const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), dateInput = document.getElementById('taskDueDate'), title = document.getElementById('taskModalTitle');
             if (noteId) {
-                currentEditingId = noteId; 
-                const note = notes.find(n => n.id === noteId);
-                title.innerText = 'Edit Task'; 
-                input.value = note.text;
+                currentEditingId = noteId; const note = notes.find(n => n.id === noteId);
+                title.innerText = 'Edit Task'; input.value = note.text;
                 dateInput.value = note.dueDate ? note.dueDate.substring(0, 10) : '';
             } else {
-                currentEditingId = null; 
-                currentAddingQuadrant = quadrant;
-                title.innerText = 'Add Task'; 
-                input.value = '';
-                dateInput.value = '';
+                currentEditingId = null; currentAddingQuadrant = quadrant;
+                title.innerText = 'Add Task'; input.value = ''; dateInput.value = '';
             }
-            modal.style.display = 'flex'; 
-            setTimeout(() => input.focus(), 100);
+            modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
         }
-        
         function closeTaskModal() { document.getElementById('taskModal').style.display = 'none'; }
 
         function saveTaskModal() {
             const text = document.getElementById('taskInput').value.trim();
             if (!text) return closeTaskModal();
             
-            const dueDateVal = document.getElementById('taskDueDate').value;
+            const dueDateVal = document.getElementById('taskDueDate').value; // YYYY-MM-DD
             let isoDate = null;
-            if (dueDateVal) isoDate = new Date(dueDateVal).toISOString(); 
+            if (dueDateVal) isoDate = `${dueDateVal}T00:00:00.000Z`; 
 
             if (currentEditingId) {
                 const note = notes.find(n => n.id === currentEditingId);
                 if (note && (note.text !== text || note.dueDate !== isoDate)) { 
-                    note.text = text; 
-                    note.dueDate = isoDate;
-                    note.dirty = true; 
+                    note.text = text; note.dueDate = isoDate; note.dirty = true; 
                     saveNotes(); handleSearch(); 
                 }
             } else {
-                notes.push({ 
-                    id: Date.now().toString(), 
-                    text: text, 
-                    quadrant: currentAddingQuadrant, 
-                    status: 'active', 
-                    dueDate: isoDate,
-                    dirty: true, 
-                    deleted: false 
-                });
+                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', dueDate: isoDate, dirty: true, deleted: false });
                 saveNotes(); handleSearch();
             }
             closeTaskModal();
@@ -921,11 +863,7 @@
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
         function parseTags(str) { return escapeHTML(str).replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>'); }
         function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
-        
-        function clearSearch() {
-            const searchInput = document.getElementById('searchInput');
-            searchInput.value = ''; handleSearch(); searchInput.focus();
-        }
+        function clearSearch() { const searchInput = document.getElementById('searchInput'); searchInput.value = ''; handleSearch(); searchInput.focus(); }
 
         function handleSearch() {
             const query = document.getElementById('searchInput').value;
@@ -937,13 +875,11 @@
                 let openedSidebar = false;
                 if (notes.some(n => !n.deleted && n.status === 'closed' && n.text.toLowerCase().includes(qLower))) {
                     document.getElementById('closed-tray-content').classList.add('open');
-                    document.getElementById('closed-chevron').innerText = '▲';
-                    openedSidebar = true;
+                    document.getElementById('closed-chevron').innerText = '▲'; openedSidebar = true;
                 }
                 if (notes.some(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox' && n.text.toLowerCase().includes(qLower))) {
                     document.getElementById('inbox-tray-content').classList.add('open');
-                    document.getElementById('inbox-chevron').innerText = '▲';
-                    openedSidebar = true;
+                    document.getElementById('inbox-chevron').innerText = '▲'; openedSidebar = true;
                 }
                 if (openedSidebar) openSidebar();
             }
@@ -959,63 +895,37 @@
 
         function renderCalendar() {
             if (currentLayout !== 'calendar') return;
-            const grid = document.getElementById('calendar-grid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
             
             const startOfWeek = new Date(currentDateIndex);
             startOfWeek.setDate(currentDateIndex.getDate() - currentDateIndex.getDay());
-            
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 6);
 
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const startStr = `${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()}`;
-            const endStr = `${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
-            document.getElementById('calendar-month-year').innerText = `${startStr} - ${endStr}`;
+            document.getElementById('calendar-month-year').innerText = `${monthNames[startOfWeek.getMonth()]} ${startOfWeek.getDate()} - ${monthNames[endOfWeek.getMonth()]} ${endOfWeek.getDate()}, ${endOfWeek.getFullYear()}`;
 
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             days.forEach(d => {
-                const el = document.createElement('div');
-                el.className = 'calendar-day-header';
-                el.innerText = d;
-                grid.appendChild(el);
+                const el = document.createElement('div'); el.className = 'calendar-day-header'; el.innerText = d; grid.appendChild(el);
             });
 
             const today = new Date();
             
             for (let i = 0; i < 7; i++) {
-                const cellDate = new Date(startOfWeek);
-                cellDate.setDate(startOfWeek.getDate() + i);
-
-                const cell = document.createElement('div');
-                cell.className = 'calendar-cell';
+                const cellDate = new Date(startOfWeek); cellDate.setDate(startOfWeek.getDate() + i);
+                const cell = document.createElement('div'); cell.className = 'calendar-cell';
                 
-                const y = cellDate.getFullYear();
-                const m = String(cellDate.getMonth() + 1).padStart(2, '0');
-                const dStr = String(cellDate.getDate()).padStart(2, '0');
+                const y = cellDate.getFullYear(), m = String(cellDate.getMonth() + 1).padStart(2, '0'), dStr = String(cellDate.getDate()).padStart(2, '0');
                 const dateString = `${y}-${m}-${dStr}`;
                 
-                if (y === today.getFullYear() && cellDate.getMonth() === today.getMonth() && cellDate.getDate() === today.getDate()) {
-                    cell.classList.add('today');
-                }
+                if (y === today.getFullYear() && cellDate.getMonth() === today.getMonth() && cellDate.getDate() === today.getDate()) cell.classList.add('today');
 
-                cell.ondragover = allowDrop;
-                cell.ondragleave = dragLeave;
-                cell.ondrop = (e) => dropToCalendar(e, dateString);
+                cell.ondragover = allowDrop; cell.ondragleave = dragLeave; cell.ondrop = (e) => dropToCalendar(e, dateString);
 
-                const dayNum = document.createElement('div');
-                dayNum.className = 'day-number';
-                dayNum.innerText = cellDate.getDate();
-                cell.appendChild(dayNum);
-
-                const taskList = document.createElement('div');
-                taskList.className = 'task-list';
-                taskList.id = `cal-list-${dateString}`;
-                cell.appendChild(taskList);
-
+                const dayNum = document.createElement('div'); dayNum.className = 'day-number'; dayNum.innerText = cellDate.getDate(); cell.appendChild(dayNum);
+                const taskList = document.createElement('div'); taskList.className = 'task-list'; taskList.id = `cal-list-${dateString}`; cell.appendChild(taskList);
                 grid.appendChild(cell);
             }
-            
             populateCalendarTasks();
         }
 
@@ -1025,11 +935,9 @@
                     const noteDateStr = note.dueDate.split('T')[0];
                     const list = document.getElementById(`cal-list-${noteDateStr}`);
                     if (list) {
-                        const taskEl = document.createElement('div');
-                        taskEl.className = 'calendar-task';
+                        const taskEl = document.createElement('div'); taskEl.className = 'calendar-task';
                         taskEl.style.backgroundColor = quadColors[note.quadrant] || 'var(--q2-bg)';
-                        taskEl.innerHTML = parseTags(note.text);
-                        taskEl.title = "Double-click to edit";
+                        taskEl.innerHTML = parseTags(note.text); taskEl.title = "Double-click to edit";
                         taskEl.draggable = true;
                         taskEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
                         taskEl.ondblclick = (e) => openTaskModal(null, note.id, e);
@@ -1039,14 +947,21 @@
             });
         }
 
-        // --- Standard List Rendering ---
+        // --- Standard List Rendering (Sorted) ---
         function renderNotes(searchQuery = '') {
             ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => {
-                const el = document.getElementById(`list-${q}`);
-                if (el) el.innerHTML = '';
+                const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = '';
             });
             
-            const filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery.toLowerCase()));
+            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            // Smart Sort: No Date comes first, then ascending dates.
+            filteredNotes.sort((a, b) => {
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return -1;
+                if (!b.dueDate) return 1;
+                return a.dueDate.localeCompare(b.dueDate);
+            });
 
             filteredNotes.forEach(note => {
                 const list = document.getElementById(note.status === 'closed' ? 'list-closed' : `list-${note.quadrant}`);
@@ -1055,33 +970,20 @@
                     noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
                     if (note.status === 'active') { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
 
-                    const contentWrapper = document.createElement('div');
-                    contentWrapper.className = 'note-content-wrapper';
-                    
-                    const textSpan = document.createElement('div'); 
-                    textSpan.className = 'note-text';
-                    textSpan.innerHTML = parseTags(note.text); 
+                    const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
+                    const textSpan = document.createElement('div'); textSpan.className = 'note-text'; textSpan.innerHTML = parseTags(note.text); 
                     contentWrapper.appendChild(textSpan);
 
                     if (note.dueDate) {
-                        const d = new Date(note.dueDate);
-                        const dd = String(d.getDate()).padStart(2, '0');
-                        const mm = String(d.getMonth() + 1).padStart(2, '0');
-                        const yyyy = d.getFullYear();
-
+                        // Strict format bypassing browser timezones
+                        const [yyyy, mm, dd] = note.dueDate.split('T')[0].split('-');
                         const dateSpan = document.createElement('div');
-                        dateSpan.style.fontSize = '12px';
-                        dateSpan.style.color = 'var(--brand-primary)';
-                        dateSpan.style.marginTop = '6px';
-                        dateSpan.style.fontWeight = '500';
+                        dateSpan.style.fontSize = '12px'; dateSpan.style.color = 'var(--brand-primary)'; dateSpan.style.marginTop = '6px'; dateSpan.style.fontWeight = '500';
                         dateSpan.innerHTML = `🗓️ Due: ${dd}/${mm}/${yyyy}`;
                         contentWrapper.appendChild(dateSpan);
                     }
 
-                    if (note.status === 'active') { 
-                        contentWrapper.title = "Double-click to edit"; 
-                        contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); 
-                    }
+                    if (note.status === 'active') { contentWrapper.title = "Double-click to edit"; contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); }
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
                     if (note.status === 'active') {
@@ -1090,8 +992,7 @@
                         actionsDiv.innerHTML = `<button class="action-btn restore-btn" title="Restore" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" title="Delete" onclick="deleteTask('${note.id}')">×</button>`;
                     }
                     
-                    noteEl.append(contentWrapper, actionsDiv); 
-                    list.appendChild(noteEl);
+                    noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
                 }
             });
 
@@ -1115,7 +1016,6 @@
             backBtn.style.display = 'none';
         }
 
-        // Init
         setLayout(currentLayout);
         checkConfigState();
         renderNotes(); 
