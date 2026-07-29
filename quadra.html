@@ -339,7 +339,6 @@
 </head>
 <body>
 
-    <!-- Header acts natively above the dynamic workspace -->
     <header>
         <div class="header-left">
             <div class="brand-container">
@@ -378,7 +377,6 @@
 
     <div id="sync-banner"><span class="spin">↻</span> Syncing with Google...</div>
 
-    <!-- MAIN WORKSPACE: Handles Side Panel Padding Squeeze -->
     <div class="main-wrapper">
         
         <!-- Auth Overlay now covers the entire workspace wrapper (Tags, Matrix, and Side Panel) -->
@@ -987,7 +985,8 @@
 
             const tagCounts = {};
             notes.forEach(note => {
-                if (!note.deleted) {
+                // Only count tags for active tasks
+                if (!note.deleted && note.status === 'active') {
                     const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     if (matches) {
                         // Map matches to lowercase so #Jira and #jira count together
