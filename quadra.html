@@ -34,6 +34,7 @@
             overflow: hidden; 
         }
 
+        /* --- Main Layout Wrapper --- */
         .main-wrapper {
             display: flex; flex-direction: column; flex-grow: 1;
             position: relative; overflow: hidden;
@@ -900,6 +901,10 @@
         async function loadCalendars() {
             if (!gapi.client.getToken()) return alert("Please sign in first.");
             try {
+                // Ensure calendar API is loaded before calling
+                if (!gapi.client.calendar) {
+                    await gapi.client.load('calendar', 'v3');
+                }
                 const response = await gapi.client.calendar.calendarList.list();
                 const calendars = response.result.items;
                 const select = document.getElementById('configCalendar');
@@ -910,8 +915,14 @@
                     if(cal.id === appConfig.calendarId) opt.selected = true;
                     select.appendChild(opt);
                 });
+                alert("Calendars loaded successfully! Please select one and save.");
             } catch (e) {
-                console.error(e); alert("Failed to load calendars.");
+                console.error("Calendar Load Error:", e);
+                if (e.status === 401 || e.status === 403) {
+                    alert("Permission Denied: Please click 'Sign Out' and then 'Sign In' again to grant Quadra access to your Google Calendar.");
+                } else {
+                    alert("Failed to load calendars. Please check your internet connection and try again.");
+                }
             }
         }
 
@@ -1052,7 +1063,9 @@
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token'));
+                
+                // Using V2 key to force re-auth for Calendar scopes
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
                     document.getElementById('auth-overlay').style.display = 'none';
                     document.getElementById('authorize_button').style.display = 'none';
@@ -1076,7 +1089,8 @@
         async function initializeGapiClient() { 
             try { 
                 await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: DISCOVERY_DOCS }); 
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); 
+                // V2 Token Check
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2')); 
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) { 
                     gapi.client.setToken({ access_token: savedTokenData.token }); 
                     initGoogleSync(); 
@@ -1092,7 +1106,8 @@
                         scope: SCOPES, 
                         callback: async (resp) => { 
                             if (resp.error !== undefined) { throw (resp); } 
-                            localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                            // Save V2 Token
+                            localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
                             document.getElementById('auth-overlay').style.display = 'none'; 
                             document.getElementById('authorize_button').style.display = 'none'; 
                             document.getElementById('signout_button').style.display = 'inline-block'; 
@@ -1106,10 +1121,9 @@
         function handleAuthClick() { 
             if (!appConfig.clientId) return openSettings(); 
             
-            // Safety check in case the script hasn't loaded yet
             if (!tokenClient) {
                 if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-                    gisLoaded(); // Try to initialize it now
+                    gisLoaded();
                 }
                 if (!tokenClient) {
                     alert("Google services are still loading. Please wait a moment and try again.");
@@ -1117,7 +1131,6 @@
                 }
             }
 
-            // Protect against gapi.client not being ready
             const token = (typeof gapi !== 'undefined' && gapi.client && gapi.client.getToken) ? gapi.client.getToken() : null;
             if (token === null) tokenClient.requestAccessToken({prompt: 'consent'}); 
             else tokenClient.requestAccessToken({prompt: ''}); 
@@ -1126,7 +1139,7 @@
         function handleSignoutClick() { 
             const token = gapi.client.getToken(); 
             if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } 
-            localStorage.removeItem('quadra_gapi_token'); 
+            localStorage.removeItem('quadra_gapi_token_v2'); 
             isGoogleSynced = false; 
             clearInterval(syncIntervalId); 
             document.getElementById('auth-overlay').style.display = 'flex'; 
@@ -1155,6 +1168,10 @@
 
             try {
                 document.getElementById('sync-banner').style.display = 'block';
+                if (!gapi.client.calendar) {
+                    await gapi.client.load('calendar', 'v3');
+                }
+                
                 const response = await gapi.client.calendar.events.list({
                     calendarId: appConfig.calendarId,
                     timeMin: timeMin,
@@ -1176,7 +1193,7 @@
                     const endHour = end.getHours() + (end.getMinutes() / 60);
                     const duration = endHour - startHour;
                     
-                    if (notes.find(n => n.eventId === event.id)) return; // Prevent duplicates
+                    if (notes.find(n => n.eventId === event.id)) return; 
                     
                     const newNote = {
                         id: Date.now().toString() + Math.random(),
@@ -1208,9 +1225,13 @@
                 }
                 
             } catch(e) {
-                console.error(e);
+                console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
-                alert("Failed to fetch calendar events.");
+                if (e.status === 401 || e.status === 403) {
+                    alert("Permission Denied: Please click 'Sign Out' and then 'Sign In' again to grant Quadra access to your Google Calendar.");
+                } else {
+                    alert("Failed to fetch calendar events. Check your connection.");
+                }
             }
         }
 
