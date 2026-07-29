@@ -43,7 +43,6 @@
         }
 
         @media (min-width: 769px) {
-            /* Only compress the main workspace, protecting the header */
             body.sidebar-open .main-wrapper { padding-right: 350px; }
             body.sidebar-open #sync-banner { right: 374px; }
         }
@@ -102,6 +101,21 @@
         .btn-outline:hover { background-color: var(--bg-main); }
         
         #backBtn, #signout_button, #authorize_button { display: none; }
+
+        /* Quick Filter Tags Bar */
+        .tags-bar {
+            display: flex; gap: 8px; padding: 12px 32px; background: #ffffff;
+            border-bottom: 1px solid var(--border-color); overflow-x: auto;
+            flex-shrink: 0; scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .tags-bar::-webkit-scrollbar { display: none; }
+        .tags-bar:empty { display: none; }
+        .filter-tag {
+            background: rgba(79, 70, 229, 0.08); color: var(--brand-primary);
+            padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600;
+            cursor: pointer; white-space: nowrap; transition: all 0.2s; border: 1px solid transparent;
+        }
+        .filter-tag:hover { background: rgba(79, 70, 229, 0.15); transform: translateY(-1px); }
 
         /* Matrix Layout */
         .matrix-container {
@@ -323,7 +337,6 @@
 </head>
 <body>
 
-    <!-- Header acts natively above the dynamic workspace -->
     <header>
         <div class="header-left">
             <div class="brand-container">
@@ -362,9 +375,13 @@
 
     <div id="sync-banner"><span class="spin">↻</span> Syncing with Google...</div>
 
-    <!-- MAIN WORKSPACE: Handles Side Panel Padding Squeeze -->
     <div class="main-wrapper">
         
+        <!-- Quick Filter Tags Bar -->
+        <div id="quick-tags-bar" class="tags-bar">
+            <!-- Rendered dynamically -->
+        </div>
+
         <!-- Toggle Sidebar Button -->
         <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
             <span>📥 Trays</span>
@@ -964,6 +981,52 @@
             });
         }
 
+        function renderTagsList() {
+            const tagsBar = document.getElementById('quick-tags-bar');
+            if (!tagsBar) return;
+
+            const tagCounts = {};
+            notes.forEach(note => {
+                if (!note.deleted) {
+                    const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
+                    if (matches) {
+                        // Count unique tags per task
+                        const uniqueTagsInTask = new Set(matches);
+                        uniqueTagsInTask.forEach(tag => {
+                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                        });
+                    }
+                }
+            });
+
+            tagsBar.innerHTML = '';
+            
+            // Sort by frequency (highest first), then alphabetically
+            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
+                if (tagCounts[b] !== tagCounts[a]) {
+                    return tagCounts[b] - tagCounts[a];
+                }
+                return a.localeCompare(b); 
+            });
+
+            sortedTags.forEach(tag => {
+                const count = tagCounts[tag];
+                const tagBtn = document.createElement('button');
+                tagBtn.className = 'filter-tag';
+                tagBtn.innerText = `${tag} (${count})`;
+                
+                tagBtn.onclick = (e) => {
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput.value === tag) {
+                        clearSearch(); // Toggle off
+                    } else {
+                        searchTag(tag, e); // Toggle on
+                    }
+                };
+                tagsBar.appendChild(tagBtn);
+            });
+        }
+
         // --- Standard List Rendering (Sorted) ---
         function renderNotes(searchQuery = '') {
             ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => {
@@ -1015,6 +1078,8 @@
             document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox').length;
             
             if (currentLayout === 'calendar') renderCalendar();
+            
+            renderTagsList();
         }
 
         const matrix = document.getElementById('matrix'), backBtn = document.getElementById('backBtn');
