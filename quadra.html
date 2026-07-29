@@ -147,15 +147,15 @@
         
         .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
         
-        /* Extended timeline height to support up to 30 hours for overnight wraps */
-        .timeline { position: relative; height: 1800px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
+        /* Standard 24-hour vertical scale */
+        .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
         
         .timeline-bg-lines { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
         .time-row { position: absolute; width: 100%; border-top: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 0; }
         .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; position: absolute; left: 8px; top: -8px; background: #ffffff; padding: 0 4px; line-height: 1; }
         
         .timeline-cols-container { position: absolute; left: 55px; right: 0; top: 0; bottom: 0; display: flex; z-index: 1; }
-        .time-col { flex: 1; position: relative; border-left: 1px solid var(--border-color); min-height: 1800px; cursor: crosshair; }
+        .time-col { flex: 1; position: relative; border-left: 1px solid var(--border-color); min-height: 1440px; cursor: crosshair; }
         .time-col:first-child { border-left: none; }
         .time-col.drag-over { background: rgba(79, 70, 229, 0.03); box-shadow: inset 0 0 0 2px var(--brand-primary); }
         
@@ -221,7 +221,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.4</span></h1>
+                <h1>Quadra <span class="version-badge">v2.5</span></h1>
             </div>
             
             <div class="search-container">
@@ -455,7 +455,7 @@
         const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
         const defaultSchedule = [
-            { title: 'Out of Office', startHour: 14, endHour: 29 }, // Supports overnight wrapping (14:00 to 05:00 next day)
+            { title: 'Out of office hours', startHour: 14, endHour: 29 }, // Overnight wrap support
             { title: 'Lunch', startHour: 13, endHour: 14 }
         ];
         let appSchedule = JSON.parse(localStorage.getItem('quadra_schedule')) || defaultSchedule;
@@ -524,13 +524,23 @@
             if (note && note.status === 'active' && note.quadrant !== quadrant) { note.quadrant = quadrant; note.dirty = true; saveNotes(); handleSearch(); }
         }
 
-        // --- TIME FORMAT HELPER (Supports hours beyond 24 for overnight wraps) ---
+        // --- TIME FORMAT HELPER ---
         function decToTime(dec) {
             let normalizedDec = dec % 24;
             let h = Math.floor(normalizedDec);
             let m = Math.round((normalizedDec - h) * 60);
             if (m === 60) { h++; m = 0; }
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        // --- DATE HELPER FOR OVERNIGHT CLIPPING ---
+        function addDays(dateStr, days) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const date = new Date(y, m - 1, d + days);
+            const localY = date.getFullYear();
+            const localM = String(date.getMonth() + 1).padStart(2, '0');
+            const localD = String(date.getDate()).padStart(2, '0');
+            return `${localY}-${localM}-${localD}`;
         }
 
         // --- TIME TRACKER LOGIC ---
@@ -563,13 +573,13 @@
 
             canvas.innerHTML = '';
 
-            // Render up to 30 hours to support overnight visual rendering
+            // Standard 24-hour vertical scale
             const bgLines = document.createElement('div');
             bgLines.className = 'timeline-bg-lines';
-            for (let i = 0; i <= 30; i++) {
+            for (let i = 0; i <= 24; i++) {
                 const row = document.createElement('div');
                 row.className = 'time-row'; row.style.top = `${i * 60}px`;
-                row.innerHTML = `<span class="time-label">${(i % 24).toString().padStart(2, '0')}:00${i >= 24 ? ' (+1d)' : ''}</span>`;
+                row.innerHTML = `<span class="time-label">${i.toString().padStart(2, '0')}:00</span>`;
                 bgLines.appendChild(row);
             }
             canvas.appendChild(bgLines);
@@ -624,30 +634,71 @@
                     col.appendChild(header);
                 }
 
-                // Render Overlays with overnight wrap support
+                // 1. Render Overlays with Overnight Splitting (Current Day Part & Next Day Part)
                 appSchedule.forEach(block => {
-                    const overlay = document.createElement('div');
-                    overlay.className = 'schedule-overlay';
-                    overlay.style.top = `${block.startHour * 60}px`;
-                    overlay.style.height = `${(block.endHour - block.startHour) * 60}px`;
-                    if(currentTrackerMode === 'day') overlay.innerText = block.title;
-                    col.appendChild(overlay);
+                    let start = block.startHour;
+                    let end = block.endHour;
+
+                    // If overlay belongs to this column (starts on this date)
+                    if (start < 24) {
+                        let renderEnd = Math.min(end, 24);
+                        const overlay = document.createElement('div');
+                        overlay.className = 'schedule-overlay';
+                        overlay.style.top = `${start * 60}px`;
+                        overlay.style.height = `${(renderEnd - start) * 60}px`;
+                        if (currentTrackerMode === 'day') overlay.innerText = block.title;
+                        col.appendChild(overlay);
+                    }
+
+                    // If overlay wraps past midnight into this column from the previous day
+                    const prevDateStr = addDays(dateStr, -1);
+                    // Check if a schedule from yesterday wrapped into today
+                    appSchedule.forEach(prevBlock => {
+                        if (prevBlock.endHour > 24 && dtObj.date === dateStr) {
+                            let overflowStart = 0;
+                            let overflowEnd = Math.min(prevBlock.endHour - 24, end === block.endHour ? Math.min(prevBlock.endHour - 24, 24) : 24);
+                            // Simpler check: if yesterday's block wrapped past 24, render 00:00 to (endHour - 24) on today's column
+                            let wrappedSpan = prevBlock.endHour - 24;
+                            if (wrappedSpan > 0) {
+                                const overlay = document.createElement('div');
+                                overlay.className = 'schedule-overlay';
+                                overlay.style.top = `0px`;
+                                overlay.style.height = `${Math.min(wrappedSpan, 24) * 60}px`;
+                                if (currentTrackerMode === 'day') overlay.innerText = prevBlock.title;
+                                col.appendChild(overlay);
+                            }
+                        }
+                    });
                 });
 
+                // 2. Render Time Blocks (Supporting overnight split across columns)
                 notes.forEach(note => {
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
+                        let blockStart = tb.startHour;
+                        let blockEnd = tb.startHour + tb.duration;
+
+                        // Check if block lands on this column
                         if (tb.date === dateStr) {
                             totalTimeRendered += tb.duration;
+                            let renderStart = blockStart % 24;
+                            let renderDuration = tb.duration;
+
+                            if (blockStart < 24 && blockEnd > 24) {
+                                renderDuration = 24 - blockStart; // Clip at midnight for current day
+                            } else if (blockStart >= 24) {
+                                return; // Handled by next day loop
+                            }
+
                             const blockEl = document.createElement('div');
                             blockEl.className = 'logged-block';
                             blockEl.id = `block-${tb.id}`;
-                            blockEl.style.top = `${tb.startHour * 60}px`;
-                            blockEl.style.height = `${tb.duration * 60}px`;
+                            blockEl.style.top = `${renderStart * 60}px`;
+                            blockEl.style.height = `${renderDuration * 60}px`;
                             
                             let displayTitle = note.text.split('\n')[0].substring(0, 40);
-                            const endHour = tb.startHour + tb.duration;
-                            const timeStr = `${decToTime(tb.startHour)} - ${decToTime(endHour)} (${tb.duration}h)`;
+                            const actualEndHour = blockStart + tb.duration;
+                            const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${tb.duration}h)`;
 
                             blockEl.innerHTML = `
                                 <div class="block-title">${displayTitle}</div>
@@ -657,6 +708,28 @@
                             
                             blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
                             col.appendChild(blockEl);
+                        } 
+                        // Handle the overflow part on the next day's column
+                        else if (tb.date === addDays(dateStr, -1)) {
+                            if (blockStart < 24 && blockEnd > 24) {
+                                let overflowDuration = blockEnd - 24;
+                                const blockEl = document.createElement('div');
+                                blockEl.className = 'logged-block';
+                                blockEl.id = `block-overflow-${tb.id}`;
+                                blockEl.style.top = `0px`;
+                                blockEl.style.height = `${overflowDuration * 60}px`;
+                                
+                                let displayTitle = note.text.split('\n')[0].substring(0, 40);
+                                const actualEndHour = blockStart + tb.duration;
+                                const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${tb.duration}h)`;
+
+                                blockEl.innerHTML = `
+                                    <div class="block-title">${displayTitle} (cont.)</div>
+                                    <div class="block-meta">${timeStr}</div>
+                                `;
+                                blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
+                                col.appendChild(blockEl);
+                            }
                         }
                     });
                 });
@@ -706,13 +779,7 @@
                 block.startHour = Math.max(0, Math.min(30 - block.duration, dragState.originalStart + dHours));
             }
             
-            const el = document.getElementById(`block-${dragState.blockId}`);
-            if(el) {
-                el.style.top = `${block.startHour * 60}px`;
-                el.style.height = `${block.duration * 60}px`;
-                const endHour = block.startHour + block.duration;
-                el.querySelector('.block-meta').innerText = `${decToTime(block.startHour)} - ${decToTime(endHour)} (${block.duration}h)`;
-            }
+            renderTrackerTimeline();
         }
 
         function stopBlockDrag(e) {
@@ -970,7 +1037,6 @@
                 let startH = parseInt(startStr[0] || 0) + (parseInt(startStr[1] || 0) / 60);
                 let endH = parseInt(endStr[0] || 0) + (parseInt(endStr[1] || 0) / 60);
                 
-                // Smart overnight wrap detection: if end time is earlier than or equal to start time, add 24 hours
                 if (endH <= startH) {
                     endH += 24;
                 }
