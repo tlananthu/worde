@@ -34,7 +34,6 @@
             overflow: hidden; 
         }
 
-        /* --- Main Layout Wrapper --- */
         .main-wrapper {
             display: flex; flex-direction: column; flex-grow: 1;
             position: relative; overflow: hidden;
@@ -221,7 +220,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.2</span></h1>
+                <h1>Quadra <span class="version-badge">v2.3</span></h1>
             </div>
             
             <div class="search-container">
@@ -447,7 +446,6 @@
         
         let tokenClient;
         let isGoogleSynced = false;
-        let syncIntervalId = null;
         
         const DISCOVERY_DOCS = [
             'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
@@ -564,7 +562,6 @@
 
             canvas.innerHTML = '';
 
-            // 1. Render Background Lines (Google Calendar style)
             const bgLines = document.createElement('div');
             bgLines.className = 'timeline-bg-lines';
             for (let i = 0; i <= 24; i++) {
@@ -575,7 +572,6 @@
             }
             canvas.appendChild(bgLines);
 
-            // 2. Setup Columns based on mode
             const baseDateStr = document.getElementById('trackerDate').value;
             const [y, m, d] = baseDateStr.split('-');
             const baseDate = new Date(y, m - 1, d);
@@ -584,7 +580,7 @@
             if (currentTrackerMode === 'day') {
                 datesToRender.push({ date: baseDateStr, label: '' });
             } else {
-                const dayOfWeek = baseDate.getDay(); // 0 is Sunday
+                const dayOfWeek = baseDate.getDay();
                 const startOfWeek = new Date(baseDate);
                 startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
                 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -626,7 +622,6 @@
                     col.appendChild(header);
                 }
 
-                // Render Background Overlays
                 appSchedule.forEach(block => {
                     const overlay = document.createElement('div');
                     overlay.className = 'schedule-overlay';
@@ -636,7 +631,6 @@
                     col.appendChild(overlay);
                 });
 
-                // Render Time Blocks
                 notes.forEach(note => {
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
@@ -918,7 +912,7 @@
                 alert("Calendars loaded successfully! Please select one and save.");
             } catch (e) {
                 console.error("Calendar Load Error:", e);
-                alert("Failed to load calendars. Please ensure the Google Calendar API is enabled in your Google Cloud Console project.");
+                alert("Failed to load calendars. Please ensure the Google Calendar API is fully enabled in your Google Cloud Console.");
             }
         }
 
@@ -1074,7 +1068,7 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Google API Engine ---
+        // --- Google API Engine (Optimized: No polling loops) ---
         function gapiLoaded() { 
             if(appConfig.apiKey) {
                 gapi.load('client', initializeGapiClient); 
@@ -1087,7 +1081,8 @@
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2')); 
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) { 
                     gapi.client.setToken({ access_token: savedTokenData.token }); 
-                    initGoogleSync(); 
+                    isGoogleSynced = true;
+                    // Removed background polling interval to conserve API quota
                 } 
             } catch(e) { console.error("GAPI Init Error:", e); } 
         }
@@ -1104,7 +1099,8 @@
                             document.getElementById('auth-overlay').style.display = 'none'; 
                             document.getElementById('authorize_button').style.display = 'none'; 
                             document.getElementById('signout_button').style.display = 'inline-block'; 
-                            initGoogleSync(); 
+                            isGoogleSynced = true;
+                            performBackgroundSync(); 
                         }, 
                     }); 
                 } catch(e) { console.error("GIS Error:", e); } 
@@ -1113,17 +1109,10 @@
         
         function handleAuthClick() { 
             if (!appConfig.clientId) return openSettings(); 
-            
             if (!tokenClient) {
-                if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-                    gisLoaded();
-                }
-                if (!tokenClient) {
-                    alert("Google services are still loading. Please wait a moment and try again.");
-                    return;
-                }
+                if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { gisLoaded(); }
+                if (!tokenClient) { alert("Google services are still loading. Please wait a moment and try again."); return; }
             }
-
             tokenClient.requestAccessToken({prompt: 'consent'}); 
         }
         
@@ -1132,19 +1121,12 @@
             if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } 
             localStorage.removeItem('quadra_gapi_token_v2'); 
             isGoogleSynced = false; 
-            clearInterval(syncIntervalId); 
             document.getElementById('auth-overlay').style.display = 'flex'; 
             document.getElementById('authorize_button').style.display = 'inline-block'; 
             document.getElementById('signout_button').style.display = 'none'; 
             document.getElementById('sidePanel').classList.remove('open'); 
             document.getElementById('sidebarToggleBtn').classList.remove('open'); 
             document.body.classList.remove('sidebar-open'); 
-        }
-        
-        function initGoogleSync() { 
-            isGoogleSynced = true; 
-            performBackgroundSync(); 
-            syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); 
         }
 
         async function importCalendarEvents() {
