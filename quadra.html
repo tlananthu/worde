@@ -22,7 +22,27 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Added transition to padding so the body smoothly squeezes when sidebar opens */
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+            transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Push the main layout to the left when sidebar is open (Desktop Only) */
+        @media (min-width: 769px) {
+            body.sidebar-open {
+                padding-right: 350px;
+            }
+            body.sidebar-open #sync-banner {
+                right: 374px; /* Move banner over to not get covered by sidebar */
+            }
+        }
 
         /* Header & Logo */
         header {
@@ -81,11 +101,12 @@
         /* Matrix Layout */
         .matrix-container {
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
-            max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto;
+            max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto;
         }
-        .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        /* Min-width ensures if the sidebar squeezes it too small, horizontal scroll appears instead of breaking layout */
+        .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-width: 700px; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
-        .matrix-container.fullscreen { display: flex; overflow: hidden; }
+        .matrix-container.fullscreen { display: flex; overflow: hidden; min-width: 0; }
         .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
         .matrix-container.fullscreen .quadrant.active { display: flex; }
 
@@ -270,6 +291,7 @@
             display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text-main); 
             color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -283,11 +305,15 @@
             .view-toggle { display: flex; width: 100%; margin: 0; justify-content: space-between; order: -1; }
             .view-toggle button { flex: 1; padding: 8px 0; text-align: center; }
             
-            .matrix-container.layout-grid { display: flex; flex-direction: column; }
+            .matrix-container.layout-grid { display: flex; flex-direction: column; min-width: 0; }
             .quadrant { min-height: 400px; }
 
             .side-panel { width: 320px; right: -320px; max-width: 100vw; }
             .toggle-sidebar-btn.open { right: 320px; }
+            
+            /* Remove padding compression on mobile so UI is overlaid instead */
+            body.sidebar-open { padding-right: 0; }
+            body.sidebar-open #sync-banner { right: 24px; }
         }
     </style>
 </head>
@@ -507,12 +533,13 @@
             }
         }
 
-        // --- Sidebar Management ---
+        // --- Sidebar Management (PUSH EFFECT) ---
         function toggleSidebar() {
             const panel = document.getElementById('sidePanel');
             const btn = document.getElementById('sidebarToggleBtn');
             panel.classList.toggle('open');
             btn.classList.toggle('open');
+            document.body.classList.toggle('sidebar-open');
         }
 
         function openSidebar() {
@@ -521,6 +548,7 @@
             if (!panel.classList.contains('open')) {
                 panel.classList.add('open');
                 btn.classList.add('open');
+                document.body.classList.add('sidebar-open');
             }
         }
 
@@ -651,6 +679,7 @@
             document.getElementById('sync-banner').style.display = 'block';
             
             try {
+                // Ensure Task Lists Exist
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
                 for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
@@ -663,6 +692,7 @@
                     }
                 }
 
+                // Fetch Remote Tasks
                 let remoteTaskMap = {};
                 for (const quadKey of Object.keys(gapiListIds)) {
                     const listId = gapiListIds[quadKey];
@@ -671,6 +701,7 @@
                     rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
                 }
 
+                // Process Dirty Changes Up
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 
                 for (let sn of syncSnapshot) {
@@ -725,6 +756,7 @@
                     }
                 }
 
+                // Add pure remote tasks
                 Object.values(remoteTaskMap).forEach(remoteObj => {
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
@@ -734,6 +766,7 @@
                     });
                 });
 
+                // Smart Merge
                 let newNotesArray = [];
                 let syncedIds = new Set();
 
@@ -764,6 +797,7 @@
         // --- Fast Local Actions ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
+        // Core Drag & Drop
         function allowDrop(ev) {
             ev.preventDefault(); 
             if(ev.currentTarget.classList.contains('quadrant') || 
