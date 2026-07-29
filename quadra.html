@@ -231,9 +231,10 @@
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
         
+        /* 3 Line Limit with precise sizing */
         .note-text { 
             white-space: pre-wrap; word-break: break-word;
-            max-height: 4.5em; 
+            max-height: 4.5em; /* 3 lines exact */
             overflow-y: auto; padding-right: 4px;
         }
         .note-text::-webkit-scrollbar { width: 4px; }
@@ -337,6 +338,7 @@
 </head>
 <body>
 
+    <!-- Header acts natively above the dynamic workspace -->
     <header>
         <div class="header-left">
             <div class="brand-container">
@@ -375,6 +377,7 @@
 
     <div id="sync-banner"><span class="spin">↻</span> Syncing with Google...</div>
 
+    <!-- MAIN WORKSPACE: Handles Side Panel Padding Squeeze -->
     <div class="main-wrapper">
         
         <!-- Quick Filter Tags Bar -->
@@ -566,16 +569,6 @@
             panel.classList.toggle('open');
             btn.classList.toggle('open');
             document.body.classList.toggle('sidebar-open');
-        }
-
-        function openSidebar() {
-            const panel = document.getElementById('sidePanel');
-            const btn = document.getElementById('sidebarToggleBtn');
-            if (!panel.classList.contains('open')) {
-                panel.classList.add('open');
-                btn.classList.add('open');
-                document.body.classList.add('sidebar-open');
-            }
         }
 
         function toggleClosedTray() {
@@ -903,20 +896,6 @@
             const query = document.getElementById('searchInput').value;
             document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
             renderNotes(query);
-            
-            const qLower = query.toLowerCase();
-            if (query.trim() !== '') {
-                let openedSidebar = false;
-                if (notes.some(n => !n.deleted && n.status === 'closed' && n.text.toLowerCase().includes(qLower))) {
-                    document.getElementById('closed-tray-content').classList.add('open');
-                    document.getElementById('closed-chevron').innerText = '▲'; openedSidebar = true;
-                }
-                if (notes.some(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox' && n.text.toLowerCase().includes(qLower))) {
-                    document.getElementById('inbox-tray-content').classList.add('open');
-                    document.getElementById('inbox-chevron').innerText = '▲'; openedSidebar = true;
-                }
-                if (openedSidebar) openSidebar();
-            }
         }
 
         // --- Weekly Calendar Rendering ---
@@ -990,8 +969,8 @@
                 if (!note.deleted) {
                     const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     if (matches) {
-                        // Count unique tags per task
-                        const uniqueTagsInTask = new Set(matches);
+                        // Map matches to lowercase so #Jira and #jira count together
+                        const uniqueTagsInTask = new Set(matches.map(t => t.toLowerCase()));
                         uniqueTagsInTask.forEach(tag => {
                             tagCounts[tag] = (tagCounts[tag] || 0) + 1;
                         });
@@ -1001,7 +980,6 @@
 
             tagsBar.innerHTML = '';
             
-            // Sort by frequency (highest first), then alphabetically
             const sortedTags = Object.keys(tagCounts).sort((a, b) => {
                 if (tagCounts[b] !== tagCounts[a]) {
                     return tagCounts[b] - tagCounts[a];
@@ -1018,9 +996,9 @@
                 tagBtn.onclick = (e) => {
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput.value === tag) {
-                        clearSearch(); // Toggle off
+                        clearSearch(); 
                     } else {
-                        searchTag(tag, e); // Toggle on
+                        searchTag(tag, e); 
                     }
                 };
                 tagsBar.appendChild(tagBtn);
