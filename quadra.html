@@ -78,17 +78,6 @@
         
         #backBtn, #signout_button, #authorize_button { display: none; }
 
-        /* Inbox Tray */
-        .inbox-tray { background-color: #ffffff; border-bottom: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
-        .inbox-tray-header { padding: 12px 32px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; transition: background 0.2s; }
-        .inbox-tray-header:hover { background: #F1F5F9; }
-        .inbox-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--brand-primary); display: flex; align-items: center; gap: 8px; }
-        
-        .inbox-tray-content { height: 0; overflow: hidden; background: #ffffff; padding: 0 32px; transition: height 0.3s ease, padding 0.3s ease; display: flex; flex-direction: column; }
-        .inbox-tray-content.open { height: 220px; padding: 0 32px 16px 32px; }
-        .inbox-tray-content.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
-        #list-inbox { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; flex-grow: 1; overflow-y: auto; padding-right: 8px; margin-top: 12px; }
-
         /* Matrix Layout */
         .matrix-container {
             display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease;
@@ -123,7 +112,6 @@
         .calendar-task { 
             font-size: 12px; font-weight: 500; padding: 6px 8px; border-radius: 6px; cursor: grab; 
             border: 1px solid rgba(0,0,0,0.05); transition: transform 0.1s; 
-            /* 3 Line limit */
             white-space: pre-wrap; word-break: break-word; line-height: 1.4;
             max-height: 4.2em; overflow-y: auto;
         }
@@ -165,7 +153,6 @@
         }
         #taskInput:focus { background: #ffffff; border-color: var(--brand-primary); }
         
-        /* Compact Date Picker */
         #taskDueDate { width: auto; min-width: 180px; padding: 10px 14px; cursor: pointer; }
 
         /* Quadrants */
@@ -205,10 +192,9 @@
         .note:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
         
-        /* 3 Line limit and scrollbar */
         .note-text { 
             white-space: pre-wrap; word-break: break-word;
-            max-height: 4.5em; /* 3 lines at 1.5 line-height */
+            max-height: 4.5em; 
             overflow-y: auto; padding-right: 4px;
         }
         .note-text::-webkit-scrollbar { width: 4px; }
@@ -231,14 +217,53 @@
         .closed-note:hover { opacity: 0.9; transform: none; box-shadow: none; }
         .closed-note .note-text { text-decoration: line-through; cursor: default; overflow-y: hidden; }
 
-        /* Closed Tasks Tray */
-        .closed-tray { background-color: #ffffff; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; flex-direction: column; }
-        .closed-tray-header { padding: 12px 32px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; transition: background 0.2s; }
-        .closed-tray-header:hover { background: #F1F5F9; }
-        .closed-tray-header h3 { font-size: 14px; font-weight: 600; color: var(--text-muted); }
-        .closed-tray-content { height: 0; overflow: hidden; background: #F8FAFC; padding: 0 32px; transition: height 0.3s ease, padding 0.3s ease; }
-        .closed-tray-content.open { height: 250px; padding: 16px 32px; border-top: 1px solid var(--border-color); }
-        #list-closed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-content: flex-start; height: 100%; overflow-y: auto; padding-right: 8px; }
+        /* --- Sticky Sidebar for Inbox & Closed Tasks --- */
+        .toggle-sidebar-btn {
+            position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+            background: var(--brand-primary); color: white; border: none; padding: 16px 8px; 
+            border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91;
+            display: flex; flex-direction: column; gap: 8px; align-items: center; 
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toggle-sidebar-btn.open { right: 350px; }
+        .toggle-sidebar-btn span { writing-mode: vertical-rl; text-orientation: mixed; font-weight: 600; letter-spacing: 1px; }
+
+        .side-panel {
+            position: fixed; top: 0; right: -350px; width: 350px; height: 100vh;
+            background: #ffffff; z-index: 90; box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; border-left: 1px solid var(--border-color);
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .side-panel.open { right: 0; }
+        
+        .side-panel-header {
+            padding: 16px 24px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid var(--border-color);
+            background: #F8FAFC; flex-shrink: 0;
+        }
+        .side-panel-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
+        .close-sidebar-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+        .close-sidebar-btn:hover { color: var(--text-main); }
+
+        .side-panel .inbox-tray, .side-panel .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
+        .side-panel .closed-tray { border-top: 1px solid var(--border-color); }
+        
+        .side-panel .tray-header { 
+            padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; 
+            align-items: center; background: #ffffff; transition: background 0.2s; 
+        }
+        .side-panel .tray-header:hover { background: #F9FAFB; }
+        .side-panel .tray-header h3 { font-size: 14px; font-weight: 600; }
+        .side-panel .inbox-tray h3 { color: var(--brand-primary); }
+        .side-panel .closed-tray h3 { color: var(--text-muted); }
+
+        .side-panel .tray-content { 
+            height: 0; overflow: hidden; display: flex; flex-direction: column; 
+            transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC;
+        }
+        .side-panel .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; }
+        
+        .side-panel .task-list { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; overflow-y: visible; }
 
         /* Sync Banner */
         #sync-banner {
@@ -246,7 +271,6 @@
             color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
         }
-        
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
@@ -254,19 +278,16 @@
         @media (max-width: 768px) {
             header { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
             .header-left { max-width: 100%; }
-            
             .header-actions { flex-direction: column; align-items: stretch; gap: 12px; }
-            /* Expand View Toggle buttons to row */
+            
             .view-toggle { display: flex; width: 100%; margin: 0; justify-content: space-between; order: -1; }
             .view-toggle button { flex: 1; padding: 8px 0; text-align: center; }
             
-            /* Stack Grid view vertically on mobile */
             .matrix-container.layout-grid { display: flex; flex-direction: column; }
             .quadrant { min-height: 400px; }
-            
-            .inbox-tray-content.open { height: 300px; }
-            .closed-tray-content.open { height: 350px; }
-            #list-closed, #list-inbox { grid-template-columns: 1fr; }
+
+            .side-panel { width: 320px; right: -320px; max-width: 100vw; }
+            .toggle-sidebar-btn.open { right: 320px; }
         }
     </style>
 </head>
@@ -310,17 +331,41 @@
 
     <div id="sync-banner"><span class="spin">↻</span> Syncing with Google...</div>
 
-    <!-- Inbox Tray -->
-    <div class="inbox-tray">
-        <div class="inbox-tray-header" onclick="toggleInboxTray()">
-            <h3>Inbox (Un-prioritized) (<span id="inbox-count">0</span>)</h3>
-            <div class="header-buttons" onclick="event.stopPropagation()">
-                <button class="icon-btn add-btn" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
-                <span id="inbox-chevron" style="margin-left: 8px; color: var(--text-muted); cursor: pointer;" onclick="toggleInboxTray()">▼</span>
+    <!-- Toggle Sidebar Button -->
+    <button class="toggle-sidebar-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
+        <span>📥 Trays</span>
+    </button>
+
+    <!-- Side Panel -->
+    <div id="sidePanel" class="side-panel">
+        <div class="side-panel-header">
+            <h2>Trays</h2>
+            <button class="close-sidebar-btn" onclick="toggleSidebar()" title="Close Sidebar">×</button>
+        </div>
+        
+        <!-- Inbox Tray -->
+        <div class="inbox-tray">
+            <div class="tray-header" onclick="toggleInboxTray()">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h3>Inbox (<span id="inbox-count">0</span>)</h3>
+                    <button class="icon-btn add-btn" style="width: 24px; height: 24px; font-size: 16px;" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
+                </div>
+                <span id="inbox-chevron" style="color: var(--text-muted);">▼</span>
+            </div>
+            <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
+                <div class="task-list" id="list-inbox"></div>
             </div>
         </div>
-        <div class="inbox-tray-content" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
-            <div class="task-list" id="list-inbox"></div>
+
+        <!-- Completed Tray -->
+        <div class="closed-tray">
+            <div class="tray-header" onclick="toggleClosedTray()">
+                <h3>Completed (<span id="closed-count">0</span>)</h3>
+                <span id="closed-chevron" style="color: var(--text-muted);">▲</span>
+            </div>
+            <div class="tray-content" id="closed-tray-content">
+                <div class="task-list" id="list-closed"></div>
+            </div>
         </div>
     </div>
 
@@ -386,17 +431,6 @@
         </div>
         <div class="calendar-grid" id="calendar-grid">
             <!-- Rendered dynamically -->
-        </div>
-    </div>
-
-    <!-- Closed Tasks Tray -->
-    <div class="closed-tray">
-        <div class="closed-tray-header" onclick="toggleClosedTray()">
-            <h3>Completed Tasks (<span id="closed-count">0</span>)</h3>
-            <span id="closed-chevron">▼</span>
-        </div>
-        <div class="closed-tray-content" id="closed-tray-content">
-            <div class="task-list" id="list-closed"></div>
         </div>
     </div>
 
@@ -471,6 +505,32 @@
                 matrix.classList.remove('layout-grid', 'layout-kanban');
                 matrix.classList.add(`layout-${layout}`);
             }
+        }
+
+        // --- Sidebar Management ---
+        function toggleSidebar() {
+            const panel = document.getElementById('sidePanel');
+            const btn = document.getElementById('sidebarToggleBtn');
+            panel.classList.toggle('open');
+            btn.classList.toggle('open');
+        }
+
+        function openSidebar() {
+            const panel = document.getElementById('sidePanel');
+            const btn = document.getElementById('sidebarToggleBtn');
+            if (!panel.classList.contains('open')) {
+                panel.classList.add('open');
+                btn.classList.add('open');
+            }
+        }
+
+        function toggleClosedTray() {
+            const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron');
+            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
+        }
+        function toggleInboxTray() {
+            const content = document.getElementById('inbox-tray-content'), chevron = document.getElementById('inbox-chevron');
+            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
         }
 
         // --- State Management ---
@@ -591,7 +651,6 @@
             document.getElementById('sync-banner').style.display = 'block';
             
             try {
-                // Ensure Task Lists Exist
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
                 for (const quadKey of Object.keys(GAPI_LIST_NAMES)) {
@@ -604,7 +663,6 @@
                     }
                 }
 
-                // Fetch Remote Tasks
                 let remoteTaskMap = {};
                 for (const quadKey of Object.keys(gapiListIds)) {
                     const listId = gapiListIds[quadKey];
@@ -613,7 +671,6 @@
                     rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; });
                 }
 
-                // Process Dirty Changes Up
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 
                 for (let sn of syncSnapshot) {
@@ -668,7 +725,6 @@
                     }
                 }
 
-                // Add pure remote tasks
                 Object.values(remoteTaskMap).forEach(remoteObj => {
                     syncSnapshot.push({
                         id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey,
@@ -678,7 +734,6 @@
                     });
                 });
 
-                // Smart Merge
                 let newNotesArray = [];
                 let syncedIds = new Set();
 
@@ -709,7 +764,6 @@
         // --- Fast Local Actions ---
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
-        // Core Drag & Drop
         function allowDrop(ev) {
             ev.preventDefault(); 
             if(ev.currentTarget.classList.contains('quadrant') || 
@@ -738,7 +792,6 @@
             }
         }
 
-        // Calendar Drag & Drop
         function dropToCalendar(ev, dateString) {
             ev.preventDefault();
             if(ev.currentTarget.classList.contains('calendar-cell')) ev.currentTarget.classList.remove('drag-over');
@@ -847,14 +900,18 @@
             
             const qLower = query.toLowerCase();
             if (query.trim() !== '') {
+                let openedSidebar = false;
                 if (notes.some(n => !n.deleted && n.status === 'closed' && n.text.toLowerCase().includes(qLower))) {
                     document.getElementById('closed-tray-content').classList.add('open');
                     document.getElementById('closed-chevron').innerText = '▲';
+                    openedSidebar = true;
                 }
                 if (notes.some(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox' && n.text.toLowerCase().includes(qLower))) {
                     document.getElementById('inbox-tray-content').classList.add('open');
                     document.getElementById('inbox-chevron').innerText = '▲';
+                    openedSidebar = true;
                 }
+                if (openedSidebar) openSidebar();
             }
         }
 
@@ -937,8 +994,8 @@
                         const taskEl = document.createElement('div');
                         taskEl.className = 'calendar-task';
                         taskEl.style.backgroundColor = quadColors[note.quadrant] || 'var(--q2-bg)';
-                        taskEl.innerText = note.text;
-                        taskEl.title = "Double-click to open full view";
+                        taskEl.innerHTML = parseTags(note.text);
+                        taskEl.title = "Double-click to edit";
                         taskEl.draggable = true;
                         taskEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
                         taskEl.ondblclick = (e) => openTaskModal(null, note.id, e);
@@ -988,7 +1045,7 @@
                     }
 
                     if (note.status === 'active') { 
-                        contentWrapper.title = "Double-click to open full view"; 
+                        contentWrapper.title = "Double-click to edit"; 
                         contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); 
                     }
 
@@ -1007,17 +1064,7 @@
             document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed').length;
             document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox').length;
             
-            // Sync calendar view if active
             if (currentLayout === 'calendar') renderCalendar();
-        }
-
-        function toggleClosedTray() {
-            const content = document.getElementById('closed-tray-content'), chevron = document.getElementById('closed-chevron');
-            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
-        }
-        function toggleInboxTray() {
-            const content = document.getElementById('inbox-tray-content'), chevron = document.getElementById('inbox-chevron');
-            if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }
         }
 
         const matrix = document.getElementById('matrix'), backBtn = document.getElementById('backBtn');
