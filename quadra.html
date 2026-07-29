@@ -34,7 +34,6 @@
             overflow: hidden; 
         }
 
-        /* --- Main Layout Wrapper --- */
         .main-wrapper {
             display: flex; flex-direction: column; flex-grow: 1;
             position: relative; overflow: hidden;
@@ -199,8 +198,8 @@
         .modal-content { background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
         .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
-        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--brand-primary); }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
         #sync-banner { display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text-main); color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -338,7 +337,10 @@
                                 <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
                             </h2>
                         </div>
-                        <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings from Google Calendar for this day">📥 Sync Meetings</button>
+                            <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
+                        </div>
                     </div>
                     
                     <div class="timeline-scroll-area" id="timelineScrollArea">
@@ -384,6 +386,7 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <h3>Configuration</h3>
@@ -396,6 +399,20 @@
                 <input type="text" id="configApiKey" style="font-family: monospace;">
             </div>
             
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+            
+            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Google Calendar Integration</h4>
+            <div class="form-group">
+                <label>Select Calendar for Timesheet Import</label>
+                <div style="display: flex; gap: 8px;">
+                    <select id="configCalendar" style="flex-grow: 1;">
+                        <option value="">-- Select a Calendar --</option>
+                    </select>
+                    <button class="btn btn-outline" onclick="loadCalendars()">Load</button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click 'Load' to authenticate and view your available calendars.</p>
+            </div>
+
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
             
             <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Recurring Overlays</h4>
@@ -424,11 +441,17 @@
 
     <script>
         // --- Core Settings & Config ---
-        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '' };
+        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '' };
         
         let tokenClient;
         let isGoogleSynced = false;
         let syncIntervalId = null;
+        
+        const DISCOVERY_DOCS = [
+            'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
+            'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
+        ];
+        const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
         const defaultSchedule = [
             { title: 'Out of Office', startHour: 19, endHour: 24 },
@@ -446,7 +469,7 @@
                 });
                 delete note.timeLogs; 
             }
-            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks };
+            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks, eventId: note.eventId || null };
         });
 
         const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
@@ -552,7 +575,8 @@
 
             // 2. Setup Columns based on mode
             const baseDateStr = document.getElementById('trackerDate').value;
-            const baseDate = new Date(baseDateStr);
+            const [y, m, d] = baseDateStr.split('-');
+            const baseDate = new Date(y, m - 1, d);
             let datesToRender = [];
             
             if (currentTrackerMode === 'day') {
@@ -563,11 +587,16 @@
                 startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
                 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 for(let i=0; i<7; i++) {
-                    let d = new Date(startOfWeek);
-                    d.setDate(startOfWeek.getDate() + i);
+                    let dateIter = new Date(startOfWeek);
+                    dateIter.setDate(startOfWeek.getDate() + i);
+                    
+                    const localY = dateIter.getFullYear();
+                    const localM = String(dateIter.getMonth() + 1).padStart(2, '0');
+                    const localD = String(dateIter.getDate()).padStart(2, '0');
+                    
                     datesToRender.push({
-                        date: d.toLocaleDateString('en-CA').split('T')[0],
-                        label: `${dayNames[i]} ${d.getDate()}`
+                        date: `${localY}-${localM}-${localD}`,
+                        label: `${dayNames[i]} ${dateIter.getDate()}`
                     });
                 }
             }
@@ -775,7 +804,7 @@
                         duration: 1.0
                     });
                 }
-                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', timeBlocks: newBlocks, dirty: true, deleted: false }); 
+                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', timeBlocks: newBlocks, dirty: true, deleted: false, eventId: null }); 
                 saveNotes(); handleSearch(); 
             }
             closeTaskModal();
@@ -811,7 +840,8 @@
         // --- Export Engine ---
         function exportTimesheet() {
             const baseDateStr = document.getElementById('trackerDate').value;
-            const baseDate = new Date(baseDateStr);
+            const [y, m, d] = baseDateStr.split('-');
+            const baseDate = new Date(y, m - 1, d);
             let datesToExport = [];
             
             if (currentTrackerMode === 'day') {
@@ -821,9 +851,14 @@
                 const startOfWeek = new Date(baseDate);
                 startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
                 for(let i=0; i<7; i++) {
-                    let d = new Date(startOfWeek);
-                    d.setDate(startOfWeek.getDate() + i);
-                    datesToExport.push(d.toLocaleDateString('en-CA').split('T')[0]);
+                    let dateIter = new Date(startOfWeek);
+                    dateIter.setDate(startOfWeek.getDate() + i);
+                    
+                    const localY = dateIter.getFullYear();
+                    const localM = String(dateIter.getMonth() + 1).padStart(2, '0');
+                    const localD = String(dateIter.getDate()).padStart(2, '0');
+                    
+                    datesToExport.push(`${localY}-${localM}-${localD}`);
                 }
             }
 
@@ -862,6 +897,24 @@
         }
 
         // --- Config Settings & UI ---
+        async function loadCalendars() {
+            if (!gapi.client.getToken()) return alert("Please sign in with Google first.");
+            try {
+                const response = await gapi.client.calendar.calendarList.list();
+                const calendars = response.result.items;
+                const select = document.getElementById('configCalendar');
+                select.innerHTML = '<option value="">-- Select a Calendar --</option>';
+                calendars.forEach(cal => {
+                    const opt = document.createElement('option');
+                    opt.value = cal.id; opt.innerText = cal.summary;
+                    if(cal.id === appConfig.calendarId) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } catch (e) {
+                console.error(e); alert("Failed to load calendars.");
+            }
+        }
+
         function renderScheduleSettings() {
             const container = document.getElementById('scheduleConfigList');
             container.innerHTML = '';
@@ -890,6 +943,9 @@
         function openSettings() {
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
+            
+            document.getElementById('configCalendar').innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? 'Saved Calendar (Click Load to change)' : '-- Select a Calendar --'}</option>`;
+            
             renderScheduleSettings();
             document.getElementById('settingsModal').style.display = 'flex';
         }
@@ -898,6 +954,7 @@
         function saveSettings() {
             appConfig.clientId = document.getElementById('configClientId').value.trim();
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
+            appConfig.calendarId = document.getElementById('configCalendar').value;
             localStorage.setItem('quadra_config', JSON.stringify(appConfig));
             
             const rows = document.querySelectorAll('.schedule-row');
@@ -1009,16 +1066,87 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
+        // --- Google API Engine ---
         function gapiLoaded() { if(appConfig.apiKey) gapi.load('client', initializeGapiClient); }
-        async function initializeGapiClient() { try { await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: [DISCOVERY_DOC] }); const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); if (savedTokenData && savedTokenData.expires_at > Date.now()) { gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync(); } } catch(e) {} }
+        async function initializeGapiClient() { try { await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: DISCOVERY_DOCS }); const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token')); if (savedTokenData && savedTokenData.expires_at > Date.now()) { gapi.client.setToken({ access_token: savedTokenData.token }); initGoogleSync(); } } catch(e) {} }
         function gisLoaded() { if(appConfig.clientId) { try { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: appConfig.clientId, scope: SCOPES, callback: async (resp) => { if (resp.error !== undefined) { throw (resp); } localStorage.setItem('quadra_gapi_token', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('authorize_button').style.display = 'none'; document.getElementById('signout_button').style.display = 'inline-block'; initGoogleSync(); }, }); } catch(e) {} } }
         function handleAuthClick() { if (!appConfig.clientId) return openSettings(); if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'}); else tokenClient.requestAccessToken({prompt: ''}); }
         function handleSignoutClick() { const token = gapi.client.getToken(); if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } localStorage.removeItem('quadra_gapi_token'); isGoogleSynced = false; clearInterval(syncIntervalId); document.getElementById('auth-overlay').style.display = 'flex'; document.getElementById('authorize_button').style.display = 'inline-block'; document.getElementById('signout_button').style.display = 'none'; document.getElementById('sidePanel').classList.remove('open'); document.getElementById('sidebarToggleBtn').classList.remove('open'); document.body.classList.remove('sidebar-open'); }
         function initGoogleSync() { isGoogleSynced = true; performBackgroundSync(); syncIntervalId = setInterval(performBackgroundSync, 5 * 60 * 1000); }
 
+        async function importCalendarEvents() {
+            if (!gapi.client.getToken()) return alert("Please sign in first.");
+            if (!appConfig.calendarId) return alert("Please select a calendar in Settings first.");
+            
+            const dateStr = document.getElementById('trackerDate').value;
+            const [y, m, day] = dateStr.split('-');
+            
+            const timeMin = new Date(y, m-1, day, 0, 0, 0).toISOString();
+            const timeMax = new Date(y, m-1, day, 23, 59, 59).toISOString();
+
+            try {
+                document.getElementById('sync-banner').style.display = 'block';
+                const response = await gapi.client.calendar.events.list({
+                    calendarId: appConfig.calendarId,
+                    timeMin: timeMin,
+                    timeMax: timeMax,
+                    singleEvents: true,
+                    orderBy: 'startTime'
+                });
+                
+                const events = response.result.items;
+                let importedCount = 0;
+
+                events.forEach(event => {
+                    if (!event.start.dateTime) return; // Skip all-day events
+                    
+                    const start = new Date(event.start.dateTime);
+                    const end = new Date(event.end.dateTime);
+                    
+                    const startHour = start.getHours() + (start.getMinutes() / 60);
+                    const endHour = end.getHours() + (end.getMinutes() / 60);
+                    const duration = endHour - startHour;
+                    
+                    if (notes.find(n => n.eventId === event.id)) return; // Prevent duplicates
+                    
+                    const newNote = {
+                        id: Date.now().toString() + Math.random(),
+                        eventId: event.id, 
+                        text: `${event.summary || 'Meeting'} #meeting`,
+                        quadrant: 'closed', 
+                        status: 'closed',
+                        dirty: true, 
+                        deleted: false,
+                        timeBlocks: [{
+                            id: Date.now().toString() + Math.random(),
+                            date: dateStr,
+                            startHour: startHour,
+                            duration: duration
+                        }]
+                    };
+                    
+                    notes.push(newNote);
+                    importedCount++;
+                });
+                
+                document.getElementById('sync-banner').style.display = 'none';
+                if (importedCount > 0) {
+                    saveNotes();
+                    handleSearch(); 
+                    alert(`${importedCount} meetings imported to timeline.`);
+                } else {
+                    alert("No new meetings found for this date.");
+                }
+                
+            } catch(e) {
+                console.error(e);
+                document.getElementById('sync-banner').style.display = 'none';
+                alert("Failed to fetch calendar events.");
+            }
+        }
+
         async function performBackgroundSync() {
             if (!isGoogleSynced || !gapi.client.getToken()) return;
-            document.getElementById('sync-banner').style.display = 'block';
             try {
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
@@ -1036,12 +1164,12 @@
                         sn.dirty = false;
                     } else if (!sn.dirty && !sn.deleted) { const remoteObj = remoteTaskMap[sn.id]; if (remoteObj) { sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active'; sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null; delete remoteTaskMap[sn.id]; } }
                 }
-                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], dirty: false, deleted: false }); });
+                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], eventId: null, dirty: false, deleted: false }); });
                 let newNotesArray = []; let syncedIds = new Set();
-                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
+                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
                 notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
                 notes = newNotesArray; saveNotes(); handleSearch(); 
-            } catch (e) {} document.getElementById('sync-banner').style.display = 'none';
+            } catch (e) {}
         }
 
         setLayout(currentLayout); checkConfigState(); renderNotes();
