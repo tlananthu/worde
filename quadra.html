@@ -1391,7 +1391,6 @@
                 let importedCount = 0;
                 let ignoredCount = 0;
 
-                // Parse user-defined ignore keywords
                 const ignoreKeywords = (appConfig.ignoreKeywords || 'out of office, ooo, away, vacation, holiday')
                     .toLowerCase()
                     .split(',')
@@ -1423,7 +1422,7 @@
                         id: Date.now().toString() + Math.random(),
                         eventId: event.id, 
                         text: `${event.summary || 'Meeting'} #meeting`,
-                        quadrant: 'q2', // Default quadrant color
+                        quadrant: 'q2', 
                         status: 'active',
                         dirty: false, 
                         deleted: false,
