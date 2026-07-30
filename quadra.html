@@ -255,7 +255,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.3</span></h1>
+                <h1>Quadra <span class="version-badge">v5.4</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1378,6 +1378,7 @@
                     }, 
                 });
             }
+            checkConfigState();
         });
         
         function handleAuthClick() { 
@@ -1405,7 +1406,9 @@
         
         function handleSignoutClick() { 
             const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (savedToken && savedToken.token) { google.accounts.oauth2.revoke(savedToken.token); } 
+            if (savedToken && savedToken.token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { 
+                google.accounts.oauth2.revoke(savedToken.token, () => {}); 
+            } 
             localStorage.removeItem('quadra_gapi_token_v2'); 
             isGoogleSynced = false; 
             document.getElementById('auth-overlay').style.display = 'flex'; 
@@ -1414,6 +1417,7 @@
             document.getElementById('sidePanel').classList.remove('open'); 
             document.getElementById('sidebarToggleBtn').classList.remove('open'); 
             document.body.classList.remove('sidebar-open'); 
+            showToast("Signed out successfully.");
         }
 
         async function importCalendarEvents() {
@@ -1541,7 +1545,7 @@
             }
         }
 
-        setLayout(currentLayout); checkConfigState(); renderNotes();
+        setLayout(currentLayout); renderNotes();
     </script>
 </body>
 </html>
