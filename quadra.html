@@ -105,7 +105,8 @@
         #q1 { background-color: var(--q1-bg); } #q2 { background-color: var(--q2-bg); } #q3 { background-color: var(--q3-bg); } #q4 { background-color: var(--q4-bg); }
 
         .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .q-header h2 { font-size: 16px; font-weight: 600; }
+        .q-header h2 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .q-badge { font-size: 12px; font-weight: 600; background: rgba(0,0,0,0.08); padding: 2px 8px; border-radius: 12px; color: var(--text-muted); }
         
         .header-buttons { display: flex; gap: 8px; align-items: center; }
         .icon-btn { background: rgba(255,255,255,0.5); border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; font-size: 16px; font-weight: bold; }
@@ -244,7 +245,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v4.4</span></h1>
+                <h1>Quadra <span class="version-badge">v4.5</span></h1>
             </div>
             
             <div class="search-container">
@@ -331,19 +332,19 @@
         <!-- Matrix View -->
         <div id="matrix" class="matrix-container layout-grid">
             <div class="quadrant" id="q1" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q1')">
-                <div class="q-header"><h2>Do First</h2><button class="icon-btn add-btn" onclick="openTaskModal('q1')">+</button></div>
+                <div class="q-header"><h2>Do First <span class="q-badge" id="badge-q1">0</span></h2><button class="icon-btn add-btn" onclick="openTaskModal('q1')">+</button></div>
                 <div class="task-list" id="list-q1"></div>
             </div>
             <div class="quadrant" id="q2" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q2')">
-                <div class="q-header"><h2>Schedule</h2><button class="icon-btn add-btn" onclick="openTaskModal('q2')">+</button></div>
+                <div class="q-header"><h2>Schedule <span class="q-badge" id="badge-q2">0</span></h2><button class="icon-btn add-btn" onclick="openTaskModal('q2')">+</button></div>
                 <div class="task-list" id="list-q2"></div>
             </div>
             <div class="quadrant" id="q3" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q3')">
-                <div class="q-header"><h2>Delegate</h2><button class="icon-btn add-btn" onclick="openTaskModal('q3')">+</button></div>
+                <div class="q-header"><h2>Delegate <span class="q-badge" id="badge-q3">0</span></h2><button class="icon-btn add-btn" onclick="openTaskModal('q3')">+</button></div>
                 <div class="task-list" id="list-q3"></div>
             </div>
             <div class="quadrant" id="q4" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'q4')">
-                <div class="q-header"><h2>Later</h2><button class="icon-btn add-btn" onclick="openTaskModal('q4')">+</button></div>
+                <div class="q-header"><h2>Later <span class="q-badge" id="badge-q4">0</span></h2><button class="icon-btn add-btn" onclick="openTaskModal('q4')">+</button></div>
                 <div class="task-list" id="list-q4"></div>
             </div>
         </div>
@@ -1261,7 +1262,9 @@
                     contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
                     
                     if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
-                    if (note.status === 'active' || note.eventId) { contentWrapper.title = "Double-click to edit"; contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); }
+                    
+                    // Single-click on note opens Task Details modal
+                    contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
                     if (!note.eventId) {
@@ -1275,9 +1278,16 @@
                 }
             });
 
+            const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
             document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
-            document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox' && !n.eventId).length;
+            document.getElementById('inbox-count').innerText = activeNotes.filter(n => n.quadrant === 'inbox').length;
             document.getElementById('calendar-count').innerText = notes.filter(n => !n.deleted && n.eventId).length;
+            
+            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+                const count = activeNotes.filter(n => n.quadrant === q).length;
+                const badge = document.getElementById(`badge-${q}`);
+                if (badge) badge.innerText = count;
+            });
             
             if (currentLayout === 'tracker') renderTrackerTimeline();
             renderTagsList();
