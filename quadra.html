@@ -236,7 +236,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.8</span></h1>
+                <h1>Quadra <span class="version-badge">v3.9</span></h1>
             </div>
             
             <div class="search-container">
@@ -737,12 +737,17 @@
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
                         let blockStart = tb.startHour;
+                        // Handle cross-day span durations correctly (e.g., 14:00 to 05:00 = 15h)
                         let blockEnd = tb.startHour + tb.duration;
+                        if (blockEnd < blockStart) {
+                            blockEnd += 24;
+                        }
+                        let actualDuration = blockEnd - blockStart;
 
                         if (tb.date === dateStr) {
-                            totalTimeRendered += tb.duration;
+                            totalTimeRendered += actualDuration;
                             let renderStart = blockStart % 24;
-                            let renderDuration = tb.duration;
+                            let renderDuration = actualDuration;
 
                             if (blockStart < 24 && blockEnd > 24) {
                                 renderDuration = 24 - blockStart; 
@@ -758,8 +763,8 @@
                             blockEl.style.height = `${renderDuration * 60}px`;
                             
                             let displayTitle = note.text.split('\n')[0].substring(0, 40);
-                            const actualEndHour = blockStart + tb.duration;
-                            const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${tb.duration}h)`;
+                            const actualEndHour = (blockStart + actualDuration) % 24;
+                            const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${actualDuration}h)`;
 
                             blockEl.innerHTML = `
                                 <div class="block-info">
@@ -792,8 +797,8 @@
                                 blockEl.style.height = `${overflowDuration * 60}px`;
                                 
                                 let displayTitle = note.text.split('\n')[0].substring(0, 40);
-                                const actualEndHour = blockStart + tb.duration;
-                                const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${tb.duration}h)`;
+                                const actualEndHour = (blockStart + actualDuration) % 24;
+                                const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${actualDuration}h)`;
 
                                 blockEl.innerHTML = `
                                     <div class="block-info">
@@ -1057,10 +1062,13 @@
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => { 
                         if(tb.date === dateStr) {
-                            dailyHrs += tb.duration;
+                            let bEnd = tb.startHour + tb.duration;
+                            if (bEnd < tb.startHour) bEnd += 24;
+                            let dur = bEnd - tb.startHour;
+                            dailyHrs += dur;
                             const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                             let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
-                            dailyLog += `- [${identifier}] ${tb.duration}h\n`;
+                            dailyLog += `- [${identifier}] ${dur}h\n`;
                         }
                     });
                 });
@@ -1370,7 +1378,8 @@
                     const end = new Date(event.end.dateTime);
                     
                     const startHour = start.getHours() + (start.getMinutes() / 60);
-                    const endHour = end.getHours() + (end.getMinutes() / 60);
+                    let endHour = end.getHours() + (end.getMinutes() / 60);
+                    if (endHour <= startHour) endHour += 24;
                     const duration = endHour - startHour;
                     
                     if (notes.find(n => n.eventId === event.id)) return; 
