@@ -208,7 +208,7 @@
         .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
-        .form-group input[type="date"] { width: auto; min-width: 180px; } /* Fixed full-width date picker bug */
+        .form-group input[type="date"] { width: auto; min-width: 180px; }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
@@ -229,7 +229,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.0</span></h1>
+                <h1>Quadra <span class="version-badge">v3.1</span></h1>
             </div>
             
             <div class="search-container">
@@ -832,7 +832,7 @@
             }
         }
 
-        // --- Canvas Clicking & Dropping ---
+        // --- Canvas Clicking & Dropping (Default: Open Task Modal directly) ---
         let pendingTimelineContext = null;
 
         function handleTimelineClick(ev, dateStr) {
@@ -846,6 +846,7 @@
             if (remainder > 15 && remainder <= 45) dropHour += 0.5;
             if (remainder > 45) dropHour += 1.0;
 
+            // Clicking empty canvas space now opens Task Modal and queues the time block
             openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
         }
 
@@ -881,7 +882,7 @@
 
             const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
             if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task Details'; input.value = note.text; }
-            else { currentEditingId = null; currentAddingQuadrant = quadrant; title.innerText = 'Add Task'; input.value = ''; }
+            else { currentEditingId = null; currentAddingQuadrant = quadrant || 'inbox'; title.innerText = 'Add Task'; input.value = ''; }
             modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
         }
 
@@ -897,6 +898,7 @@
                 if (note) { note.text = text; note.dirty = true; saveNotes(); handleSearch(); } 
             } else { 
                 let newBlocks = [];
+                let targetQuad = currentAddingQuadrant || 'inbox';
                 if (pendingTimelineContext) {
                     newBlocks.push({
                         id: Date.now().toString() + Math.random(),
@@ -905,7 +907,7 @@
                         duration: 1.0
                     });
                 }
-                notes.push({ id: Date.now().toString(), text: text, quadrant: currentAddingQuadrant, status: 'active', timeBlocks: newBlocks, dirty: true, deleted: false, eventId: null }); 
+                notes.push({ id: Date.now().toString(), text: text, quadrant: targetQuad, status: 'active', timeBlocks: newBlocks, dirty: true, deleted: false, eventId: null }); 
                 saveNotes(); handleSearch(); 
             }
             closeTaskModal();
@@ -1320,8 +1322,9 @@
 
         async function performBackgroundSync() {
             const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!isGoogleSynced || !savedToken || !savedToken.token) return;
+            if (!savedToken || !savedToken.token) return alert("Please sign in first to sync with Google Tasks.");
             try {
+                document.getElementById('sync-banner').style.display = 'block';
                 if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
                     gapi.client.setToken({ access_token: savedToken.token });
                 }
@@ -1346,7 +1349,13 @@
                 syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
                 notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
                 notes = newNotesArray; saveNotes(); handleSearch(); 
-            } catch (e) {}
+                document.getElementById('sync-banner').style.display = 'none';
+                alert("Successfully synced with Google Tasks!");
+            } catch (e) {
+                document.getElementById('sync-banner').style.display = 'none';
+                console.error(e);
+                alert("Tasks sync failed. Please check your Google Tasks API configuration.");
+            }
         }
 
         setLayout(currentLayout); checkConfigState(); renderNotes();
