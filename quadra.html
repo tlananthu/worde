@@ -163,7 +163,6 @@
 
         .schedule-overlay { position: absolute; left: 0; right: 0; background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px ); pointer-events: none; z-index: 2; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
         
-        /* Current Time Indicator Line */
         .current-time-line { position: absolute; left: 0; right: 0; height: 2px; background: #EF4444; z-index: 25; pointer-events: none; }
         .current-time-line::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; }
         .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
@@ -209,6 +208,7 @@
         .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
+        .form-group input[type="date"] { width: auto; min-width: 180px; } /* Fixed full-width date picker bug */
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
@@ -229,7 +229,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.9</span></h1>
+                <h1>Quadra <span class="version-badge">v3.0</span></h1>
             </div>
             
             <div class="search-container">
@@ -348,6 +348,7 @@
                             </h2>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
+                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
                             <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings from Google Calendar for this day">📥 Sync Meetings</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
