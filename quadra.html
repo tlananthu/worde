@@ -229,7 +229,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.2</span></h1>
+                <h1>Quadra <span class="version-badge">v3.3</span></h1>
             </div>
             
             <div class="search-container">
@@ -419,9 +419,8 @@
                     <select id="configCalendar" style="flex-grow: 1;" onchange="appConfig.calendarId = this.value;">
                         <option value="">-- Select a Calendar --</option>
                     </select>
-                    <button class="btn btn-outline" onclick="loadCalendars()">Load</button>
                 </div>
-                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click 'Load' to fetch your available Google calendars securely.</p>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Calendars load automatically upon sign-in.</p>
             </div>
 
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
@@ -733,7 +732,7 @@
                                 <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
                             `;
                             
-                            // Default click on block opens Task Details modal
+                            // Clicking block opens Task Details modal
                             blockEl.onclick = (e) => {
                                 if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
                                 openTaskModal(null, note.id, e);
@@ -848,7 +847,6 @@
             if (remainder > 15 && remainder <= 45) dropHour += 0.5;
             if (remainder > 45) dropHour += 1.0;
 
-            // Clicking empty canvas space opens Task Modal directly
             openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
         }
 
@@ -894,13 +892,7 @@
                 title.innerText = 'Add Task'; 
                 input.value = '';
                 document.getElementById('taskDueDate').value = timelineContext ? timelineContext.date : '';
-                
-                if (timelineContext) {
-                    // Queue block creation upon saving task
-                    pendingTimelineContext = timelineContext;
-                } else {
-                    pendingTimelineContext = null;
-                }
+                pendingTimelineContext = timelineContext || null;
             }
             modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
         }
@@ -1041,33 +1033,29 @@
             navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
         }
 
-        // --- Config Settings & UI ---
+        // --- Config Settings & UI (Automatic Calendar Fetch on Load) ---
         async function loadCalendars() {
-            const token = gapi.client.getToken();
-            if (!token || !token.access_token) return alert("Please sign in first.");
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (!savedToken || !savedToken.token) return;
             try {
                 const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-                    headers: { 'Authorization': `Bearer ${token.access_token}` }
+                    headers: { 'Authorization': `Bearer ${savedToken.token}` }
                 });
                 const data = await res.json();
-                
-                if (data.error) {
-                    throw new Error(data.error.message);
-                }
+                if (data.error) return;
 
                 const calendars = data.items || [];
                 const select = document.getElementById('configCalendar');
+                const currentVal = appConfig.calendarId;
                 select.innerHTML = '<option value="">-- Select a Calendar --</option>';
                 calendars.forEach(cal => {
                     const opt = document.createElement('option');
                     opt.value = cal.id; opt.innerText = cal.summary;
-                    if(cal.id === appConfig.calendarId) opt.selected = true;
+                    if(cal.id === currentVal) opt.selected = true;
                     select.appendChild(opt);
                 });
-                alert("Calendars loaded successfully! Please select your calendar from the dropdown and click 'Save Configuration'.");
             } catch (e) {
-                console.error("Calendar Load Error:", e);
-                alert("Failed to load calendars. Please check network connection or verify Calendar API scope permissions.");
+                console.error("Auto Calendar Load Error:", e);
             }
         }
 
@@ -1101,8 +1089,7 @@
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             
-            const select = document.getElementById('configCalendar');
-            select.innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? appConfig.calendarId : '-- Select a Calendar --'}</option>`;
+            loadCalendars(); // Automatically load calendars into dropdown when settings open!
             
             renderScheduleSettings();
             document.getElementById('settingsModal').style.display = 'flex';
@@ -1114,7 +1101,7 @@
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
             
             const calendarSelect = document.getElementById('configCalendar');
-            if (calendarSelect.value) {
+            if (calendarSelect && calendarSelect.value) {
                 appConfig.calendarId = calendarSelect.value;
             }
             
@@ -1230,6 +1217,7 @@
                     document.getElementById('auth-overlay').style.display = 'none';
                     document.getElementById('authorize_button').style.display = 'none';
                     document.getElementById('signout_button').style.display = 'inline-block';
+                    loadCalendars(); // Automatically load calendars in background on active session
                 } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
             }
         }
@@ -1262,6 +1250,7 @@
                             document.getElementById('signout_button').style.display = 'inline-block'; 
                             isGoogleSynced = true;
                             if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
+                            loadCalendars(); // Automatically load calendars upon successful sign-in
                             performBackgroundSync(); 
                         }, 
                     }); 
