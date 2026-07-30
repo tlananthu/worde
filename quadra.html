@@ -1384,7 +1384,7 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- ICS Parser for Outlook Calendars with CORS Proxy ---
+        // --- ICS Parser for Outlook Calendars with robust AllOrigins CORS Proxy ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
             let lines = icsText.split(/\r\n|\n|\r/);
@@ -1478,8 +1478,8 @@
                         fetchUrl = fetchUrl.replace('webcal://', 'https://');
                     }
 
-                    // Route through corsproxy.io to bypass browser CORS restrictions
-                    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(fetchUrl)}`;
+                    // Route through AllOrigins raw proxy to avoid payload size limits and CORS restrictions
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(fetchUrl)}`;
                     const res = await fetch(proxyUrl);
                     if (!res.ok) throw new Error("Failed to fetch ICS feed via proxy");
                     
