@@ -231,10 +231,10 @@
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
         .form-group input[type="date"] { width: auto; min-width: 180px; }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--brand-primary); }
+        .inline-form-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+        .inline-form-row label { width: 140px; margin-bottom: 0; flex-shrink: 0; font-size: 14px; font-weight: 600; }
+        .inline-form-row input { flex-grow: 1; max-width: 220px; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
-
-        .form-row-inline { display: flex; align-items: center; gap: 16px; }
-        .form-row-inline label { width: 120px; font-size: 14px; font-weight: 600; color: var(--text-main); flex-shrink: 0; margin-bottom: 0; }
 
         /* Toast Notification System */
         #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
@@ -258,7 +258,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.6</span></h1>
+                <h1>Quadra <span class="version-badge">v5.6b</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -467,31 +467,29 @@
     <!-- Modals -->
     <div id="taskModal" class="modal">
         <div class="modal-content">
-            <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
+            <h3 id="taskModalTitle" style="font-weight: 700; font-size: 18px; margin-bottom: 8px;">Task Details</h3>
+            <div class="form-group">
+                <input type="text" id="taskTitleInput" placeholder="Text" style="font-weight: 600;">
+            </div>
+            <div class="form-group">
+                <textarea id="taskInfoInput" rows="7" placeholder="task info"></textarea>
+            </div>
             
-            <div class="form-group">
-                <input type="text" id="taskTitleInput" placeholder="Text" style="font-weight: 600; font-size: 15px;">
-            </div>
-
-            <div class="form-group">
-                <textarea id="taskInfoInput" rows="10" placeholder="task info"></textarea>
-            </div>
-
-            <div class="form-group form-row-inline">
+            <div class="inline-form-row">
                 <label>Due Date</label>
                 <input type="date" id="taskDueDate">
             </div>
 
-            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+            <hr style="margin: 12px 0 16px 0; border: none; border-top: 1px solid var(--border-color);">
 
-            <div class="form-group form-row-inline">
+            <div class="inline-form-row">
                 <label>Selected Date</label>
                 <input type="date" id="taskSelectedDate">
             </div>
 
-            <div class="form-group form-row-inline">
+            <div class="inline-form-row">
                 <label>Hours worked</label>
-                <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;">
+                <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0">
             </div>
 
             <div class="modal-actions">
@@ -1008,35 +1006,37 @@
             const titleInput = document.getElementById('taskTitleInput');
             const infoInput = document.getElementById('taskInfoInput');
             const dueDateInput = document.getElementById('taskDueDate');
-            const selectedDateInput = document.getElementById('taskSelectedDate');
-            const hoursWorkedInput = document.getElementById('taskHoursWorked');
+            const selDateInput = document.getElementById('taskSelectedDate');
+            const hoursInput = document.getElementById('taskHoursWorked');
+
+            const activeTrackerDate = document.getElementById('trackerDate').value || todayStr;
 
             if (noteId) {
                 currentEditingId = noteId; 
                 const note = notes.find(n => n.id === noteId); 
-                document.getElementById('taskModalTitle').innerText = 'Task Details'; 
-
-                // Split title line from body
+                
                 let lines = note.text.split('\n');
                 titleInput.value = lines[0] || '';
                 infoInput.value = lines.slice(1).join('\n') || '';
-
                 dueDateInput.value = note.dueDate ? note.dueDate.split('T')[0] : '';
-                
-                // Prefill selected date & hours from existing block if present
-                let activeBlock = (note.timeBlocks && note.timeBlocks.length > 0) ? note.timeBlocks[0] : null;
-                selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
-                hoursWorkedInput.value = activeBlock ? activeBlock.duration : '';
+
+                let targetDate = timelineContext ? timelineContext.date : activeTrackerDate;
+                selDateInput.value = targetDate;
+
+                let existingBlock = (note.timeBlocks || []).find(b => b.date === targetDate);
+                hoursInput.value = existingBlock ? existingBlock.duration : '';
 
             } else { 
                 currentEditingId = null; 
                 currentAddingQuadrant = quadrant || 'inbox'; 
-                document.getElementById('taskModalTitle').innerText = 'Add Task'; 
                 titleInput.value = '';
                 infoInput.value = '';
-                dueDateInput.value = timelineContext ? timelineContext.date : '';
-                selectedDateInput.value = timelineContext ? timelineContext.date : todayStr;
-                hoursWorkedInput.value = '';
+
+                let targetDate = timelineContext ? timelineContext.date : activeTrackerDate;
+                dueDateInput.value = targetDate;
+                selDateInput.value = targetDate;
+                hoursInput.value = timelineContext ? '1' : '';
+
                 pendingTimelineContext = timelineContext || null;
             }
             modal.style.display = 'flex'; setTimeout(() => titleInput.focus(), 100);
@@ -1051,36 +1051,38 @@
 
         function saveTaskModal() {
             const titleText = document.getElementById('taskTitleInput').value.trim(); 
-            const infoText = document.getElementById('taskInfoInput').value.trim(); 
+            const infoText = document.getElementById('taskInfoInput').value.trim();
             const dueDate = document.getElementById('taskDueDate').value;
-            const selectedDate = document.getElementById('taskSelectedDate').value;
-            const hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
+            const selDate = document.getElementById('taskSelectedDate').value;
+            const hoursWorked = parseFloat(document.getElementById('taskHoursWorked').value);
 
-            if (!titleText && !infoText) return closeTaskModal();
+            if (!titleText) return closeTaskModal();
 
-            const fullText = titleText + (infoText ? ('\n' + infoText) : '');
+            const fullText = infoText ? `${titleText}\n${infoText}` : titleText;
 
             if (currentEditingId) { 
                 const note = notes.find(n => n.id === currentEditingId); 
                 if (note) { 
                     note.text = fullText; 
                     note.dueDate = dueDate || null;
-                    
-                    // Update/add time block if hours specified
-                    if (!isNaN(hoursVal) && hoursVal > 0) {
-                        let existingBlock = (note.timeBlocks && note.timeBlocks.length > 0) ? note.timeBlocks[0] : null;
-                        if (existingBlock) {
-                            existingBlock.date = selectedDate || todayStr;
-                            existingBlock.duration = hoursVal;
+
+                    if (!note.timeBlocks) note.timeBlocks = [];
+                    let blockIdx = note.timeBlocks.findIndex(b => b.date === selDate);
+
+                    if (!isNaN(hoursWorked) && hoursWorked > 0) {
+                        if (blockIdx !== -1) {
+                            note.timeBlocks[blockIdx].duration = hoursWorked;
                         } else {
-                            if (!note.timeBlocks) note.timeBlocks = [];
+                            let startH = pendingTimelineContext ? pendingTimelineContext.startHour : 9;
                             note.timeBlocks.push({
                                 id: Date.now().toString() + Math.random(),
-                                date: selectedDate || todayStr,
-                                startHour: 9,
-                                duration: hoursVal
+                                date: selDate,
+                                startHour: startH,
+                                duration: hoursWorked
                             });
                         }
+                    } else if (blockIdx !== -1 && (isNaN(hoursWorked) || hoursWorked === 0)) {
+                        note.timeBlocks.splice(blockIdx, 1);
                     }
 
                     note.dirty = true; 
@@ -1090,21 +1092,14 @@
             } else { 
                 let newBlocks = [];
                 let targetQuad = currentAddingQuadrant || 'inbox';
-                
-                if (!isNaN(hoursVal) && hoursVal > 0) {
+
+                if (!isNaN(hoursWorked) && hoursWorked > 0) {
                     let startH = pendingTimelineContext ? pendingTimelineContext.startHour : 9;
                     newBlocks.push({
                         id: Date.now().toString() + Math.random(),
-                        date: selectedDate || (pendingTimelineContext ? pendingTimelineContext.date : todayStr),
+                        date: selDate,
                         startHour: startH,
-                        duration: hoursVal
-                    });
-                } else if (pendingTimelineContext) {
-                    newBlocks.push({
-                        id: Date.now().toString() + Math.random(),
-                        date: pendingTimelineContext.date,
-                        startHour: pendingTimelineContext.startHour,
-                        duration: 1.0
+                        duration: hoursWorked
                     });
                 }
 
