@@ -229,7 +229,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.1</span></h1>
+                <h1>Quadra <span class="version-badge">v3.2</span></h1>
             </div>
             
             <div class="search-container">
@@ -729,10 +729,16 @@
                                     <div class="block-title">${displayTitle}</div>
                                     <div class="block-meta">${timeStr}</div>
                                 </div>
-                                <button class="block-edit-icon" onclick="openTaskModal(null, '${note.id}', event)" title="Edit Task Details">📝</button>
+                                <button class="block-edit-icon" onclick="openEditBlockModal('${note.id}', '${tb.id}', event)" title="Edit Time Block Hours">📝</button>
                                 <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
                             `;
                             
+                            // Default click on block opens Task Details modal
+                            blockEl.onclick = (e) => {
+                                if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
+                                openTaskModal(null, note.id, e);
+                            };
+
                             blockEl.onmousedown = (e) => {
                                 if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
                                 startBlockDrag(e, note.id, tb.id, false);
@@ -757,11 +763,11 @@
                                         <div class="block-title">${displayTitle} (cont.)</div>
                                         <div class="block-meta">${timeStr}</div>
                                     </div>
-                                    <button class="block-edit-icon" onclick="openTaskModal(null, '${note.id}', event)" title="Edit Task Details">📝</button>
+                                    <button class="block-edit-icon" onclick="openEditBlockModal('${note.id}', '${tb.id}', event)" title="Edit Time Block Hours">📝</button>
                                 `;
-                                blockEl.onmousedown = (e) => {
+                                blockEl.onclick = (e) => {
                                     if(e.target.closest('.block-edit-icon')) return;
-                                    startBlockDrag(e, note.id, tb.id, false);
+                                    openTaskModal(null, note.id, e);
                                 };
                                 col.appendChild(blockEl);
                             }
@@ -822,9 +828,7 @@
                 document.removeEventListener('mousemove', onBlockDrag);
                 document.removeEventListener('mouseup', stopBlockDrag);
                 
-                if (!dragState.hasMoved && !dragState.isResize) {
-                    openEditBlockModal(dragState.noteId, dragState.blockId);
-                } else if (dragState.hasMoved) {
+                if (dragState.hasMoved) {
                     const note = notes.find(n => n.id === dragState.noteId);
                     note.dirty = true; saveNotes(); renderTrackerTimeline(); 
                 }
@@ -832,9 +836,7 @@
             }
         }
 
-        // --- Canvas Clicking & Dropping (Default: Open Task Modal directly) ---
-        let pendingTimelineContext = null;
-
+        // --- Canvas Clicking & Dropping ---
         function handleTimelineClick(ev, dateStr) {
             if (ev.target.closest('.logged-block')) return; 
             
@@ -846,7 +848,7 @@
             if (remainder > 15 && remainder <= 45) dropHour += 0.5;
             if (remainder > 45) dropHour += 1.0;
 
-            // Clicking empty canvas space now opens Task Modal and queues the time block
+            // Clicking empty canvas space opens Task Modal directly
             openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
         }
 
@@ -878,13 +880,32 @@
         
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
             if (event) event.stopPropagation();
-            pendingTimelineContext = timelineContext;
-
             const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
-            if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task Details'; input.value = note.text; }
-            else { currentEditingId = null; currentAddingQuadrant = quadrant || 'inbox'; title.innerText = 'Add Task'; input.value = ''; }
+            
+            if (noteId) {
+                currentEditingId = noteId; 
+                const note = notes.find(n => n.id === noteId); 
+                title.innerText = 'Edit Task Details'; 
+                input.value = note.text;
+                document.getElementById('taskDueDate').value = note.dueDate ? note.dueDate.split('T')[0] : '';
+            } else { 
+                currentEditingId = null; 
+                currentAddingQuadrant = quadrant || 'inbox'; 
+                title.innerText = 'Add Task'; 
+                input.value = '';
+                document.getElementById('taskDueDate').value = timelineContext ? timelineContext.date : '';
+                
+                if (timelineContext) {
+                    // Queue block creation upon saving task
+                    pendingTimelineContext = timelineContext;
+                } else {
+                    pendingTimelineContext = null;
+                }
+            }
             modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
         }
+
+        let pendingTimelineContext = null;
 
         function closeTaskModal() { 
             document.getElementById('taskModal').style.display = 'none'; 
@@ -892,10 +913,19 @@
         }
 
         function saveTaskModal() {
-            const text = document.getElementById('taskInput').value.trim(); if (!text) return closeTaskModal();
+            const text = document.getElementById('taskInput').value.trim(); 
+            const dueDate = document.getElementById('taskDueDate').value;
+            if (!text) return closeTaskModal();
+
             if (currentEditingId) { 
                 const note = notes.find(n => n.id === currentEditingId); 
-                if (note) { note.text = text; note.dirty = true; saveNotes(); handleSearch(); } 
+                if (note) { 
+                    note.text = text; 
+                    note.dueDate = dueDate || null;
+                    note.dirty = true; 
+                    saveNotes(); 
+                    handleSearch(); 
+                } 
             } else { 
                 let newBlocks = [];
                 let targetQuad = currentAddingQuadrant || 'inbox';
@@ -907,14 +937,26 @@
                         duration: 1.0
                     });
                 }
-                notes.push({ id: Date.now().toString(), text: text, quadrant: targetQuad, status: 'active', timeBlocks: newBlocks, dirty: true, deleted: false, eventId: null }); 
-                saveNotes(); handleSearch(); 
+                notes.push({ 
+                    id: Date.now().toString(), 
+                    text: text, 
+                    quadrant: targetQuad, 
+                    status: 'active', 
+                    dueDate: dueDate || null,
+                    timeBlocks: newBlocks, 
+                    dirty: true, 
+                    deleted: false, 
+                    eventId: null 
+                }); 
+                saveNotes(); 
+                handleSearch(); 
             }
             closeTaskModal();
         }
 
         let editingBlockState = null;
-        function openEditBlockModal(noteId, blockId) {
+        function openEditBlockModal(noteId, blockId, event) {
+            if (event) event.stopPropagation();
             const note = notes.find(n => n.id === noteId);
             const block = note.timeBlocks.find(b => b.id === blockId);
             editingBlockState = { noteId, blockId };
@@ -1347,7 +1389,6 @@
                 Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], eventId: null, dirty: false, deleted: false }); });
                 let newNotesArray = []; let syncedIds = new Set();
                 syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
-                notes.forEach(liveNote => { if (!syncedIds.has(liveNote.id) && !liveNote.deleted) newNotesArray.push(liveNote); });
                 notes = newNotesArray; saveNotes(); handleSearch(); 
                 document.getElementById('sync-banner').style.display = 'none';
                 alert("Successfully synced with Google Tasks!");
