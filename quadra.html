@@ -193,16 +193,15 @@
         .side-panel-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
         .close-sidebar-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
         
-        .inbox-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
-        .closed-tray { border-top: 1px solid var(--border-color); }
+        .inbox-tray, .calendar-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
+        .calendar-tray, .closed-tray { border-top: 1px solid var(--border-color); }
         
         .tray-header { padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background 0.2s; }
         .tray-header:hover { background: #F9FAFB; }
         .tray-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main); }
         
-        /* Fixed scrollbars for sidebar trays */
         .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
-        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; max-height: calc(50vh - 60px); border-bottom: 1px solid var(--border-color); }
+        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; max-height: calc(33vh - 40px); border-bottom: 1px solid var(--border-color); }
 
         /* Overlays & Modals */
         .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
@@ -237,7 +236,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.6</span></h1>
+                <h1>Quadra <span class="version-badge">v3.7</span></h1>
             </div>
             
             <div class="search-container">
@@ -296,6 +295,17 @@
                 </div>
                 <div class="tray-content open" id="inbox-tray-content" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'inbox')">
                     <div class="task-list" id="list-inbox"></div>
+                </div>
+            </div>
+
+            <!-- Calendar Events Tray (Below Inbox) -->
+            <div class="calendar-tray">
+                <div class="tray-header" onclick="toggleCalendarTray()">
+                    <h3>Calendar Events (<span id="calendar-count">0</span>)</h3>
+                    <span id="calendar-chevron">▼</span>
+                </div>
+                <div class="tray-content" id="calendar-tray-content">
+                    <div class="task-list" id="list-calendar"></div>
                 </div>
             </div>
 
@@ -607,7 +617,7 @@
             const paletteList = document.getElementById('tracker-palette-list');
             
             paletteList.innerHTML = '';
-            const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query));
+            const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query) && !n.eventId);
             
             filteredNotes.forEach(note => {
                 const el = document.createElement('div');
@@ -757,7 +767,6 @@
                                 <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
                             `;
                             
-                            // Clicking block opens Task Details modal
                             blockEl.onclick = (e) => {
                                 if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
                                 openTaskModal(null, note.id, e);
@@ -1163,7 +1172,7 @@
             const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
             const tagCounts = {};
             notes.forEach(note => {
-                if (!note.deleted && note.status === 'active') {
+                if (!note.deleted && note.status === 'active' && !note.eventId) {
                     const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                     if (matches) {
                         const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
@@ -1194,32 +1203,41 @@
         }
 
         function renderNotes(searchQuery = '') {
-            ['inbox', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
+            ['inbox', 'calendar', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
             let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
             filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
 
             filteredNotes.forEach(note => {
-                const list = document.getElementById(note.status === 'closed' ? 'list-closed' : `list-${note.quadrant}`);
+                let targetListId = `list-${note.quadrant}`;
+                if (note.eventId) {
+                    targetListId = 'list-calendar';
+                }
+                const list = document.getElementById(targetListId);
                 if (list) {
                     const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
-                    if (note.status === 'active') { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
+                    if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
 
                     const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
                     contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
                     
                     if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
-                    if (note.status === 'active') { contentWrapper.title = "Double-click to edit"; contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); }
+                    if (note.status === 'active' || note.eventId) { contentWrapper.title = "Double-click to edit"; contentWrapper.ondblclick = (e) => openTaskModal(null, note.id, e); }
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
-                    if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
-                    else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
+                    if (!note.eventId) {
+                        if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
+                        else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
+                    } else {
+                        actionsDiv.innerHTML = `<button class="action-btn delete-btn" onclick="deleteTask('${note.id}')" title="Remove event">×</button>`;
+                    }
                     
                     noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
                 }
             });
 
-            document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed').length;
-            document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox').length;
+            document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
+            document.getElementById('inbox-count').innerText = notes.filter(n => !n.deleted && n.status === 'active' && n.quadrant === 'inbox' && !n.eventId).length;
+            document.getElementById('calendar-count').innerText = notes.filter(n => !n.deleted && n.eventId).length;
             
             if (currentLayout === 'tracker') renderTrackerTimeline();
             renderTagsList();
@@ -1231,6 +1249,7 @@
 
         function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
         function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleCalendarTray() { const content = document.getElementById('calendar-tray-content'); const chevron = document.getElementById('calendar-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
         function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         function checkConfigState() {
@@ -1347,9 +1366,9 @@
                         id: Date.now().toString() + Math.random(),
                         eventId: event.id, 
                         text: `${event.summary || 'Meeting'} #meeting`,
-                        quadrant: 'closed', 
-                        status: 'closed',
-                        dirty: true, 
+                        quadrant: 'inbox', 
+                        status: 'active',
+                        dirty: false, 
                         deleted: false,
                         timeBlocks: [{
                             id: Date.now().toString() + Math.random(),
@@ -1367,7 +1386,7 @@
                 if (importedCount > 0) {
                     saveNotes();
                     renderTrackerTimeline(); 
-                    showToast(`${importedCount} meetings imported to timeline.`);
+                    showToast(`${importedCount} meetings imported to timeline and Calendar Events tray.`);
                 } else {
                     showToast("No new meetings found for this date.");
                 }
@@ -1396,6 +1415,7 @@
                 for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 for (let sn of syncSnapshot) {
+                    if (sn.eventId) continue; // Skip calendar meetings from syncing to Google Tasks
                     if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
                     if (sn.dirty && !sn.deleted) {
                         const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
