@@ -236,6 +236,14 @@
         .form-row-inline { display: flex; align-items: center; gap: 16px; }
         .form-row-inline label { width: 120px; font-size: 14px; font-weight: 600; color: var(--text-main); flex-shrink: 0; margin-bottom: 0; }
 
+        /* Responsive Grid for Date & Hours Row */
+        .responsive-date-hours-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            align-items: center;
+        }
+
         /* Toast Notification System */
         #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
         .toast { background: var(--text-main); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto; }
@@ -258,7 +266,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.6</span></h1>
+                <h1>Quadra <span class="version-badge">v5.7</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -474,7 +482,7 @@
             </div>
 
             <div class="form-group">
-                <textarea id="taskInfoInput" rows="10" placeholder="task info"></textarea>
+                <textarea id="taskInfoInput" rows="8" placeholder="task info"></textarea>
             </div>
 
             <div class="form-group form-row-inline">
@@ -484,14 +492,17 @@
 
             <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
 
-            <div class="form-group form-row-inline">
-                <label>Selected Date</label>
-                <input type="date" id="taskSelectedDate">
-            </div>
+            <!-- Single Line Row for Selected Date & Hours Worked on Laptop -->
+            <div class="responsive-date-hours-grid">
+                <div class="form-group form-row-inline" style="margin-bottom: 0;">
+                    <label>Selected Date</label>
+                    <input type="date" id="taskSelectedDate">
+                </div>
 
-            <div class="form-group form-row-inline">
-                <label>Hours worked</label>
-                <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;">
+                <div class="form-group form-row-inline" style="margin-bottom: 0;">
+                    <label>Hours worked</label>
+                    <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;">
+                </div>
             </div>
 
             <div class="modal-actions">
@@ -1016,14 +1027,12 @@
                 const note = notes.find(n => n.id === noteId); 
                 document.getElementById('taskModalTitle').innerText = 'Task Details'; 
 
-                // Split title line from body
                 let lines = note.text.split('\n');
                 titleInput.value = lines[0] || '';
                 infoInput.value = lines.slice(1).join('\n') || '';
 
                 dueDateInput.value = note.dueDate ? note.dueDate.split('T')[0] : '';
                 
-                // Prefill selected date & hours from existing block if present
                 let activeBlock = (note.timeBlocks && note.timeBlocks.length > 0) ? note.timeBlocks[0] : null;
                 selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
                 hoursWorkedInput.value = activeBlock ? activeBlock.duration : '';
@@ -1066,7 +1075,6 @@
                     note.text = fullText; 
                     note.dueDate = dueDate || null;
                     
-                    // Update/add time block if hours specified
                     if (!isNaN(hoursVal) && hoursVal > 0) {
                         let existingBlock = (note.timeBlocks && note.timeBlocks.length > 0) ? note.timeBlocks[0] : null;
                         if (existingBlock) {
