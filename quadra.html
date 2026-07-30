@@ -255,7 +255,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.0</span></h1>
+                <h1>Quadra <span class="version-badge">v5.1</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -506,8 +506,8 @@
         </div>
     </div>
 
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <script>
         // --- Toast Notification System ---
@@ -1178,6 +1178,7 @@
 
         // --- Config Settings & UI ---
         async function loadCalendars() {
+            if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return;
             const token = gapi.client.getToken();
             if (!token || !token.access_token) return;
             try {
@@ -1372,6 +1373,7 @@
                     document.getElementById('authorize_button').style.display = 'none';
                     document.getElementById('signout_button').style.display = 'inline-block';
                     isGoogleSynced = true;
+                    if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: savedTokenData.token });
                     loadCalendars(); 
                 } else { if(appConfig.calSource === 'google') document.getElementById('authorize_button').style.display = 'inline-block'; else document.getElementById('auth-overlay').style.display = 'none'; }
             }
@@ -1382,43 +1384,52 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Google API Engine ---
-        function gapiLoaded() { 
-            if(appConfig.apiKey) {
+        // --- Google API Engine Initialization ---
+        window.addEventListener('load', () => {
+            if (typeof gapi !== 'undefined' && appConfig.apiKey) {
                 gapi.load('client', () => {
                     gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'] }).catch(() => {});
-                }); 
+                });
             }
-        }
-        
-        function gisLoaded() { 
-            if(appConfig.clientId && typeof google !== 'undefined' && google.accounts) { 
-                try { 
-                    tokenClient = google.accounts.oauth2.initTokenClient({ 
-                        client_id: appConfig.clientId, 
-                        scope: SCOPES, 
-                        callback: async (resp) => { 
-                            if (resp.error !== undefined) { throw (resp); } 
-                            localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
-                            document.getElementById('auth-overlay').style.display = 'none'; 
-                            document.getElementById('authorize_button').style.display = 'none'; 
-                            document.getElementById('signout_button').style.display = 'inline-block'; 
-                            isGoogleSynced = true;
-                            if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
-                            loadCalendars(); 
-                            performBackgroundSync(); 
-                        }, 
-                    }); 
-                } catch(e) { console.error("GIS Error:", e); } 
-            } 
-        }
+            if (typeof google !== 'undefined' && google.accounts && appConfig.clientId) {
+                tokenClient = google.accounts.oauth2.initTokenClient({ 
+                    client_id: appConfig.clientId, 
+                    scope: SCOPES, 
+                    callback: async (resp) => { 
+                        if (resp.error !== undefined) { throw (resp); } 
+                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                        document.getElementById('auth-overlay').style.display = 'none'; 
+                        document.getElementById('authorize_button').style.display = 'none'; 
+                        document.getElementById('signout_button').style.display = 'inline-block'; 
+                        isGoogleSynced = true;
+                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
+                        loadCalendars(); 
+                        performBackgroundSync(); 
+                    }, 
+                });
+            }
+        });
         
         function handleAuthClick() { 
             if (!appConfig.clientId) return openSettingsPage(); 
-            if (!tokenClient) {
-                if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { gisLoaded(); }
-                if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
+            if (!tokenClient && typeof google !== 'undefined' && google.accounts) { 
+                tokenClient = google.accounts.oauth2.initTokenClient({ 
+                    client_id: appConfig.clientId, 
+                    scope: SCOPES, 
+                    callback: async (resp) => { 
+                        if (resp.error !== undefined) { throw (resp); } 
+                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                        document.getElementById('auth-overlay').style.display = 'none'; 
+                        document.getElementById('authorize_button').style.display = 'none'; 
+                        document.getElementById('signout_button').style.display = 'inline-block'; 
+                        isGoogleSynced = true;
+                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
+                        loadCalendars(); 
+                        performBackgroundSync(); 
+                    }, 
+                }); 
             }
+            if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
             tokenClient.requestAccessToken({prompt: 'consent'}); 
         }
         
@@ -1438,7 +1449,7 @@
         // --- ICS Parser for Outlook Calendars ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
-            let lines = icsText.split(/\r\n|\n|\r/");
+            let lines = icsText.split(/\r\n|\n|\r/);
             let currentEvent = null;
 
             for (let line of lines) {
@@ -1524,9 +1535,7 @@
                 document.getElementById('sync-banner').style.display = 'block';
 
                 if (appConfig.calSource === 'outlook' && appConfig.icsUrl) {
-                    // Fetch via ICS feed (CORS proxy or direct if allowed)
                     let fetchUrl = appConfig.icsUrl;
-                    // Handle webcal:// links
                     if (fetchUrl.startsWith('webcal://')) {
                         fetchUrl = fetchUrl.replace('webcal://', 'https://');
                     }
@@ -1556,7 +1565,6 @@
                     });
 
                 } else {
-                    // Google Calendar API
                     const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
                     if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) {
                         document.getElementById('sync-banner').style.display = 'none';
@@ -1579,7 +1587,7 @@
 
                     const events = data.items || [];
                     events.forEach(event => {
-                        if (!event.start.dateTime) return; // Skip all-day events
+                        if (!event.start.dateTime) return; 
 
                         const title = (event.summary || '').toLowerCase();
                         const shouldIgnore = ignoreKeywords.some(keyword => title.includes(keyword));
