@@ -10,6 +10,7 @@
         :root {
             --brand-primary: #4F46E5;
             --brand-primary-hover: #4338CA;
+            --brand-meeting: #0D9488; /* Distinct teal color for calendar meetings */
             --bg-main: #F9FAFB;
             --text-main: #111827;
             --text-muted: #6B7280;
@@ -168,7 +169,8 @@
         .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
 
         .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 6px 10px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; }
-        .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.5); z-index: 12;}
+        .logged-block.is-meeting { background: var(--brand-meeting); box-shadow: 0 2px 5px rgba(13, 148, 136, 0.3); }
+        .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 12;}
         .block-info { pointer-events: none; overflow: hidden; flex-grow: 1; padding-right: 4px; }
         .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .block-meta { font-size: 11px; opacity: 0.8; }
@@ -229,7 +231,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.3</span></h1>
+                <h1>Quadra <span class="version-badge">v3.4</span></h1>
             </div>
             
             <div class="search-container">
@@ -714,7 +716,9 @@
                             }
 
                             const blockEl = document.createElement('div');
-                            blockEl.className = 'logged-block';
+                            // Add different styling class if it's a calendar meeting
+                            const isMeeting = note.eventId || note.text.includes('#meeting');
+                            blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : '');
                             blockEl.id = `block-${tb.id}`;
                             blockEl.style.top = `${renderStart * 60}px`;
                             blockEl.style.height = `${renderDuration * 60}px`;
@@ -748,7 +752,8 @@
                             if (blockStart < 24 && blockEnd > 24) {
                                 let overflowDuration = blockEnd - 24;
                                 const blockEl = document.createElement('div');
-                                blockEl.className = 'logged-block';
+                                const isMeeting = note.eventId || note.text.includes('#meeting');
+                                blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : '');
                                 blockEl.id = `block-overflow-${tb.id}`;
                                 blockEl.style.top = `0px`;
                                 blockEl.style.height = `${overflowDuration * 60}px`;
@@ -1033,13 +1038,13 @@
             navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
         }
 
-        // --- Config Settings & UI (Automatic Calendar Fetch on Load) ---
+        // --- Config Settings & UI ---
         async function loadCalendars() {
-            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!savedToken || !savedToken.token) return;
+            const token = gapi.client.getToken();
+            if (!token || !token.access_token) return;
             try {
                 const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-                    headers: { 'Authorization': `Bearer ${savedToken.token}` }
+                    headers: { 'Authorization': `Bearer ${token.access_token}` }
                 });
                 const data = await res.json();
                 if (data.error) return;
@@ -1089,7 +1094,7 @@
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             
-            loadCalendars(); // Automatically load calendars into dropdown when settings open!
+            loadCalendars(); 
             
             renderScheduleSettings();
             document.getElementById('settingsModal').style.display = 'flex';
@@ -1217,7 +1222,8 @@
                     document.getElementById('auth-overlay').style.display = 'none';
                     document.getElementById('authorize_button').style.display = 'none';
                     document.getElementById('signout_button').style.display = 'inline-block';
-                    loadCalendars(); // Automatically load calendars in background on active session
+                    isGoogleSynced = true;
+                    loadCalendars(); 
                 } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
             }
         }
@@ -1250,7 +1256,7 @@
                             document.getElementById('signout_button').style.display = 'inline-block'; 
                             isGoogleSynced = true;
                             if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
-                            loadCalendars(); // Automatically load calendars upon successful sign-in
+                            loadCalendars(); 
                             performBackgroundSync(); 
                         }, 
                     }); 
@@ -1338,7 +1344,7 @@
                 document.getElementById('sync-banner').style.display = 'none';
                 if (importedCount > 0) {
                     saveNotes();
-                    handleSearch(); 
+                    renderTrackerTimeline(); 
                     alert(`${importedCount} meetings imported to timeline.`);
                 } else {
                     alert("No new meetings found for this date.");
