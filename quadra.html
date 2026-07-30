@@ -96,10 +96,7 @@
         .matrix-container { display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease; max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto; }
         .matrix-container.layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; min-width: 700px; }
         .matrix-container.layout-kanban { grid-template-columns: repeat(4, minmax(300px, 1fr)); grid-template-rows: 1fr; overflow-x: auto; }
-        .matrix-container.fullscreen { display: flex; overflow: hidden; min-width: 0; }
-        .matrix-container.fullscreen .quadrant { display: none; width: 100%; height: 100%; }
-        .matrix-container.fullscreen .quadrant.active { display: flex; }
-
+        
         .quadrant { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; border: 1px solid rgba(0,0,0,0.05); min-height: 0; transition: box-shadow 0.2s; }
         .quadrant.drag-over { box-shadow: 0 0 0 2px var(--brand-primary) inset; }
         #q1 { background-color: var(--q1-bg); } #q2 { background-color: var(--q2-bg); } #q3 { background-color: var(--q3-bg); } #q4 { background-color: var(--q4-bg); }
@@ -165,25 +162,13 @@
         .col-header { position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); z-index: 20; text-align: center; font-weight: 600; font-size: 13px; padding: 10px 0; border-bottom: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         .col-header.today { color: var(--brand-primary); }
 
-        /* Schedule Overlay spanning fully across time column and grid */
         .schedule-overlay { 
-            position: absolute; 
-            left: -55px; 
-            right: 0; 
+            position: absolute; left: -55px; right: 0; 
             background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.04), rgba(0,0,0,0.04) 10px, rgba(0,0,0,0.08) 10px, rgba(0,0,0,0.08) 20px ); 
-            pointer-events: none; 
-            z-index: 1; 
-            border-top: 1px solid rgba(0,0,0,0.1); 
-            border-bottom: 1px solid rgba(0,0,0,0.1); 
-            display: flex; 
-            align-items: center; 
-            justify-content: flex-start; 
-            padding-left: 65px;
-            color: var(--text-main); 
-            font-weight: 700; 
-            font-size: 12px; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
+            pointer-events: none; z-index: 1; 
+            border-top: 1px solid rgba(0,0,0,0.1); border-bottom: 1px solid rgba(0,0,0,0.1); 
+            display: flex; align-items: center; justify-content: flex-start; padding-left: 65px;
+            color: var(--text-main); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; 
         }
         
         .current-time-line { position: absolute; left: 0; right: 0; height: 2px; background: #EF4444; z-index: 25; pointer-events: none; }
@@ -231,6 +216,12 @@
         .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
         .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; max-height: calc(33vh - 40px); border-bottom: 1px solid var(--border-color); }
 
+        /* --- Settings Page View --- */
+        #settings-view { display: none; flex-grow: 1; width: 100%; overflow-y: auto; background: #ffffff; padding: 40px; }
+        .settings-container { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; }
+        .settings-header h2 { font-size: 22px; font-weight: 700; }
+
         /* Overlays & Modals */
         .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
@@ -264,10 +255,10 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v4.8</span></h1>
+                <h1>Quadra <span class="version-badge">v4.9</span></h1>
             </div>
             
-            <div class="search-container">
+            <div class="search-container" id="searchHeaderContainer">
                 <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -279,14 +270,15 @@
         
         <div class="header-actions">
             <button class="btn btn-outline" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
-            <div class="view-toggle">
+            <div class="view-toggle" id="viewToggleGroup">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
                 <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
             </div>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
-            <button class="btn btn-outline" onclick="openSettings()">⚙️ Settings</button>
+            <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️ Settings</button>
+            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">← Back</button>
         </div>
     </header>
 
@@ -410,6 +402,63 @@
             </div>
         </div>
 
+        <!-- Settings Page View -->
+        <div id="settings-view">
+            <div class="settings-container">
+                <div class="settings-header">
+                    <h2>Configuration Settings</h2>
+                    <button class="btn" onclick="saveSettings()">Save Changes</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Google OAuth Client ID</label>
+                    <input type="text" id="configClientId" style="font-family: monospace;">
+                </div>
+                <div class="form-group">
+                    <label>Google API Key (Optional)</label>
+                    <input type="text" id="configApiKey" style="font-family: monospace;">
+                </div>
+                
+                <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+                
+                <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Google Calendar Integration</h4>
+                <div class="form-group">
+                    <label>Select Calendar for Timesheet Import</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="configCalendar" style="flex-grow: 1;" onchange="appConfig.calendarId = this.value;">
+                            <option value="">-- Select a Calendar --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 12px;">
+                    <label>Ignore Keywords (Comma-separated)</label>
+                    <input type="text" id="configIgnoreKeywords" placeholder="out of office, ooo, away, vacation, holiday">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Calendar events containing these words will be ignored during sync.</p>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
+                    <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; color: #EF4444; border-color: #EF4444;" onclick="clearCalendarCache()">🗑️ Clear Calendar Cache</button>
+                </div>
+
+                <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+                
+                <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Recurring Overlays</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Highlight unavailable time on your tracker.</p>
+                <div id="scheduleConfigList"></div>
+                <button class="btn btn-outline" style="margin-top: 8px; width: 100%;" onclick="addScheduleRow()">+ Add Block</button>
+
+                <hr style="margin: 24px 0 16px 0; border: none; border-top: 1px solid var(--border-color);">
+
+                <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Data Management</h4>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" onclick="exportData()">📤 Export Backup</button>
+                    <button class="btn btn-outline" onclick="triggerImport()">📥 Import Backup</button>
+                    <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Modals -->
@@ -440,64 +489,6 @@
                 <button class="btn btn-outline" style="margin-right: auto; color: red;" onclick="deleteTimeBlock()">Delete Block</button>
                 <button class="btn btn-outline" onclick="closeEditBlockModal()">Cancel</button>
                 <button class="btn" onclick="saveTimeBlock()">Update</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <h3>Configuration</h3>
-            <div class="form-group">
-                <label>Google OAuth Client ID</label>
-                <input type="text" id="configClientId" style="font-family: monospace;">
-            </div>
-            <div class="form-group">
-                <label>Google API Key (Optional)</label>
-                <input type="text" id="configApiKey" style="font-family: monospace;">
-            </div>
-            
-            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
-            
-            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Google Calendar Integration</h4>
-            <div class="form-group">
-                <label>Select Calendar for Timesheet Import</label>
-                <div style="display: flex; gap: 8px;">
-                    <select id="configCalendar" style="flex-grow: 1;" onchange="appConfig.calendarId = this.value;">
-                        <option value="">-- Select a Calendar --</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-top: 12px;">
-                <label>Ignore Keywords (Comma-separated)</label>
-                <input type="text" id="configIgnoreKeywords" placeholder="out of office, ooo, away, vacation, holiday">
-                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Calendar events containing these words will be ignored during sync.</p>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
-                <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; color: #EF4444; border-color: #EF4444;" onclick="clearCalendarCache()">🗑️ Clear Calendar Cache</button>
-            </div>
-
-            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
-            
-            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Recurring Overlays</h4>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 0; margin-bottom: 12px;">Highlight unavailable time on your tracker.</p>
-            <div id="scheduleConfigList"></div>
-            <button class="btn btn-outline" style="margin-top: 8px; width: 100%;" onclick="addScheduleRow()">+ Add Block</button>
-
-            <hr style="margin: 24px 0 16px 0; border: none; border-top: 1px solid var(--border-color);">
-
-            <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Data Management</h4>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-outline" onclick="exportData()">📤 Export Backup</button>
-                <button class="btn btn-outline" onclick="triggerImport()">📥 Import Backup</button>
-                <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
-            </div>
-
-            <div class="modal-actions" style="margin-top: 24px;">
-                <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
-                <button class="btn" onclick="saveSettings()">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -562,6 +553,7 @@
             
             const matrix = document.getElementById('matrix');
             const tracker = document.getElementById('tracker-view');
+            const settingsView = document.getElementById('settings-view');
             const btnGrid = document.getElementById('btnGrid');
             const btnKanban = document.getElementById('btnKanban');
             const btnTracker = document.getElementById('btnTracker');
@@ -570,6 +562,8 @@
             if (btnKanban) btnKanban.classList.toggle('active', layout === 'kanban');
             if (btnTracker) btnTracker.classList.toggle('active', layout === 'tracker');
             
+            settingsView.style.display = 'none';
+
             if (layout === 'tracker') {
                 matrix.style.display = 'none'; 
                 tracker.style.display = 'block'; 
@@ -583,6 +577,33 @@
                 matrix.classList.add(`layout-${layout}`);
                 stopLiveClock();
             }
+            document.getElementById('quick-tags-bar').style.display = 'flex';
+            document.getElementById('searchHeaderContainer').style.display = 'block';
+            document.getElementById('viewToggleGroup').style.display = 'flex';
+            document.getElementById('settingsNavBtn').style.display = 'inline-block';
+            document.getElementById('backNavBtn').style.display = 'none';
+        }
+
+        function openSettingsPage() {
+            document.getElementById('matrix').style.display = 'none';
+            document.getElementById('tracker-view').style.display = 'none';
+            document.getElementById('settings-view').style.display = 'block';
+            document.body.classList.remove('sidebar-open');
+            document.getElementById('quick-tags-bar').style.display = 'none';
+            document.getElementById('searchHeaderContainer').style.display = 'none';
+            document.getElementById('viewToggleGroup').style.display = 'none';
+            document.getElementById('settingsNavBtn').style.display = 'none';
+            document.getElementById('backNavBtn').style.display = 'inline-block';
+
+            document.getElementById('configClientId').value = appConfig.clientId || '';
+            document.getElementById('configApiKey').value = appConfig.apiKey || '';
+            document.getElementById('configIgnoreKeywords').value = appConfig.ignoreKeywords || '';
+            loadCalendars();
+            renderScheduleSettings();
+        }
+
+        function closeSettingsPage() {
+            setLayout(currentLayout);
         }
 
         function setTrackerMode(mode) {
@@ -597,7 +618,7 @@
         function startLiveClock() {
             if(clockIntervalId) clearInterval(clockIntervalId);
             clockIntervalId = setInterval(() => {
-                if (currentLayout === 'tracker' && currentTrackerMode === 'day') {
+                if (currentLayout === 'tracker' && currentTrackerMode === 'day' && document.getElementById('tracker-view').style.display === 'block') {
                     const line = document.querySelector('.current-time-line');
                     const badge = document.querySelector('.current-time-badge');
                     if (line && badge) {
@@ -1178,18 +1199,6 @@
             document.getElementById('scheduleConfigList').appendChild(div);
         }
 
-        function openSettings() {
-            document.getElementById('configClientId').value = appConfig.clientId || '';
-            document.getElementById('configApiKey').value = appConfig.apiKey || '';
-            document.getElementById('configIgnoreKeywords').value = appConfig.ignoreKeywords || '';
-            
-            loadCalendars(); 
-            
-            renderScheduleSettings();
-            document.getElementById('settingsModal').style.display = 'flex';
-        }
-        function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
-        
         function saveSettings() {
             appConfig.clientId = document.getElementById('configClientId').value.trim();
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
@@ -1222,8 +1231,7 @@
             });
             localStorage.setItem('quadra_schedule', JSON.stringify(appSchedule));
             
-            closeSettings(); 
-            renderTrackerTimeline(); 
+            closeSettingsPage(); 
             showToast("Configuration saved!");
         }
 
@@ -1323,7 +1331,7 @@
 
         function checkConfigState() {
             if (!appConfig.clientId) {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettingsPage()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
                 
@@ -1341,7 +1349,7 @@
 
         function exportData() { const dataStr = JSON.stringify(notes, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); }
         function triggerImport() { document.getElementById('importFile').click(); }
-        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettings(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
+        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
         // --- Google API Engine ---
         function gapiLoaded() { 
@@ -1375,7 +1383,7 @@
         }
         
         function handleAuthClick() { 
-            if (!appConfig.clientId) return openSettings(); 
+            if (!appConfig.clientId) return openSettingsPage(); 
             if (!tokenClient) {
                 if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { gisLoaded(); }
                 if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
