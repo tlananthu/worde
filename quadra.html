@@ -200,8 +200,9 @@
         .tray-header:hover { background: #F9FAFB; }
         .tray-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main); }
         
+        /* Fixed scrollbars for sidebar trays */
         .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
-        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; border-bottom: 1px solid var(--border-color); }
+        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; max-height: calc(50vh - 60px); border-bottom: 1px solid var(--border-color); }
 
         /* Overlays & Modals */
         .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
@@ -236,7 +237,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.5</span></h1>
+                <h1>Quadra <span class="version-badge">v3.6</span></h1>
             </div>
             
             <div class="search-container">
