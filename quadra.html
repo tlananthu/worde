@@ -147,7 +147,6 @@
         
         .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
         
-        /* Standard 24-hour vertical scale */
         .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
         
         .timeline-bg-lines { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
@@ -164,6 +163,11 @@
 
         .schedule-overlay { position: absolute; left: 0; right: 0; background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.06) 10px, rgba(0,0,0,0.06) 20px ); pointer-events: none; z-index: 2; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;}
         
+        /* Current Time Indicator Line */
+        .current-time-line { position: absolute; left: 0; right: 0; height: 2px; background: #EF4444; z-index: 25; pointer-events: none; }
+        .current-time-line::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; }
+        .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
+
         .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 6px 10px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; }
         .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.5); z-index: 12;}
         .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
@@ -221,7 +225,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.5</span></h1>
+                <h1>Quadra <span class="version-badge">v2.6</span></h1>
             </div>
             
             <div class="search-container">
@@ -412,7 +416,7 @@
                     </select>
                     <button class="btn btn-outline" onclick="loadCalendars()">Load</button>
                 </div>
-                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click 'Load' to fetch your available Google calendars.</p>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Click 'Load' to fetch your available Google calendars securely.</p>
             </div>
 
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
@@ -455,7 +459,7 @@
         const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
         const defaultSchedule = [
-            { title: 'Out of office hours', startHour: 14, endHour: 29 }, // Overnight wrap support
+            { title: 'Out of office hours', startHour: 14, endHour: 29 }, 
             { title: 'Lunch', startHour: 13, endHour: 14 }
         ];
         let appSchedule = JSON.parse(localStorage.getItem('quadra_schedule')) || defaultSchedule;
@@ -533,7 +537,6 @@
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
 
-        // --- DATE HELPER FOR OVERNIGHT CLIPPING ---
         function addDays(dateStr, days) {
             const [y, m, d] = dateStr.split('-').map(Number);
             const date = new Date(y, m - 1, d + days);
@@ -573,7 +576,6 @@
 
             canvas.innerHTML = '';
 
-            // Standard 24-hour vertical scale
             const bgLines = document.createElement('div');
             bgLines.className = 'timeline-bg-lines';
             for (let i = 0; i <= 24; i++) {
@@ -634,12 +636,22 @@
                     col.appendChild(header);
                 }
 
-                // 1. Render Overlays with Overnight Splitting (Current Day Part & Next Day Part)
+                // Render Current Time Line if viewing Today in Day Mode
+                if (currentTrackerMode === 'day' && dateStr === todayStr) {
+                    const now = new Date();
+                    const currentHour = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
+                    const timeLine = document.createElement('div');
+                    timeLine.className = 'current-time-line';
+                    timeLine.style.top = `${currentHour * 60}px`;
+                    timeLine.innerHTML = `<span class="current-time-badge">${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+                    col.appendChild(timeLine);
+                }
+
+                // Render Overlays with Overnight Splitting
                 appSchedule.forEach(block => {
                     let start = block.startHour;
                     let end = block.endHour;
 
-                    // If overlay belongs to this column (starts on this date)
                     if (start < 24) {
                         let renderEnd = Math.min(end, 24);
                         const overlay = document.createElement('div');
@@ -650,14 +662,8 @@
                         col.appendChild(overlay);
                     }
 
-                    // If overlay wraps past midnight into this column from the previous day
-                    const prevDateStr = addDays(dateStr, -1);
-                    // Check if a schedule from yesterday wrapped into today
                     appSchedule.forEach(prevBlock => {
                         if (prevBlock.endHour > 24 && dtObj.date === dateStr) {
-                            let overflowStart = 0;
-                            let overflowEnd = Math.min(prevBlock.endHour - 24, end === block.endHour ? Math.min(prevBlock.endHour - 24, 24) : 24);
-                            // Simpler check: if yesterday's block wrapped past 24, render 00:00 to (endHour - 24) on today's column
                             let wrappedSpan = prevBlock.endHour - 24;
                             if (wrappedSpan > 0) {
                                 const overlay = document.createElement('div');
@@ -671,23 +677,22 @@
                     });
                 });
 
-                // 2. Render Time Blocks (Supporting overnight split across columns)
+                // Render Time Blocks
                 notes.forEach(note => {
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
                         let blockStart = tb.startHour;
                         let blockEnd = tb.startHour + tb.duration;
 
-                        // Check if block lands on this column
                         if (tb.date === dateStr) {
                             totalTimeRendered += tb.duration;
                             let renderStart = blockStart % 24;
                             let renderDuration = tb.duration;
 
                             if (blockStart < 24 && blockEnd > 24) {
-                                renderDuration = 24 - blockStart; // Clip at midnight for current day
+                                renderDuration = 24 - blockStart; 
                             } else if (blockStart >= 24) {
-                                return; // Handled by next day loop
+                                return; 
                             }
 
                             const blockEl = document.createElement('div');
@@ -709,7 +714,6 @@
                             blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
                             col.appendChild(blockEl);
                         } 
-                        // Handle the overflow part on the next day's column
                         else if (tb.date === addDays(dateStr, -1)) {
                             if (blockStart < 24 && blockEnd > 24) {
                                 let overflowDuration = blockEnd - 24;
@@ -962,15 +966,23 @@
             navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
         }
 
-        // --- Config Settings & UI ---
+        // --- Config Settings & UI (Token-Only Secure Calendar Fetch) ---
         async function loadCalendars() {
-            if (!gapi.client.getToken()) return alert("Please sign in first.");
+            const token = gapi.client.getToken();
+            if (!token || !token.access_token) return alert("Please sign in first.");
+            
             try {
-                if (!gapi.client.calendar) {
-                    await gapi.client.load('calendar', 'v3');
+                // Fetch directly via standard fetch using the OAuth token, bypassing API key domain restrictions completely!
+                const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+                    headers: { 'Authorization': `Bearer ${token.access_token}` }
+                });
+                const data = await res.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message);
                 }
-                const response = await gapi.client.calendar.calendarList.list();
-                const calendars = response.result.items;
+
+                const calendars = data.items || [];
                 const select = document.getElementById('configCalendar');
                 select.innerHTML = '<option value="">-- Select a Calendar --</option>';
                 calendars.forEach(cal => {
@@ -982,7 +994,7 @@
                 alert("Calendars loaded successfully! Please select one and save.");
             } catch (e) {
                 console.error("Calendar Load Error:", e);
-                alert("Failed to load calendars. Please ensure the Google Calendar API is fully enabled in your Google Cloud Console.");
+                alert("Failed to load calendars. Please ensure the Google Calendar API is enabled in your Google Cloud Console project.");
             }
         }
 
@@ -1131,7 +1143,7 @@
             if (!appConfig.clientId || !appConfig.apiKey) {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="Use Offline</button>`;
                 
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
@@ -1208,7 +1220,8 @@
         }
 
         async function importCalendarEvents() {
-            if (!gapi.client.getToken()) return alert("Please sign in first.");
+            const token = gapi.client.getToken();
+            if (!token || !token.access_token) return alert("Please sign in first.");
             if (!appConfig.calendarId) return alert("Please select a calendar in Settings first.");
             
             const dateStr = document.getElementById('trackerDate').value;
@@ -1219,19 +1232,14 @@
 
             try {
                 document.getElementById('sync-banner').style.display = 'block';
-                if (!gapi.client.calendar) {
-                    await gapi.client.load('calendar', 'v3');
-                }
                 
-                const response = await gapi.client.calendar.events.list({
-                    calendarId: appConfig.calendarId,
-                    timeMin: timeMin,
-                    timeMax: timeMax,
-                    singleEvents: true,
-                    orderBy: 'startTime'
+                const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(appConfig.calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
+                    headers: { 'Authorization': `Bearer ${token.access_token}` }
                 });
-                
-                const events = response.result.items;
+                const data = await res.json();
+                if(data.error) throw new Error(data.error.message);
+
+                const events = data.items || [];
                 let importedCount = 0;
 
                 events.forEach(event => {
@@ -1278,7 +1286,7 @@
             } catch(e) {
                 console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
-                alert("Failed to fetch calendar events. Please make sure the Google Calendar API is fully enabled in your Google Cloud Console project.");
+                alert("Failed to fetch calendar events. Please check your network connection.");
             }
         }
 
