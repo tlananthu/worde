@@ -225,7 +225,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.7</span></h1>
+                <h1>Quadra <span class="version-badge">v2.8</span></h1>
             </div>
             
             <div class="search-container">
@@ -401,7 +401,7 @@
                 <input type="text" id="configClientId" style="font-family: monospace;">
             </div>
             <div class="form-group">
-                <label>Google API Key</label>
+                <label>Google API Key (Optional)</label>
                 <input type="text" id="configApiKey" style="font-family: monospace;">
             </div>
             
@@ -453,10 +453,6 @@
         let isGoogleSynced = false;
         let clockIntervalId = null;
         
-        const DISCOVERY_DOCS = [
-            'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
-            'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
-        ];
         const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
         const defaultSchedule = [
@@ -535,7 +531,7 @@
                         badge.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     }
                 }
-            }, 30000); // Update every 30 seconds
+            }, 30000); 
         }
 
         function stopLiveClock() {
@@ -1044,7 +1040,6 @@
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             
-            // Populate dropdown with currently saved selection if available
             const select = document.getElementById('configCalendar');
             select.innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? appConfig.calendarId : '-- Select a Calendar --'}</option>`;
             
@@ -1085,7 +1080,7 @@
             localStorage.setItem('quadra_schedule', JSON.stringify(appSchedule));
             
             closeSettings(); 
-            renderTrackerTimeline(); // Refresh cleanly without page reload so calendar is retained!
+            renderTrackerTimeline(); 
         }
 
         // --- Core UI Tasks & Notes Matrix ---
@@ -1164,7 +1159,7 @@
         function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         function checkConfigState() {
-            if (!appConfig.clientId || !appConfig.apiKey) {
+            if (!appConfig.clientId) {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
@@ -1183,22 +1178,14 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Google API Engine ---
+        // --- Google API Engine (API-Key Independent) ---
         function gapiLoaded() { 
+            // Optional GAPI load for Tasks discovery if API key is provided
             if(appConfig.apiKey) {
-                gapi.load('client', initializeGapiClient); 
+                gapi.load('client', () => {
+                    gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'] }).catch(() => {});
+                }); 
             }
-        }
-        
-        async function initializeGapiClient() { 
-            try { 
-                await gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: DISCOVERY_DOCS }); 
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2')); 
-                if (savedTokenData && savedTokenData.expires_at > Date.now()) { 
-                    gapi.client.setToken({ access_token: savedTokenData.token }); 
-                    isGoogleSynced = true; 
-                } 
-            } catch(e) { console.error("GAPI Init Error:", e); } 
         }
         
         function gisLoaded() { 
@@ -1214,6 +1201,7 @@
                             document.getElementById('authorize_button').style.display = 'none'; 
                             document.getElementById('signout_button').style.display = 'inline-block'; 
                             isGoogleSynced = true;
+                            if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
                             performBackgroundSync(); 
                         }, 
                     }); 
@@ -1231,8 +1219,8 @@
         }
         
         function handleSignoutClick() { 
-            const token = gapi.client.getToken(); 
-            if (token !== null) { google.accounts.oauth2.revoke(token.access_token); gapi.client.setToken(''); } 
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (savedToken && savedToken.token) { google.accounts.oauth2.revoke(savedToken.token); } 
             localStorage.removeItem('quadra_gapi_token_v2'); 
             isGoogleSynced = false; 
             document.getElementById('auth-overlay').style.display = 'flex'; 
@@ -1244,8 +1232,8 @@
         }
 
         async function importCalendarEvents() {
-            const token = gapi.client.getToken();
-            if (!token || !token.access_token) return alert("Please sign in first.");
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) return alert("Please sign in first.");
             if (!appConfig.calendarId) return alert("Please select a calendar in Settings first.");
             
             const dateStr = document.getElementById('trackerDate').value;
@@ -1258,7 +1246,7 @@
                 document.getElementById('sync-banner').style.display = 'block';
                 
                 const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(appConfig.calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
-                    headers: { 'Authorization': `Bearer ${token.access_token}` }
+                    headers: { 'Authorization': `Bearer ${savedToken.token}` }
                 });
                 const data = await res.json();
                 if(data.error) throw new Error(data.error.message);
@@ -1310,13 +1298,17 @@
             } catch(e) {
                 console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
-                alert("Failed to fetch calendar events. Please check your network connection.");
+                alert("Failed to fetch calendar events. Please check your network connection or sign in again.");
             }
         }
 
         async function performBackgroundSync() {
-            if (!isGoogleSynced || !gapi.client.getToken()) return;
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (!isGoogleSynced || !savedToken || !savedToken.token) return;
             try {
+                if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
+                    gapi.client.setToken({ access_token: savedToken.token });
+                }
                 const response = await gapi.client.tasks.tasklists.list();
                 const remoteLists = response.result.items || [];
                 const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
