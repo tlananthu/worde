@@ -225,13 +225,18 @@
         /* Overlays & Modals */
         .overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(249, 250, 251, 0.95); z-index: 95; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; backdrop-filter: blur(4px); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 650px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 32px; border-radius: 16px; width: 95%; max-width: 800px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto; }
         .form-group { text-align: left; }
         .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
         .form-group input[type="date"] { width: auto; min-width: 180px; }
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+
+        /* Time Entries List inside Task Modal */
+        .time-entries-container { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; max-height: 180px; overflow-y: auto; }
+        .time-entry-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px border-box solid #E5E7EB; font-size: 13px; color: var(--text-main); }
+        .time-entry-item:last-child { border-bottom: none; }
 
         /* Toast Notification System */
         #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
@@ -255,7 +260,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.4</span></h1>
+                <h1>Quadra <span class="version-badge">v5.5</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -464,12 +469,19 @@
     <!-- Modals -->
     <div id="taskModal" class="modal">
         <div class="modal-content">
-            <h3 id="taskModalTitle">Add Task</h3>
-            <textarea id="taskInput" rows="6" placeholder="Enter task details..."></textarea>
-            <div class="form-group" style="margin-top: -8px;">
+            <h3 id="taskModalTitle">Task Details</h3>
+            <textarea id="taskInput" rows="8" placeholder="Enter task details..."></textarea>
+            <div class="form-group" style="margin-top: -4px;">
                 <label>Due Date</label>
                 <input type="date" id="taskDueDate">
             </div>
+
+            <!-- Merged Time Entries Section -->
+            <div class="form-group" id="taskModalTimeEntriesGroup" style="display: none;">
+                <label>Logged Time Entries</label>
+                <div class="time-entries-container" id="taskModalTimeEntriesList"></div>
+            </div>
+
             <div class="modal-actions">
                 <button class="btn btn-outline" onclick="closeTaskModal()">Cancel</button>
                 <button class="btn" onclick="saveTaskModal()">Save Task</button>
@@ -981,13 +993,35 @@
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
             if (event) event.stopPropagation();
             const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
-            
+            const entriesGroup = document.getElementById('taskModalTimeEntriesGroup');
+            const entriesList = document.getElementById('taskModalTimeEntriesList');
+
             if (noteId) {
                 currentEditingId = noteId; 
                 const note = notes.find(n => n.id === noteId); 
-                title.innerText = 'Edit Task Details'; 
+                title.innerText = 'Task Details'; 
                 input.value = note.text;
                 document.getElementById('taskDueDate').value = note.dueDate ? note.dueDate.split('T')[0] : '';
+
+                // Render merged time entries
+                if (note.timeBlocks && note.timeBlocks.length > 0) {
+                    entriesList.innerHTML = '';
+                    note.timeBlocks.forEach(tb => {
+                        let endH = tb.startHour + tb.duration;
+                        let timeRange = `${decToTime(tb.startHour)} - ${decToTime(endH)}`;
+                        let row = document.createElement('div');
+                        row.className = 'time-entry-item';
+                        row.innerHTML = `
+                            <span>📅 <strong>${tb.date}</strong> &nbsp;|&nbsp; 🕒 ${timeRange} (${tb.duration}h)</span>
+                            <button class="action-btn delete-btn" onclick="removeTimeBlockFromModal('${note.id}', '${tb.id}')" title="Delete entry">×</button>
+                        `;
+                        entriesList.appendChild(row);
+                    });
+                    entriesGroup.style.display = 'block';
+                } else {
+                    entriesGroup.style.display = 'none';
+                }
+
             } else { 
                 currentEditingId = null; 
                 currentAddingQuadrant = quadrant || 'inbox'; 
@@ -995,8 +1029,20 @@
                 input.value = '';
                 document.getElementById('taskDueDate').value = timelineContext ? timelineContext.date : '';
                 pendingTimelineContext = timelineContext || null;
+                entriesGroup.style.display = 'none';
             }
             modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
+        }
+
+        function removeTimeBlockFromModal(noteId, blockId) {
+            const note = notes.find(n => n.id === noteId);
+            if (note) {
+                note.timeBlocks = note.timeBlocks.filter(b => b.id !== blockId);
+                note.dirty = true;
+                saveNotes();
+                handleSearch();
+                openTaskModal(null, noteId);
+            }
         }
 
         let pendingTimelineContext = null;
