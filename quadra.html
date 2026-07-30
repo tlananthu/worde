@@ -236,7 +236,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.7</span></h1>
+                <h1>Quadra <span class="version-badge">v3.8</span></h1>
             </div>
             
             <div class="search-container">
@@ -298,7 +298,7 @@
                 </div>
             </div>
 
-            <!-- Calendar Events Tray (Below Inbox) -->
+            <!-- Calendar Events Tray -->
             <div class="calendar-tray">
                 <div class="tray-header" onclick="toggleCalendarTray()">
                     <h3>Calendar Events (<span id="calendar-count">0</span>)</h3>
@@ -439,7 +439,10 @@
                         <option value="">-- Select a Calendar --</option>
                     </select>
                 </div>
-                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Calendars load automatically upon sign-in.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <p style="font-size: 11px; color: var(--text-muted);">Calendars load automatically upon sign-in.</p>
+                    <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; color: #EF4444; border-color: #EF4444;" onclick="clearCalendarCache()">🗑️ Clear Calendar Cache</button>
+                </div>
             </div>
 
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
@@ -1009,6 +1012,16 @@
             note.dirty = true; saveNotes(); handleSearch(); closeEditBlockModal();
         }
 
+        // --- Clear Calendar Cache from Settings ---
+        function clearCalendarCache() {
+            if (confirm("Are you sure you want to clear the calendar event cache? This will allow re-importing all meetings when you click Sync Meetings.")) {
+                notes = notes.filter(n => !n.eventId);
+                saveNotes();
+                handleSearch();
+                showToast("Calendar event cache cleared!");
+            }
+        }
+
         // --- Export Engine ---
         function exportTimesheet() {
             const baseDateStr = document.getElementById('trackerDate').value;
@@ -1415,7 +1428,7 @@
                 for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
                 const syncSnapshot = JSON.parse(JSON.stringify(notes));
                 for (let sn of syncSnapshot) {
-                    if (sn.eventId) continue; // Skip calendar meetings from syncing to Google Tasks
+                    if (sn.eventId) continue; 
                     if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
                     if (sn.dirty && !sn.deleted) {
                         const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
