@@ -168,11 +168,15 @@
         .current-time-line::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; }
         .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
 
-        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 6px 10px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; }
+        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 6px 10px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; }
         .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.5); z-index: 12;}
-        .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;}
-        .block-meta { font-size: 11px; opacity: 0.8; pointer-events: none;}
+        .block-info { pointer-events: none; overflow: hidden; flex-grow: 1; padding-right: 4px; }
+        .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .block-meta { font-size: 11px; opacity: 0.8; }
         
+        .block-edit-icon { background: rgba(255,255,255,0.2); border: none; color: white; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: background 0.2s; flex-shrink: 0; z-index: 12; }
+        .block-edit-icon:hover { background: rgba(255,255,255,0.4); }
+
         .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; cursor: ns-resize; display: flex; justify-content: center; align-items: center; z-index: 11; opacity: 0.5; transition: opacity 0.2s; }
         .resize-handle:hover { opacity: 1; }
         .resize-handle::after { content: ''; width: 24px; height: 3px; background: rgba(255,255,255,0.7); border-radius: 2px; }
@@ -225,7 +229,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.8</span></h1>
+                <h1>Quadra <span class="version-badge">v2.9</span></h1>
             </div>
             
             <div class="search-container">
@@ -720,12 +724,18 @@
                             const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${tb.duration}h)`;
 
                             blockEl.innerHTML = `
-                                <div class="block-title">${displayTitle}</div>
-                                <div class="block-meta">${timeStr}</div>
+                                <div class="block-info">
+                                    <div class="block-title">${displayTitle}</div>
+                                    <div class="block-meta">${timeStr}</div>
+                                </div>
+                                <button class="block-edit-icon" onclick="openTaskModal(null, '${note.id}', event)" title="Edit Task Details">📝</button>
                                 <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
                             `;
                             
-                            blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
+                            blockEl.onmousedown = (e) => {
+                                if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
+                                startBlockDrag(e, note.id, tb.id, false);
+                            };
                             col.appendChild(blockEl);
                         } 
                         else if (tb.date === addDays(dateStr, -1)) {
@@ -742,10 +752,16 @@
                                 const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${tb.duration}h)`;
 
                                 blockEl.innerHTML = `
-                                    <div class="block-title">${displayTitle} (cont.)</div>
-                                    <div class="block-meta">${timeStr}</div>
+                                    <div class="block-info">
+                                        <div class="block-title">${displayTitle} (cont.)</div>
+                                        <div class="block-meta">${timeStr}</div>
+                                    </div>
+                                    <button class="block-edit-icon" onclick="openTaskModal(null, '${note.id}', event)" title="Edit Task Details">📝</button>
                                 `;
-                                blockEl.onmousedown = (e) => startBlockDrag(e, note.id, tb.id, false);
+                                blockEl.onmousedown = (e) => {
+                                    if(e.target.closest('.block-edit-icon')) return;
+                                    startBlockDrag(e, note.id, tb.id, false);
+                                };
                                 col.appendChild(blockEl);
                             }
                         }
@@ -863,7 +879,7 @@
             pendingTimelineContext = timelineContext;
 
             const modal = document.getElementById('taskModal'), input = document.getElementById('taskInput'), title = document.getElementById('taskModalTitle');
-            if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task'; input.value = note.text; }
+            if (noteId) { currentEditingId = noteId; const note = notes.find(n => n.id === noteId); title.innerText = 'Edit Task Details'; input.value = note.text; }
             else { currentEditingId = null; currentAddingQuadrant = quadrant; title.innerText = 'Add Task'; input.value = ''; }
             modal.style.display = 'flex'; setTimeout(() => input.focus(), 100);
         }
@@ -980,7 +996,7 @@
             navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
         }
 
-        // --- Config Settings & UI (Token-Only Secure Calendar Fetch) ---
+        // --- Config Settings & UI ---
         async function loadCalendars() {
             const token = gapi.client.getToken();
             if (!token || !token.access_token) return alert("Please sign in first.");
@@ -1178,9 +1194,8 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Google API Engine (API-Key Independent) ---
+        // --- Google API Engine ---
         function gapiLoaded() { 
-            // Optional GAPI load for Tasks discovery if API key is provided
             if(appConfig.apiKey) {
                 gapi.load('client', () => {
                     gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'] }).catch(() => {});
