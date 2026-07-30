@@ -244,7 +244,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v4.2</span></h1>
+                <h1>Quadra <span class="version-badge">v4.3</span></h1>
             </div>
             
             <div class="search-container">
@@ -447,10 +447,16 @@
                         <option value="">-- Select a Calendar --</option>
                     </select>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <p style="font-size: 11px; color: var(--text-muted);">Calendars load automatically upon sign-in.</p>
-                    <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; color: #EF4444; border-color: #EF4444;" onclick="clearCalendarCache()">🗑️ Clear Calendar Cache</button>
-                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label>Ignore Keywords (Comma-separated)</label>
+                <input type="text" id="configIgnoreKeywords" placeholder="out of office, ooo, away, vacation, holiday">
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Calendar events containing these words will be ignored during sync.</p>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
+                <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; color: #EF4444; border-color: #EF4444;" onclick="clearCalendarCache()">🗑️ Clear Calendar Cache</button>
             </div>
 
             <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
@@ -496,7 +502,8 @@
         }
 
         // --- Core Settings & Config ---
-        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '' };
+        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '', ignoreKeywords: 'out of office, ooo, away, vacation, holiday' };
+        if (!appConfig.ignoreKeywords) appConfig.ignoreKeywords = 'out of office, ooo, away, vacation, holiday';
         
         let tokenClient;
         let isGoogleSynced = false;
@@ -519,7 +526,7 @@
                 });
                 delete note.timeLogs; 
             }
-            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks, eventId: note.eventId || null };
+            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks, eventId: note.eventId || null, quadrant: note.quadrant || 'q2' };
         });
 
         const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
@@ -751,9 +758,8 @@
                         }
                         let actualDuration = blockEnd - blockStart;
 
-                        // Check if block falls on this specific day column
                         if (tb.date === dateStr) {
-                            totalTimeRendered += tb.duration; // Use the specific block's duration for this day column
+                            totalTimeRendered += tb.duration; 
                             let renderStart = blockStart % 24;
                             let renderDuration = tb.duration;
 
@@ -795,11 +801,10 @@
                             };
                             col.appendChild(blockEl);
                         } 
-                        // Handle overnight overflow into the next day column
                         else if (tb.date === addDays(dateStr, -1)) {
                             if (blockStart < 24 && blockEnd > 24) {
                                 let overflowDuration = blockEnd - 24;
-                                totalTimeRendered += overflowDuration; // Add overflow duration to this day's total
+                                totalTimeRendered += overflowDuration; 
                                 const blockEl = document.createElement('div');
                                 const isMeeting = note.eventId || note.text.includes('#meeting');
                                 const quadClass = note.quadrant || 'q2';
@@ -1156,6 +1161,7 @@
         function openSettings() {
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
+            document.getElementById('configIgnoreKeywords').value = appConfig.ignoreKeywords || '';
             
             loadCalendars(); 
             
@@ -1167,6 +1173,7 @@
         function saveSettings() {
             appConfig.clientId = document.getElementById('configClientId').value.trim();
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
+            appConfig.ignoreKeywords = document.getElementById('configIgnoreKeywords').value.trim();
             
             const calendarSelect = document.getElementById('configCalendar');
             if (calendarSelect && calendarSelect.value) {
@@ -1382,9 +1389,25 @@
 
                 const events = data.items || [];
                 let importedCount = 0;
+                let ignoredCount = 0;
+
+                // Parse user-defined ignore keywords
+                const ignoreKeywords = (appConfig.ignoreKeywords || 'out of office, ooo, away, vacation, holiday')
+                    .toLowerCase()
+                    .split(',')
+                    .map(k => k.trim())
+                    .filter(k => k.length > 0);
 
                 events.forEach(event => {
                     if (!event.start.dateTime) return; // Skip all-day events
+
+                    const title = (event.summary || '').toLowerCase();
+                    const shouldIgnore = ignoreKeywords.some(keyword => title.includes(keyword));
+
+                    if (shouldIgnore) {
+                        ignoredCount++;
+                        return;
+                    }
                     
                     const start = new Date(event.start.dateTime);
                     const end = new Date(event.end.dateTime);
@@ -1400,7 +1423,7 @@
                         id: Date.now().toString() + Math.random(),
                         eventId: event.id, 
                         text: `${event.summary || 'Meeting'} #meeting`,
-                        quadrant: 'q2', // Default to Schedule quadrant color
+                        quadrant: 'q2', // Default quadrant color
                         status: 'active',
                         dirty: false, 
                         deleted: false,
@@ -1417,10 +1440,10 @@
                 });
                 
                 document.getElementById('sync-banner').style.display = 'none';
-                if (importedCount > 0) {
+                if (importedCount > 0 || ignoredCount > 0) {
                     saveNotes();
                     renderTrackerTimeline(); 
-                    showToast(`${importedCount} meetings imported to timeline and Calendar Events tray.`);
+                    showToast(`${importedCount} imported, ${ignoredCount} ignored (OOO).`);
                 } else {
                     showToast("No new meetings found for this date.");
                 }
@@ -1466,7 +1489,7 @@
             } catch (e) {
                 document.getElementById('sync-banner').style.display = 'none';
                 console.error(e);
-                showToast("Tasks sync force-failed. Check your API configuration.");
+                showToast("Tasks sync failed. Check your API configuration.");
             }
         }
 
