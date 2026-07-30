@@ -225,7 +225,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v2.6</span></h1>
+                <h1>Quadra <span class="version-badge">v2.7</span></h1>
             </div>
             
             <div class="search-container">
@@ -411,7 +411,7 @@
             <div class="form-group">
                 <label>Select Calendar for Timesheet Import</label>
                 <div style="display: flex; gap: 8px;">
-                    <select id="configCalendar" style="flex-grow: 1;">
+                    <select id="configCalendar" style="flex-grow: 1;" onchange="appConfig.calendarId = this.value;">
                         <option value="">-- Select a Calendar --</option>
                     </select>
                     <button class="btn btn-outline" onclick="loadCalendars()">Load</button>
@@ -451,6 +451,7 @@
         
         let tokenClient;
         let isGoogleSynced = false;
+        let clockIntervalId = null;
         
         const DISCOVERY_DOCS = [
             'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest',
@@ -502,11 +503,13 @@
                 tracker.style.display = 'block'; 
                 document.body.classList.remove('sidebar-open');
                 renderTrackerTimeline();
+                startLiveClock();
             } else {
                 matrix.style.display = ''; 
                 tracker.style.display = 'none';
                 matrix.classList.remove('layout-grid', 'layout-kanban');
                 matrix.classList.add(`layout-${layout}`);
+                stopLiveClock();
             }
         }
 
@@ -519,6 +522,26 @@
 
         function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
 
+        function startLiveClock() {
+            if(clockIntervalId) clearInterval(clockIntervalId);
+            clockIntervalId = setInterval(() => {
+                if (currentLayout === 'tracker' && currentTrackerMode === 'day') {
+                    const line = document.querySelector('.current-time-line');
+                    const badge = document.querySelector('.current-time-badge');
+                    if (line && badge) {
+                        const now = new Date();
+                        const currentHour = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
+                        line.style.top = `${currentHour * 60}px`;
+                        badge.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
+                }
+            }, 30000); // Update every 30 seconds
+        }
+
+        function stopLiveClock() {
+            if(clockIntervalId) { clearInterval(clockIntervalId); clockIntervalId = null; }
+        }
+
         // --- Drag/Drop Routing ---
         function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
         function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
@@ -528,7 +551,6 @@
             if (note && note.status === 'active' && note.quadrant !== quadrant) { note.quadrant = quadrant; note.dirty = true; saveNotes(); handleSearch(); }
         }
 
-        // --- TIME FORMAT HELPER ---
         function decToTime(dec) {
             let normalizedDec = dec % 24;
             let h = Math.floor(normalizedDec);
@@ -546,7 +568,6 @@
             return `${localY}-${localM}-${localD}`;
         }
 
-        // --- TIME TRACKER LOGIC ---
         function changeTrackerDay(offset) {
             const dateInput = document.getElementById('trackerDate');
             const d = new Date(dateInput.value);
@@ -636,7 +657,6 @@
                     col.appendChild(header);
                 }
 
-                // Render Current Time Line if viewing Today in Day Mode
                 if (currentTrackerMode === 'day' && dateStr === todayStr) {
                     const now = new Date();
                     const currentHour = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
@@ -647,7 +667,6 @@
                     col.appendChild(timeLine);
                 }
 
-                // Render Overlays with Overnight Splitting
                 appSchedule.forEach(block => {
                     let start = block.startHour;
                     let end = block.endHour;
@@ -677,7 +696,6 @@
                     });
                 });
 
-                // Render Time Blocks
                 notes.forEach(note => {
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
@@ -970,9 +988,7 @@
         async function loadCalendars() {
             const token = gapi.client.getToken();
             if (!token || !token.access_token) return alert("Please sign in first.");
-            
             try {
-                // Fetch directly via standard fetch using the OAuth token, bypassing API key domain restrictions completely!
                 const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
                     headers: { 'Authorization': `Bearer ${token.access_token}` }
                 });
@@ -991,10 +1007,10 @@
                     if(cal.id === appConfig.calendarId) opt.selected = true;
                     select.appendChild(opt);
                 });
-                alert("Calendars loaded successfully! Please select one and save.");
+                alert("Calendars loaded successfully! Please select your calendar from the dropdown and click 'Save Configuration'.");
             } catch (e) {
                 console.error("Calendar Load Error:", e);
-                alert("Failed to load calendars. Please ensure the Google Calendar API is enabled in your Google Cloud Console project.");
+                alert("Failed to load calendars. Please check network connection or verify Calendar API scope permissions.");
             }
         }
 
@@ -1028,7 +1044,9 @@
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             
-            document.getElementById('configCalendar').innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? 'Saved Calendar (Click Load to refresh)' : '-- Select a Calendar --'}</option>`;
+            // Populate dropdown with currently saved selection if available
+            const select = document.getElementById('configCalendar');
+            select.innerHTML = `<option value="${appConfig.calendarId}">${appConfig.calendarId ? appConfig.calendarId : '-- Select a Calendar --'}</option>`;
             
             renderScheduleSettings();
             document.getElementById('settingsModal').style.display = 'flex';
@@ -1038,7 +1056,12 @@
         function saveSettings() {
             appConfig.clientId = document.getElementById('configClientId').value.trim();
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
-            appConfig.calendarId = document.getElementById('configCalendar').value;
+            
+            const calendarSelect = document.getElementById('configCalendar');
+            if (calendarSelect.value) {
+                appConfig.calendarId = calendarSelect.value;
+            }
+            
             localStorage.setItem('quadra_config', JSON.stringify(appConfig));
             
             const rows = document.querySelectorAll('.schedule-row');
@@ -1061,7 +1084,8 @@
             });
             localStorage.setItem('quadra_schedule', JSON.stringify(appSchedule));
             
-            closeSettings(); location.reload(); 
+            closeSettings(); 
+            renderTrackerTimeline(); // Refresh cleanly without page reload so calendar is retained!
         }
 
         // --- Core UI Tasks & Notes Matrix ---
@@ -1143,7 +1167,7 @@
             if (!appConfig.clientId || !appConfig.apiKey) {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettings()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="Use Offline</button>`;
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
                 
                 const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
                 if (savedTokenData && savedTokenData.expires_at > Date.now()) {
