@@ -10,7 +10,7 @@
         :root {
             --brand-primary: #4F46E5;
             --brand-primary-hover: #4338CA;
-            --brand-meeting: #0D9488; /* Distinct teal color for calendar meetings */
+            --brand-meeting: #0D9488; 
             --bg-main: #F9FAFB;
             --text-main: #111827;
             --text-muted: #6B7280;
@@ -214,6 +214,11 @@
         .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--brand-primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
 
+        /* Toast Notification System */
+        #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { background: var(--text-main); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
         #sync-banner { display: none; position: fixed; bottom: 24px; right: 24px; background: var(--text-main); color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .spin { animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -231,7 +236,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v3.4</span></h1>
+                <h1>Quadra <span class="version-badge">v3.5</span></h1>
             </div>
             
             <div class="search-container">
@@ -258,6 +263,7 @@
     </header>
 
     <div id="sync-banner"><span class="spin">↻</span> Syncing...</div>
+    <div id="toast-container"></div>
 
     <div class="main-wrapper">
         <div id="auth-overlay" class="overlay">
@@ -452,6 +458,21 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
+        // --- Toast Notification System ---
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         // --- Core Settings & Config ---
         let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '' };
         
@@ -716,7 +737,6 @@
                             }
 
                             const blockEl = document.createElement('div');
-                            // Add different styling class if it's a calendar meeting
                             const isMeeting = note.eventId || note.text.includes('#meeting');
                             blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : '');
                             blockEl.id = `block-${tb.id}`;
@@ -1035,7 +1055,7 @@
                  plainTextLog += `\n========================\nWeekly Total: ${overallTotal}h\n`;
             }
 
-            navigator.clipboard.writeText(plainTextLog).then(() => alert("Timesheet copied to clipboard!")).catch(err => alert("Copy failed"));
+            navigator.clipboard.writeText(plainTextLog).then(() => showToast("Timesheet copied to clipboard!")).catch(err => showToast("Copy failed"));
         }
 
         // --- Config Settings & UI ---
@@ -1134,6 +1154,7 @@
             
             closeSettings(); 
             renderTrackerTimeline(); 
+            showToast("Configuration saved!");
         }
 
         // --- Core UI Tasks & Notes Matrix ---
@@ -1231,7 +1252,7 @@
 
         function exportData() { const dataStr = JSON.stringify(notes, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); }
         function triggerImport() { document.getElementById('importFile').click(); }
-        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); alert("Tasks merged!"); closeSettings(); } else alert("Invalid format."); } catch (err) { alert("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
+        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettings(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
         // --- Google API Engine ---
         function gapiLoaded() { 
@@ -1268,7 +1289,7 @@
             if (!appConfig.clientId) return openSettings(); 
             if (!tokenClient) {
                 if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { gisLoaded(); }
-                if (!tokenClient) { alert("Google services are still loading. Please wait a moment and try again."); return; }
+                if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
             }
             tokenClient.requestAccessToken({prompt: 'consent'}); 
         }
@@ -1288,8 +1309,8 @@
 
         async function importCalendarEvents() {
             const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) return alert("Please sign in first.");
-            if (!appConfig.calendarId) return alert("Please select a calendar in Settings first.");
+            if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) return showToast("Please sign in first.");
+            if (!appConfig.calendarId) return showToast("Please select a calendar in Settings first.");
             
             const dateStr = document.getElementById('trackerDate').value;
             const [y, m, day] = dateStr.split('-');
@@ -1345,21 +1366,21 @@
                 if (importedCount > 0) {
                     saveNotes();
                     renderTrackerTimeline(); 
-                    alert(`${importedCount} meetings imported to timeline.`);
+                    showToast(`${importedCount} meetings imported to timeline.`);
                 } else {
-                    alert("No new meetings found for this date.");
+                    showToast("No new meetings found for this date.");
                 }
                 
             } catch(e) {
                 console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
-                alert("Failed to fetch calendar events. Please check your network connection or sign in again.");
+                showToast("Failed to fetch calendar events. Check your network or sign in again.");
             }
         }
 
         async function performBackgroundSync() {
             const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!savedToken || !savedToken.token) return alert("Please sign in first to sync with Google Tasks.");
+            if (!savedToken || !savedToken.token) return showToast("Please sign in first to sync with Google Tasks.");
             try {
                 document.getElementById('sync-banner').style.display = 'block';
                 if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
@@ -1386,11 +1407,11 @@
                 syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
                 notes = newNotesArray; saveNotes(); handleSearch(); 
                 document.getElementById('sync-banner').style.display = 'none';
-                alert("Successfully synced with Google Tasks!");
+                showToast("Successfully synced with Google Tasks!");
             } catch (e) {
                 document.getElementById('sync-banner').style.display = 'none';
                 console.error(e);
-                alert("Tasks sync failed. Please check your Google Tasks API configuration.");
+                showToast("Tasks sync failed. Check your API configuration.");
             }
         }
 
