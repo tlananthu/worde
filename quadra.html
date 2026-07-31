@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.7</span></h1>
+                <h1>Quadra <span class="version-badge">v6.8</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1518,17 +1518,48 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Dynamic Timezone ICS Parser for Outlook Calendars ---
+        // --- Robust Universal Timezone ICS Parser ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
-            let timezones = {}; // Store TZID definitions if present in VTIMEZONE blocks
+            let vTimezones = {}; // Map of TZID -> parsed VTIMEZONE blocks with standard/daylight offsets
             let lines = icsText.split(/\r\n|\n|\r/);
             let currentEvent = null;
-            let currentTzid = null;
+            let currentTzId = null;
+            let currentTzProp = null; // STANDARD or DAYLIGHT
 
-            // First pass: extract explicit timezone offsets from VTIMEZONE blocks if available
-            let tzHoursOffset = 0; // Default fallback offset map for Microsoft labels if VTIMEZONE details are missing
-            const outlookTzMap = {
+            // Pass 1: Parse VTIMEZONE definitions to dynamically read any global timezone rules
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                if (line.startsWith('BEGIN:VTIMEZONE')) {
+                    currentTzId = null;
+                } else if (line.startsWith('TZID:')) {
+                    currentTzId = line.substring(5).trim();
+                    if (!vTimezones[currentTzId]) vTimezones[currentTzId] = {};
+                } else if (line.startsWith('BEGIN:STANDARD') || line.startsWith('BEGIN:DAYLIGHT')) {
+                    currentTzProp = line.includes('DAYLIGHT') ? 'DAYLIGHT' : 'STANDARD';
+                } else if (line.startsWith('TZOFFSETFROM:') || line.startsWith('TZOFFSETTO:')) {
+                    if (currentTzId && currentTzProp) {
+                        let offsetStr = line.substring(13).trim();
+                        let sign = offsetStr.startsWith('-') ? -1 : 1;
+                        let hrs = parseInt(offsetStr.substring(1, 3)) || 0;
+                        let mins = parseInt(offsetStr.substring(3, 5)) || 0;
+                        let totalHours = sign * (hrs + (mins / 60));
+                        
+                        if (!vTimezones[currentTzId][currentTzProp]) {
+                            vTimezones[currentTzId][currentTzProp] = {};
+                        }
+                        if (line.startsWith('TZOFFSETTO:')) {
+                            vTimezones[currentTzId][currentTzProp].offsetTo = totalHours;
+                        }
+                    }
+                } else if (line.startsWith('END:VTIMEZONE')) {
+                    currentTzId = null;
+                    currentTzProp = null;
+                }
+            }
+
+            // Fallback offset dictionary for common Microsoft / Outlook timezone strings if VTIMEZONE blocks are absent
+            const fallbackOffsets = {
                 'AUS EASTERN STANDARD TIME': 10,
                 'E. AUSTRALIA STANDARD TIME': 10,
                 'AEST': 10,
@@ -1536,26 +1567,11 @@
                 'GMT': 0,
                 'UTC': 0,
                 'PACIFIC STANDARD TIME': -8,
-                'EASTERN STANDARD TIME': -5
+                'EASTERN STANDARD TIME': -5,
+                'CENTRAL STANDARD TIME': -6
             };
 
             for (let line of lines) {
-                if (line.startsWith('TZID:')) {
-                    currentTzid = line.substring(5).trim().toUpperCase();
-                }
-                if (line.includes('STANDARD') || line.includes('DAYLIGHT')) {
-                    // Look for standard offset lines like TZOFFSETFROM:+1000
-                }
-                if (line.startsWith('TZOFFSETFROM:')) {
-                    let offsetStr = line.substring(13).trim();
-                    let sign = offsetStr.startsWith('-') ? -1 : 1;
-                    let hrs = parseInt(offsetStr.substring(1, 3)) || 0;
-                    let mins = parseInt(offsetStr.substring(3, 5)) || 0;
-                    if (currentTzid) {
-                        timezones[currentTzid] = sign * (hrs + (mins / 60));
-                    }
-                }
-
                 if (line === 'BEGIN:VEVENT') {
                     currentEvent = {};
                 } else if (line === 'END:VEVENT' && currentEvent) {
@@ -1588,6 +1604,7 @@
                 let dtStartVal = ev[dtStartKey];
                 let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
 
+                // Universal Date Converter using native browser timezone and dynamic offsets
                 let parseUniversalDate = (keyName, valStr) => {
                     let clean = valStr.trim();
                     let match = clean.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?Z?$/);
@@ -1604,21 +1621,31 @@
                     if (clean.endsWith('Z')) {
                         dateObj = new Date(Date.UTC(y, m, d, h, min, s));
                     } else {
-                        // Check if TZID is declared in the property key (e.g. DTSTART;TZID=AUS Eastern Standard Time:...)
                         let tzidMatch = keyName.match(/TZID=([^;:]+)/i);
+                        let sourceOffset = undefined;
+
                         if (tzidMatch) {
-                            let tzidKey = tzidMatch[1].trim().toUpperCase();
-                            let sourceOffset = timezones[tzidKey] !== undefined ? timezones[tzidKey] : outlookTzMap[tzidKey];
-                            
-                            if (sourceOffset !== undefined) {
-                                // Convert event's declared timezone time to UTC, then browser local time
-                                let localBrowserOffsetHours = -new Date().getTimezoneOffset() / 60; // Browser offset from UTC
-                                let netOffsetDiff = localBrowserOffsetHours - sourceOffset;
-                                dateObj = new Date(y, m, d, h + netOffsetDiff, min, s);
-                            } else {
-                                dateObj = new Date(y, m, d, h, min, s);
+                            let tzidKey = tzidMatch[1].trim();
+                            // Check parsed VTIMEZONE blocks first
+                            if (vTimezones[tzidKey]) {
+                                let tzData = vTimezones[tzidKey]['DAYLIGHT'] || vTimezones[tzidKey]['STANDARD'];
+                                if (tzData && tzData.offsetTo !== undefined) {
+                                    sourceOffset = tzData.offsetTo;
+                                }
                             }
+                            // Fallback to standard dictionary if not found in VTIMEZONE
+                            if (sourceOffset === undefined) {
+                                sourceOffset = fallbackOffsets[tzidKey.toUpperCase()];
+                            }
+                        }
+
+                        if (sourceOffset !== undefined) {
+                            // Compute net offset difference between the event's source timezone and browser local timezone
+                            let localBrowserOffsetHours = -new Date().getTimezoneOffset() / 60;
+                            let netOffsetDiff = localBrowserOffsetHours - sourceOffset;
+                            dateObj = new Date(y, m, d, h + netOffsetDiff, min, s);
                         } else {
+                            // Default fallback if no timezone identifier is attached
                             dateObj = new Date(y, m, d, h, min, s);
                         }
                     }
