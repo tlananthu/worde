@@ -148,14 +148,14 @@
         
         .timeline-scroll-area { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding: 24px 0;}
         
-        .timeline { position: relative; height: 1440px; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
+        .timeline { position: relative; margin: 0 24px 24px 24px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; }
         
         .timeline-bg-lines { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0; pointer-events: none; }
         .time-row { position: absolute; width: 100%; border-top: 1px dashed var(--border-color); box-sizing: border-box; display: flex; align-items: flex-start; padding-left: 0; }
         .time-label { color: var(--text-muted); font-size: 11px; font-weight: 500; position: absolute; left: 8px; top: -8px; background: #ffffff; padding: 0 4px; line-height: 1; z-index: 5; }
         
         .timeline-cols-container { position: absolute; left: 55px; right: 0; top: 0; bottom: 0; display: flex; z-index: 2; }
-        .time-col { flex: 1; position: relative; border-left: 1px solid var(--border-color); min-height: 1440px; cursor: crosshair; }
+        .time-col { flex: 1; position: relative; border-left: 1px solid var(--border-color); height: 100%; cursor: crosshair; }
         .time-col:first-child { border-left: none; }
         .time-col.drag-over { background: rgba(79, 70, 229, 0.03); box-shadow: inset 0 0 0 2px var(--brand-primary); }
         
@@ -175,7 +175,7 @@
         .current-time-line::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; }
         .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
 
-        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 6px 10px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.4); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; }
+        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 4px 8px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.4); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; min-height: 24px; }
         
         .logged-block.q1 { background-color: var(--q1-bg); border-color: var(--q1-border); color: var(--q1-text); }
         .logged-block.q2 { background-color: var(--q2-bg); border-color: var(--q2-border); color: var(--q2-text); }
@@ -185,13 +185,13 @@
 
         .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 12;}
         .block-info { pointer-events: none; overflow: hidden; flex-grow: 1; padding-right: 4px; }
-        .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .block-meta { font-size: 11px; opacity: 0.9; }
+        .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+        .block-meta { font-size: 11px; opacity: 0.9; line-height: 1; }
         
-        .block-edit-icon { background: rgba(0,0,0,0.08); border: none; color: inherit; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: background 0.2s; flex-shrink: 0; z-index: 12; }
+        .block-edit-icon { background: rgba(0,0,0,0.08); border: none; color: inherit; width: 20px; height: 20px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: background 0.2s; flex-shrink: 0; z-index: 12; }
         .block-edit-icon:hover { background: rgba(0,0,0,0.15); }
 
-        .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; cursor: ns-resize; display: flex; justify-content: center; align-items: center; z-index: 11; opacity: 0.7; transition: opacity 0.2s; }
+        .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 10px; cursor: ns-resize; display: flex; justify-content: center; align-items: center; z-index: 11; opacity: 0.7; transition: opacity 0.2s; }
         .resize-handle:hover { opacity: 1; }
         .resize-handle::after { content: ''; width: 24px; height: 3px; background: rgba(0,0,0,0.3); border-radius: 2px; }
 
@@ -236,7 +236,6 @@
         .form-row-inline { display: flex; align-items: center; gap: 16px; }
         .form-row-inline label { width: 120px; font-size: 14px; font-weight: 600; color: var(--text-main); flex-shrink: 0; margin-bottom: 0; }
 
-        /* Responsive Grid for Date & Hours Row */
         .responsive-date-hours-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -266,7 +265,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.7</span></h1>
+                <h1>Quadra <span class="version-badge">v5.8</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -396,6 +395,15 @@
                                 <input type="date" id="trackerDate" onchange="renderTrackerTimeline()">
                                 <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
                             </h2>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
+                                🔍 <label for="trackerZoom">Zoom:</label>
+                                <select id="trackerZoom" onchange="setTimelineZoom(this.value)" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px;">
+                                    <option value="1">1x (Normal)</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2">2x (Large)</option>
+                                </select>
+                            </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
@@ -492,7 +500,6 @@
 
             <hr style="border: none; border-top: 1px solid var(--border-color); margin: 8px 0;">
 
-            <!-- Single Line Row for Selected Date & Hours Worked on Laptop -->
             <div class="responsive-date-hours-grid">
                 <div class="form-group form-row-inline" style="margin-bottom: 0;">
                     <label>Selected Date</label>
@@ -554,6 +561,7 @@
         let tokenClient;
         let isGoogleSynced = false;
         let clockIntervalId = null;
+        let timelineZoom = parseFloat(localStorage.getItem('quadra_zoom')) || 1;
         
         const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
@@ -603,6 +611,7 @@
                 matrix.style.display = 'none'; 
                 tracker.style.display = 'block'; 
                 document.body.classList.remove('sidebar-open');
+                document.getElementById('trackerZoom').value = timelineZoom;
                 renderTrackerTimeline();
                 startLiveClock();
             } else {
@@ -617,6 +626,12 @@
             document.getElementById('viewToggleGroup').style.display = 'flex';
             document.getElementById('settingsNavBtn').style.display = 'inline-block';
             document.getElementById('backNavBtn').style.display = 'none';
+        }
+
+        function setTimelineZoom(val) {
+            timelineZoom = parseFloat(val) || 1;
+            localStorage.setItem('quadra_zoom', timelineZoom);
+            renderTrackerTimeline();
         }
 
         function openSettingsPage() {
@@ -658,9 +673,10 @@
                     const line = document.querySelector('.current-time-line');
                     const badge = document.querySelector('.current-time-badge');
                     if (line && badge) {
+                        const hourPx = 60 * timelineZoom;
                         const now = new Date();
                         const currentHour = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
-                        line.style.top = `${currentHour * 60}px`;
+                        line.style.top = `${currentHour * hourPx}px`;
                         badge.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     }
                 }
@@ -710,6 +726,7 @@
             const query = searchInput ? searchInput.value.toLowerCase() : '';
             const canvas = document.getElementById('timelineCanvas');
             const paletteList = document.getElementById('tracker-palette-list');
+            const hourPx = 60 * timelineZoom;
             
             paletteList.innerHTML = '';
             const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query) && !n.eventId);
@@ -725,12 +742,13 @@
             });
 
             canvas.innerHTML = '';
+            canvas.style.height = `${24 * hourPx}px`;
 
             const bgLines = document.createElement('div');
             bgLines.className = 'timeline-bg-lines';
             for (let i = 0; i <= 24; i++) {
                 const row = document.createElement('div');
-                row.className = 'time-row'; row.style.top = `${i * 60}px`;
+                row.className = 'time-row'; row.style.top = `${i * hourPx}px`;
                 row.innerHTML = `<span class="time-label">${i.toString().padStart(2, '0')}:00</span>`;
                 bgLines.appendChild(row);
             }
@@ -791,7 +809,7 @@
                     const currentHour = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
                     const timeLine = document.createElement('div');
                     timeLine.className = 'current-time-line';
-                    timeLine.style.top = `${currentHour * 60}px`;
+                    timeLine.style.top = `${currentHour * hourPx}px`;
                     timeLine.innerHTML = `<span class="current-time-badge">${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
                     col.appendChild(timeLine);
                 }
@@ -804,8 +822,8 @@
                         let renderEnd = Math.min(end, 24);
                         const overlay = document.createElement('div');
                         overlay.className = 'schedule-overlay';
-                        overlay.style.top = `${start * 60}px`;
-                        overlay.style.height = `${(renderEnd - start) * 60}px`;
+                        overlay.style.top = `${start * hourPx}px`;
+                        overlay.style.height = `${(renderEnd - start) * hourPx}px`;
                         if (currentTrackerMode === 'day') overlay.innerText = block.title;
                         col.appendChild(overlay);
                     }
@@ -817,7 +835,7 @@
                                 const overlay = document.createElement('div');
                                 overlay.className = 'schedule-overlay';
                                 overlay.style.top = `0px`;
-                                overlay.style.height = `${Math.min(wrappedSpan, 24) * 60}px`;
+                                overlay.style.height = `${Math.min(wrappedSpan, 24) * hourPx}px`;
                                 if (currentTrackerMode === 'day') overlay.innerText = prevBlock.title;
                                 col.appendChild(overlay);
                             }
@@ -851,8 +869,8 @@
                             const quadClass = note.quadrant || 'q2';
                             blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
                             blockEl.id = `block-${tb.id}`;
-                            blockEl.style.top = `${renderStart * 60}px`;
-                            blockEl.style.height = `${renderDuration * 60}px`;
+                            blockEl.style.top = `${renderStart * hourPx}px`;
+                            blockEl.style.height = `${renderDuration * hourPx}px`;
                             
                             let displayTitle = note.text.split('\n')[0].substring(0, 40);
                             const actualEndHour = (blockStart + actualDuration) % 24;
@@ -888,7 +906,7 @@
                                 blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
                                 blockEl.id = `block-overflow-${tb.id}`;
                                 blockEl.style.top = `0px`;
-                                blockEl.style.height = `${overflowDuration * 60}px`;
+                                blockEl.style.height = `${overflowDuration * hourPx}px`;
                                 
                                 let displayTitle = note.text.split('\n')[0].substring(0, 40);
                                 const actualEndHour = (blockStart + actualDuration) % 24;
@@ -917,7 +935,7 @@
             document.getElementById('trackerDailyTotal').innerText = `Total: ${totalTimeRendered}h`;
 
             const scrollArea = document.getElementById('timelineScrollArea');
-            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * 60; 
+            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
         }
 
         // --- Drag & Resize Engine ---
@@ -943,9 +961,10 @@
         function onBlockDrag(e) {
             if (!dragState) return;
             dragState.hasMoved = true;
+            const hourPx = 60 * timelineZoom;
             
             const dy = e.clientY - dragState.startY;
-            const dHours = Math.round((dy / 60) * 4) / 4; 
+            const dHours = Math.round((dy / hourPx) * 4) / 4; 
             
             const note = notes.find(n => n.id === dragState.noteId);
             const block = note.timeBlocks.find(b => b.id === dragState.blockId);
@@ -975,14 +994,15 @@
         // --- Canvas Clicking & Dropping ---
         function handleTimelineClick(ev, dateStr) {
             if (ev.target.closest('.logged-block')) return; 
+            const hourPx = 60 * timelineZoom;
             
             const rect = ev.currentTarget.getBoundingClientRect();
             const y = ev.clientY - rect.top; 
-            let dropHour = Math.floor(y / 60);
+            let dropHour = Math.floor(y / hourPx);
             
-            const remainder = y % 60;
-            if (remainder > 15 && remainder <= 45) dropHour += 0.5;
-            if (remainder > 45) dropHour += 1.0;
+            const remainder = y % hourPx;
+            if (remainder > (hourPx * 0.25) && remainder <= (hourPx * 0.75)) dropHour += 0.5;
+            if (remainder > (hourPx * 0.75)) dropHour += 1.0;
 
             openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
         }
@@ -994,15 +1014,16 @@
             ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
             const noteId = ev.dataTransfer.getData("text/plain");
             const note = notes.find(n => n.id === noteId);
+            const hourPx = 60 * timelineZoom;
             
             if (note) {
                 const rect = ev.currentTarget.getBoundingClientRect();
                 const y = ev.clientY - rect.top; 
-                let dropHour = Math.floor(y / 60);
+                let dropHour = Math.floor(y / hourPx);
                 
-                const remainder = y % 60;
-                if (remainder > 15 && remainder <= 45) dropHour += 0.5;
-                if (remainder > 45) dropHour += 1.0;
+                const remainder = y % hourPx;
+                if (remainder > (hourPx * 0.25) && remainder <= (hourPx * 0.75)) dropHour += 0.5;
+                if (remainder > (hourPx * 0.75)) dropHour += 1.0;
 
                 if (!note.timeBlocks) note.timeBlocks = [];
                 note.timeBlocks.push({ id: Date.now().toString(), date: dateStr, startHour: dropHour, duration: 1.0 });
