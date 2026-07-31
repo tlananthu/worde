@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.1</span></h1>
+                <h1>Quadra <span class="version-badge">v6.2</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -305,7 +305,7 @@
     <div class="main-wrapper">
         <div id="auth-overlay" class="overlay">
             <h3 id="overlay-title">Google Tasks & Calendar Sync</h3>
-            <p id="overlay-text">Sync your Eisenhower Matrix and import meetings directly from Google Calendar.</p>
+            <p id="overlay-text">Sync your Eisenhower Matrix and import meetings directly from Google Calendar or Outlook.</p>
             <div class="overlay-actions" id="overlay-actions"></div>
         </div>
 
@@ -414,7 +414,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
-                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings from Google Calendar for this day">📥 Sync Meetings</button>
+                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
                     </div>
@@ -447,7 +447,15 @@
                 
                 <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
                 
-                <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Google Calendar Integration</h4>
+                <h4 style="margin-bottom: 8px; font-size: 14px; font-weight: 600;">Calendar Source Integration</h4>
+                <div class="form-group">
+                    <label>Calendar Provider</label>
+                    <select id="configCalSource" onchange="toggleCalSourceFields(this.value)">
+                        <option value="google">Google Calendar API</option>
+                        <option value="outlook">Outlook / Google Apps Script Bridge URL</option>
+                    </select>
+                </div>
+
                 <div class="form-group" id="googleCalGroup">
                     <label>Select Google Calendar for Import</label>
                     <div style="display: flex; gap: 8px;">
@@ -455,6 +463,12 @@
                             <option value="">-- Select a Calendar --</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="form-group" id="outlookIcsGroup" style="display: none;">
+                    <label>Google Apps Script Bridge Web App URL</label>
+                    <input type="text" id="configIcsUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec" style="font-family: monospace;">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Paste your deployed Apps Script Web App URL (`/exec`).</p>
                 </div>
 
                 <div class="form-group" style="margin-top: 12px;">
@@ -567,8 +581,10 @@
         }
 
         // --- Core Settings & Config ---
-        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '', ignoreKeywords: 'out of office, ooo, away, vacation, holiday' };
+        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '', calSource: 'google', icsUrl: '', ignoreKeywords: 'out of office, ooo, away, vacation, holiday' };
         if (!appConfig.ignoreKeywords) appConfig.ignoreKeywords = 'out of office, ooo, away, vacation, holiday';
+        if (!appConfig.calSource) appConfig.calSource = 'google';
+        if (!appConfig.icsUrl) appConfig.icsUrl = '';
         
         let tokenClient;
         let isGoogleSynced = false;
@@ -661,9 +677,22 @@
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
             document.getElementById('configIgnoreKeywords').value = appConfig.ignoreKeywords || '';
+            document.getElementById('configCalSource').value = appConfig.calSource || 'google';
+            document.getElementById('configIcsUrl').value = appConfig.icsUrl || '';
             
+            toggleCalSourceFields(appConfig.calSource || 'google');
             loadCalendars();
             renderScheduleSettings();
+        }
+
+        function toggleCalSourceFields(source) {
+            if (source === 'outlook') {
+                document.getElementById('googleCalGroup').style.display = 'none';
+                document.getElementById('outlookIcsGroup').style.display = 'block';
+            } else {
+                document.getElementById('googleCalGroup').style.display = 'block';
+                document.getElementById('outlookIcsGroup').style.display = 'none';
+            }
         }
 
         function closeSettingsPage() {
@@ -1317,6 +1346,8 @@
             appConfig.clientId = document.getElementById('configClientId').value.trim();
             appConfig.apiKey = document.getElementById('configApiKey').value.trim();
             appConfig.ignoreKeywords = document.getElementById('configIgnoreKeywords').value.trim();
+            appConfig.calSource = document.getElementById('configCalSource').value;
+            appConfig.icsUrl = document.getElementById('configIcsUrl').value.trim();
             
             const calendarSelect = document.getElementById('configCalendar');
             if (calendarSelect && calendarSelect.value) {
@@ -1465,7 +1496,7 @@
         function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         function checkConfigState() {
-            if (!appConfig.clientId) {
+            if (!appConfig.clientId && appConfig.calSource === 'google') {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettingsPage()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
                 document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
@@ -1478,7 +1509,7 @@
                     isGoogleSynced = true;
                     if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: savedTokenData.token });
                     loadCalendars(); 
-                } else { document.getElementById('authorize_button').style.display = 'inline-block'; }
+                } else { if(appConfig.calSource === 'google') document.getElementById('authorize_button').style.display = 'inline-block'; else document.getElementById('auth-overlay').style.display = 'none'; }
             }
         }
         function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
@@ -1486,6 +1517,84 @@
         function exportData() { const dataStr = JSON.stringify(notes, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); }
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
+
+        // --- ICS Parser for Outlook Calendars via Google Apps Script Proxy ---
+        function parseICS(icsText, targetDateStr, ignoreKeywords) {
+            let events = [];
+            let lines = icsText.split(/\r\n|\n|\r/);
+            let currentEvent = null;
+
+            for (let line of lines) {
+                if (line === 'BEGIN:VEVENT') {
+                    currentEvent = {};
+                } else if (line === 'END:VEVENT' && currentEvent) {
+                    if (currentEvent.SUMMARY && currentEvent.DTSTART && currentEvent.DTEND) {
+                        events.push(currentEvent);
+                    }
+                    currentEvent = null;
+                } else if (currentEvent) {
+                    let colonIdx = line.indexOf(':');
+                    if (colonIdx !== -1) {
+                        let key = line.substring(0, colonIdx).split(';')[0];
+                        let val = line.substring(colonIdx + 1);
+                        currentEvent[key] = val;
+                    }
+                }
+            }
+
+            let parsedEvents = [];
+            events.forEach(ev => {
+                let summary = ev.SUMMARY || 'Meeting';
+                let lowerSummary = summary.toLowerCase();
+                let shouldIgnore = ignoreKeywords.some(kw => lowerSummary.includes(kw));
+                if (shouldIgnore) return;
+
+                let parseIcsDate = (icsDateStr) => {
+                    let clean = icsDateStr.replace('Z', '');
+                    let y = parseInt(clean.substring(0, 4));
+                    let m = parseInt(clean.substring(4, 6)) - 1;
+                    let d = parseInt(clean.substring(6, 8));
+                    let h = 0, min = 0, s = 0;
+                    if (clean.includes('T')) {
+                        let timePart = clean.split('T')[1];
+                        h = parseInt(timePart.substring(0, 2));
+                        min = parseInt(timePart.substring(2, 4));
+                        s = parseInt(timePart.substring(4, 6));
+                    }
+                    return new Date(y, m, d, h, min, s);
+                };
+
+                try {
+                    let startDate = parseIcsDate(ev.DTSTART);
+                    let endDate = parseIcsDate(ev.DTEND);
+
+                    let localY = startDate.getFullYear();
+                    let localM = String(startDate.getMonth() + 1).padStart(2, '0');
+                    let localD = String(startDate.getDate()).padStart(2, '0');
+                    let eventDateStr = `${localY}-${localM}-${localD}`;
+
+                    // Strictly enforce current selected date filter
+                    if (eventDateStr === targetDateStr) {
+                        let rawStartHour = startDate.getHours() + (startDate.getMinutes() / 60);
+                        let rawEndHour = endDate.getHours() + (endDate.getMinutes() / 60);
+                        if (rawEndHour <= rawStartHour) rawEndHour += 24;
+                        let rawDuration = rawEndHour - rawStartHour;
+
+                        let startHour = roundToQuarterHour(rawStartHour);
+                        let duration = Math.max(0.25, roundToQuarterHour(rawDuration));
+
+                        parsedEvents.push({
+                            id: ev.UID || (Math.random().toString()),
+                            summary: summary,
+                            startHour: startHour,
+                            duration: duration
+                        });
+                    }
+                } catch(e) {}
+            });
+
+            return parsedEvents;
+        }
 
         // --- Google API Initialization ---
         window.addEventListener('load', () => {
@@ -1554,79 +1663,116 @@
         }
 
         async function importCalendarEvents() {
-            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) return showToast("Please sign in first.");
-            if (!appConfig.calendarId) return showToast("Please select a calendar in Settings first.");
-            
             const dateStr = document.getElementById('trackerDate').value;
-            const [y, m, day] = dateStr.split('-');
-            
-            const timeMin = new Date(y, m-1, day, 0, 0, 0).toISOString();
-            const timeMax = new Date(y, m-1, day, 23, 59, 59).toISOString();
+            const ignoreKeywords = (appConfig.ignoreKeywords || 'out of office, ooo, away, vacation, holiday')
+                .toLowerCase()
+                .split(',')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+
+            let importedCount = 0;
+            let ignoredCount = 0;
 
             try {
                 document.getElementById('sync-banner').style.display = 'block';
-                
-                const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(appConfig.calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
-                    headers: { 'Authorization': `Bearer ${savedToken.token}` }
-                });
-                const data = await res.json();
-                if(data.error) throw new Error(data.error.message);
 
-                const events = data.items || [];
-                let importedCount = 0;
-                let ignoredCount = 0;
+                if (appConfig.calSource === 'outlook' && appConfig.icsUrl) {
+                    let fetchUrl = appConfig.icsUrl;
+                    
+                    // Fetch directly from Google Apps Script Web App bridge
+                    const res = await fetch(fetchUrl);
+                    if (!res.ok) throw new Error("Failed to fetch ICS feed via Apps Script bridge");
+                    
+                    const icsText = await res.text();
+                    const icsEvents = parseICS(icsText, dateStr, ignoreKeywords);
 
-                const ignoreKeywords = (appConfig.ignoreKeywords || 'out of office, ooo, away, vacation, holiday')
-                    .toLowerCase()
-                    .split(',')
-                    .map(k => k.trim())
-                    .filter(k => k.length > 0);
+                    icsEvents.forEach(ev => {
+                        if (notes.find(n => n.eventId === ev.id)) return;
+                        notes.push({
+                            id: Date.now().toString() + Math.random(),
+                            eventId: ev.id,
+                            text: `${ev.summary} #meeting`,
+                            quadrant: 'q2',
+                            status: 'active',
+                            dirty: false,
+                            deleted: false,
+                            timeBlocks: [{
+                                id: Date.now().toString() + Math.random(),
+                                date: dateStr,
+                                startHour: ev.startHour,
+                                duration: ev.duration
+                            }]
+                        });
+                        importedCount++;
+                    });
 
-                events.forEach(event => {
-                    if (!event.start.dateTime) return; // Skip all-day events
-
-                    const title = (event.summary || '').toLowerCase();
-                    const shouldIgnore = ignoreKeywords.some(keyword => title.includes(keyword));
-
-                    if (shouldIgnore) {
-                        ignoredCount++;
-                        return;
+                } else {
+                    const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+                    if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) {
+                        document.getElementById('sync-banner').style.display = 'none';
+                        return showToast("Please sign in to Google first.");
+                    }
+                    if (!appConfig.calendarId) {
+                        document.getElementById('sync-banner').style.display = 'none';
+                        return showToast("Please select a Google calendar in Settings first.");
                     }
                     
-                    const start = new Date(event.start.dateTime);
-                    const end = new Date(event.end.dateTime);
-                    
-                    const rawStartHour = start.getHours() + (start.getMinutes() / 60);
-                    let rawEndHour = end.getHours() + (end.getMinutes() / 60);
-                    if (rawEndHour <= rawStartHour) rawEndHour += 24;
-                    const rawDuration = rawEndHour - rawStartHour;
+                    const [y, m, day] = dateStr.split('-');
+                    const timeMin = new Date(y, m-1, day, 0, 0, 0).toISOString();
+                    const timeMax = new Date(y, m-1, day, 23, 59, 59).toISOString();
 
-                    // Round start hour and duration to 15-minute intervals
-                    const startHour = roundToQuarterHour(rawStartHour);
-                    const duration = Math.max(0.25, roundToQuarterHour(rawDuration));
-                    
-                    if (notes.find(n => n.eventId === event.id)) return; 
-                    
-                    const newNote = {
-                        id: Date.now().toString() + Math.random(),
-                        eventId: event.id, 
-                        text: `${event.summary || 'Meeting'} #meeting`,
-                        quadrant: 'q2', 
-                        status: 'active',
-                        dirty: false, 
-                        deleted: false,
-                        timeBlocks: [{
+                    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(appConfig.calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
+                        headers: { 'Authorization': `Bearer ${savedToken.token}` }
+                    });
+                    const data = await res.json();
+                    if(data.error) throw new Error(data.error.message);
+
+                    const events = data.items || [];
+                    events.forEach(event => {
+                        if (!event.start.dateTime) return; // Skip all-day events
+
+                        const title = (event.summary || '').toLowerCase();
+                        const shouldIgnore = ignoreKeywords.some(keyword => title.includes(keyword));
+
+                        if (shouldIgnore) {
+                            ignoredCount++;
+                            return;
+                        }
+                        
+                        const start = new Date(event.start.dateTime);
+                        const end = new Date(event.end.dateTime);
+                        
+                        const rawStartHour = start.getHours() + (start.getMinutes() / 60);
+                        let rawEndHour = end.getHours() + (end.getMinutes() / 60);
+                        if (rawEndHour <= rawStartHour) rawEndHour += 24;
+                        const rawDuration = rawEndHour - rawStartHour;
+
+                        // Round start hour and duration to 15-minute intervals
+                        const startHour = roundToQuarterHour(rawStartHour);
+                        const duration = Math.max(0.25, roundToQuarterHour(rawDuration));
+                        
+                        if (notes.find(n => n.eventId === event.id)) return; 
+                        
+                        const newNote = {
                             id: Date.now().toString() + Math.random(),
-                            date: dateStr,
-                            startHour: startHour,
-                            duration: duration
-                        }]
-                    };
-                    
-                    notes.push(newNote);
-                    importedCount++;
-                });
+                            eventId: event.id, 
+                            text: `${event.summary || 'Meeting'} #meeting`,
+                            quadrant: 'q2', 
+                            status: 'active',
+                            dirty: false, 
+                            deleted: false,
+                            timeBlocks: [{
+                                id: Date.now().toString() + Math.random(),
+                                date: dateStr,
+                                startHour: startHour,
+                                duration: duration
+                            }]
+                        };
+                        
+                        notes.push(newNote);
+                        importedCount++;
+                    });
+                }
                 
                 document.getElementById('sync-banner').style.display = 'none';
                 if (importedCount > 0 || ignoredCount > 0) {
@@ -1640,7 +1786,7 @@
             } catch(e) {
                 console.error("Calendar Sync Error:", e);
                 document.getElementById('sync-banner').style.display = 'none';
-                showToast("Failed to fetch calendar events. Check your network or sign in again.");
+                showToast("Failed to fetch calendar events. Check your network or Apps Script Web App URL.");
             }
         }
 
