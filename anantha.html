@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Financial Goals V1.3</title>
+    <title>Anantha | Financial Goals V1.4</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -67,7 +67,7 @@
 
         /* Goals Grid */
         .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        .goal-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; position: relative; }
+        .goal-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; position: relative; display: flex; flex-direction: column; }
         .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
         .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
         .goal-title { font-weight: 600; font-size: 1.1rem; }
@@ -80,7 +80,12 @@
         
         .goal-stat { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
         .goal-stat span:first-child { color: var(--text-secondary); }
-        .target-amount { margin-top: 1rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); text-align: right; }
+        
+        .instrument-box { margin-top: auto; padding: 1rem; background-color: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-color); border-radius: 0 4px 4px 0; font-size: 0.85rem; margin-bottom: 1rem; }
+        .instrument-box span { color: var(--text-secondary); display: block; margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;}
+        .instrument-box strong { color: var(--accent-color); font-weight: 500; }
+
+        .target-amount { margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); text-align: right; }
         .target-amount span { display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
         .target-value { font-size: 1.5rem; font-weight: 700; color: var(--accent-color); }
     </style>
@@ -89,7 +94,7 @@
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v1.3 (Retirement & Edit Features)</div>
+        <div class="version">v1.4 (Instrument Suggestions)</div>
     </header>
 
     <div class="dashboard-layout">
@@ -169,7 +174,8 @@
             editingId: null,
 
             init() {
-                const savedGoals = localStorage.getItem('ananthaGoalsV1_3');
+                // Changed local storage key to v1_4 to keep it isolated or migrate
+                const savedGoals = localStorage.getItem('ananthaGoalsV1_4');
                 if (savedGoals) {
                     this.goals = JSON.parse(savedGoals);
                 }
@@ -232,6 +238,21 @@
                 return corpus;
             },
 
+            // New function to suggest instrument based on time horizon
+            suggestInstrument(type, years) {
+                if (type === 'retirement') {
+                    return "Index Funds + EPF/PPF (Accumulation) ➔ SWP + SCSS (Withdrawal Phase)";
+                }
+                
+                if (years <= 3) {
+                    return "Liquid Mutual Funds, Bank FDs, or Arbitrage Funds (Capital Protection)";
+                } else if (years <= 7) {
+                    return "Balanced Advantage Funds or Aggressive Hybrid Funds";
+                } else {
+                    return "Flexi-Cap Equity MFs & Nifty 50 Index Funds (Wealth Creation)";
+                }
+            },
+
             handleSave(event) {
                 event.preventDefault();
 
@@ -239,7 +260,6 @@
                 const name = document.getElementById('goalName').value;
                 const inflation = parseFloat(document.getElementById('inflation').value);
 
-                let targetValue = 0;
                 let goalData = {
                     id: this.editingId || Date.now().toString(),
                     type: type,
@@ -251,6 +271,7 @@
                     goalData.currentValue = parseFloat(document.getElementById('currentValue').value);
                     goalData.years = parseInt(document.getElementById('years').value);
                     goalData.targetValue = this.calculateStandardTarget(goalData.currentValue, goalData.years, inflation);
+                    goalData.instrument = this.suggestInstrument(type, goalData.years);
                 } else {
                     goalData.monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value);
                     goalData.yearsToRetire = parseInt(document.getElementById('yearsToRetire').value);
@@ -259,6 +280,7 @@
                     goalData.targetValue = this.calculateRetirementCorpus(
                         goalData.monthlyExpenses, goalData.yearsToRetire, goalData.yearsInRetirement, inflation, goalData.postRetirementReturn
                     );
+                    goalData.instrument = this.suggestInstrument(type, goalData.yearsToRetire);
                 }
 
                 if (this.editingId) {
@@ -319,7 +341,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaGoalsV1_3', JSON.stringify(this.goals));
+                localStorage.setItem('ananthaGoalsV1_4', JSON.stringify(this.goals));
             },
 
             render() {
@@ -351,6 +373,9 @@
                         `;
                     }
 
+                    // Fallback in case old data doesn't have the instrument yet
+                    const instrumentText = goal.instrument || this.suggestInstrument(goal.type, goal.type === 'standard' ? goal.years : goal.yearsToRetire);
+
                     card.innerHTML = `
                         <div class="goal-header">
                             <div class="goal-title">
@@ -363,6 +388,12 @@
                             </div>
                         </div>
                         ${statsHTML}
+                        
+                        <div class="instrument-box">
+                            <span>Suggested Strategy</span>
+                            <strong>${instrumentText}</strong>
+                        </div>
+
                         <div class="target-amount">
                             <span>Required Corpus at Closure</span>
                             <div class="target-value">${this.formatCurrency(goal.targetValue)}</div>
