@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.5</span></h1>
+                <h1>Quadra <span class="version-badge">v8.7</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -294,17 +294,17 @@
         </div>
         
         <div class="header-actions">
-            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks" aria-label="Sync tasks">🔄</button>
             <div class="view-toggle" id="viewToggleGroup">
-                <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
-                <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
-                <button id="btnOverdue" onclick="setLayout('overdue')">⚠️ Overdue</button>
-                <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
+                <button id="btnKanban" onclick="setLayout('kanban')" title="Kanban" aria-label="Kanban">|||</button>
+                <button id="btnGrid" onclick="setLayout('grid')" title="Matrix" aria-label="Matrix">⊞</button>
+                <button id="btnOverdue" onclick="setLayout('overdue')" title="Overdue" aria-label="Overdue">✕</button>
+                <button id="btnTracker" onclick="setLayout('tracker')" title="Tracker" aria-label="Tracker">⧗</button>
             </div>
-            <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
-            <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
-            <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️ Settings</button>
-            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">← Back</button>
+            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks" aria-label="Sync tasks">↻</button>
+            <button id="authorize_button" class="btn" onclick="handleAuthClick()">🔑</button>
+            <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">🔑🚪</button>
+            <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️</button>
+            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">↰</button>
         </div>
     </header>
 
