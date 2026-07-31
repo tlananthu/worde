@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7.3</span></h1>
+                <h1>Quadra <span class="version-badge">v7.4</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -294,7 +294,7 @@
         </div>
         
         <div class="header-actions">
-            <button class="btn" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
+            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
             <div class="view-toggle" id="viewToggleGroup">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
@@ -432,8 +432,8 @@
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <button class="btn btn-outline" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
-                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
+                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
+                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
                     </div>
@@ -1599,7 +1599,6 @@
             let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
             filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
 
-            // Dynamic filtered count tracking for quadrant badges
             let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
 
             filteredNotes.forEach(note => {
