@@ -11,6 +11,9 @@
             --brand-primary: #4F46E5;
             --brand-primary-hover: #4338CA;
             --brand-meeting: #0D9488; 
+            --person-tag: #059669;
+            --person-tag-bg: rgba(5, 150, 105, 0.08);
+            --person-tag-hover: rgba(5, 150, 105, 0.15);
             
             /* Quadrant Colors */
             --q1-bg: #FFE4E6; --q1-border: #FDA4AF; --q1-text: #9F1239;
@@ -91,6 +94,8 @@
         .tags-bar:empty { display: none; }
         .filter-tag { background: rgba(79, 70, 229, 0.08); color: var(--brand-primary); padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s; border: 1px solid transparent; }
         .filter-tag:hover { background: rgba(79, 70, 229, 0.15); transform: translateY(-1px); }
+        .filter-tag.person-filter { background: var(--person-tag-bg); color: var(--person-tag); }
+        .filter-tag.person-filter:hover { background: var(--person-tag-hover); }
 
         /* Matrix Layout */
         .matrix-container { display: grid; gap: 24px; padding: 24px; flex-grow: 1; transition: all 0.3s ease; max-width: 1600px; margin: 0 auto; width: 100%; position: relative; overflow-y: auto; overflow-x: auto; }
@@ -121,6 +126,8 @@
         .note-text::-webkit-scrollbar { width: 4px; } .note-text::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
         .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
         .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
+        .person-tag { color: var(--person-tag); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
+        .person-tag:hover { background-color: var(--person-tag-hover); text-decoration: underline; }
 
         .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; flex-shrink: 0; }
         .note:hover .note-actions { opacity: 1; }
@@ -265,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.9</span></h1>
+                <h1>Quadra <span class="version-badge">v6.0</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -273,7 +280,7 @@
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="searchInput" placeholder="Search tasks or #tags..." oninput="handleSearch()">
+                <input type="text" id="searchInput" placeholder="Search tasks, #tags, or @people..." oninput="handleSearch()">
                 <button class="clear-search" id="clearSearchBtn" onclick="clearSearch()" title="Clear search">×</button>
             </div>
         </div>
@@ -486,7 +493,7 @@
             <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
             
             <div class="form-group">
-                <input type="text" id="taskTitleInput" placeholder="Text" style="font-weight: 600; font-size: 15px;">
+                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;">
             </div>
 
             <div class="form-group">
@@ -1230,7 +1237,7 @@
                         if(tb.date === dateStr) {
                             let dur = roundToQuarterHour(tb.duration);
                             dailyHrs += dur;
-                            const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
+                            const tags = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
                             let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
                             dailyLog += `- [${identifier}] ${dur}h\n`;
                         }
@@ -1345,27 +1352,53 @@
         // --- Core UI Tasks & Notes Matrix ---
         function renderTagsList() {
             const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
-            const tagCounts = {};
+            const hashTagCounts = {};
+            const personTagCounts = {};
+
             notes.forEach(note => {
                 if (!note.deleted && note.status === 'active' && !note.eventId) {
-                    const matches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
-                    if (matches) {
-                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
-                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+                    const hashMatches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
+                    if (hashMatches) {
+                        const uniqueTags = new Set(hashMatches.map(t => t.toLowerCase()));
+                        uniqueTags.forEach(tag => { hashTagCounts[tag] = (hashTagCounts[tag] || 0) + 1; });
+                    }
+
+                    const personMatches = note.text.match(/(@[a-zA-Z0-9_]+)/g);
+                    if (personMatches) {
+                        const uniquePersons = new Set(personMatches.map(p => p.toLowerCase()));
+                        uniquePersons.forEach(p => { personTagCounts[p] = (personTagCounts[p] || 0) + 1; });
                     }
                 }
             });
+
             tagsBar.innerHTML = '';
-            const sortedTags = Object.keys(tagCounts).sort((a, b) => { if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a]; return a.localeCompare(b); });
-            sortedTags.forEach(tag => {
-                const btn = document.createElement('button'); btn.className = 'filter-tag'; btn.innerText = `${tag} (${tagCounts[tag]})`;
+
+            // Render # Tags
+            const sortedHashtags = Object.keys(hashTagCounts).sort((a, b) => hashTagCounts[b] - hashTagCounts[a]);
+            sortedHashtags.forEach(tag => {
+                const btn = document.createElement('button'); btn.className = 'filter-tag'; btn.innerText = `${tag} (${hashTagCounts[tag]})`;
                 btn.onclick = (e) => { const searchInput = document.getElementById('searchInput'); if (searchInput.value === tag) clearSearch(); else searchTag(tag, e); };
+                tagsBar.appendChild(btn);
+            });
+
+            // Render @ Person Tags
+            const sortedPersons = Object.keys(personTagCounts).sort((a, b) => personTagCounts[b] - personTagCounts[a]);
+            sortedPersons.forEach(person => {
+                const btn = document.createElement('button'); btn.className = 'filter-tag person-filter'; btn.innerText = `${person} (${personTagCounts[person]})`;
+                btn.onclick = (e) => { const searchInput = document.getElementById('searchInput'); if (searchInput.value === person) clearSearch(); else searchTag(person, e); };
                 tagsBar.appendChild(btn);
             });
         }
 
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
-        function parseTags(str) { return escapeHTML(str).replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>'); }
+        
+        function parseTags(str) { 
+            let html = escapeHTML(str);
+            html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
+            html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
+            return html;
+        }
+
         function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
         function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
 
