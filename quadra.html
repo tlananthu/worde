@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7.2</span></h1>
+                <h1>Quadra <span class="version-badge">v7.3</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -526,7 +526,7 @@
             <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
             
             <div class="form-group">
-                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;" oninput="updateTitleHighlight(this)">
+                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;">
             </div>
 
             <div class="form-group">
@@ -1172,16 +1172,6 @@
             }
         });
 
-        // Highlights only tags/people words inside input with a dotted underline using a transparent-text over absolute layered layout
-        function updateTitleHighlight(textarea) {
-            const highlightLayer = document.getElementById('titleHighlightLayer');
-            if(!highlightLayer) return;
-            let text = textarea.value;
-            let escaped = escapeHTML(text);
-            let highlighted = escaped.replace(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g, '<span style="text-decoration: underline dotted var(--brand-primary);">$1</span>');
-            highlightLayer.innerHTML = highlighted + '\n';
-        }
-
         function timeStrToDecimal(timeStr) {
             if (!timeStr) return null;
             const [h, m] = timeStr.split(':').map(Number);
@@ -1273,7 +1263,6 @@
                 pendingTimelineContext = timelineContext || null;
             }
             modal.style.display = 'flex'; 
-            updateTitleHighlight(titleInput);
             setTimeout(() => titleInput.focus(), 100);
         }
 
@@ -1610,6 +1599,9 @@
             let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
             filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
 
+            // Dynamic filtered count tracking for quadrant badges
+            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
+
             filteredNotes.forEach(note => {
                 let targetListId = `list-${note.quadrant}`;
                 if (note.eventId) {
@@ -1617,6 +1609,16 @@
                 }
                 const list = document.getElementById(targetListId);
                 if (list) {
+                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
+                        filteredCounts[note.quadrant]++;
+                    }
+                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
+                        filteredCounts['calendar']++;
+                    }
+                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
+                        filteredCounts['inbox']++;
+                    }
+
                     const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
                     if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
 
@@ -1641,13 +1643,12 @@
 
             const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
             document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
-            document.getElementById('inbox-count').innerText = activeNotes.filter(n => n.quadrant === 'inbox').length;
-            document.getElementById('calendar-count').innerText = notes.filter(n => !n.deleted && n.eventId).length;
+            document.getElementById('inbox-count').innerText = filteredCounts.inbox;
+            document.getElementById('calendar-count').innerText = filteredCounts.calendar;
             
             ['q1', 'q2', 'q3', 'q4'].forEach(q => {
-                const count = activeNotes.filter(n => n.quadrant === q).length;
                 const badge = document.getElementById(`badge-${q}`);
-                if (badge) badge.innerText = count;
+                if (badge) badge.innerText = filteredCounts[q];
             });
             
             if (currentLayout === 'tracker') renderTrackerTimeline();
