@@ -210,11 +210,6 @@
         .overdue-card { background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.2s; }
         .overdue-card:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
 
-        /* Dotted Underlines exclusively for hashtags and person tags inside inputs */
-        .editable-tag-input {
-            position: relative;
-        }
-
         /* --- Sticky Sidebar & Trays --- */
         .toggle-sidebar-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: var(--brand-primary); color: white; border: none; padding: 16px 8px; border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91; display: flex; flex-direction: column; gap: 8px; align-items: center; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .toggle-sidebar-btn.open { right: 350px; }
@@ -285,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7.1</span></h1>
+                <h1>Quadra <span class="version-badge">v7.2</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -299,7 +294,7 @@
         </div>
         
         <div class="header-actions">
-            <button class="btn btn-outline" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
+            <button class="btn" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
             <div class="view-toggle" id="viewToggleGroup">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
@@ -437,8 +432,8 @@
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
+                            <button class="btn btn-outline" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
                             <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
-                            <button class="btn" style="padding: 4px 12px; font-size: 13px;" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
                     </div>
@@ -531,10 +526,7 @@
             <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
             
             <div class="form-group">
-                <div id="editableTitleContainer" style="position: relative; border: 1px solid var(--border-color); border-radius: 8px; background: white; padding: 12px; font-weight: 600; font-size: 15px;">
-                    <div id="titleHighlightLayer" style="position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; pointer-events: none; white-space: pre-wrap; word-break: break-word; color: transparent;"></div>
-                    <textarea id="taskTitleInput" rows="2" placeholder="Text (use #tags or @person)" style="width: 100%; border: none; outline: none; resize: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: inherit; color: var(--text-main); margin: 0; padding: 0;" oninput="updateTitleHighlight(this)"></textarea>
-                </div>
+                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;" oninput="updateTitleHighlight(this)">
             </div>
 
             <div class="form-group">
@@ -1180,12 +1172,11 @@
             }
         });
 
-        // Highlights only tags/people words inside input with a dotted underline
+        // Highlights only tags/people words inside input with a dotted underline using a transparent-text over absolute layered layout
         function updateTitleHighlight(textarea) {
             const highlightLayer = document.getElementById('titleHighlightLayer');
             if(!highlightLayer) return;
             let text = textarea.value;
-            // Escape HTML and wrap hashtags/people tags in a styled span for the background highlight layer
             let escaped = escapeHTML(text);
             let highlighted = escaped.replace(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g, '<span style="text-decoration: underline dotted var(--brand-primary);">$1</span>');
             highlightLayer.innerHTML = highlighted + '\n';
