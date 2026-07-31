@@ -75,7 +75,7 @@
         .clear-search { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; display: none; line-height: 1; padding: 0 4px; }
         .clear-search:hover { color: var(--text-main); }
 
-        .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+        .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; position: relative; }
 
         .view-toggle { display: flex; background-color: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; margin-right: 8px; }
         .view-toggle button { background: transparent; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
@@ -88,6 +88,13 @@
         .btn-outline:hover { background-color: var(--bg-main); }
         
         #backBtn, #signout_button, #authorize_button { display: none; }
+
+        /* Overflow Menu Styling */
+        .overflow-menu-container { position: relative; display: inline-block; }
+        .overflow-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 200; width: 200px; padding: 6px; }
+        .overflow-dropdown.show { display: flex; flex-direction: column; gap: 4px; }
+        .overflow-item { background: transparent; border: none; width: 100%; text-align: left; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--text-main); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .overflow-item:hover { background: var(--bg-main); color: var(--brand-primary); }
 
         .tags-bar { display: flex; gap: 8px; padding: 12px 32px; background: #ffffff; border-bottom: 1px solid var(--border-color); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; -ms-overflow-style: none; }
         .tags-bar::-webkit-scrollbar { display: none; }
@@ -281,7 +288,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7.5</span></h1>
+                <h1>Quadra <span class="version-badge">v7.6</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -295,13 +302,23 @@
         </div>
         
         <div class="header-actions">
-            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
             <div class="view-toggle" id="viewToggleGroup">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
                 <button id="btnOverdue" onclick="setLayout('overdue')">⚠️ Overdue</button>
                 <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
             </div>
+            
+            <!-- Header Overflow Menu (Three Dots) -->
+            <div class="overflow-menu-container">
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 18px;" onclick="toggleOverflowMenu(event)" title="More options">⋮</button>
+                <div class="overflow-dropdown" id="overflowDropdown">
+                    <button class="overflow-item" onclick="exportTimesheet()">📋 Export Timesheet</button>
+                    <button class="overflow-item" onclick="importCalendarEvents()">📥 Sync Meetings</button>
+                    <button class="overflow-item" onclick="performBackgroundSync()">🔄 Sync Tasks</button>
+                </div>
+            </div>
+
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
             <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️ Settings</button>
@@ -433,8 +450,6 @@
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
-                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
                     </div>
@@ -697,6 +712,19 @@
             document.getElementById('settingsNavBtn').style.display = 'inline-block';
             document.getElementById('backNavBtn').style.display = 'none';
         }
+
+        function toggleOverflowMenu(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('overflowDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        window.addEventListener('click', () => {
+            const dropdown = document.getElementById('overflowDropdown');
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
 
         function adjustTimelineZoom(amount) {
             timelineZoom = Math.max(0.5, Math.min(3, roundToQuarterHour(timelineZoom + amount)));
@@ -966,15 +994,12 @@
                     });
                 });
 
-                // Sort blocks by start time, then duration (longest first)
                 dayBlocks.sort((a, b) => a.blockStart - b.blockStart || (b.blockEnd - b.blockStart) - (a.blockEnd - a.blockStart));
 
-                // Cluster overlapping blocks and assign side-by-side columns
                 let groups = [];
                 dayBlocks.forEach(b => {
                     let placed = false;
                     for (let g of groups) {
-                        // Check if block overlaps with any item in this group
                         let overlaps = g.some(item => Math.max(item.blockStart, b.blockStart) < Math.min(item.blockEnd, b.blockEnd));
                         if (overlaps) {
                             g.push(b);
@@ -988,7 +1013,6 @@
                 });
 
                 groups.forEach(g => {
-                    // Assign columns within each collision cluster
                     let columns = [];
                     g.forEach(b => {
                         let placedCol = false;
@@ -1010,7 +1034,6 @@
                     g.forEach(b => { b.totalCols = totalCols; });
                 });
 
-                // Render collision-resolved blocks
                 dayBlocks.forEach(b => {
                     const { note, tb, blockStart, actualDuration, renderStart, renderDuration, colIndex, totalCols } = b;
 
@@ -1020,7 +1043,6 @@
                     blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
                     blockEl.id = `block-${tb.id}`;
                     
-                    // Position horizontally based on collision column count
                     const widthPct = (100 / totalCols) - 2;
                     const leftPct = (colIndex * (100 / totalCols)) + 1;
                     blockEl.style.left = `${leftPct}%`;
