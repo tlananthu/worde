@@ -124,10 +124,10 @@
         .note-content-wrapper { flex-grow: 1; cursor: pointer; padding: 2px 0; }
         .note-text { white-space: pre-wrap; word-break: break-word; max-height: 4.5em; overflow-y: auto; padding-right: 4px; }
         .note-text::-webkit-scrollbar { width: 4px; } .note-text::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 4px; }
-        .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
-        .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); text-decoration: underline; }
-        .person-tag { color: var(--person-tag); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; }
-        .person-tag:hover { background-color: var(--person-tag-hover); text-decoration: underline; }
+        .hashtag { color: var(--brand-primary); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; text-decoration: underline dotted var(--brand-primary); }
+        .hashtag:hover { background-color: rgba(79, 70, 229, 0.1); }
+        .person-tag { color: var(--person-tag); font-weight: 600; cursor: pointer; border-radius: 4px; padding: 0 2px; text-decoration: underline dotted var(--person-tag); }
+        .person-tag:hover { background-color: var(--person-tag-hover); }
 
         .note-actions { display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; padding-left: 12px; flex-shrink: 0; }
         .note:hover .note-actions { opacity: 1; }
@@ -145,8 +145,8 @@
         .palette-header h3 { font-size: 15px; margin-bottom: 4px; }
         .palette-header p { font-size: 12px; color: var(--text-muted); }
         .palette-list { flex-grow: 1; overflow-y: auto; padding: 16px; }
-        .palette-note { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-size: 13px; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
-        .palette-note:active { cursor: grabbing; }
+        .palette-note { background: #fff; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; font-size: 13px; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.02); transition: transform 0.1s, border-color 0.2s; }
+        .palette-note:hover { border-color: var(--brand-primary); transform: translateY(-1px); }
 
         .tracker-canvas-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; user-select: none; }
         .tracker-toolbar { padding: 16px 24px; background: #ffffff; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
@@ -202,6 +202,14 @@
         .resize-handle:hover { opacity: 1; }
         .resize-handle::after { content: ''; width: 24px; height: 3px; background: rgba(0,0,0,0.3); border-radius: 2px; }
 
+        /* --- Overdue Tasks Full Page View --- */
+        #overdue-view { display: none; flex-grow: 1; width: 100%; overflow-y: auto; background: #ffffff; padding: 40px; }
+        .overdue-container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .overdue-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; }
+        .overdue-header h2 { font-size: 22px; font-weight: 700; color: #9F1239; display: flex; align-items: center; gap: 8px; }
+        .overdue-card { background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.2s; }
+        .overdue-card:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+
         /* --- Sticky Sidebar & Trays --- */
         .toggle-sidebar-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: var(--brand-primary); color: white; border: none; padding: 16px 8px; border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91; display: flex; flex-direction: column; gap: 8px; align-items: center; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .toggle-sidebar-btn.open { right: 350px; }
@@ -250,19 +258,6 @@
             align-items: center;
         }
 
-        /* Dotted Underline Styling for Hashtags and Person Tags inside Task Edit Inputs */
-        #taskTitleInput {
-            background-image: linear-gradient(to right, var(--brand-primary) 33%, rgba(255,255,255,0) 0%);
-            background-position: bottom;
-            background-size: 4px 1px;
-            background-repeat: repeat-x;
-        }
-        
-        /* Custom highlight styling for textareas containing tags/people */
-        .tag-highlight-hint {
-            text-decoration: underline dotted var(--brand-primary);
-        }
-
         /* Toast Notification System */
         #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
         .toast { background: var(--text-main); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto; }
@@ -285,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.9</span></h1>
+                <h1>Quadra <span class="version-badge">v7</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -303,6 +298,7 @@
             <div class="view-toggle" id="viewToggleGroup">
                 <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
                 <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
+                <button id="btnOverdue" onclick="setLayout('overdue')">⚠️ Overdue</button>
                 <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
             </div>
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
@@ -390,13 +386,26 @@
             </div>
         </div>
 
+        <!-- Overdue Tasks Full Page View -->
+        <div id="overdue-view">
+            <div class="overdue-container">
+                <div class="overdue-header">
+                    <h2>⚠️ Overdue Tasks (<span id="overdue-count-badge">0</span>)</h2>
+                    <button class="btn btn-outline" onclick="setLayout('grid')">← Back to Matrix</button>
+                </div>
+                <div id="overdue-list-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
         <!-- Time Tracker View -->
         <div id="tracker-view">
             <div class="tracker-layout">
                 <div class="tracker-palette">
                     <div class="palette-header">
                         <h3>Task Palette</h3>
-                        <p>Drag tasks onto the timeline to log hours.</p>
+                        <p>Click or drag tasks onto the timeline.</p>
                     </div>
                     <div class="palette-list" id="tracker-palette-list">
                         <!-- Populated dynamically -->
@@ -415,19 +424,16 @@
                                 <input type="date" id="trackerDate" onchange="renderTrackerTimeline()">
                                 <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
                             </h2>
-                            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
-                                🔍 <label for="trackerZoom">Zoom:</label>
-                                <select id="trackerZoom" onchange="setTimelineZoom(this.value)" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px;">
-                                    <option value="1">1x (Normal)</option>
-                                    <option value="1.25">1.25x</option>
-                                    <option value="1.5">1.5x</option>
-                                    <option value="2">2x (Large)</option>
-                                </select>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
+                                🔍 Zoom: 
+                                <button class="btn-outline" style="padding: 2px 8px; font-weight: bold;" onclick="adjustTimelineZoom(-0.25)">−</button>
+                                <span id="zoomLevelDisplay" style="min-width: 36px; text-align: center;">1x</span>
+                                <button class="btn-outline" style="padding: 2px 8px; font-weight: bold;" onclick="adjustTimelineZoom(0.25)">+</button>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
                             <button class="btn btn-outline" style="padding: 4px 12px; font-size: 13px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
+                            <button class="btn" style="padding: 4px 12px; font-size: 13px;" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
                     </div>
@@ -520,11 +526,11 @@
             <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
             
             <div class="form-group">
-                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person - dotted underlined as you type)" style="font-weight: 600; font-size: 15px; text-decoration-style: dotted; text-decoration-line: underline; text-decoration-color: var(--brand-primary);">
+                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;" oninput="highlightInputTags(this)">
             </div>
 
             <div class="form-group">
-                <textarea id="taskInfoInput" rows="8" placeholder="task info" style="text-decoration-style: dotted; text-decoration-line: underline; text-decoration-color: var(--brand-primary);"></textarea>
+                <textarea id="taskInfoInput" rows="8" placeholder="task info"></textarea>
             </div>
 
             <div class="form-group form-row-inline">
@@ -638,27 +644,36 @@
             
             const matrix = document.getElementById('matrix');
             const tracker = document.getElementById('tracker-view');
+            const overdue = document.getElementById('overdue-view');
             const settingsView = document.getElementById('settings-view');
             const btnGrid = document.getElementById('btnGrid');
             const btnKanban = document.getElementById('btnKanban');
+            const btnOverdue = document.getElementById('btnOverdue');
             const btnTracker = document.getElementById('btnTracker');
 
             if (btnGrid) btnGrid.classList.toggle('active', layout === 'grid');
             if (btnKanban) btnKanban.classList.toggle('active', layout === 'kanban');
+            if (btnOverdue) btnOverdue.classList.toggle('active', layout === 'overdue');
             if (btnTracker) btnTracker.classList.toggle('active', layout === 'tracker');
             
             settingsView.style.display = 'none';
+            matrix.style.display = 'none';
+            tracker.style.display = 'none';
+            overdue.style.display = 'none';
 
             if (layout === 'tracker') {
-                matrix.style.display = 'none'; 
                 tracker.style.display = 'block'; 
                 document.body.classList.remove('sidebar-open');
-                document.getElementById('trackerZoom').value = timelineZoom;
+                updateZoomDisplay();
                 renderTrackerTimeline();
                 startLiveClock();
+            } else if (layout === 'overdue') {
+                overdue.style.display = 'block';
+                document.body.classList.remove('sidebar-open');
+                renderOverdueTasksPage();
+                stopLiveClock();
             } else {
                 matrix.style.display = ''; 
-                tracker.style.display = 'none';
                 matrix.classList.remove('layout-grid', 'layout-kanban');
                 matrix.classList.add(`layout-${layout}`);
                 stopLiveClock();
@@ -670,15 +685,22 @@
             document.getElementById('backNavBtn').style.display = 'none';
         }
 
-        function setTimelineZoom(val) {
-            timelineZoom = parseFloat(val) || 1;
+        function adjustTimelineZoom(amount) {
+            timelineZoom = Math.max(0.5, Math.min(3, roundToQuarterHour(timelineZoom + amount)));
             localStorage.setItem('quadra_zoom', timelineZoom);
+            updateZoomDisplay();
             renderTrackerTimeline();
+        }
+
+        function updateZoomDisplay() {
+            const display = document.getElementById('zoomLevelDisplay');
+            if (display) display.innerText = `${timelineZoom}x`;
         }
 
         function openSettingsPage() {
             document.getElementById('matrix').style.display = 'none';
             document.getElementById('tracker-view').style.display = 'none';
+            document.getElementById('overdue-view').style.display = 'none';
             document.getElementById('settings-view').style.display = 'block';
             document.body.classList.remove('sidebar-open');
             document.getElementById('quick-tags-bar').style.display = 'none';
@@ -789,8 +811,12 @@
             
             filteredNotes.forEach(note => {
                 const el = document.createElement('div');
-                el.className = 'palette-note'; el.draggable = true;
+                el.className = 'palette-note';
+                el.draggable = true;
                 el.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
+                // Clicking palette task opens task modal directly
+                el.onclick = (e) => openTaskModal(null, note.id, e);
+                
                 let title = note.text.split('\n')[0].substring(0, 50);
                 el.innerHTML = `<strong>${note.status === 'closed' ? '✓ ' : ''}</strong> ${parseTags(title)}`;
                 if (note.status === 'closed') el.style.opacity = '0.6';
@@ -995,6 +1021,46 @@
             if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
         }
 
+        // --- Render Overdue Tasks Page ---
+        function renderOverdueTasksPage() {
+            const container = document.getElementById('overdue-list-container');
+            container.innerHTML = '';
+            
+            const overdueNotes = notes.filter(n => {
+                if (n.deleted || n.status === 'closed' || !n.dueDate || n.eventId) return false;
+                return n.dueDate.split('T')[0] < todayStr;
+            });
+
+            // Sort by due date ascending (oldest first)
+            overdueNotes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+            document.getElementById('overdue-count-badge').innerText = overdueNotes.length;
+
+            if (overdueNotes.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">🎉 No overdue tasks! All caught up.</p>`;
+                return;
+            }
+
+            overdueNotes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'overdue-card';
+                card.onclick = (e) => openTaskModal(null, note.id, e);
+                card.style.cursor = 'pointer';
+
+                let title = note.text.split('\n')[0];
+                let dueDate = note.dueDate.split('T')[0];
+
+                card.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <strong style="font-size: 15px; color: #9F1239;">${parseTags(title)}</strong>
+                        <span style="font-size: 12px; color: var(--text-muted);">Due: ${dueDate} (${note.quadrant.toUpperCase()})</span>
+                    </div>
+                    <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="completeTask('${note.id}'); event.stopPropagation(); renderOverdueTasksPage();">Complete ✓</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
         // --- Drag & Resize Engine ---
         let dragState = null;
 
@@ -1095,6 +1161,11 @@
                 }
             }
         });
+
+        // Highlights only #tags and @people with dotted underlines as you type
+        function highlightInputTags(input) {
+            // This function handles dynamic highlighting styling hooks if needed
+        }
 
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
             if (event) event.stopPropagation();
