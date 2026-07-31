@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.3</span></h1>
+                <h1>Quadra <span class="version-badge">v6.4</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1518,7 +1518,7 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- ICS Parser for Outlook Calendars via Google Apps Script Proxy ---
+        // --- Robust ICS Parser for Outlook Calendars via Google Apps Script Proxy ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
             let lines = icsText.split(/\r\n|\n|\r/);
@@ -1528,16 +1528,16 @@
                 if (line === 'BEGIN:VEVENT') {
                     currentEvent = {};
                 } else if (line === 'END:VEVENT' && currentEvent) {
-                    if (currentEvent.SUMMARY && currentEvent.DTSTART && currentEvent.DTEND) {
+                    if (currentEvent.SUMMARY && (currentEvent.DTSTART || currentEvent['DTSTART;TZID'])) {
                         events.push(currentEvent);
                     }
                     currentEvent = null;
                 } else if (currentEvent) {
                     let colonIdx = line.indexOf(':');
                     if (colonIdx !== -1) {
-                        let key = line.substring(0, colonIdx).split(';')[0];
+                        let fullKey = line.substring(0, colonIdx);
                         let val = line.substring(colonIdx + 1);
-                        currentEvent[key] = val;
+                        currentEvent[fullKey] = val;
                     }
                 }
             }
@@ -1549,9 +1549,18 @@
                 let shouldIgnore = ignoreKeywords.some(kw => lowerSummary.includes(kw));
                 if (shouldIgnore) return;
 
-                let parseIcsDate = (icsDateStr) => {
-                    let isUTC = icsDateStr.endsWith('Z');
-                    let clean = icsDateStr.replace('Z', '');
+                // Extract DTSTART & DTEND key and TZID if present
+                let dtStartKey = Object.keys(ev).find(k => k.startsWith('DTSTART'));
+                let dtEndKey = Object.keys(ev).find(k => k.startsWith('DTEND'));
+
+                if (!dtStartKey || !ev[dtStartKey]) return;
+
+                let dtStartVal = ev[dtStartKey];
+                let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
+
+                let parseIcsDateWithTZ = (keyName, valStr) => {
+                    let isUTC = valStr.endsWith('Z');
+                    let clean = valStr.replace('Z', '');
                     let y = parseInt(clean.substring(0, 4));
                     let m = parseInt(clean.substring(4, 6)) - 1;
                     let d = parseInt(clean.substring(6, 8));
@@ -1564,17 +1573,29 @@
                         s = parseInt(timePart.substring(4, 6));
                     }
 
-                    // Convert UTC timestamps to local browser time
                     if (isUTC) {
                         return new Date(Date.UTC(y, m, d, h, min, s));
                     }
-                    
+
+                    // Check for TZID in key (e.g., DTSTART;TZID=AEST or DTSTART;TZID=AUS Eastern Standard Time)
+                    let tzidMatch = keyName.match(/TZID=([^;:]+)/i);
+                    if (tzidMatch) {
+                        let tzid = tzidMatch[1].toUpperCase();
+                        // Handle Australian Eastern Timezone variations (AEST: UTC+10)
+                        if (tzid.includes('AEST') || tzid.includes('AUS EASTERN') || tzid.includes('MELBOURNE') || tzid.includes('SYDNEY')) {
+                            return new Date(Date.UTC(y, m, d, h - 10, min, s));
+                        }
+                        if (tzid.includes('AEDT')) { // Daylight Saving (UTC+11)
+                            return new Date(Date.UTC(y, m, d, h - 11, min, s));
+                        }
+                    }
+
                     return new Date(y, m, d, h, min, s);
                 };
 
                 try {
-                    let startDate = parseIcsDate(ev.DTSTART);
-                    let endDate = parseIcsDate(ev.DTEND);
+                    let startDate = parseIcsDateWithTZ(dtStartKey, dtStartVal);
+                    let endDate = parseIcsDateWithTZ(dtEndKey || dtStartKey, dtEndVal);
 
                     let localY = startDate.getFullYear();
                     let localM = String(startDate.getMonth() + 1).padStart(2, '0');
