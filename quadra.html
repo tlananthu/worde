@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.4</span></h1>
+                <h1>Quadra <span class="version-badge">v6.5</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1528,7 +1528,7 @@
                 if (line === 'BEGIN:VEVENT') {
                     currentEvent = {};
                 } else if (line === 'END:VEVENT' && currentEvent) {
-                    if (currentEvent.SUMMARY && (currentEvent.DTSTART || currentEvent['DTSTART;TZID'])) {
+                    if (currentEvent.SUMMARY && (currentEvent.DTSTART || Object.keys(currentEvent).some(k => k.startsWith('DTSTART')))) {
                         events.push(currentEvent);
                     }
                     currentEvent = null;
@@ -1549,7 +1549,6 @@
                 let shouldIgnore = ignoreKeywords.some(kw => lowerSummary.includes(kw));
                 if (shouldIgnore) return;
 
-                // Extract DTSTART & DTEND key and TZID if present
                 let dtStartKey = Object.keys(ev).find(k => k.startsWith('DTSTART'));
                 let dtEndKey = Object.keys(ev).find(k => k.startsWith('DTEND'));
 
@@ -1558,9 +1557,8 @@
                 let dtStartVal = ev[dtStartKey];
                 let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
 
-                let parseIcsDateWithTZ = (keyName, valStr) => {
-                    let isUTC = valStr.endsWith('Z');
-                    let clean = valStr.replace('Z', '');
+                let parseIcsDate = (valStr) => {
+                    let clean = valStr.trim();
                     let y = parseInt(clean.substring(0, 4));
                     let m = parseInt(clean.substring(4, 6)) - 1;
                     let d = parseInt(clean.substring(6, 8));
@@ -1573,44 +1571,32 @@
                         s = parseInt(timePart.substring(4, 6));
                     }
 
-                    if (isUTC) {
-                        return new Date(Date.UTC(y, m, d, h, min, s));
+                    // If it ends with Z, treat as UTC, otherwise treat as local floating time (exact clock hours)
+                    if (clean.endsWith('Z')) {
+                        let utcDate = new Date(Date.UTC(y, m, d, h, min, s));
+                        return {
+                            dateStr: utcDate.toLocaleDateString('en-CA').split('T')[0],
+                            hour: utcDate.getHours() + (utcDate.getMinutes() / 60)
+                        };
+                    } else {
+                        // Local time preservation matching calendar time directly
+                        let localDateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        return {
+                            dateStr: localDateStr,
+                            hour: h + (min / 60)
+                        };
                     }
-
-                    // Check for TZID in key (e.g., DTSTART;TZID=AEST or DTSTART;TZID=AUS Eastern Standard Time)
-                    let tzidMatch = keyName.match(/TZID=([^;:]+)/i);
-                    if (tzidMatch) {
-                        let tzid = tzidMatch[1].toUpperCase();
-                        // Handle Australian Eastern Timezone variations (AEST: UTC+10)
-                        if (tzid.includes('AEST') || tzid.includes('AUS EASTERN') || tzid.includes('MELBOURNE') || tzid.includes('SYDNEY')) {
-                            return new Date(Date.UTC(y, m, d, h - 10, min, s));
-                        }
-                        if (tzid.includes('AEDT')) { // Daylight Saving (UTC+11)
-                            return new Date(Date.UTC(y, m, d, h - 11, min, s));
-                        }
-                    }
-
-                    return new Date(y, m, d, h, min, s);
                 };
 
                 try {
-                    let startDate = parseIcsDateWithTZ(dtStartKey, dtStartVal);
-                    let endDate = parseIcsDateWithTZ(dtEndKey || dtStartKey, dtEndVal);
+                    let startParsed = parseIcsDate(dtStartVal);
+                    let endParsed = parseIcsDate(dtEndVal);
 
-                    let localY = startDate.getFullYear();
-                    let localM = String(startDate.getMonth() + 1).padStart(2, '0');
-                    let localD = String(startDate.getDate()).padStart(2, '0');
-                    let eventDateStr = `${localY}-${localM}-${localD}`;
-
-                    // Strictly enforce current selected date filter
-                    if (eventDateStr === targetDateStr) {
-                        let rawStartHour = startDate.getHours() + (startDate.getMinutes() / 60);
-                        let rawEndHour = endDate.getHours() + (endDate.getMinutes() / 60);
-                        if (rawEndHour <= rawStartHour) rawEndHour += 24;
-                        let rawDuration = rawEndHour - rawStartHour;
-
-                        let startHour = roundToQuarterHour(rawStartHour);
-                        let duration = Math.max(0.25, roundToQuarterHour(rawDuration));
+                    if (startParsed.dateStr === targetDateStr) {
+                        let startHour = roundToQuarterHour(startParsed.hour);
+                        let endHour = roundToQuarterHour(endParsed.hour);
+                        if (endHour <= startHour) endHour += 24;
+                        let duration = Math.max(0.25, roundToQuarterHour(endHour - startHour));
 
                         parsedEvents.push({
                             id: ev.UID || (Math.random().toString()),
@@ -1708,7 +1694,6 @@
                 if (appConfig.calSource === 'outlook' && appConfig.icsUrl) {
                     let fetchUrl = appConfig.icsUrl;
                     
-                    // Fetch directly from Google Apps Script Web App bridge
                     const res = await fetch(fetchUrl);
                     if (!res.ok) throw new Error("Failed to fetch ICS feed via Apps Script bridge");
                     
@@ -1776,7 +1761,6 @@
                         if (rawEndHour <= rawStartHour) rawEndHour += 24;
                         const rawDuration = rawEndHour - rawStartHour;
 
-                        // Round start hour and duration to 15-minute intervals
                         const startHour = roundToQuarterHour(rawStartHour);
                         const duration = Math.max(0.25, roundToQuarterHour(rawDuration));
                         
