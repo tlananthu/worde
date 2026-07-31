@@ -210,6 +210,11 @@
         .overdue-card { background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.2s; }
         .overdue-card:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
 
+        /* Dotted Underlines exclusively for hashtags and person tags inside inputs */
+        .editable-tag-input {
+            position: relative;
+        }
+
         /* --- Sticky Sidebar & Trays --- */
         .toggle-sidebar-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: var(--brand-primary); color: white; border: none; padding: 16px 8px; border-radius: 8px 0 0 8px; cursor: pointer; z-index: 91; display: flex; flex-direction: column; gap: 8px; align-items: center; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .toggle-sidebar-btn.open { right: 350px; }
@@ -280,7 +285,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7</span></h1>
+                <h1>Quadra <span class="version-badge">v7.1</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -526,11 +531,14 @@
             <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
             
             <div class="form-group">
-                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;" oninput="highlightInputTags(this)">
+                <div id="editableTitleContainer" style="position: relative; border: 1px solid var(--border-color); border-radius: 8px; background: white; padding: 12px; font-weight: 600; font-size: 15px;">
+                    <div id="titleHighlightLayer" style="position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px; pointer-events: none; white-space: pre-wrap; word-break: break-word; color: transparent;"></div>
+                    <textarea id="taskTitleInput" rows="2" placeholder="Text (use #tags or @person)" style="width: 100%; border: none; outline: none; resize: none; background: transparent; font-family: inherit; font-size: inherit; font-weight: inherit; color: var(--text-main); margin: 0; padding: 0;" oninput="updateTitleHighlight(this)"></textarea>
+                </div>
             </div>
 
             <div class="form-group">
-                <textarea id="taskInfoInput" rows="8" placeholder="task info"></textarea>
+                <textarea id="taskInfoInput" rows="6" placeholder="task info"></textarea>
             </div>
 
             <div class="form-group form-row-inline">
@@ -548,7 +556,19 @@
 
                 <div class="form-group form-row-inline" style="margin-bottom: 0;">
                     <label>Hours worked</label>
-                    <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;">
+                    <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;" oninput="onHoursChanged()">
+                </div>
+            </div>
+
+            <div class="responsive-date-hours-grid" style="margin-top: 12px;">
+                <div class="form-group form-row-inline" style="margin-bottom: 0;">
+                    <label>Start Time</label>
+                    <input type="time" id="taskStartTime" oninput="onTimesChanged()">
+                </div>
+
+                <div class="form-group form-row-inline" style="margin-bottom: 0;">
+                    <label>End Time</label>
+                    <input type="time" id="taskEndTime" oninput="onTimesChanged()">
                 </div>
             </div>
 
@@ -814,7 +834,6 @@
                 el.className = 'palette-note';
                 el.draggable = true;
                 el.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
-                // Clicking palette task opens task modal directly
                 el.onclick = (e) => openTaskModal(null, note.id, e);
                 
                 let title = note.text.split('\n')[0].substring(0, 50);
@@ -1031,7 +1050,6 @@
                 return n.dueDate.split('T')[0] < todayStr;
             });
 
-            // Sort by due date ascending (oldest first)
             overdueNotes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
             document.getElementById('overdue-count-badge').innerText = overdueNotes.length;
@@ -1162,9 +1180,51 @@
             }
         });
 
-        // Highlights only #tags and @people with dotted underlines as you type
-        function highlightInputTags(input) {
-            // This function handles dynamic highlighting styling hooks if needed
+        // Highlights only tags/people words inside input with a dotted underline
+        function updateTitleHighlight(textarea) {
+            const highlightLayer = document.getElementById('titleHighlightLayer');
+            if(!highlightLayer) return;
+            let text = textarea.value;
+            // Escape HTML and wrap hashtags/people tags in a styled span for the background highlight layer
+            let escaped = escapeHTML(text);
+            let highlighted = escaped.replace(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g, '<span style="text-decoration: underline dotted var(--brand-primary);">$1</span>');
+            highlightLayer.innerHTML = highlighted + '\n';
+        }
+
+        function timeStrToDecimal(timeStr) {
+            if (!timeStr) return null;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h + (m / 60);
+        }
+
+        function decimalToTimeStr(dec) {
+            let norm = dec % 24;
+            let h = Math.floor(norm);
+            let m = Math.round((norm - h) * 60);
+            if (m === 60) { h++; m = 0; }
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function onTimesChanged() {
+            const startVal = document.getElementById('taskStartTime').value;
+            const endVal = document.getElementById('taskEndTime').value;
+            if (startVal && endVal) {
+                let startDec = timeStrToDecimal(startVal);
+                let endDec = timeStrToDecimal(endVal);
+                if (endDec <= startDec) endDec += 24;
+                let duration = roundToQuarterHour(endDec - startDec);
+                document.getElementById('taskHoursWorked').value = duration;
+            }
+        }
+
+        function onHoursChanged() {
+            const hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
+            const startVal = document.getElementById('taskStartTime').value;
+            if (!isNaN(hoursVal) && startVal) {
+                let startDec = timeStrToDecimal(startVal);
+                let endDec = startDec + hoursVal;
+                document.getElementById('taskEndTime').value = decimalToTimeStr(endDec);
+            }
         }
 
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
@@ -1175,6 +1235,8 @@
             const dueDateInput = document.getElementById('taskDueDate');
             const selectedDateInput = document.getElementById('taskSelectedDate');
             const hoursWorkedInput = document.getElementById('taskHoursWorked');
+            const startTimeInput = document.getElementById('taskStartTime');
+            const endTimeInput = document.getElementById('taskEndTime');
 
             if (noteId) {
                 currentEditingId = noteId; 
@@ -1191,6 +1253,14 @@
                 selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
                 hoursWorkedInput.value = activeBlock ? roundToQuarterHour(activeBlock.duration) : '';
 
+                if (activeBlock && activeBlock.startHour !== undefined) {
+                    startTimeInput.value = decimalToTimeStr(activeBlock.startHour);
+                    endTimeInput.value = decimalToTimeStr(activeBlock.startHour + activeBlock.duration);
+                } else {
+                    startTimeInput.value = '';
+                    endTimeInput.value = '';
+                }
+
             } else { 
                 currentEditingId = null; 
                 currentAddingQuadrant = quadrant || 'inbox'; 
@@ -1199,10 +1269,21 @@
                 infoInput.value = '';
                 dueDateInput.value = timelineContext ? timelineContext.date : '';
                 selectedDateInput.value = timelineContext ? timelineContext.date : todayStr;
-                hoursWorkedInput.value = '';
+                hoursWorkedInput.value = timelineContext ? '1.0' : '';
+                
+                if (timelineContext && timelineContext.startHour !== undefined) {
+                    startTimeInput.value = decimalToTimeStr(timelineContext.startHour);
+                    endTimeInput.value = decimalToTimeStr(timelineContext.startHour + 1.0);
+                } else {
+                    startTimeInput.value = '';
+                    endTimeInput.value = '';
+                }
+
                 pendingTimelineContext = timelineContext || null;
             }
-            modal.style.display = 'flex'; setTimeout(() => titleInput.focus(), 100);
+            modal.style.display = 'flex'; 
+            updateTitleHighlight(titleInput);
+            setTimeout(() => titleInput.focus(), 100);
         }
 
         let pendingTimelineContext = null;
@@ -1219,10 +1300,18 @@
             const selectedDate = document.getElementById('taskSelectedDate').value;
             let hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
             if (!isNaN(hoursVal)) hoursVal = roundToQuarterHour(hoursVal);
+            const startVal = document.getElementById('taskStartTime').value;
 
             if (!titleText && !infoText) return closeTaskModal();
 
             const fullText = titleText + (infoText ? ('\n' + infoText) : '');
+
+            let calculatedStartHour = 9;
+            if (startVal) {
+                calculatedStartHour = roundToQuarterHour(timeStrToDecimal(startVal));
+            } else if (pendingTimelineContext) {
+                calculatedStartHour = roundToQuarterHour(pendingTimelineContext.startHour);
+            }
 
             if (currentEditingId) { 
                 const note = notes.find(n => n.id === currentEditingId); 
@@ -1235,12 +1324,13 @@
                         if (existingBlock) {
                             existingBlock.date = selectedDate || todayStr;
                             existingBlock.duration = hoursVal;
+                            existingBlock.startHour = calculatedStartHour;
                         } else {
                             if (!note.timeBlocks) note.timeBlocks = [];
                             note.timeBlocks.push({
                                 id: Date.now().toString() + Math.random(),
                                 date: selectedDate || todayStr,
-                                startHour: 9,
+                                startHour: calculatedStartHour,
                                 duration: hoursVal
                             });
                         }
@@ -1255,19 +1345,11 @@
                 let targetQuad = currentAddingQuadrant || 'inbox';
                 
                 if (!isNaN(hoursVal) && hoursVal > 0) {
-                    let startH = pendingTimelineContext ? pendingTimelineContext.startHour : 9;
                     newBlocks.push({
                         id: Date.now().toString() + Math.random(),
                         date: selectedDate || (pendingTimelineContext ? pendingTimelineContext.date : todayStr),
-                        startHour: roundToQuarterHour(startH),
+                        startHour: calculatedStartHour,
                         duration: hoursVal
-                    });
-                } else if (pendingTimelineContext) {
-                    newBlocks.push({
-                        id: Date.now().toString() + Math.random(),
-                        date: pendingTimelineContext.date,
-                        startHour: roundToQuarterHour(pendingTimelineContext.startHour),
-                        duration: 1.0
                     });
                 }
 
@@ -1494,7 +1576,6 @@
 
             tagsBar.innerHTML = '';
 
-            // Sort all tags (# and @) strictly by number of occurrences
             const sortedTags = Object.keys(tagCounts).sort((a, b) => {
                 if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
                 return a.localeCompare(b);
@@ -1553,7 +1634,6 @@
                     
                     if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
                     
-                    // Single-click on note opens Task Details modal
                     contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
 
                     const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
