@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.0</span></h1>
+                <h1>Quadra <span class="version-badge">v6.1</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1352,40 +1352,35 @@
         // --- Core UI Tasks & Notes Matrix ---
         function renderTagsList() {
             const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
-            const hashTagCounts = {};
-            const personTagCounts = {};
+            const tagCounts = {};
 
             notes.forEach(note => {
                 if (!note.deleted && note.status === 'active' && !note.eventId) {
-                    const hashMatches = note.text.match(/(#[a-zA-Z0-9_]+)/g);
-                    if (hashMatches) {
-                        const uniqueTags = new Set(hashMatches.map(t => t.toLowerCase()));
-                        uniqueTags.forEach(tag => { hashTagCounts[tag] = (hashTagCounts[tag] || 0) + 1; });
-                    }
-
-                    const personMatches = note.text.match(/(@[a-zA-Z0-9_]+)/g);
-                    if (personMatches) {
-                        const uniquePersons = new Set(personMatches.map(p => p.toLowerCase()));
-                        uniquePersons.forEach(p => { personTagCounts[p] = (personTagCounts[p] || 0) + 1; });
+                    const matches = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
+                    if (matches) {
+                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
+                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
                     }
                 }
             });
 
             tagsBar.innerHTML = '';
 
-            // Render # Tags
-            const sortedHashtags = Object.keys(hashTagCounts).sort((a, b) => hashTagCounts[b] - hashTagCounts[a]);
-            sortedHashtags.forEach(tag => {
-                const btn = document.createElement('button'); btn.className = 'filter-tag'; btn.innerText = `${tag} (${hashTagCounts[tag]})`;
-                btn.onclick = (e) => { const searchInput = document.getElementById('searchInput'); if (searchInput.value === tag) clearSearch(); else searchTag(tag, e); };
-                tagsBar.appendChild(btn);
+            // Sort all tags (# and @) strictly by number of occurrences
+            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
+                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
+                return a.localeCompare(b);
             });
 
-            // Render @ Person Tags
-            const sortedPersons = Object.keys(personTagCounts).sort((a, b) => personTagCounts[b] - personTagCounts[a]);
-            sortedPersons.forEach(person => {
-                const btn = document.createElement('button'); btn.className = 'filter-tag person-filter'; btn.innerText = `${person} (${personTagCounts[person]})`;
-                btn.onclick = (e) => { const searchInput = document.getElementById('searchInput'); if (searchInput.value === person) clearSearch(); else searchTag(person, e); };
+            sortedTags.forEach(tag => {
+                const btn = document.createElement('button');
+                const isPerson = tag.startsWith('@');
+                btn.className = 'filter-tag' + (isPerson ? ' person-filter' : '');
+                btn.innerText = `${tag} (${tagCounts[tag]})`;
+                btn.onclick = (e) => { 
+                    const searchInput = document.getElementById('searchInput'); 
+                    if (searchInput.value === tag) clearSearch(); else searchTag(tag, e); 
+                };
                 tagsBar.appendChild(btn);
             });
         }
