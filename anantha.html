@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Financial Goals V1.4</title>
+    <title>Anantha | Financial Goals V1.5</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -14,6 +14,7 @@
             --accent-color: #38bdf8;
             --danger-color: #f43f5e;
             --warning-color: #fbbf24;
+            --edu-color: #a78bfa;
             --border-color: #2dd4bf20;
             --font-family: system-ui, -apple-system, sans-serif;
         }
@@ -61,6 +62,9 @@
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-color); }
         .form-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
 
+        .row-group { display: flex; gap: 1rem; }
+        .row-group > div { flex: 1; }
+
         button { flex: 1; background-color: var(--accent-color); color: #000; border: none; padding: 0.75rem; border-radius: 4px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
         button:hover { opacity: 0.9; }
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
@@ -69,6 +73,8 @@
         .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
         .goal-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; position: relative; display: flex; flex-direction: column; }
         .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
+        .goal-card.education-type { border-top: 3px solid var(--edu-color); }
+        
         .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
         .goal-title { font-weight: 600; font-size: 1.1rem; }
         .goal-type-badge { font-size: 0.7rem; background: var(--surface-light); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); margin-left: 0.5rem; vertical-align: middle;}
@@ -94,7 +100,7 @@
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v1.4 (Instrument Suggestions)</div>
+        <div class="version">v1.5 (Education Timeline)</div>
     </header>
 
     <div class="dashboard-layout">
@@ -107,6 +113,7 @@
                     <select id="goalType" onchange="app.toggleFormFields()">
                         <option value="standard">Standard Financial Goal</option>
                         <option value="retirement">Retirement Corpus</option>
+                        <option value="education">Kids Education Timeline</option>
                     </select>
                 </div>
 
@@ -147,9 +154,39 @@
                     </div>
                 </div>
 
-                <!-- Shared Field -->
+                <!-- Education Fields -->
+                <div id="educationFields" style="display: none;">
+                    <div class="form-group row-group">
+                        <div>
+                            <label for="eduChildren">No. of Children</label>
+                            <input type="number" id="eduChildren" value="2" min="1" max="10">
+                        </div>
+                        <div>
+                            <label for="eduGrade">Current Grade (1-12)</label>
+                            <input type="number" id="eduGrade" value="4" min="1" max="12">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="eduCurrentFees">Current Yearly Fees (per child) (₹)</label>
+                        <input type="number" id="eduCurrentFees" placeholder="150000" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="eduCost11_12">11th & 12th Cost (Today's Value/child) (₹)</label>
+                        <input type="number" id="eduCost11_12" placeholder="400000" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="eduCostDegree">Degree Total Cost (Today's Value/child) (₹)</label>
+                        <input type="number" id="eduCostDegree" placeholder="1500000" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="eduCostHigher">Higher Studies (Today's Value/child) (₹)</label>
+                        <input type="number" id="eduCostHigher" placeholder="2500000" min="0" step="any">
+                    </div>
+                </div>
+
+                <!-- Shared Field: Inflation -->
                 <div class="form-group">
-                    <label for="inflation">Expected YoY Inflation (%)</label>
+                    <label id="inflationLabel" for="inflation">Expected YoY Inflation (%)</label>
                     <input type="number" id="inflation" required placeholder="6" min="0" max="100" step="0.1">
                 </div>
 
@@ -174,8 +211,7 @@
             editingId: null,
 
             init() {
-                // Changed local storage key to v1_4 to keep it isolated or migrate
-                const savedGoals = localStorage.getItem('ananthaGoalsV1_4');
+                const savedGoals = localStorage.getItem('ananthaGoalsV1_5');
                 if (savedGoals) {
                     this.goals = JSON.parse(savedGoals);
                 }
@@ -192,21 +228,33 @@
                 const type = document.getElementById('goalType').value;
                 const standardFields = document.getElementById('standardFields');
                 const retirementFields = document.getElementById('retirementFields');
+                const educationFields = document.getElementById('educationFields');
+                const inflationLabel = document.getElementById('inflationLabel');
+
+                // Reset standard requirements
+                document.getElementById('currentValue').required = false;
+                document.getElementById('years').required = false;
+                document.getElementById('monthlyExpenses').required = false;
+                document.getElementById('yearsToRetire').required = false;
+                document.getElementById('yearsInRetirement').required = false;
+                document.getElementById('postRetirementReturn').required = false;
+                document.getElementById('eduCurrentFees').required = false;
+                document.getElementById('eduCostDegree').required = false;
 
                 if (type === 'standard') {
                     standardFields.style.display = 'block';
                     retirementFields.style.display = 'none';
+                    educationFields.style.display = 'none';
+                    inflationLabel.innerText = "Expected YoY Inflation (%)";
+                    
                     document.getElementById('currentValue').required = true;
                     document.getElementById('years').required = true;
-                    document.getElementById('monthlyExpenses').required = false;
-                    document.getElementById('yearsToRetire').required = false;
-                    document.getElementById('yearsInRetirement').required = false;
-                    document.getElementById('postRetirementReturn').required = false;
-                } else {
+                } else if (type === 'retirement') {
                     standardFields.style.display = 'none';
                     retirementFields.style.display = 'block';
-                    document.getElementById('currentValue').required = false;
-                    document.getElementById('years').required = false;
+                    educationFields.style.display = 'none';
+                    inflationLabel.innerText = "Expected YoY Inflation (%)";
+                    
                     document.getElementById('monthlyExpenses').required = true;
                     document.getElementById('yearsToRetire').required = true;
                     document.getElementById('yearsInRetirement').required = true;
@@ -214,6 +262,18 @@
                     
                     if(!document.getElementById('goalName').value) {
                         document.getElementById('goalName').value = "Retirement Fund";
+                    }
+                } else if (type === 'education') {
+                    standardFields.style.display = 'none';
+                    retirementFields.style.display = 'none';
+                    educationFields.style.display = 'block';
+                    inflationLabel.innerText = "Expected Education Fee Inflation (%)";
+                    
+                    document.getElementById('eduCurrentFees').required = true;
+                    document.getElementById('eduCostDegree').required = true;
+
+                    if(!document.getElementById('goalName').value) {
+                        document.getElementById('goalName').value = "Kids Education Fund";
                     }
                 }
             },
@@ -238,19 +298,48 @@
                 return corpus;
             },
 
-            // New function to suggest instrument based on time horizon
+            calculateEducationCorpus(children, grade, currentFees, eduInf, cost11_12, costDegree, costHigher) {
+                const r = eduInf / 100;
+                let currentYearFee = currentFees;
+                
+                // 1. Calculate cascading Schooling fees till 10th
+                let schoolingCost = 0;
+                let yearsTo10 = Math.max(0, 10 - grade);
+                for (let i = 1; i <= yearsTo10; i++) {
+                    currentYearFee = currentYearFee * (1 + r);
+                    schoolingCost += currentYearFee;
+                }
+
+                // 2. Calculate 11th & 12th (Starts in: 11 - grade years)
+                let yearsTo11 = Math.max(0, 11 - grade);
+                let futureCost11_12 = cost11_12 ? (cost11_12 * Math.pow(1 + r, yearsTo11)) : 0;
+
+                // 3. Calculate Degree (Starts in: 13 - grade years)
+                let yearsToDegree = Math.max(0, 13 - grade);
+                let futureCostDegree = costDegree ? (costDegree * Math.pow(1 + r, yearsToDegree)) : 0;
+
+                // 4. Calculate Higher Studies (Starts roughly in: 16 - grade years)
+                let yearsToHigher = Math.max(0, 16 - grade);
+                let futureCostHigher = costHigher ? (costHigher * Math.pow(1 + r, yearsToHigher)) : 0;
+
+                let totalPerChild = schoolingCost + futureCost11_12 + futureCostDegree + futureCostHigher;
+                return totalPerChild * children;
+            },
+
             suggestInstrument(type, years) {
                 if (type === 'retirement') {
                     return "Index Funds + EPF/PPF (Accumulation) ➔ SWP + SCSS (Withdrawal Phase)";
                 }
-                
-                if (years <= 3) {
-                    return "Liquid Mutual Funds, Bank FDs, or Arbitrage Funds (Capital Protection)";
-                } else if (years <= 7) {
-                    return "Balanced Advantage Funds or Aggressive Hybrid Funds";
-                } else {
-                    return "Flexi-Cap Equity MFs & Nifty 50 Index Funds (Wealth Creation)";
+                if (type === 'education') {
+                    if (years <= 3) return "Arbitrage Funds & FDs for immediate school fees. Shift degree funds here soon.";
+                    if (years <= 7) return "Balanced Advantage Funds (for approaching degree costs).";
+                    return "Flexi-Cap Equity MFs & Nifty 50 Index. Shift to Debt 3 years before college starts.";
                 }
+                
+                // Standard Goals
+                if (years <= 3) return "Liquid Mutual Funds, Bank FDs, or Arbitrage Funds (Capital Protection)";
+                if (years <= 7) return "Balanced Advantage Funds or Aggressive Hybrid Funds";
+                return "Flexi-Cap Equity MFs & Nifty 50 Index Funds (Wealth Creation)";
             },
 
             handleSave(event) {
@@ -272,7 +361,7 @@
                     goalData.years = parseInt(document.getElementById('years').value);
                     goalData.targetValue = this.calculateStandardTarget(goalData.currentValue, goalData.years, inflation);
                     goalData.instrument = this.suggestInstrument(type, goalData.years);
-                } else {
+                } else if (type === 'retirement') {
                     goalData.monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value);
                     goalData.yearsToRetire = parseInt(document.getElementById('yearsToRetire').value);
                     goalData.yearsInRetirement = parseInt(document.getElementById('yearsInRetirement').value);
@@ -281,6 +370,22 @@
                         goalData.monthlyExpenses, goalData.yearsToRetire, goalData.yearsInRetirement, inflation, goalData.postRetirementReturn
                     );
                     goalData.instrument = this.suggestInstrument(type, goalData.yearsToRetire);
+                } else if (type === 'education') {
+                    goalData.children = parseInt(document.getElementById('eduChildren').value);
+                    goalData.grade = parseInt(document.getElementById('eduGrade').value);
+                    goalData.currentFees = parseFloat(document.getElementById('eduCurrentFees').value);
+                    goalData.cost11_12 = parseFloat(document.getElementById('eduCost11_12').value || 0);
+                    goalData.costDegree = parseFloat(document.getElementById('eduCostDegree').value || 0);
+                    goalData.costHigher = parseFloat(document.getElementById('eduCostHigher').value || 0);
+                    
+                    goalData.targetValue = this.calculateEducationCorpus(
+                        goalData.children, goalData.grade, goalData.currentFees, inflation, 
+                        goalData.cost11_12, goalData.costDegree, goalData.costHigher
+                    );
+                    
+                    // Years to degree for instrument suggestion
+                    const yearsToDegree = Math.max(0, 13 - goalData.grade);
+                    goalData.instrument = this.suggestInstrument(type, yearsToDegree);
                 }
 
                 if (this.editingId) {
@@ -314,11 +419,18 @@
                 if (goal.type === 'standard') {
                     document.getElementById('currentValue').value = goal.currentValue;
                     document.getElementById('years').value = goal.years;
-                } else {
+                } else if (goal.type === 'retirement') {
                     document.getElementById('monthlyExpenses').value = goal.monthlyExpenses;
                     document.getElementById('yearsToRetire').value = goal.yearsToRetire;
                     document.getElementById('yearsInRetirement').value = goal.yearsInRetirement;
                     document.getElementById('postRetirementReturn').value = goal.postRetirementReturn;
+                } else if (goal.type === 'education') {
+                    document.getElementById('eduChildren').value = goal.children;
+                    document.getElementById('eduGrade').value = goal.grade;
+                    document.getElementById('eduCurrentFees').value = goal.currentFees;
+                    document.getElementById('eduCost11_12').value = goal.cost11_12;
+                    document.getElementById('eduCostDegree').value = goal.costDegree;
+                    document.getElementById('eduCostHigher').value = goal.costHigher;
                 }
             },
 
@@ -341,7 +453,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaGoalsV1_4', JSON.stringify(this.goals));
+                localStorage.setItem('ananthaGoalsV1_5', JSON.stringify(this.goals));
             },
 
             render() {
@@ -355,7 +467,13 @@
 
                 this.goals.forEach(goal => {
                     const card = document.createElement('div');
-                    card.className = `goal-card ${goal.type === 'retirement' ? 'retirement-type' : ''}`;
+                    
+                    let typeClass = '';
+                    let badgeLabel = 'Standard';
+                    if (goal.type === 'retirement') { typeClass = 'retirement-type'; badgeLabel = 'Retirement'; }
+                    if (goal.type === 'education') { typeClass = 'education-type'; badgeLabel = 'Education'; }
+                    
+                    card.className = `goal-card ${typeClass}`;
                     
                     let statsHTML = '';
                     if (goal.type === 'standard') {
@@ -364,23 +482,34 @@
                             <div class="goal-stat"><span>Timeline:</span><span>${goal.years} Years</span></div>
                             <div class="goal-stat"><span>Expected Inflation:</span><span>${goal.inflation}% YoY</span></div>
                         `;
-                    } else {
+                    } else if (goal.type === 'retirement') {
                         statsHTML = `
                             <div class="goal-stat"><span>Current Monthly Exp:</span><span>${this.formatCurrency(goal.monthlyExpenses)}</span></div>
                             <div class="goal-stat"><span>Retiring In:</span><span>${goal.yearsToRetire} Years</span></div>
                             <div class="goal-stat"><span>Retirement Duration:</span><span>${goal.yearsInRetirement} Years</span></div>
                             <div class="goal-stat"><span>Inflation / Return:</span><span>${goal.inflation}% / ${goal.postRetirementReturn}%</span></div>
                         `;
+                    } else if (goal.type === 'education') {
+                        statsHTML = `
+                            <div class="goal-stat"><span>Children / Grade:</span><span>${goal.children} Kids / ${goal.grade}th Std</span></div>
+                            <div class="goal-stat"><span>Current Yearly Fee:</span><span>${this.formatCurrency(goal.currentFees)}</span></div>
+                            <div class="goal-stat"><span>Fee Inflation:</span><span>${goal.inflation}% YoY</span></div>
+                            <div class="goal-stat"><span>Degree Estimate (Today):</span><span>${this.formatCurrency(goal.costDegree)}</span></div>
+                        `;
                     }
 
                     // Fallback in case old data doesn't have the instrument yet
-                    const instrumentText = goal.instrument || this.suggestInstrument(goal.type, goal.type === 'standard' ? goal.years : goal.yearsToRetire);
+                    let timeHorizon = goal.years;
+                    if (goal.type === 'retirement') timeHorizon = goal.yearsToRetire;
+                    if (goal.type === 'education') timeHorizon = Math.max(0, 13 - goal.grade);
+                    
+                    const instrumentText = goal.instrument || this.suggestInstrument(goal.type, timeHorizon);
 
                     card.innerHTML = `
                         <div class="goal-header">
                             <div class="goal-title">
                                 ${goal.name}
-                                <span class="goal-type-badge">${goal.type === 'retirement' ? 'Retirement' : 'Standard'}</span>
+                                <span class="goal-type-badge">${badgeLabel}</span>
                             </div>
                             <div class="card-actions">
                                 <button class="icon-btn" onclick="app.editGoal('${goal.id}')" title="Edit Goal">✎</button>
@@ -395,7 +524,7 @@
                         </div>
 
                         <div class="target-amount">
-                            <span>Required Corpus at Closure</span>
+                            <span>Total Projected Future Outflow</span>
                             <div class="target-value">${this.formatCurrency(goal.targetValue)}</div>
                         </div>
                     `;
