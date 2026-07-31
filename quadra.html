@@ -87,7 +87,7 @@
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
         
-        #backNavBtn { display: none; }
+        #backBtn { display: none; }
 
         /* Overflow Menu Styling */
         .overflow-menu-container { position: relative; display: inline-block; }
@@ -288,7 +288,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7.7</span></h1>
+                <h1>Quadra <span class="version-badge">v7.8</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -661,7 +661,7 @@
         const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
         document.getElementById('trackerDate').value = todayStr;
 
-        // --- Tag Parser (Globally Hoisted) ---
+        // --- Tag Parser & Helper Functions (Hoisted) ---
         function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
         
         function parseTags(str) { 
@@ -669,6 +669,121 @@
             html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
             html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
             return html;
+        }
+
+        function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
+
+        function handleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if(!searchInput) return;
+            const query = searchInput.value.toLowerCase();
+            document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
+            renderNotes(query);
+        }
+
+        function renderNotes(searchQuery = '') {
+            ['inbox', 'calendar', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
+            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
+            filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
+
+            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
+
+            filteredNotes.forEach(note => {
+                let targetListId = `list-${note.quadrant}`;
+                if (note.eventId) {
+                    targetListId = 'list-calendar';
+                }
+                const list = document.getElementById(targetListId);
+                if (list) {
+                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
+                        filteredCounts[note.quadrant]++;
+                    }
+                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
+                        filteredCounts['calendar']++;
+                    }
+                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
+                        filteredCounts['inbox']++;
+                    }
+
+                    const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
+                    if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
+
+                    const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
+                    contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
+                    
+                    if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
+                    
+                    contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
+
+                    const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
+                    if (!note.eventId) {
+                        if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
+                        else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
+                    } else {
+                        actionsDiv.innerHTML = `<button class="action-btn delete-btn" onclick="deleteTask('${note.id}')" title="Remove event">×</button>`;
+                    }
+                    
+                    noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
+                }
+            });
+
+            const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
+            document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
+            document.getElementById('inbox-count').innerText = filteredCounts.inbox;
+            document.getElementById('calendar-count').innerText = filteredCounts.calendar;
+            
+            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+                const badge = document.getElementById(`badge-${q}`);
+                if (badge) badge.innerText = filteredCounts[q];
+            });
+            
+            if (currentLayout === 'tracker') renderTrackerTimeline();
+            renderTagsList();
+        }
+
+        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
+
+        // --- Auth Functions (Hoisted) ---
+        function handleAuthClick() { 
+            if (!appConfig.clientId) return openSettingsPage(); 
+            if (!tokenClient && typeof google !== 'undefined' && google.accounts) { 
+                tokenClient = google.accounts.oauth2.initTokenClient({ 
+                    client_id: appConfig.clientId, 
+                    scope: SCOPES, 
+                    callback: async (resp) => { 
+                        if (resp.error !== undefined) { throw (resp); } 
+                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                        document.getElementById('auth-overlay').style.display = 'none'; 
+                        document.getElementById('authorize_button').style.display = 'none'; 
+                        document.getElementById('signout_button').style.display = 'inline-block'; 
+                        isGoogleSynced = true;
+                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
+                        loadCalendars(); 
+                        performBackgroundSync(); 
+                    }, 
+                }); 
+            }
+            if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
+            tokenClient.requestAccessToken({prompt: 'consent'}); 
+        }
+        
+        function handleSignoutClick() { 
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (savedToken && savedToken.token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { 
+                google.accounts.oauth2.revoke(savedToken.token, () => {}); 
+            } 
+            localStorage.removeItem('quadra_gapi_token_v2'); 
+            isGoogleSynced = false; 
+            document.getElementById('auth-overlay').style.display = 'flex'; 
+            document.getElementById('authorize_button').style.display = 'inline-block'; 
+            document.getElementById('signout_button').style.display = 'none'; 
+            document.getElementById('sidePanel').classList.remove('open'); 
+            document.getElementById('sidebarToggleBtn').classList.remove('open'); 
+            document.body.classList.remove('sidebar-open'); 
+            showToast("Signed out successfully.");
         }
 
         // --- Layout Management ---
