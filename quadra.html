@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.2</span></h1>
+                <h1>Quadra <span class="version-badge">v6.3</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1550,17 +1550,25 @@
                 if (shouldIgnore) return;
 
                 let parseIcsDate = (icsDateStr) => {
+                    let isUTC = icsDateStr.endsWith('Z');
                     let clean = icsDateStr.replace('Z', '');
                     let y = parseInt(clean.substring(0, 4));
                     let m = parseInt(clean.substring(4, 6)) - 1;
                     let d = parseInt(clean.substring(6, 8));
                     let h = 0, min = 0, s = 0;
+                    
                     if (clean.includes('T')) {
                         let timePart = clean.split('T')[1];
                         h = parseInt(timePart.substring(0, 2));
                         min = parseInt(timePart.substring(2, 4));
                         s = parseInt(timePart.substring(4, 6));
                     }
+
+                    // Convert UTC timestamps to local browser time
+                    if (isUTC) {
+                        return new Date(Date.UTC(y, m, d, h, min, s));
+                    }
+                    
                     return new Date(y, m, d, h, min, s);
                 };
 
