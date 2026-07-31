@@ -75,11 +75,10 @@
         .clear-search { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; color: var(--text-muted); cursor: pointer; display: none; line-height: 1; padding: 0 4px; }
         .clear-search:hover { color: var(--text-main); }
 
-        .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; position: relative; }
+        .header-actions { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
 
         .view-toggle { display: flex; background-color: #F1F5F9; border-radius: 8px; padding: 4px; gap: 4px; margin-right: 8px; }
-        .view-toggle button { background: transparent; border: none; padding: 8px 12px; border-radius: 6px; font-size: 15px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-        .view-toggle button svg { width: 18px; height: 18px; }
+        .view-toggle button { background: transparent; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
         .view-toggle button:hover { color: var(--text-main); }
         .view-toggle button.active { background-color: white; color: var(--brand-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
@@ -88,14 +87,7 @@
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
         
-        #backNavBtn { display: none; }
-
-        /* Overflow Menu Styling */
-        .overflow-menu-container { position: relative; display: inline-block; }
-        .overflow-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 200; width: 200px; padding: 6px; }
-        .overflow-dropdown.show { display: flex; flex-direction: column; gap: 4px; }
-        .overflow-item { background: transparent; border: none; width: 100%; text-align: left; padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--text-main); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .overflow-item:hover { background: var(--bg-main); color: var(--brand-primary); }
+        #backBtn, #signout_button, #authorize_button { display: none; }
 
         .tags-bar { display: flex; gap: 8px; padding: 12px 32px; background: #ffffff; border-bottom: 1px solid var(--border-color); overflow-x: auto; flex-shrink: 0; scrollbar-width: none; -ms-overflow-style: none; }
         .tags-bar::-webkit-scrollbar { display: none; }
@@ -190,8 +182,7 @@
         .current-time-line::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; }
         .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
 
-        .logged-block { position: absolute; background: var(--brand-primary); color: white; border-radius: 6px; padding: 4px 8px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.4); overflow: hidden; cursor: grab; transition: box-shadow 0.1s, z-index 0.2s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; min-height: 24px; }
-        .logged-block:hover { z-index: 30; box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
+        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 4px 8px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.4); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; min-height: 24px; }
         
         .logged-block.q1 { background-color: var(--q1-bg); border-color: var(--q1-border); color: var(--q1-text); }
         .logged-block.q2 { background-color: var(--q2-bg); border-color: var(--q2-border); color: var(--q2-text); }
@@ -199,7 +190,7 @@
         .logged-block.q4 { background-color: var(--q4-bg); border-color: var(--q4-border); color: var(--q4-text); }
         .logged-block.is-meeting { background-color: var(--q2-bg); border-color: var(--q2-border); color: var(--q2-text); }
 
-        .logged-block:active { cursor: grabbing; z-index: 35;}
+        .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 12;}
         .block-info { pointer-events: none; overflow: hidden; flex-grow: 1; padding-right: 4px; }
         .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
         .block-meta { font-size: 11px; opacity: 0.9; line-height: 1; }
@@ -289,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.1</span></h1>
+                <h1>Quadra <span class="version-badge">v7.4</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -303,35 +294,17 @@
         </div>
         
         <div class="header-actions">
+            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
             <div class="view-toggle" id="viewToggleGroup">
-                <button id="btnGrid" onclick="setLayout('grid')" title="Matrix">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                </button>
-                <button id="btnKanban" onclick="setLayout('kanban')" title="Kanban">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="18" rx="1"></rect><rect x="10" y="3" width="4" height="18" rx="1"></rect><rect x="17" y="3" width="4" height="18" rx="1"></rect></svg>
-                </button>
-                <button id="btnOverdue" onclick="setLayout('overdue')" title="Overdue">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                </button>
-                <button id="btnTracker" onclick="setLayout('tracker')" title="Tracker">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </button>
+                <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
+                <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
+                <button id="btnOverdue" onclick="setLayout('overdue')">⚠️ Overdue</button>
+                <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
             </div>
-            
-            <!-- Header Overflow Menu (Three Dots) -->
-            <div class="overflow-menu-container">
-                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 18px;" onclick="toggleOverflowMenu(event)" title="More options">⋮</button>
-                <div class="overflow-dropdown" id="overflowDropdown">
-                    <button class="overflow-item" onclick="exportTimesheet()">📋 Export Timesheet</button>
-                    <button class="overflow-item" onclick="importCalendarEvents()">📥 Sync Meetings</button>
-                    <button class="overflow-item" onclick="performBackgroundSync()">🔄 Sync Tasks</button>
-                </div>
-            </div>
-
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
             <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️ Settings</button>
-            <button id="backNavBtn" class="btn btn-outline" onclick="closeSettingsPage()">← Back</button>
+            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">← Back</button>
         </div>
     </header>
 
@@ -459,6 +432,8 @@
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
+                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;" onclick="exportTimesheet()" title="Export Timesheet">📋 Export Timesheet</button>
+                            <button class="btn btn-outline" style="padding: 8px 16px; font-size: 14px;" onclick="importCalendarEvents()" title="Import meetings for this day">📥 Sync Meetings</button>
                             <span id="trackerDailyTotal" style="font-weight: 600; color: var(--brand-primary);">Total: 0h</span>
                         </div>
                     </div>
@@ -624,7 +599,6 @@
         // --- Toast Notification System ---
         function showToast(message) {
             const container = document.getElementById('toast-container');
-            if(!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerText = message;
@@ -670,350 +644,7 @@
         });
 
         const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
-        const trackerDateEl = document.getElementById('trackerDate');
-        if(trackerDateEl) trackerDateEl.value = todayStr;
-
-        // --- Tag Parser & Search Helpers (Hoisted Globally) ---
-        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
-        
-        function parseTags(str) { 
-            let html = escapeHTML(str);
-            html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
-            html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
-            return html;
-        }
-
-        function searchTag(tag, event) { 
-            if (event) event.stopPropagation(); 
-            const searchInput = document.getElementById('searchInput'); 
-            if (searchInput) searchInput.value = tag; 
-            handleSearch(); 
-        }
-
-        function clearSearch() { 
-            const searchInput = document.getElementById('searchInput'); 
-            if (searchInput) searchInput.value = ''; 
-            handleSearch(); 
-        }
-
-        function handleSearch() {
-            const searchInput = document.getElementById('searchInput');
-            if(!searchInput) return;
-            const query = searchInput.value.toLowerCase();
-            const clearBtn = document.getElementById('clearSearchBtn');
-            if(clearBtn) clearBtn.style.display = query.length > 0 ? 'block' : 'none';
-            renderNotes(query);
-        }
-
-        function renderTagsList() {
-            const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
-            const tagCounts = {};
-
-            notes.forEach(note => {
-                if (!note.deleted && note.status === 'active' && !note.eventId) {
-                    const matches = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
-                    if (matches) {
-                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
-                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
-                    }
-                }
-            });
-
-            tagsBar.innerHTML = '';
-
-            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
-                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
-                return a.localeCompare(b);
-            });
-
-            sortedTags.forEach(tag => {
-                const btn = document.createElement('button');
-                const isPerson = tag.startsWith('@');
-                btn.className = 'filter-tag' + (isPerson ? ' person-filter' : '');
-                btn.innerText = `${tag} (${tagCounts[tag]})`;
-                btn.onclick = (e) => { 
-                    const searchInput = document.getElementById('searchInput'); 
-                    if (searchInput && searchInput.value === tag) clearSearch(); else searchTag(tag, e); 
-                };
-                tagsBar.appendChild(btn);
-            });
-        }
-
-        function renderNotes(searchQuery = '') {
-            ['inbox', 'calendar', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
-            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
-            filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
-
-            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
-
-            filteredNotes.forEach(note => {
-                let targetListId = `list-${note.quadrant}`;
-                if (note.eventId) {
-                    targetListId = 'list-calendar';
-                }
-                const list = document.getElementById(targetListId);
-                if (list) {
-                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
-                        filteredCounts[note.quadrant]++;
-                    }
-                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
-                        filteredCounts['calendar']++;
-                    }
-                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
-                        filteredCounts['inbox']++;
-                    }
-
-                    const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
-                    if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
-
-                    const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
-                    contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
-                    
-                    if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
-                    
-                    contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
-
-                    const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
-                    if (!note.eventId) {
-                        if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
-                        else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
-                    } else {
-                        actionsDiv.innerHTML = `<button class="action-btn delete-btn" onclick="deleteTask('${note.id}')" title="Remove event">×</button>`;
-                    }
-                    
-                    noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
-                }
-            });
-
-            const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
-            const closedCount = document.getElementById('closed-count');
-            const inboxCount = document.getElementById('inbox-count');
-            const calCount = document.getElementById('calendar-count');
-
-            if (closedCount) closedCount.innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
-            if (inboxCount) inboxCount.innerText = filteredCounts.inbox;
-            if (calCount) calCount.innerText = filteredCounts.calendar;
-            
-            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
-                const badge = document.getElementById(`badge-${q}`);
-                if (badge) badge.innerText = filteredCounts[q];
-            });
-            
-            if (currentLayout === 'tracker') renderTrackerTimeline();
-            renderTagsList();
-        }
-
-        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
-        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
-        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
-
-        // --- Auth Functions (Hoisted) ---
-        function checkConfigState() {
-            const actions = document.getElementById('overlay-actions');
-            const authBtn = document.getElementById('authorize_button');
-            const signoutBtn = document.getElementById('signout_button');
-            const authOverlay = document.getElementById('auth-overlay');
-
-            if (!appConfig.clientId && appConfig.calSource === 'google') {
-                if (actions) actions.innerHTML = `<button class="btn" onclick="openSettingsPage()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
-            } else {
-                if (actions) actions.innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
-                
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
-                    if (authOverlay) authOverlay.style.display = 'none';
-                    if (authBtn) authBtn.style.display = 'none';
-                    if (signoutBtn) signoutBtn.style.display = 'inline-block';
-                    isGoogleSynced = true;
-                    if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: savedTokenData.token });
-                    loadCalendars(); 
-                } else { 
-                    if(appConfig.calSource === 'google') {
-                        if (authBtn) authBtn.style.display = 'inline-block';
-                        if (signoutBtn) signoutBtn.style.display = 'none';
-                    } else {
-                        if (authOverlay) authOverlay.style.display = 'none';
-                    } 
-                }
-            }
-        }
-
-        function dismissOverlay() { 
-            const authOverlay = document.getElementById('auth-overlay');
-            if (authOverlay) authOverlay.style.display = 'none'; 
-            renderNotes(); 
-        }
-
-        function handleAuthClick() { 
-            if (!appConfig.clientId) return openSettingsPage(); 
-            if (!tokenClient && typeof google !== 'undefined' && google.accounts) { 
-                tokenClient = google.accounts.oauth2.initTokenClient({ 
-                    client_id: appConfig.clientId, 
-                    scope: SCOPES, 
-                    callback: async (resp) => { 
-                        if (resp.error !== undefined) { throw (resp); } 
-                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
-                        
-                        const authOverlay = document.getElementById('auth-overlay');
-                        const authBtn = document.getElementById('authorize_button');
-                        const signoutBtn = document.getElementById('signout_button');
-
-                        if (authOverlay) authOverlay.style.display = 'none'; 
-                        if (authBtn) authBtn.style.display = 'none'; 
-                        if (signoutBtn) signoutBtn.style.display = 'inline-block'; 
-
-                        isGoogleSynced = true;
-                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
-                        loadCalendars(); 
-                        performBackgroundSync(); 
-                    }, 
-                }); 
-            }
-            if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
-            tokenClient.requestAccessToken({prompt: 'consent'}); 
-        }
-        
-        function handleSignoutClick() { 
-            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (savedToken && savedToken.token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { 
-                google.accounts.oauth2.revoke(savedToken.token, () => {}); 
-            } 
-            localStorage.removeItem('quadra_gapi_token_v2'); 
-            isGoogleSynced = false; 
-
-            const authOverlay = document.getElementById('auth-overlay');
-            const authBtn = document.getElementById('authorize_button');
-            const signoutBtn = document.getElementById('signout_button');
-
-            if (authOverlay) authOverlay.style.display = 'flex'; 
-            if (authBtn) authBtn.style.display = 'inline-block'; 
-            if (signoutBtn) signoutBtn.style.display = 'none'; 
-
-            document.getElementById('sidePanel').classList.remove('open'); 
-            document.getElementById('sidebarToggleBtn').classList.remove('open'); 
-            document.body.classList.remove('sidebar-open'); 
-            showToast("Signed out successfully.");
-        }
-
-        // --- Background Sync Engine ---
-        async function performBackgroundSync() {
-            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!savedToken || !savedToken.token) return showToast("Please sign in first to sync with Google Tasks.");
-            try {
-                const syncBanner = document.getElementById('sync-banner');
-                if (syncBanner) syncBanner.style.display = 'block';
-                if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
-                    gapi.client.setToken({ access_token: savedToken.token });
-                }
-                const response = await gapi.client.tasks.tasklists.list();
-                const remoteLists = response.result.items || [];
-                const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
-                let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
-                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) { const existingList = remoteLists.find(l => l.title === GAPI_LIST_NAMES[quadKey]); if (existingList) { gapiListIds[quadKey] = existingList.id; } else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: GAPI_LIST_NAMES[quadKey] }); gapiListIds[quadKey] = newListReq.result.id; } }
-                let remoteTaskMap = {};
-                for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
-                const syncSnapshot = JSON.parse(JSON.stringify(notes));
-                for (let sn of syncSnapshot) {
-                    if (sn.eventId) continue; 
-                    if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
-                    if (sn.dirty && !sn.deleted) {
-                        const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
-                        if (remoteObj) { if (remoteObj.listId !== targetListId) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id }); const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} } else { try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){} } delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId]; } else { try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} }
-                        sn.dirty = false;
-                    } else if (!sn.dirty && !sn.deleted) { const remoteObj = remoteTaskMap[sn.id]; if (remoteObj) { sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active'; sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null; delete remoteTaskMap[sn.id]; } }
-                }
-                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], eventId: null, dirty: false, deleted: false }); });
-                let newNotesArray = []; let syncedIds = new Set();
-                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
-                notes = newNotesArray; saveNotes(); handleSearch(); 
-                if (syncBanner) syncBanner.style.display = 'none';
-                showToast("Successfully synced with Google Tasks!");
-            } catch (e) {
-                const syncBanner = document.getElementById('sync-banner');
-                if (syncBanner) syncBanner.style.display = 'none';
-                console.error(e);
-                showToast("Tasks sync failed. Check your API configuration.");
-            }
-        }
-
-        // --- Sidebar & Tray Accordion Controllers ---
-        function toggleSidebar() { 
-            const panel = document.getElementById('sidePanel'); 
-            const btn = document.getElementById('sidebarToggleBtn'); 
-            if (panel && btn) {
-                panel.classList.toggle('open'); 
-                btn.classList.toggle('open'); 
-                document.body.classList.toggle('sidebar-open'); 
-            }
-        }
-
-        function toggleClosedTray() { 
-            const content = document.getElementById('closed-tray-content'); 
-            const chevron = document.getElementById('closed-chevron'); 
-            if (content && chevron) {
-                if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } 
-                else { content.classList.add('open'); chevron.innerText = '▲'; } 
-            }
-        }
-
-        function toggleCalendarTray() { 
-            const content = document.getElementById('calendar-tray-content'); 
-            const chevron = document.getElementById('calendar-chevron'); 
-            if (content && chevron) {
-                if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } 
-                else { content.classList.add('open'); chevron.innerText = '▲'; } 
-            }
-        }
-
-        function toggleInboxTray() { 
-            const content = document.getElementById('inbox-tray-content'); 
-            const chevron = document.getElementById('inbox-chevron'); 
-            if (content && chevron) {
-                if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } 
-                else { content.classList.add('open'); chevron.innerText = '▲'; } 
-            }
-        }
-
-        // --- Backup & Data Management Helpers ---
-        function exportData() { 
-            const dataStr = JSON.stringify(notes, null, 2); 
-            const blob = new Blob([dataStr], { type: "application/json" }); 
-            const url = URL.createObjectURL(blob); 
-            const a = document.createElement('a'); 
-            a.href = url; 
-            a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; 
-            a.click(); 
-            URL.revokeObjectURL(url); 
-        }
-
-        function triggerImport() { 
-            const importFile = document.getElementById('importFile');
-            if (importFile) importFile.click(); 
-        }
-
-        function importData(event) { 
-            const file = event.target.files[0]; 
-            if (!file) return; 
-            const reader = new FileReader(); 
-            reader.onload = function(e) { 
-                try { 
-                    const importedNotes = JSON.parse(e.target.result); 
-                    if (Array.isArray(importedNotes)) { 
-                        const noteMap = new Map(notes.map(n => [n.id, n])); 
-                        importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); 
-                        notes = Array.from(noteMap.values()); 
-                        saveNotes(); 
-                        handleSearch(); 
-                        showToast("Tasks merged!"); 
-                        closeSettingsPage(); 
-                    } else showToast("Invalid format."); 
-                } catch (err) { 
-                    showToast("Error reading file."); 
-                } 
-                event.target.value = ''; 
-            }; 
-            reader.readAsText(file); 
-        }
+        document.getElementById('trackerDate').value = todayStr;
 
         // --- Layout Management ---
         let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
@@ -1031,61 +662,40 @@
             const btnKanban = document.getElementById('btnKanban');
             const btnOverdue = document.getElementById('btnOverdue');
             const btnTracker = document.getElementById('btnTracker');
-            const backBtn = document.getElementById('backNavBtn');
-            const settingsNavBtn = document.getElementById('settingsNavBtn');
 
             if (btnGrid) btnGrid.classList.toggle('active', layout === 'grid');
             if (btnKanban) btnKanban.classList.toggle('active', layout === 'kanban');
             if (btnOverdue) btnOverdue.classList.toggle('active', layout === 'overdue');
             if (btnTracker) btnTracker.classList.toggle('active', layout === 'tracker');
             
-            if (settingsView) settingsView.style.display = 'none';
-            if (matrix) matrix.style.display = 'none';
-            if (tracker) tracker.style.display = 'none';
-            if (overdue) overdue.style.display = 'none';
+            settingsView.style.display = 'none';
+            matrix.style.display = 'none';
+            tracker.style.display = 'none';
+            overdue.style.display = 'none';
 
             if (layout === 'tracker') {
-                if (tracker) tracker.style.display = 'block'; 
+                tracker.style.display = 'block'; 
                 document.body.classList.remove('sidebar-open');
                 updateZoomDisplay();
                 renderTrackerTimeline();
                 startLiveClock();
             } else if (layout === 'overdue') {
-                if (overdue) overdue.style.display = 'block';
+                overdue.style.display = 'block';
                 document.body.classList.remove('sidebar-open');
                 renderOverdueTasksPage();
                 stopLiveClock();
             } else {
-                if (matrix) {
-                    matrix.style.display = ''; 
-                    matrix.classList.remove('layout-grid', 'layout-kanban');
-                    matrix.classList.add(`layout-${layout}`);
-                }
+                matrix.style.display = ''; 
+                matrix.classList.remove('layout-grid', 'layout-kanban');
+                matrix.classList.add(`layout-${layout}`);
                 stopLiveClock();
             }
-            const tagsBar = document.getElementById('quick-tags-bar');
-            const searchContainer = document.getElementById('searchHeaderContainer');
-            const toggleGroup = document.getElementById('viewToggleGroup');
-
-            if (tagsBar) tagsBar.style.display = 'flex';
-            if (searchContainer) searchContainer.style.display = 'block';
-            if (toggleGroup) toggleGroup.style.display = 'flex';
-            if (settingsNavBtn) settingsNavBtn.style.display = 'inline-block';
-            if (backBtn) backBtn.style.display = 'none';
+            document.getElementById('quick-tags-bar').style.display = 'flex';
+            document.getElementById('searchHeaderContainer').style.display = 'block';
+            document.getElementById('viewToggleGroup').style.display = 'flex';
+            document.getElementById('settingsNavBtn').style.display = 'inline-block';
+            document.getElementById('backNavBtn').style.display = 'none';
         }
-
-        function toggleOverflowMenu(e) {
-            e.stopPropagation();
-            const dropdown = document.getElementById('overflowDropdown');
-            if (dropdown) dropdown.classList.toggle('show');
-        }
-
-        window.addEventListener('click', () => {
-            const dropdown = document.getElementById('overflowDropdown');
-            if (dropdown && dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        });
 
         function adjustTimelineZoom(amount) {
             timelineZoom = Math.max(0.5, Math.min(3, roundToQuarterHour(timelineZoom + amount)));
@@ -1100,28 +710,16 @@
         }
 
         function openSettingsPage() {
-            const matrix = document.getElementById('matrix');
-            const tracker = document.getElementById('tracker-view');
-            const overdue = document.getElementById('overdue-view');
-            const settingsView = document.getElementById('settings-view');
-            const backBtn = document.getElementById('backNavBtn');
-            const settingsNavBtn = document.getElementById('settingsNavBtn');
-
-            if (matrix) matrix.style.display = 'none';
-            if (tracker) tracker.style.display = 'none';
-            if (overdue) overdue.style.display = 'none';
-            if (settingsView) settingsView.style.display = 'block';
+            document.getElementById('matrix').style.display = 'none';
+            document.getElementById('tracker-view').style.display = 'none';
+            document.getElementById('overdue-view').style.display = 'none';
+            document.getElementById('settings-view').style.display = 'block';
             document.body.classList.remove('sidebar-open');
-
-            const tagsBar = document.getElementById('quick-tags-bar');
-            const searchContainer = document.getElementById('searchHeaderContainer');
-            const toggleGroup = document.getElementById('viewToggleGroup');
-
-            if (tagsBar) tagsBar.style.display = 'none';
-            if (searchContainer) searchContainer.style.display = 'none';
-            if (toggleGroup) toggleGroup.style.display = 'none';
-            if (settingsNavBtn) settingsNavBtn.style.display = 'none';
-            if (backBtn) backBtn.style.display = 'inline-block';
+            document.getElementById('quick-tags-bar').style.display = 'none';
+            document.getElementById('searchHeaderContainer').style.display = 'none';
+            document.getElementById('viewToggleGroup').style.display = 'none';
+            document.getElementById('settingsNavBtn').style.display = 'none';
+            document.getElementById('backNavBtn').style.display = 'inline-block';
 
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
@@ -1150,10 +748,8 @@
 
         function setTrackerMode(mode) {
             currentTrackerMode = mode;
-            const dayBtn = document.getElementById('btnTrackerDay');
-            const weekBtn = document.getElementById('btnTrackerWeek');
-            if (dayBtn) dayBtn.classList.toggle('active', mode === 'day');
-            if (weekBtn) weekBtn.classList.toggle('active', mode === 'week');
+            document.getElementById('btnTrackerDay').classList.toggle('active', mode === 'day');
+            document.getElementById('btnTrackerWeek').classList.toggle('active', mode === 'week');
             renderTrackerTimeline();
         }
 
@@ -1209,7 +805,6 @@
 
         function changeTrackerDay(offset) {
             const dateInput = document.getElementById('trackerDate');
-            if(!dateInput) return;
             const d = new Date(dateInput.value);
             d.setDate(d.getDate() + offset);
             dateInput.value = d.toLocaleDateString('en-CA').split('T')[0];
@@ -1222,7 +817,6 @@
             const canvas = document.getElementById('timelineCanvas');
             const paletteList = document.getElementById('tracker-palette-list');
             const hourPx = 60 * timelineZoom;
-            if(!canvas || !paletteList) return;
             
             paletteList.innerHTML = '';
             const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query) && !n.eventId);
@@ -1342,130 +936,105 @@
                     });
                 });
 
-                // --- Google Calendar Style Overlap Engine ---
-                let dayBlocks = [];
                 notes.forEach(note => {
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
                         let blockStart = roundToQuarterHour(tb.startHour);
                         let duration = roundToQuarterHour(tb.duration);
                         let blockEnd = blockStart + duration;
-                        if (blockEnd < blockStart) blockEnd += 24;
+                        if (blockEnd < blockStart) {
+                            blockEnd += 24;
+                        }
                         let actualDuration = roundToQuarterHour(blockEnd - blockStart);
 
                         if (tb.date === dateStr) {
-                            totalTimeRendered += duration;
+                            totalTimeRendered += duration; 
                             let renderStart = blockStart % 24;
                             let renderDuration = duration;
+
                             if (blockStart < 24 && blockEnd > 24) {
-                                renderDuration = 24 - blockStart;
+                                renderDuration = 24 - blockStart; 
                             } else if (blockStart >= 24) {
-                                return;
+                                return; 
                             }
-                            dayBlocks.push({
-                                note, tb, blockStart, blockEnd: blockStart + renderDuration,
-                                renderStart, renderDuration, actualDuration,
-                                colIndex: 0, totalCols: 1
-                            });
+
+                            const blockEl = document.createElement('div');
+                            const isMeeting = note.eventId || note.text.includes('#meeting');
+                            const quadClass = note.quadrant || 'q2';
+                            blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
+                            blockEl.id = `block-${tb.id}`;
+                            blockEl.style.top = `${renderStart * hourPx}px`;
+                            blockEl.style.height = `${Math.max(15, renderDuration * hourPx)}px`;
+                            
+                            let displayTitle = note.text.split('\n')[0].substring(0, 40);
+                            const actualEndHour = (blockStart + actualDuration) % 24;
+                            const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${actualDuration}h)`;
+
+                            blockEl.innerHTML = `
+                                <div class="block-info">
+                                    <div class="block-title">${displayTitle}</div>
+                                    <div class="block-meta">${timeStr}</div>
+                                </div>
+                                <button class="block-edit-icon" onclick="openEditBlockModal('${note.id}', '${tb.id}', event)" title="Edit Time Block Hours">📝</button>
+                                <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
+                            `;
+                            
+                            blockEl.onclick = (e) => {
+                                if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
+                                openTaskModal(null, note.id, e);
+                            };
+
+                            blockEl.onmousedown = (e) => {
+                                if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
+                                startBlockDrag(e, note.id, tb.id, false);
+                            };
+                            col.appendChild(blockEl);
+                        } 
+                        else if (tb.date === addDays(dateStr, -1)) {
+                            if (blockStart < 24 && blockEnd > 24) {
+                                let overflowDuration = roundToQuarterHour(blockEnd - 24);
+                                totalTimeRendered += overflowDuration; 
+                                const blockEl = document.createElement('div');
+                                const isMeeting = note.eventId || note.text.includes('#meeting');
+                                const quadClass = note.quadrant || 'q2';
+                                blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
+                                blockEl.id = `block-overflow-${tb.id}`;
+                                blockEl.style.top = `0px`;
+                                blockEl.style.height = `${Math.max(15, overflowDuration * hourPx)}px`;
+                                
+                                let displayTitle = note.text.split('\n')[0].substring(0, 40);
+                                const actualEndHour = (blockStart + actualDuration) % 24;
+                                const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${actualDuration}h)`;
+
+                                blockEl.innerHTML = `
+                                    <div class="block-info">
+                                        <div class="block-title">${displayTitle} (cont.)</div>
+                                        <div class="block-meta">${timeStr}</div>
+                                    </div>
+                                    <button class="block-edit-icon" onclick="openEditBlockModal('${note.id}', '${tb.id}', event)" title="Edit Time Block Hours">📝</button>
+                                `;
+                                blockEl.onclick = (e) => {
+                                    if(e.target.closest('.block-edit-icon')) return;
+                                    openTaskModal(null, note.id, e);
+                                };
+                                col.appendChild(blockEl);
+                            }
                         }
                     });
-                });
-
-                dayBlocks.sort((a, b) => a.blockStart - b.blockStart || (b.blockEnd - b.blockStart) - (a.blockEnd - a.blockStart));
-
-                let groups = [];
-                dayBlocks.forEach(b => {
-                    let placed = false;
-                    for (let g of groups) {
-                        let overlaps = g.some(item => Math.max(item.blockStart, b.blockStart) < Math.min(item.blockEnd, b.blockEnd));
-                        if (overlaps) {
-                            g.push(b);
-                            placed = true;
-                            break;
-                        }
-                    }
-                    if (!placed) {
-                        groups.push([b]);
-                    }
-                });
-
-                groups.forEach(g => {
-                    let columns = [];
-                    g.forEach(b => {
-                        let placedCol = false;
-                        for (let i = 0; i < columns.length; i++) {
-                            let lastInCol = columns[i][columns[i].length - 1];
-                            if (lastInCol.blockEnd <= b.blockStart) {
-                                columns[i].push(b);
-                                b.colIndex = i;
-                                placedCol = true;
-                                break;
-                            }
-                        }
-                        if (!placedCol) {
-                            b.colIndex = columns.length;
-                            columns.push([b]);
-                        }
-                    });
-                    let totalCols = columns.length;
-                    g.forEach(b => { b.totalCols = totalCols; });
-                });
-
-                dayBlocks.forEach(b => {
-                    const { note, tb, blockStart, actualDuration, renderStart, renderDuration, colIndex, totalCols } = b;
-
-                    const blockEl = document.createElement('div');
-                    const isMeeting = note.eventId || note.text.includes('#meeting');
-                    const quadClass = note.quadrant || 'q2';
-                    blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
-                    blockEl.id = `block-${tb.id}`;
-                    
-                    const widthPct = (100 / totalCols) - 2;
-                    const leftPct = (colIndex * (100 / totalCols)) + 1;
-                    blockEl.style.left = `${leftPct}%`;
-                    blockEl.style.width = `${Math.max(15, widthPct)}%`;
-                    blockEl.style.top = `${renderStart * hourPx}px`;
-                    blockEl.style.height = `${Math.max(15, renderDuration * hourPx)}px`;
-                    
-                    let displayTitle = note.text.split('\n')[0].substring(0, 40);
-                    const actualEndHour = (blockStart + actualDuration) % 24;
-                    const timeStr = `${decToTime(blockStart)} - ${decToTime(actualEndHour)} (${actualDuration}h)`;
-
-                    blockEl.innerHTML = `
-                        <div class="block-info">
-                            <div class="block-title">${displayTitle}</div>
-                            <div class="block-meta">${timeStr}</div>
-                        </div>
-                        <button class="block-edit-icon" onclick="openEditBlockModal('${note.id}', '${tb.id}', event)" title="Edit Time Block Hours">📝</button>
-                        <div class="resize-handle" onmousedown="startBlockDrag(event, '${note.id}', '${tb.id}', true)"></div>
-                    `;
-                    
-                    blockEl.onclick = (e) => {
-                        if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
-                        openTaskModal(null, note.id, e);
-                    };
-
-                    blockEl.onmousedown = (e) => {
-                        if(e.target.closest('.block-edit-icon') || e.target.closest('.resize-handle')) return;
-                        startBlockDrag(e, note.id, tb.id, false);
-                    };
-                    col.appendChild(blockEl);
                 });
 
                 colsContainer.appendChild(col);
             });
 
-            const dailyTotal = document.getElementById('trackerDailyTotal');
-            if (dailyTotal) dailyTotal.innerText = `Total: ${roundToQuarterHour(totalTimeRendered)}h`;
+            document.getElementById('trackerDailyTotal').innerText = `Total: ${roundToQuarterHour(totalTimeRendered)}h`;
 
             const scrollArea = document.getElementById('timelineScrollArea');
-            if (scrollArea && scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
+            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
         }
 
         // --- Render Overdue Tasks Page ---
         function renderOverdueTasksPage() {
             const container = document.getElementById('overdue-list-container');
-            if (!container) return;
             container.innerHTML = '';
             
             const overdueNotes = notes.filter(n => {
@@ -1475,8 +1044,7 @@
 
             overdueNotes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
-            const badge = document.getElementById('overdue-count-badge');
-            if (badge) badge.innerText = overdueNotes.length;
+            document.getElementById('overdue-count-badge').innerText = overdueNotes.length;
 
             if (overdueNotes.length === 0) {
                 container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">🎉 No overdue tasks! All caught up.</p>`;
@@ -1694,15 +1262,14 @@
 
                 pendingTimelineContext = timelineContext || null;
             }
-            if(modal) modal.style.display = 'flex'; 
-            setTimeout(() => { if(titleInput) titleInput.focus(); }, 100);
+            modal.style.display = 'flex'; 
+            setTimeout(() => titleInput.focus(), 100);
         }
 
         let pendingTimelineContext = null;
 
         function closeTaskModal() { 
-            const modal = document.getElementById('taskModal');
-            if(modal) modal.style.display = 'none'; 
+            document.getElementById('taskModal').style.display = 'none'; 
             pendingTimelineContext = null; 
         }
 
@@ -1895,7 +1462,6 @@
 
                 const calendars = data.items || [];
                 const select = document.getElementById('configCalendar');
-                if(!select) return;
                 const currentVal = appConfig.calendarId;
                 select.innerHTML = '<option value="">-- Select a Calendar --</option>';
                 calendars.forEach(cal => {
@@ -1911,7 +1477,6 @@
 
         function renderScheduleSettings() {
             const container = document.getElementById('scheduleConfigList');
-            if(!container) return;
             container.innerHTML = '';
             appSchedule.forEach(block => addScheduleRow(block));
         }
@@ -1933,8 +1498,7 @@
                 <input type="time" class="sched-end" value="${formatTimeForInput(block.endHour)}" style="padding:8px;">
                 <button class="btn btn-outline" style="color:red; padding:8px 12px;" onclick="this.parentElement.remove()">×</button>
             `;
-            const container = document.getElementById('scheduleConfigList');
-            if(container) container.appendChild(div);
+            document.getElementById('scheduleConfigList').appendChild(div);
         }
 
         function saveSettings() {
@@ -1974,6 +1538,539 @@
             closeSettingsPage(); 
             showToast("Configuration saved!");
         }
+
+        // --- Core UI Tasks & Notes Matrix ---
+        function renderTagsList() {
+            const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
+            const tagCounts = {};
+
+            notes.forEach(note => {
+                if (!note.deleted && note.status === 'active' && !note.eventId) {
+                    const matches = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
+                    if (matches) {
+                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
+                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+                    }
+                }
+            });
+
+            tagsBar.innerHTML = '';
+
+            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
+                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
+                return a.localeCompare(b);
+            });
+
+            sortedTags.forEach(tag => {
+                const btn = document.createElement('button');
+                const isPerson = tag.startsWith('@');
+                btn.className = 'filter-tag' + (isPerson ? ' person-filter' : '');
+                btn.innerText = `${tag} (${tagCounts[tag]})`;
+                btn.onclick = (e) => { 
+                    const searchInput = document.getElementById('searchInput'); 
+                    if (searchInput.value === tag) clearSearch(); else searchTag(tag, e); 
+                };
+                tagsBar.appendChild(btn);
+            });
+        }
+
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
+        
+        function parseTags(str) { 
+            let html = escapeHTML(str);
+            html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
+            html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
+            return html;
+        }
+
+        function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
+        function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
+
+        function handleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if(!searchInput) return;
+            const query = searchInput.value.toLowerCase();
+            document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
+            renderNotes(query);
+        }
+
+        function renderNotes(searchQuery = '') {
+            ['inbox', 'calendar', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
+            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
+            filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
+
+            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
+
+            filteredNotes.forEach(note => {
+                let targetListId = `list-${note.quadrant}`;
+                if (note.eventId) {
+                    targetListId = 'list-calendar';
+                }
+                const list = document.getElementById(targetListId);
+                if (list) {
+                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
+                        filteredCounts[note.quadrant]++;
+                    }
+                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
+                        filteredCounts['calendar']++;
+                    }
+                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
+                        filteredCounts['inbox']++;
+                    }
+
+                    const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
+                    if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
+
+                    const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
+                    contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
+                    
+                    if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
+                    
+                    contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
+
+                    const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
+                    if (!note.eventId) {
+                        if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
+                        else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
+                    } else {
+                        actionsDiv.innerHTML = `<button class="action-btn delete-btn" onclick="deleteTask('${note.id}')" title="Remove event">×</button>`;
+                    }
+                    
+                    noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
+                }
+            });
+
+            const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
+            document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
+            document.getElementById('inbox-count').innerText = filteredCounts.inbox;
+            document.getElementById('calendar-count').innerText = filteredCounts.calendar;
+            
+            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+                const badge = document.getElementById(`badge-${q}`);
+                if (badge) badge.innerText = filteredCounts[q];
+            });
+            
+            if (currentLayout === 'tracker') renderTrackerTimeline();
+            renderTagsList();
+        }
+
+        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
+        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
+
+        function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
+        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleCalendarTray() { const content = document.getElementById('calendar-tray-content'); const chevron = document.getElementById('calendar-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+
+        function checkConfigState() {
+            if (!appConfig.clientId && appConfig.calSource === 'google') {
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettingsPage()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
+            } else {
+                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
+                
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    document.getElementById('authorize_button').style.display = 'none';
+                    document.getElementById('signout_button').style.display = 'inline-block';
+                    isGoogleSynced = true;
+                    if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: savedTokenData.token });
+                    loadCalendars(); 
+                } else { if(appConfig.calSource === 'google') document.getElementById('authorize_button').style.display = 'inline-block'; else document.getElementById('auth-overlay').style.display = 'none'; }
+            }
+        }
+        function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
+
+        function exportData() { const dataStr = JSON.stringify(notes, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); }
+        function triggerImport() { document.getElementById('importFile').click(); }
+        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
+
+        // --- Robust Universal Timezone ICS Parser ---
+        function parseICS(icsText, targetDateStr, ignoreKeywords) {
+            let events = [];
+            let vTimezones = {};
+            let lines = icsText.split(/\r\n|\n|\r/);
+            let currentEvent = null;
+            let currentTzId = null;
+            let currentTzProp = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                if (line.startsWith('BEGIN:VTIMEZONE')) {
+                    currentTzId = null;
+                } else if (line.startsWith('TZID:')) {
+                    currentTzId = line.substring(5).trim();
+                    if (!vTimezones[currentTzId]) vTimezones[currentTzId] = {};
+                } else if (line.startsWith('BEGIN:STANDARD') || line.startsWith('BEGIN:DAYLIGHT')) {
+                    currentTzProp = line.includes('DAYLIGHT') ? 'DAYLIGHT' : 'STANDARD';
+                } else if (line.startsWith('TZOFFSETFROM:') || line.startsWith('TZOFFSETTO:')) {
+                    if (currentTzId && currentTzProp) {
+                        let offsetStr = line.substring(13).trim();
+                        let sign = offsetStr.startsWith('-') ? -1 : 1;
+                        let hrs = parseInt(offsetStr.substring(1, 3)) || 0;
+                        let mins = parseInt(offsetStr.substring(3, 5)) || 0;
+                        let totalHours = sign * (hrs + (mins / 60));
+                        
+                        if (!vTimezones[currentTzId][currentTzProp]) {
+                            vTimezones[currentTzId][currentTzProp] = {};
+                        }
+                        if (line.startsWith('TZOFFSETTO:')) {
+                            vTimezones[currentTzId][currentTzProp].offsetTo = totalHours;
+                        }
+                    }
+                } else if (line.startsWith('END:VTIMEZONE')) {
+                    currentTzId = null;
+                    currentTzProp = null;
+                }
+            }
+
+            const fallbackOffsets = {
+                'AUS EASTERN STANDARD TIME': 10,
+                'E. AUSTRALIA STANDARD TIME': 10,
+                'AEST': 10,
+                'AEDT': 11,
+                'GMT': 0,
+                'UTC': 0,
+                'PACIFIC STANDARD TIME': -8,
+                'EASTERN STANDARD TIME': -5,
+                'CENTRAL STANDARD TIME': -6
+            };
+
+            for (let line of lines) {
+                if (line === 'BEGIN:VEVENT') {
+                    currentEvent = {};
+                } else if (line === 'END:VEVENT' && currentEvent) {
+                    if (currentEvent.SUMMARY && Object.keys(currentEvent).some(k => k.startsWith('DTSTART'))) {
+                        events.push(currentEvent);
+                    }
+                    currentEvent = null;
+                } else if (currentEvent) {
+                    let colonIdx = line.indexOf(':');
+                    if (colonIdx !== -1) {
+                        let fullKey = line.substring(0, colonIdx);
+                        let val = line.substring(colonIdx + 1);
+                        currentEvent[fullKey] = val;
+                    }
+                }
+            }
+
+            let parsedEvents = [];
+            events.forEach(ev => {
+                let summary = ev.SUMMARY || 'Meeting';
+                let lowerSummary = summary.toLowerCase();
+                let shouldIgnore = ignoreKeywords.some(kw => lowerSummary.includes(kw));
+                if (shouldIgnore) return;
+
+                let dtStartKey = Object.keys(ev).find(k => k.startsWith('DTSTART'));
+                let dtEndKey = Object.keys(ev).find(k => k.startsWith('DTEND'));
+
+                if (!dtStartKey || !ev[dtStartKey]) return;
+
+                let dtStartVal = ev[dtStartKey];
+                let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
+
+                let parseUniversalDate = (keyName, valStr) => {
+                    let clean = valStr.trim();
+                    let match = clean.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?Z?$/);
+                    if (!match) return null;
+
+                    let y = parseInt(match[1]);
+                    let m = parseInt(match[2]) - 1;
+                    let d = parseInt(match[3]);
+                    let h = match[4] ? parseInt(match[4]) : 0;
+                    let min = match[5] ? parseInt(match[5]) : 0;
+                    let s = match[6] ? parseInt(match[6]) : 0;
+
+                    let dateObj;
+                    if (clean.endsWith('Z')) {
+                        dateObj = new Date(Date.UTC(y, m, d, h, min, s));
+                    } else {
+                        let tzidMatch = keyName.match(/TZID=([^;:]+)/i);
+                        let sourceOffset = undefined;
+
+                        if (tzidMatch) {
+                            let tzidKey = tzidMatch[1].trim();
+                            if (vTimezones[tzidKey]) {
+                                let tzData = vTimezones[tzidKey]['DAYLIGHT'] || vTimezones[tzidKey]['STANDARD'];
+                                if (tzData && tzData.offsetTo !== undefined) {
+                                    sourceOffset = tzData.offsetTo;
+                                }
+                            }
+                            if (sourceOffset === undefined) {
+                                sourceOffset = fallbackOffsets[tzidKey.toUpperCase()];
+                            }
+                        }
+
+                        if (sourceOffset !== undefined) {
+                            let localBrowserOffsetHours = -new Date().getTimezoneOffset() / 60;
+                            let netOffsetDiff = localBrowserOffsetHours - sourceOffset;
+                            dateObj = new Date(y, m, d, h + netOffsetDiff, min, s);
+                        } else {
+                            dateObj = new Date(y, m, d, h, min, s);
+                        }
+                    }
+
+                    return {
+                        dateStr: dateObj.toLocaleDateString('en-CA').split('T')[0],
+                        hour: dateObj.getHours() + (dateObj.getMinutes() / 60)
+                    };
+                };
+
+                try {
+                    let startParsed = parseUniversalDate(dtStartKey, dtStartVal);
+                    let endParsed = parseUniversalDate(dtEndKey || dtStartKey, dtEndVal);
+
+                    if (startParsed && endParsed && startParsed.dateStr === targetDateStr) {
+                        let startHour = roundToQuarterHour(startParsed.hour);
+                        let endHour = roundToQuarterHour(endParsed.hour);
+                        if (endHour <= startHour) endHour += 24;
+                        let duration = Math.max(0.25, roundToQuarterHour(endHour - startHour));
+
+                        parsedEvents.push({
+                            id: ev.UID || (Math.random().toString()),
+                            summary: summary,
+                            startHour: startHour,
+                            duration: duration
+                        });
+                    }
+                } catch(e) {}
+            });
+
+            return parsedEvents;
+        }
+
+        // --- Google API Initialization ---
+        window.addEventListener('load', () => {
+            if (typeof gapi !== 'undefined' && appConfig.apiKey) {
+                gapi.load('client', () => {
+                    gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'] }).catch(() => {});
+                });
+            }
+            if (typeof google !== 'undefined' && google.accounts && appConfig.clientId) {
+                tokenClient = google.accounts.oauth2.initTokenClient({ 
+                    client_id: appConfig.clientId, 
+                    scope: SCOPES, 
+                    callback: async (resp) => { 
+                        if (resp.error !== undefined) { throw (resp); } 
+                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                        document.getElementById('auth-overlay').style.display = 'none'; 
+                        document.getElementById('authorize_button').style.display = 'none'; 
+                        document.getElementById('signout_button').style.display = 'inline-block'; 
+                        isGoogleSynced = true;
+                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
+                        loadCalendars(); 
+                        performBackgroundSync(); 
+                    }, 
+                });
+            }
+            checkConfigState();
+        });
+        
+        function handleAuthClick() { 
+            if (!appConfig.clientId) return openSettingsPage(); 
+            if (!tokenClient && typeof google !== 'undefined' && google.accounts) { 
+                tokenClient = google.accounts.oauth2.initTokenClient({ 
+                    client_id: appConfig.clientId, 
+                    scope: SCOPES, 
+                    callback: async (resp) => { 
+                        if (resp.error !== undefined) { throw (resp); } 
+                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
+                        document.getElementById('auth-overlay').style.display = 'none'; 
+                        document.getElementById('authorize_button').style.display = 'none'; 
+                        document.getElementById('signout_button').style.display = 'inline-block'; 
+                        isGoogleSynced = true;
+                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
+                        loadCalendars(); 
+                        performBackgroundSync(); 
+                    }, 
+                }); 
+            }
+            if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
+            tokenClient.requestAccessToken({prompt: 'consent'}); 
+        }
+        
+        function handleSignoutClick() { 
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (savedToken && savedToken.token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { 
+                google.accounts.oauth2.revoke(savedToken.token, () => {}); 
+            } 
+            localStorage.removeItem('quadra_gapi_token_v2'); 
+            isGoogleSynced = false; 
+            document.getElementById('auth-overlay').style.display = 'flex'; 
+            document.getElementById('authorize_button').style.display = 'inline-block'; 
+            document.getElementById('signout_button').style.display = 'none'; 
+            document.getElementById('sidePanel').classList.remove('open'); 
+            document.getElementById('sidebarToggleBtn').classList.remove('open'); 
+            document.body.classList.remove('sidebar-open'); 
+            showToast("Signed out successfully.");
+        }
+
+        async function importCalendarEvents() {
+            const dateStr = document.getElementById('trackerDate').value;
+            const ignoreKeywords = (appConfig.ignoreKeywords || 'out of office, ooo, away, vacation, holiday')
+                .toLowerCase()
+                .split(',')
+                .map(k => k.trim())
+                .filter(k => k.length > 0);
+
+            let importedCount = 0;
+            let ignoredCount = 0;
+
+            try {
+                document.getElementById('sync-banner').style.display = 'block';
+
+                if (appConfig.calSource === 'outlook' && appConfig.icsUrl) {
+                    let fetchUrl = appConfig.icsUrl;
+                    
+                    const res = await fetch(fetchUrl);
+                    if (!res.ok) throw new Error("Failed to fetch ICS feed via Apps Script bridge");
+                    
+                    const icsText = await res.text();
+                    const icsEvents = parseICS(icsText, dateStr, ignoreKeywords);
+
+                    icsEvents.forEach(ev => {
+                        if (notes.find(n => n.eventId === ev.id)) return;
+                        notes.push({
+                            id: Date.now().toString() + Math.random(),
+                            eventId: ev.id,
+                            text: `${ev.summary} #meeting`,
+                            quadrant: 'q2',
+                            status: 'active',
+                            dirty: false,
+                            deleted: false,
+                            timeBlocks: [{
+                                id: Date.now().toString() + Math.random(),
+                                date: dateStr,
+                                startHour: ev.startHour,
+                                duration: ev.duration
+                            }]
+                        });
+                        importedCount++;
+                    });
+
+                } else {
+                    const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+                    if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) {
+                        document.getElementById('sync-banner').style.display = 'none';
+                        return showToast("Please sign in to Google first.");
+                    }
+                    if (!appConfig.calendarId) {
+                        document.getElementById('sync-banner').style.display = 'none';
+                        return showToast("Please select a Google calendar in Settings first.");
+                    }
+                    
+                    const [y, m, day] = dateStr.split('-');
+                    const timeMin = new Date(y, m-1, day, 0, 0, 0).toISOString();
+                    const timeMax = new Date(y, m-1, day, 23, 59, 59).toISOString();
+
+                    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(appConfig.calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
+                        headers: { 'Authorization': `Bearer ${savedToken.token}` }
+                    });
+                    const data = await res.json();
+                    if(data.error) throw new Error(data.error.message);
+
+                    const events = data.items || [];
+                    events.forEach(event => {
+                        if (!event.start.dateTime) return; // Skip all-day events
+
+                        const title = (event.summary || '').toLowerCase();
+                        const shouldIgnore = ignoreKeywords.some(keyword => title.includes(keyword));
+
+                        if (shouldIgnore) {
+                            ignoredCount++;
+                            return;
+                        }
+                        
+                        const start = new Date(event.start.dateTime);
+                        const end = new Date(event.end.dateTime);
+                        
+                        const rawStartHour = start.getHours() + (start.getMinutes() / 60);
+                        let rawEndHour = end.getHours() + (end.getMinutes() / 60);
+                        if (rawEndHour <= rawStartHour) rawEndHour += 24;
+                        const rawDuration = rawEndHour - rawStartHour;
+
+                        const startHour = roundToQuarterHour(rawStartHour);
+                        const duration = Math.max(0.25, roundToQuarterHour(rawDuration));
+                        
+                        if (notes.find(n => n.eventId === event.id)) return; 
+                        
+                        const newNote = {
+                            id: Date.now().toString() + Math.random(),
+                            eventId: event.id, 
+                            text: `${event.summary || 'Meeting'} #meeting`,
+                            quadrant: 'q2', 
+                            status: 'active',
+                            dirty: false, 
+                            deleted: false,
+                            timeBlocks: [{
+                                id: Date.now().toString() + Math.random(),
+                                date: dateStr,
+                                startHour: startHour,
+                                duration: duration
+                            }]
+                        };
+                        
+                        notes.push(newNote);
+                        importedCount++;
+                    });
+                }
+                
+                document.getElementById('sync-banner').style.display = 'none';
+                if (importedCount > 0 || ignoredCount > 0) {
+                    saveNotes();
+                    renderTrackerTimeline(); 
+                    showToast(`${importedCount} imported, ${ignoredCount} ignored.`);
+                } else {
+                    showToast("No new meetings found for this date.");
+                }
+                
+            } catch(e) {
+                console.error("Calendar Sync Error:", e);
+                document.getElementById('sync-banner').style.display = 'none';
+                showToast("Failed to fetch calendar events. Check your network or Apps Script Web App URL.");
+            }
+        }
+
+        async function performBackgroundSync() {
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (!savedToken || !savedToken.token) return showToast("Please sign in first to sync with Google Tasks.");
+            try {
+                document.getElementById('sync-banner').style.display = 'block';
+                if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
+                    gapi.client.setToken({ access_token: savedToken.token });
+                }
+                const response = await gapi.client.tasks.tasklists.list();
+                const remoteLists = response.result.items || [];
+                const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
+                let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
+                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) { const existingList = remoteLists.find(l => l.title === GAPI_LIST_NAMES[quadKey]); if (existingList) { gapiListIds[quadKey] = existingList.id; } else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: GAPI_LIST_NAMES[quadKey] }); gapiListIds[quadKey] = newListReq.result.id; } }
+                let remoteTaskMap = {};
+                for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
+                const syncSnapshot = JSON.parse(JSON.stringify(notes));
+                for (let sn of syncSnapshot) {
+                    if (sn.eventId) continue; 
+                    if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
+                    if (sn.dirty && !sn.deleted) {
+                        const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
+                        if (remoteObj) { if (remoteObj.listId !== targetListId) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id }); const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} } else { try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){} } delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId]; } else { try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} }
+                        sn.dirty = false;
+                    } else if (!sn.dirty && !sn.deleted) { const remoteObj = remoteTaskMap[sn.id]; if (remoteObj) { sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active'; sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null; delete remoteTaskMap[sn.id]; } }
+                }
+                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], eventId: null, dirty: false, deleted: false }); });
+                let newNotesArray = []; let syncedIds = new Set();
+                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
+                notes = newNotesArray; saveNotes(); handleSearch(); 
+                document.getElementById('sync-banner').style.display = 'none';
+                showToast("Successfully synced with Google Tasks!");
+            } catch (e) {
+                document.getElementById('sync-banner').style.display = 'none';
+                console.error(e);
+                showToast("Tasks sync failed. Check your API configuration.");
+            }
+        }
+
+        setLayout(currentLayout); renderNotes();
     </script>
 </body>
 </html>
