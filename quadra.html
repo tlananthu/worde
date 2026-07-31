@@ -115,7 +115,7 @@
         .icon-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
         .add-btn { color: var(--brand-primary); font-size: 20px; padding: 0; }
 
-        .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
+        .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; min-height: 0; }
         
         /* Note Styling */
         .note { background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
@@ -221,15 +221,15 @@
         .side-panel-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
         .close-sidebar-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
         
-        .inbox-tray, .calendar-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
+        .inbox-tray, .calendar-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; flex: 1 1 0; min-height: 0; }
         .calendar-tray, .closed-tray { border-top: 1px solid var(--border-color); }
         
         .tray-header { padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background 0.2s; }
         .tray-header:hover { background: #F9FAFB; }
         .tray-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main); }
         
-        .tray-content { max-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 0 24px; opacity: 0; transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease; background: #F8FAFC; }
-        .tray-content.open { max-height: 260px; padding: 16px 24px; opacity: 1; overflow-y: auto; border-bottom: 1px solid var(--border-color); }
+        .tray-content { max-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 0 24px; opacity: 0; transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease; background: #F8FAFC; flex: 0 0 auto; min-height: 0; }
+        .tray-content.open { max-height: calc(100vh - 220px); padding: 16px 24px; opacity: 1; overflow-y: auto; border-bottom: 1px solid var(--border-color); flex: 1 1 auto; }
 
         /* --- Settings Page View --- */
         #settings-view { display: none; flex-grow: 1; width: 100%; overflow-y: auto; background: #ffffff; padding: 40px; }
@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.8</span></h1>
+                <h1>Quadra <span class="version-badge">v8.9</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
