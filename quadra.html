@@ -265,7 +265,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v5.8</span></h1>
+                <h1>Quadra <span class="version-badge">v5.9</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -539,6 +539,11 @@
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <script>
+        // --- Helper Function: Round to 15-Minute Scale ---
+        function roundToQuarterHour(hoursVal) {
+            return Math.round(hoursVal * 4) / 4;
+        }
+
         // --- Toast Notification System ---
         function showToast(message) {
             const container = document.getElementById('toast-container');
@@ -576,10 +581,11 @@
             let blocks = note.timeBlocks || [];
             if (note.timeLogs && Object.keys(note.timeLogs).length > 0) {
                 Object.keys(note.timeLogs).forEach(date => {
-                    blocks.push({ id: Date.now().toString() + Math.random(), date: date, startHour: 9, duration: note.timeLogs[date] });
+                    blocks.push({ id: Date.now().toString() + Math.random(), date: date, startHour: 9, duration: roundToQuarterHour(note.timeLogs[date]) });
                 });
                 delete note.timeLogs; 
             }
+            blocks = blocks.map(b => ({ ...b, startHour: roundToQuarterHour(b.startHour), duration: roundToQuarterHour(b.duration) }));
             return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks, eventId: note.eventId || null, quadrant: note.quadrant || 'q2' };
         });
 
@@ -697,7 +703,8 @@
         }
 
         function decToTime(dec) {
-            let normalizedDec = dec % 24;
+            let roundedDec = roundToQuarterHour(dec);
+            let normalizedDec = roundedDec % 24;
             let h = Math.floor(normalizedDec);
             let m = Math.round((normalizedDec - h) * 60);
             if (m === 60) { h++; m = 0; }
@@ -815,8 +822,8 @@
                 }
 
                 appSchedule.forEach(block => {
-                    let start = block.startHour;
-                    let end = block.endHour;
+                    let start = roundToQuarterHour(block.startHour);
+                    let end = roundToQuarterHour(block.endHour);
 
                     if (start < 24) {
                         let renderEnd = Math.min(end, 24);
@@ -830,7 +837,7 @@
 
                     appSchedule.forEach(prevBlock => {
                         if (prevBlock.endHour > 24 && dtObj.date === dateStr) {
-                            let wrappedSpan = prevBlock.endHour - 24;
+                            let wrappedSpan = roundToQuarterHour(prevBlock.endHour - 24);
                             if (wrappedSpan > 0) {
                                 const overlay = document.createElement('div');
                                 overlay.className = 'schedule-overlay';
@@ -846,17 +853,18 @@
                 notes.forEach(note => {
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => {
-                        let blockStart = tb.startHour;
-                        let blockEnd = tb.startHour + tb.duration;
+                        let blockStart = roundToQuarterHour(tb.startHour);
+                        let duration = roundToQuarterHour(tb.duration);
+                        let blockEnd = blockStart + duration;
                         if (blockEnd < blockStart) {
                             blockEnd += 24;
                         }
-                        let actualDuration = blockEnd - blockStart;
+                        let actualDuration = roundToQuarterHour(blockEnd - blockStart);
 
                         if (tb.date === dateStr) {
-                            totalTimeRendered += tb.duration; 
+                            totalTimeRendered += duration; 
                             let renderStart = blockStart % 24;
-                            let renderDuration = tb.duration;
+                            let renderDuration = duration;
 
                             if (blockStart < 24 && blockEnd > 24) {
                                 renderDuration = 24 - blockStart; 
@@ -870,7 +878,7 @@
                             blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
                             blockEl.id = `block-${tb.id}`;
                             blockEl.style.top = `${renderStart * hourPx}px`;
-                            blockEl.style.height = `${renderDuration * hourPx}px`;
+                            blockEl.style.height = `${Math.max(15, renderDuration * hourPx)}px`;
                             
                             let displayTitle = note.text.split('\n')[0].substring(0, 40);
                             const actualEndHour = (blockStart + actualDuration) % 24;
@@ -898,7 +906,7 @@
                         } 
                         else if (tb.date === addDays(dateStr, -1)) {
                             if (blockStart < 24 && blockEnd > 24) {
-                                let overflowDuration = blockEnd - 24;
+                                let overflowDuration = roundToQuarterHour(blockEnd - 24);
                                 totalTimeRendered += overflowDuration; 
                                 const blockEl = document.createElement('div');
                                 const isMeeting = note.eventId || note.text.includes('#meeting');
@@ -906,7 +914,7 @@
                                 blockEl.className = 'logged-block' + (isMeeting ? ' is-meeting' : ` ${quadClass}`);
                                 blockEl.id = `block-overflow-${tb.id}`;
                                 blockEl.style.top = `0px`;
-                                blockEl.style.height = `${overflowDuration * hourPx}px`;
+                                blockEl.style.height = `${Math.max(15, overflowDuration * hourPx)}px`;
                                 
                                 let displayTitle = note.text.split('\n')[0].substring(0, 40);
                                 const actualEndHour = (blockStart + actualDuration) % 24;
@@ -932,7 +940,7 @@
                 colsContainer.appendChild(col);
             });
 
-            document.getElementById('trackerDailyTotal').innerText = `Total: ${totalTimeRendered}h`;
+            document.getElementById('trackerDailyTotal').innerText = `Total: ${roundToQuarterHour(totalTimeRendered)}h`;
 
             const scrollArea = document.getElementById('timelineScrollArea');
             if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
@@ -949,8 +957,8 @@
             dragState = {
                 noteId, blockId, isResize,
                 startY: e.clientY,
-                originalStart: block.startHour,
-                originalDuration: block.duration,
+                originalStart: roundToQuarterHour(block.startHour),
+                originalDuration: roundToQuarterHour(block.duration),
                 hasMoved: false
             };
             
@@ -964,15 +972,15 @@
             const hourPx = 60 * timelineZoom;
             
             const dy = e.clientY - dragState.startY;
-            const dHours = Math.round((dy / hourPx) * 4) / 4; 
+            const dHours = roundToQuarterHour(dy / hourPx); 
             
             const note = notes.find(n => n.id === dragState.noteId);
             const block = note.timeBlocks.find(b => b.id === dragState.blockId);
             
             if (dragState.isResize) {
-                block.duration = Math.max(0.25, dragState.originalDuration + dHours);
+                block.duration = Math.max(0.25, roundToQuarterHour(dragState.originalDuration + dHours));
             } else {
-                block.startHour = Math.max(0, Math.min(30 - block.duration, dragState.originalStart + dHours));
+                block.startHour = Math.max(0, Math.min(30 - block.duration, roundToQuarterHour(dragState.originalStart + dHours)));
             }
             
             renderTrackerTimeline();
@@ -998,11 +1006,7 @@
             
             const rect = ev.currentTarget.getBoundingClientRect();
             const y = ev.clientY - rect.top; 
-            let dropHour = Math.floor(y / hourPx);
-            
-            const remainder = y % hourPx;
-            if (remainder > (hourPx * 0.25) && remainder <= (hourPx * 0.75)) dropHour += 0.5;
-            if (remainder > (hourPx * 0.75)) dropHour += 1.0;
+            let dropHour = roundToQuarterHour(y / hourPx);
 
             openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
         }
@@ -1019,11 +1023,7 @@
             if (note) {
                 const rect = ev.currentTarget.getBoundingClientRect();
                 const y = ev.clientY - rect.top; 
-                let dropHour = Math.floor(y / hourPx);
-                
-                const remainder = y % hourPx;
-                if (remainder > (hourPx * 0.25) && remainder <= (hourPx * 0.75)) dropHour += 0.5;
-                if (remainder > (hourPx * 0.75)) dropHour += 1.0;
+                let dropHour = roundToQuarterHour(y / hourPx);
 
                 if (!note.timeBlocks) note.timeBlocks = [];
                 note.timeBlocks.push({ id: Date.now().toString(), date: dateStr, startHour: dropHour, duration: 1.0 });
@@ -1056,7 +1056,7 @@
                 
                 let activeBlock = (note.timeBlocks && note.timeBlocks.length > 0) ? note.timeBlocks[0] : null;
                 selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
-                hoursWorkedInput.value = activeBlock ? activeBlock.duration : '';
+                hoursWorkedInput.value = activeBlock ? roundToQuarterHour(activeBlock.duration) : '';
 
             } else { 
                 currentEditingId = null; 
@@ -1084,7 +1084,8 @@
             const infoText = document.getElementById('taskInfoInput').value.trim(); 
             const dueDate = document.getElementById('taskDueDate').value;
             const selectedDate = document.getElementById('taskSelectedDate').value;
-            const hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
+            let hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
+            if (!isNaN(hoursVal)) hoursVal = roundToQuarterHour(hoursVal);
 
             if (!titleText && !infoText) return closeTaskModal();
 
@@ -1125,14 +1126,14 @@
                     newBlocks.push({
                         id: Date.now().toString() + Math.random(),
                         date: selectedDate || (pendingTimelineContext ? pendingTimelineContext.date : todayStr),
-                        startHour: startH,
+                        startHour: roundToQuarterHour(startH),
                         duration: hoursVal
                     });
                 } else if (pendingTimelineContext) {
                     newBlocks.push({
                         id: Date.now().toString() + Math.random(),
                         date: pendingTimelineContext.date,
-                        startHour: pendingTimelineContext.startHour,
+                        startHour: roundToQuarterHour(pendingTimelineContext.startHour),
                         duration: 1.0
                     });
                 }
@@ -1162,13 +1163,13 @@
             editingBlockState = { noteId, blockId };
             
             document.getElementById('editBlockTaskName').innerText = note.text.split('\n')[0];
-            document.getElementById('editBlockHours').value = block.duration;
+            document.getElementById('editBlockHours').value = roundToQuarterHour(block.duration);
             document.getElementById('editTimeBlockModal').style.display = 'flex';
         }
         function closeEditBlockModal() { document.getElementById('editTimeBlockModal').style.display = 'none'; editingBlockState = null;}
         function saveTimeBlock() {
             if(!editingBlockState) return;
-            const newHours = parseFloat(document.getElementById('editBlockHours').value);
+            const newHours = roundToQuarterHour(parseFloat(document.getElementById('editBlockHours').value));
             const note = notes.find(n => n.id === editingBlockState.noteId);
             const block = note.timeBlocks.find(b => b.id === editingBlockState.blockId);
             
@@ -1227,9 +1228,7 @@
                     if (note.deleted || !note.timeBlocks) return;
                     note.timeBlocks.forEach(tb => { 
                         if(tb.date === dateStr) {
-                            let bEnd = tb.startHour + tb.duration;
-                            if (bEnd < tb.startHour) bEnd += 24;
-                            let dur = bEnd - tb.startHour;
+                            let dur = roundToQuarterHour(tb.duration);
                             dailyHrs += dur;
                             const tags = note.text.match(/(#[a-zA-Z0-9_]+)/g);
                             let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
@@ -1242,13 +1241,13 @@
                      plainTextLog += `\nDate: ${dateStr}\n------------------------\n`;
                      if(dailyHrs > 0) plainTextLog += dailyLog;
                      else plainTextLog += "No time logged.\n";
-                     plainTextLog += `Total: ${dailyHrs}h\n`;
+                     plainTextLog += `Total: ${roundToQuarterHour(dailyHrs)}h\n`;
                 }
                 overallTotal += dailyHrs;
             });
             
             if (currentTrackerMode === 'week') {
-                 plainTextLog += `\n========================\nWeekly Total: ${overallTotal}h\n`;
+                 plainTextLog += `\n========================\nWeekly Total: ${roundToQuarterHour(overallTotal)}h\n`;
             }
 
             navigator.clipboard.writeText(plainTextLog).then(() => showToast("Timesheet copied to clipboard!")).catch(err => showToast("Copy failed"));
@@ -1333,8 +1332,8 @@
 
                 return {
                     title: row.querySelector('.sched-title').value,
-                    startHour: startH,
-                    endHour: endH
+                    startHour: roundToQuarterHour(startH),
+                    endHour: roundToQuarterHour(endH)
                 };
             });
             localStorage.setItem('quadra_schedule', JSON.stringify(appSchedule));
@@ -1570,10 +1569,14 @@
                     const start = new Date(event.start.dateTime);
                     const end = new Date(event.end.dateTime);
                     
-                    const startHour = start.getHours() + (start.getMinutes() / 60);
-                    let endHour = end.getHours() + (end.getMinutes() / 60);
-                    if (endHour <= startHour) endHour += 24;
-                    const duration = endHour - startHour;
+                    const rawStartHour = start.getHours() + (start.getMinutes() / 60);
+                    let rawEndHour = end.getHours() + (end.getMinutes() / 60);
+                    if (rawEndHour <= rawStartHour) rawEndHour += 24;
+                    const rawDuration = rawEndHour - rawStartHour;
+
+                    // Round start hour and duration to 15-minute intervals
+                    const startHour = roundToQuarterHour(rawStartHour);
+                    const duration = Math.max(0.25, roundToQuarterHour(rawDuration));
                     
                     if (notes.find(n => n.eventId === event.id)) return; 
                     
