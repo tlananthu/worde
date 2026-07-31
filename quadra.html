@@ -115,7 +115,7 @@
         .icon-btn:hover { background: rgba(255,255,255,0.9); color: var(--brand-primary); }
         .add-btn { color: var(--brand-primary); font-size: 20px; padding: 0; }
 
-        .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; min-height: 0; }
+        .task-list { flex-grow: 1; overflow-y: auto; padding-bottom: 10px; scrollbar-width: thin; }
         
         /* Note Styling */
         .note { background-color: #ffffff; border: 1px solid rgba(0,0,0,0.05); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: flex-start; font-size: 14px; line-height: 1.5; cursor: grab; transition: transform 0.2s, box-shadow 0.2s; }
@@ -221,15 +221,15 @@
         .side-panel-header h2 { font-size: 16px; font-weight: 700; color: var(--text-main); margin: 0; }
         .close-sidebar-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
         
-        .inbox-tray, .calendar-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; min-height: 0; }
+        .inbox-tray, .calendar-tray, .closed-tray { display: flex; flex-direction: column; flex-shrink: 0; }
         .calendar-tray, .closed-tray { border-top: 1px solid var(--border-color); }
         
         .tray-header { padding: 12px 24px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #ffffff; transition: background 0.2s; }
         .tray-header:hover { background: #F9FAFB; }
         .tray-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main); }
         
-        .tray-content { display: none; flex-direction: column; padding: 0 24px; background: #F8FAFC; min-height: 0; }
-        .tray-content.open { display: flex; padding: 16px 24px; overflow-y: auto; border-bottom: 1px solid var(--border-color); max-height: calc(100vh - 220px); }
+        .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
+        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; max-height: calc(33vh - 40px); border-bottom: 1px solid var(--border-color); }
 
         /* --- Settings Page View --- */
         #settings-view { display: none; flex-grow: 1; width: 100%; overflow-y: auto; background: #ffffff; padding: 40px; }
@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.10</span></h1>
+                <h1>Quadra <span class="version-badge">v8.11</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -294,17 +294,17 @@
         </div>
         
         <div class="header-actions">
+            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks">🔄 Sync Tasks</button>
             <div class="view-toggle" id="viewToggleGroup">
-                <button id="btnKanban" onclick="setLayout('kanban')" title="Kanban" aria-label="Kanban">|||</button>
-                <button id="btnGrid" onclick="setLayout('grid')" title="Matrix" aria-label="Matrix">⊞</button>
-                <button id="btnOverdue" onclick="setLayout('overdue')" title="Overdue" aria-label="Overdue">✕</button>
-                <button id="btnTracker" onclick="setLayout('tracker')" title="Tracker" aria-label="Tracker">⧗</button>
+                <button id="btnGrid" onclick="setLayout('grid')">⊞ Matrix</button>
+                <button id="btnKanban" onclick="setLayout('kanban')">⏸ Kanban</button>
+                <button id="btnOverdue" onclick="setLayout('overdue')">⚠️ Overdue</button>
+                <button id="btnTracker" onclick="setLayout('tracker')">⏱️ Tracker</button>
             </div>
-            <button class="btn btn-outline" onclick="performBackgroundSync()" title="Sync tasks with Google Tasks" aria-label="Sync tasks">↻</button>
-            <button id="authorize_button" class="btn" onclick="handleAuthClick()">🔑</button>
-            <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">🔑🚪</button>
-            <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️</button>
-            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">↰</button>
+            <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
+            <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
+            <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️ Settings</button>
+            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">← Back</button>
         </div>
     </header>
 
@@ -335,7 +335,7 @@
                 <div class="tray-header" onclick="toggleInboxTray()">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <h3>Inbox (<span id="inbox-count">0</span>)</h3>
-                        <button class="icon-btn add-btn" onclick="event.stopPropagation(); openTaskModal('inbox', null, event)" title="Add Task">+</button>
+                        <button class="icon-btn add-btn" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
                     </div>
                     <span id="inbox-chevron">▼</span>
                 </div>
@@ -348,7 +348,7 @@
             <div class="calendar-tray">
                 <div class="tray-header" onclick="toggleCalendarTray()">
                     <h3>Calendar Events (<span id="calendar-count">0</span>)</h3>
-                    <span id="calendar-chevron">▶</span>
+                    <span id="calendar-chevron">▼</span>
                 </div>
                 <div class="tray-content" id="calendar-tray-content">
                     <div class="task-list" id="list-calendar"></div>
@@ -358,7 +358,7 @@
             <div class="closed-tray">
                 <div class="tray-header" onclick="toggleClosedTray()">
                     <h3>Completed (<span id="closed-count">0</span>)</h3>
-                    <span id="closed-chevron">▶</span>
+                    <span id="closed-chevron">▲</span>
                 </div>
                 <div class="tray-content" id="closed-tray-content">
                     <div class="task-list" id="list-closed"></div>
@@ -1659,31 +1659,9 @@
         function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
 
         function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
-        function closeAllTrayContents() {
-            ['inbox-tray-content', 'calendar-tray-content', 'closed-tray-content'].forEach(id => {
-                const content = document.getElementById(id);
-                const chevronId = id.replace('-content', '-chevron');
-                const chevron = document.getElementById(chevronId);
-                if (content) content.classList.remove('open');
-                if (chevron) chevron.innerText = '▶';
-            });
-        }
-        function toggleTray(contentId, chevronId) {
-            const content = document.getElementById(contentId);
-            const chevron = document.getElementById(chevronId);
-            if (!content || !chevron) return;
-
-            const shouldOpen = !content.classList.contains('open');
-            closeAllTrayContents();
-
-            if (shouldOpen) {
-                content.classList.add('open');
-                chevron.innerText = '▼';
-            }
-        }
-        function toggleClosedTray() { toggleTray('closed-tray-content', 'closed-chevron'); }
-        function toggleCalendarTray() { toggleTray('calendar-tray-content', 'calendar-chevron'); }
-        function toggleInboxTray() { toggleTray('inbox-tray-content', 'inbox-chevron'); }
+        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleCalendarTray() { const content = document.getElementById('calendar-tray-content'); const chevron = document.getElementById('calendar-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
 
         function checkConfigState() {
             if (!appConfig.clientId && appConfig.calSource === 'google') {
