@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Private Portfolio V1.1</title>
+    <title>Anantha | Financial Goals V1.2</title>
     <style>
         :root {
             --bg-color: #0f1115;
             --surface-color: #1a1d24;
+            --surface-light: #252a34;
             --text-primary: #e2e8f0;
             --text-secondary: #94a3b8;
             --accent-color: #38bdf8;
-            --success-color: #34d399;
+            --danger-color: #f43f5e;
             --border-color: #2dd4bf20;
             --font-family: system-ui, -apple-system, sans-serif;
         }
@@ -28,6 +29,8 @@
             font-family: var(--font-family);
             line-height: 1.6;
             padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         header {
@@ -46,84 +49,151 @@
             text-transform: uppercase;
         }
 
-        .currency-toggle select {
-            background: var(--surface-color);
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            font-family: inherit;
-            cursor: pointer;
+        .version {
+            color: var(--text-secondary);
+            font-family: monospace;
         }
 
-        .dashboard-grid {
+        .dashboard-layout {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
         }
 
-        .card {
+        @media (max-width: 800px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Form Styles */
+        .form-card {
             background-color: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: fit-content;
         }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .card-value {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .trend-positive {
-            color: var(--success-color);
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .data-list {
-            list-style: none;
-        }
-
-        .data-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .data-item:last-child {
-            border-bottom: none;
-        }
-
-        .item-name {
-            font-weight: 500;
-        }
-
-        .item-value {
+        .form-card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
             color: var(--accent-color);
         }
-        
-        .alert-banner {
-            background-color: rgba(56, 189, 248, 0.1);
-            border-left: 4px solid var(--accent-color);
-            padding: 1rem;
-            margin-bottom: 2rem;
-            border-radius: 0 4px 4px 0;
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            background: var(--surface-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Goals Grid */
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .goal-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .goal-header {
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--surface-light);
+        }
+
+        .goal-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .delete-btn {
+            background: none;
+            color: var(--text-secondary);
+            width: auto;
+            padding: 0;
+            font-size: 1.2rem;
+        }
+        
+        .delete-btn:hover {
+            color: var(--danger-color);
+        }
+
+        .goal-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .goal-stat span:first-child {
+            color: var(--text-secondary);
+        }
+
+        .target-amount {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dotted var(--surface-light);
+            text-align: right;
+        }
+
+        .target-amount span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .target-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
         }
     </style>
 </head>
@@ -131,146 +201,158 @@
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="currency-toggle">
-            <select id="currencySelector" onchange="app.updateCurrency()">
-                <option value="INR">Base: INR (₹)</option>
-                <option value="AUD">View: AUD ($)</option>
-            </select>
-        </div>
+        <div class="version">v1.2 (Target Calculator)</div>
     </header>
 
-    <div class="alert-banner" id="maturityAlert">
-        <span><strong>Portfolio Alert:</strong> Asset maturity scheduled for current month. Review reinvestment allocation.</span>
-        <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:inherit;cursor:pointer;">✕</button>
+    <div class="dashboard-layout">
+        <!-- Input Form -->
+        <aside class="form-card">
+            <h2>Define New Goal</h2>
+            <form id="goalForm">
+                <div class="form-group">
+                    <label for="goalName">Goal Name</label>
+                    <input type="text" id="goalName" required placeholder="e.g., Higher Education">
+                </div>
+                <div class="form-group">
+                    <label for="currentValue">Current Budgeted Value (₹)</label>
+                    <input type="number" id="currentValue" required placeholder="1000000" min="0" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="years">Years Till Closure</label>
+                    <input type="number" id="years" required placeholder="8" min="1" max="50">
+                </div>
+                <div class="form-group">
+                    <label for="inflation">YoY Inflation Expected (%)</label>
+                    <input type="number" id="inflation" required placeholder="6" min="0" max="100" step="0.1">
+                </div>
+                <button type="submit">Calculate & Save Goal</button>
+            </form>
+        </aside>
+
+        <!-- Goals Display Area -->
+        <main>
+            <div class="goals-grid" id="goalsContainer">
+                <!-- Goal cards will be injected here via JavaScript -->
+            </div>
+        </main>
     </div>
 
-    <main class="dashboard-grid">
-        <!-- Net Worth Card -->
-        <div class="card">
-            <div class="card-header">
-                <span>Total Managed Assets</span>
-            </div>
-            <div class="card-value" id="totalAssets">₹0.00</div>
-            <div class="trend-positive">↑ +2.4% this month</div>
-        </div>
-
-        <!-- Passive Income Streams -->
-        <div class="card">
-            <div class="card-header">
-                <span>Yield Engines</span>
-                <span>Monthly</span>
-            </div>
-            <ul class="data-list" id="yieldList">
-                <!-- Populated by JS -->
-            </ul>
-        </div>
-
-        <!-- Equities & Markets -->
-        <div class="card">
-            <div class="card-header">
-                <span>Market Holdings</span>
-                <span>NSE / Global</span>
-            </div>
-            <ul class="data-list" id="marketList">
-                <!-- Populated by JS -->
-            </ul>
-        </div>
-    </main>
-
     <script>
-        // Anantha UI Logic - V1.1
+        // Anantha V1.2 Logic
         const app = {
-            // Default initial state
-            data: {
-                settings: {
-                    currency: 'INR'
-                },
-                assets: {
-                    yieldStreams: [
-                        { name: "Vehicle Lease Operations", value: 12500 },
-                        { name: "Fixed Term Yield", value: 4200 }
-                    ],
-                    markets: [
-                        { name: "Core Equities (FMCG)", value: 450000 },
-                        { name: "Index Funds", value: 280000 }
-                    ]
-                }
-            },
+            goals: [],
 
-            // Format numbers based on selected currency
-            formatCurrency(amount) {
-                const isAUD = this.data.settings.currency === 'AUD';
-                // Simple static conversion rate for UI demo purposes
-                const rate = isAUD ? 0.018 : 1; 
-                const converted = amount * rate;
-                
-                return new Intl.NumberFormat(isAUD ? 'en-AU' : 'en-IN', {
-                    style: 'currency',
-                    currency: isAUD ? 'AUD' : 'INR',
-                    maximumFractionDigits: 0
-                }).format(converted);
-            },
-
-            // Initialize app and load from localStorage
             init() {
-                const savedData = localStorage.getItem('ananthaPortfolioState');
-                if (savedData) {
-                    this.data = JSON.parse(savedData);
-                    document.getElementById('currencySelector').value = this.data.settings.currency;
+                // Load saved goals from local storage
+                const savedGoals = localStorage.getItem('ananthaGoalsV1_2');
+                if (savedGoals) {
+                    this.goals = JSON.parse(savedGoals);
                 }
+                
+                // Bind form submission
+                document.getElementById('goalForm').addEventListener('submit', (e) => this.addGoal(e));
+                
                 this.render();
             },
 
-            // Save state securely to local browser storage
-            saveState() {
-                localStorage.setItem('ananthaPortfolioState', JSON.stringify(this.data));
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                }).format(amount);
             },
 
-            updateCurrency() {
-                this.data.settings.currency = document.getElementById('currencySelector').value;
+            calculateTarget(presentValue, years, inflationRate) {
+                // Formula: Target = PV * (1 + rate)^years
+                const rateAsDecimal = inflationRate / 100;
+                const targetValue = presentValue * Math.pow((1 + rateAsDecimal), years);
+                return targetValue;
+            },
+
+            addGoal(event) {
+                event.preventDefault(); // Prevent page reload
+
+                // Get values from form
+                const name = document.getElementById('goalName').value;
+                const currentValue = parseFloat(document.getElementById('currentValue').value);
+                const years = parseInt(document.getElementById('years').value);
+                const inflation = parseFloat(document.getElementById('inflation').value);
+
+                // Calculate target
+                const targetValue = this.calculateTarget(currentValue, years, inflation);
+
+                // Create goal object
+                const newGoal = {
+                    id: Date.now().toString(), // unique ID
+                    name: name,
+                    currentValue: currentValue,
+                    years: years,
+                    inflation: inflation,
+                    targetValue: targetValue
+                };
+
+                // Add to array and save
+                this.goals.push(newGoal);
+                this.saveState();
+                
+                // Reset form and re-render
+                document.getElementById('goalForm').reset();
+                this.render();
+            },
+
+            deleteGoal(id) {
+                this.goals = this.goals.filter(goal => goal.id !== id);
                 this.saveState();
                 this.render();
             },
 
+            saveState() {
+                localStorage.setItem('ananthaGoalsV1_2', JSON.stringify(this.goals));
+            },
+
             render() {
-                // Calculate Total
-                let total = 0;
-                
-                // Render Yield Streams
-                const yieldContainer = document.getElementById('yieldList');
-                yieldContainer.innerHTML = '';
-                this.data.assets.yieldStreams.forEach(item => {
-                    yieldContainer.innerHTML += `
-                        <li class="data-item">
-                            <span class="item-name">${item.name}</span>
-                            <span class="item-value">${this.formatCurrency(item.value)}</span>
-                        </li>
-                    `;
-                    total += item.value;
-                });
+                const container = document.getElementById('goalsContainer');
+                container.innerHTML = ''; // Clear current grid
 
-                // Render Market Holdings
-                const marketContainer = document.getElementById('marketList');
-                marketContainer.innerHTML = '';
-                this.data.assets.markets.forEach(item => {
-                    marketContainer.innerHTML += `
-                        <li class="data-item">
-                            <span class="item-name">${item.name}</span>
-                            <span class="item-value">${this.formatCurrency(item.value)}</span>
-                        </li>
-                    `;
-                    total += item.value;
-                });
+                if (this.goals.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">No goals defined yet. Create one to get started.</p>';
+                    return;
+                }
 
-                // Update Total Display
-                document.getElementById('totalAssets').innerText = this.formatCurrency(total);
+                // Render each goal as a card
+                this.goals.forEach(goal => {
+                    const card = document.createElement('div');
+                    card.className = 'goal-card';
+                    card.innerHTML = `
+                        <div class="goal-header">
+                            <div class="goal-title">${goal.name}</div>
+                            <button class="delete-btn" onclick="app.deleteGoal('${goal.id}')" title="Delete Goal">✕</button>
+                        </div>
+                        <div class="goal-stat">
+                            <span>Current Budget:</span>
+                            <span>${this.formatCurrency(goal.currentValue)}</span>
+                        </div>
+                        <div class="goal-stat">
+                            <span>Timeline:</span>
+                            <span>${goal.years} Years</span>
+                        </div>
+                        <div class="goal-stat">
+                            <span>Expected Inflation:</span>
+                            <span>${goal.inflation}% YoY</span>
+                        </div>
+                        <div class="target-amount">
+                            <span>Required at Closure</span>
+                            <div class="target-value">${this.formatCurrency(goal.targetValue)}</div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
             }
         };
 
-        // Boot the application
-        document.addEventListener('DOMContentLoaded', () => {
-            app.init();
-        });
+        // Boot the application when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
 </html>
