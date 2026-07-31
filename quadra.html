@@ -87,7 +87,7 @@
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: var(--bg-main); }
         
-        #backBtn, #signout_button, #authorize_button { display: none; }
+        #backNavBtn { display: none; }
 
         /* Overflow Menu Styling */
         .overflow-menu-container { position: relative; display: inline-block; }
@@ -288,7 +288,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v7.6</span></h1>
+                <h1>Quadra <span class="version-badge">v7.7</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -322,7 +322,6 @@
             <button id="authorize_button" class="btn" onclick="handleAuthClick()">Sign In</button>
             <button id="signout_button" class="btn btn-outline" onclick="handleSignoutClick()">Sign Out</button>
             <button id="settingsNavBtn" class="btn btn-outline" onclick="openSettingsPage()">⚙️ Settings</button>
-            <button id="backNavBtn" class="btn btn-outline" style="display: none;" onclick="closeSettingsPage()">← Back</button>
         </div>
     </header>
 
@@ -662,6 +661,16 @@
         const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
         document.getElementById('trackerDate').value = todayStr;
 
+        // --- Tag Parser (Globally Hoisted) ---
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
+        
+        function parseTags(str) { 
+            let html = escapeHTML(str);
+            html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
+            html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
+            return html;
+        }
+
         // --- Layout Management ---
         let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
         let currentTrackerMode = 'day'; 
@@ -710,7 +719,6 @@
             document.getElementById('searchHeaderContainer').style.display = 'block';
             document.getElementById('viewToggleGroup').style.display = 'flex';
             document.getElementById('settingsNavBtn').style.display = 'inline-block';
-            document.getElementById('backNavBtn').style.display = 'none';
         }
 
         function toggleOverflowMenu(e) {
@@ -748,7 +756,6 @@
             document.getElementById('searchHeaderContainer').style.display = 'none';
             document.getElementById('viewToggleGroup').style.display = 'none';
             document.getElementById('settingsNavBtn').style.display = 'none';
-            document.getElementById('backNavBtn').style.display = 'inline-block';
 
             document.getElementById('configClientId').value = appConfig.clientId || '';
             document.getElementById('configApiKey').value = appConfig.apiKey || '';
