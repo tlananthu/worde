@@ -250,6 +250,19 @@
             align-items: center;
         }
 
+        /* Dotted Underline Styling for Hashtags and Person Tags inside Task Edit Inputs */
+        #taskTitleInput {
+            background-image: linear-gradient(to right, var(--brand-primary) 33%, rgba(255,255,255,0) 0%);
+            background-position: bottom;
+            background-size: 4px 1px;
+            background-repeat: repeat-x;
+        }
+        
+        /* Custom highlight styling for textareas containing tags/people */
+        .tag-highlight-hint {
+            text-decoration: underline dotted var(--brand-primary);
+        }
+
         /* Toast Notification System */
         #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
         .toast { background: var(--text-main); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto; }
@@ -272,7 +285,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.8</span></h1>
+                <h1>Quadra <span class="version-badge">v6.9</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -507,11 +520,11 @@
             <h3 id="taskModalTitle" style="font-size: 18px; font-weight: 700;">Task Details</h3>
             
             <div class="form-group">
-                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person)" style="font-weight: 600; font-size: 15px;">
+                <input type="text" id="taskTitleInput" placeholder="Text (use #tags or @person - dotted underlined as you type)" style="font-weight: 600; font-size: 15px; text-decoration-style: dotted; text-decoration-line: underline; text-decoration-color: var(--brand-primary);">
             </div>
 
             <div class="form-group">
-                <textarea id="taskInfoInput" rows="8" placeholder="task info"></textarea>
+                <textarea id="taskInfoInput" rows="8" placeholder="task info" style="text-decoration-style: dotted; text-decoration-line: underline; text-decoration-color: var(--brand-primary);"></textarea>
             </div>
 
             <div class="form-group form-row-inline">
@@ -1067,9 +1080,22 @@
             }
         }
 
-        // --- Modals ---
+        // --- Modals & Keyboard Escape Handler ---
         let currentEditingId = null; let currentAddingQuadrant = null;
         
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const taskModal = document.getElementById('taskModal');
+                const editBlockModal = document.getElementById('editTimeBlockModal');
+                if (taskModal && taskModal.style.display === 'flex') {
+                    closeTaskModal();
+                }
+                if (editBlockModal && editBlockModal.style.display === 'flex') {
+                    closeEditBlockModal();
+                }
+            }
+        });
+
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
             if (event) event.stopPropagation();
             const modal = document.getElementById('taskModal');
@@ -1521,13 +1547,12 @@
         // --- Robust Universal Timezone ICS Parser ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
-            let vTimezones = {}; // Map of TZID -> parsed VTIMEZONE blocks with standard/daylight offsets
+            let vTimezones = {};
             let lines = icsText.split(/\r\n|\n|\r/);
             let currentEvent = null;
             let currentTzId = null;
-            let currentTzProp = null; // STANDARD or DAYLIGHT
+            let currentTzProp = null;
 
-            // Pass 1: Parse VTIMEZONE definitions to dynamically read any global timezone rules
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i];
                 if (line.startsWith('BEGIN:VTIMEZONE')) {
@@ -1558,7 +1583,6 @@
                 }
             }
 
-            // Fallback offset dictionary for common Microsoft / Outlook timezone strings if VTIMEZONE blocks are absent
             const fallbackOffsets = {
                 'AUS EASTERN STANDARD TIME': 10,
                 'E. AUSTRALIA STANDARD TIME': 10,
@@ -1604,7 +1628,6 @@
                 let dtStartVal = ev[dtStartKey];
                 let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
 
-                // Universal Date Converter using native browser timezone and dynamic offsets
                 let parseUniversalDate = (keyName, valStr) => {
                     let clean = valStr.trim();
                     let match = clean.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?Z?$/);
@@ -1626,26 +1649,22 @@
 
                         if (tzidMatch) {
                             let tzidKey = tzidMatch[1].trim();
-                            // Check parsed VTIMEZONE blocks first
                             if (vTimezones[tzidKey]) {
                                 let tzData = vTimezones[tzidKey]['DAYLIGHT'] || vTimezones[tzidKey]['STANDARD'];
                                 if (tzData && tzData.offsetTo !== undefined) {
                                     sourceOffset = tzData.offsetTo;
                                 }
                             }
-                            // Fallback to standard dictionary if not found in VTIMEZONE
                             if (sourceOffset === undefined) {
                                 sourceOffset = fallbackOffsets[tzidKey.toUpperCase()];
                             }
                         }
 
                         if (sourceOffset !== undefined) {
-                            // Compute net offset difference between the event's source timezone and browser local timezone
                             let localBrowserOffsetHours = -new Date().getTimezoneOffset() / 60;
                             let netOffsetDiff = localBrowserOffsetHours - sourceOffset;
                             dateObj = new Date(y, m, d, h + netOffsetDiff, min, s);
                         } else {
-                            // Default fallback if no timezone identifier is attached
                             dateObj = new Date(y, m, d, h, min, s);
                         }
                     }
