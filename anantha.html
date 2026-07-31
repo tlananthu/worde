@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Financial Goals V1.5</title>
+    <title>Anantha | Financial Goals V1.6</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -15,6 +15,7 @@
             --danger-color: #f43f5e;
             --warning-color: #fbbf24;
             --edu-color: #a78bfa;
+            --success-color: #34d399;
             --border-color: #2dd4bf20;
             --font-family: system-ui, -apple-system, sans-serif;
         }
@@ -70,8 +71,21 @@
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
 
         /* Goals Grid */
-        .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        .goal-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; position: relative; display: flex; flex-direction: column; }
+        .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+        
+        .goal-card { 
+            background-color: var(--surface-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            padding: 1.5rem; 
+            display: flex; 
+            flex-direction: column; 
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .goal-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.3); border-color: var(--accent-color); }
+        
         .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
         .goal-card.education-type { border-top: 3px solid var(--edu-color); }
         
@@ -79,7 +93,7 @@
         .goal-title { font-weight: 600; font-size: 1.1rem; }
         .goal-type-badge { font-size: 0.7rem; background: var(--surface-light); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); margin-left: 0.5rem; vertical-align: middle;}
         
-        .card-actions { display: flex; gap: 0.75rem; }
+        .card-actions { display: flex; gap: 0.75rem; z-index: 10; }
         .icon-btn { background: none; color: var(--text-secondary); width: auto; padding: 0; font-size: 1.1rem; }
         .icon-btn:hover { color: var(--accent-color); }
         .icon-btn.delete:hover { color: var(--danger-color); }
@@ -91,16 +105,39 @@
         .instrument-box span { color: var(--text-secondary); display: block; margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;}
         .instrument-box strong { color: var(--accent-color); font-weight: 500; }
 
-        .target-amount { margin-top: 0.5rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); text-align: right; }
-        .target-amount span { display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
-        .target-value { font-size: 1.5rem; font-weight: 700; color: var(--accent-color); }
+        .value-tiers { display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); }
+        .value-tier { display: flex; justify-content: space-between; align-items: flex-end; }
+        .value-tier span { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+        .tier-value { font-weight: 700; }
+        .tier-value.pv { font-size: 1.1rem; color: var(--text-primary); }
+        .tier-value.fv { font-size: 1.4rem; color: var(--accent-color); }
+
+        .investment-status { margin-top: 1rem; padding: 0.75rem; background: var(--surface-light); border-radius: 6px; font-size: 0.85rem; }
+        .investment-header { display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+        .investment-amount { color: var(--success-color); font-weight: 600; }
+        .user-instrument { color: var(--text-secondary); font-size: 0.75rem; font-style: italic; }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-content {
+            background: var(--surface-color); padding: 2rem; border-radius: 8px;
+            width: 90%; max-width: 400px; border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); }
+        .close-modal { position: absolute; top: 1rem; right: 1rem; background: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; border: none; padding: 0; width: auto; }
+        .close-modal:hover { color: var(--danger-color); }
     </style>
 </head>
 <body>
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v1.5 (Education Timeline)</div>
+        <div class="version">v1.6 (Tracking & Present Value)</div>
     </header>
 
     <div class="dashboard-layout">
@@ -205,13 +242,34 @@
         </main>
     </div>
 
+    <!-- Investment Modal -->
+    <div class="modal-overlay" id="investModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="app.closeModal()">✕</button>
+            <h3 id="modalGoalName">Track Investment</h3>
+            <form id="investForm" onsubmit="app.saveInvestment(event)">
+                <input type="hidden" id="modalGoalId">
+                <div class="form-group">
+                    <label for="investAmount">Existing Invested Value (₹)</label>
+                    <input type="number" id="investAmount" required placeholder="50000" min="0" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="investInstrument">Instrument Type / Account</label>
+                    <input type="text" id="investInstrument" required placeholder="e.g., HDFC Flexi-Cap MF, SBI FD">
+                </div>
+                <button type="submit" style="background-color: var(--success-color);">Update Portfolio</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         const app = {
             goals: [],
             editingId: null,
 
             init() {
-                const savedGoals = localStorage.getItem('ananthaGoalsV1_5');
+                // Key upgraded to V1_6
+                const savedGoals = localStorage.getItem('ananthaGoalsV1_6');
                 if (savedGoals) {
                     this.goals = JSON.parse(savedGoals);
                 }
@@ -231,7 +289,6 @@
                 const educationFields = document.getElementById('educationFields');
                 const inflationLabel = document.getElementById('inflationLabel');
 
-                // Reset standard requirements
                 document.getElementById('currentValue').required = false;
                 document.getElementById('years').required = false;
                 document.getElementById('monthlyExpenses').required = false;
@@ -246,7 +303,6 @@
                     retirementFields.style.display = 'none';
                     educationFields.style.display = 'none';
                     inflationLabel.innerText = "Expected YoY Inflation (%)";
-                    
                     document.getElementById('currentValue').required = true;
                     document.getElementById('years').required = true;
                 } else if (type === 'retirement') {
@@ -254,71 +310,67 @@
                     retirementFields.style.display = 'block';
                     educationFields.style.display = 'none';
                     inflationLabel.innerText = "Expected YoY Inflation (%)";
-                    
                     document.getElementById('monthlyExpenses').required = true;
                     document.getElementById('yearsToRetire').required = true;
                     document.getElementById('yearsInRetirement').required = true;
                     document.getElementById('postRetirementReturn').required = true;
-                    
-                    if(!document.getElementById('goalName').value) {
-                        document.getElementById('goalName').value = "Retirement Fund";
-                    }
+                    if(!document.getElementById('goalName').value) document.getElementById('goalName').value = "Retirement Fund";
                 } else if (type === 'education') {
                     standardFields.style.display = 'none';
                     retirementFields.style.display = 'none';
                     educationFields.style.display = 'block';
                     inflationLabel.innerText = "Expected Education Fee Inflation (%)";
-                    
                     document.getElementById('eduCurrentFees').required = true;
                     document.getElementById('eduCostDegree').required = true;
-
-                    if(!document.getElementById('goalName').value) {
-                        document.getElementById('goalName').value = "Kids Education Fund";
-                    }
+                    if(!document.getElementById('goalName').value) document.getElementById('goalName').value = "Kids Education Fund";
                 }
             },
 
-            calculateStandardTarget(presentValue, years, inflationRate) {
-                return presentValue * Math.pow((1 + (inflationRate / 100)), years);
+            // Calculations
+            calcRetirementPV(monthlyExp, yearsInRetirement, inflationRate, returnRate) {
+                const annualExp = monthlyExp * 12;
+                const rRate = returnRate / 100;
+                const iRate = inflationRate / 100;
+                const realReturn = ((1 + rRate) / (1 + iRate)) - 1;
+
+                if (realReturn <= 0) return annualExp * yearsInRetirement;
+                return annualExp * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn) * (1 + realReturn);
             },
 
-            calculateRetirementCorpus(monthlyExp, yearsToRetire, yearsInRetirement, inflationRate, returnRate) {
+            calcRetirementFV(monthlyExp, yearsToRetire, yearsInRetirement, inflationRate, returnRate) {
                 const annualExp = monthlyExp * 12;
                 const expAtRetirement = annualExp * Math.pow((1 + (inflationRate / 100)), yearsToRetire);
                 const rRate = returnRate / 100;
                 const iRate = inflationRate / 100;
                 const realReturn = ((1 + rRate) / (1 + iRate)) - 1;
 
-                let corpus = 0;
-                if (realReturn <= 0) {
-                    corpus = expAtRetirement * yearsInRetirement;
-                } else {
-                    corpus = expAtRetirement * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn) * (1 + realReturn);
-                }
-                return corpus;
+                if (realReturn <= 0) return expAtRetirement * yearsInRetirement;
+                return expAtRetirement * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn) * (1 + realReturn);
             },
 
-            calculateEducationCorpus(children, grade, currentFees, eduInf, cost11_12, costDegree, costHigher) {
+            calcEducationPV(children, grade, currentFees, cost11_12, costDegree, costHigher) {
+                let yearsTo10 = Math.max(0, 10 - grade);
+                let totalToday = (yearsTo10 * currentFees) + cost11_12 + costDegree + costHigher;
+                return totalToday * children;
+            },
+
+            calcEducationFV(children, grade, currentFees, eduInf, cost11_12, costDegree, costHigher) {
                 const r = eduInf / 100;
                 let currentYearFee = currentFees;
-                
-                // 1. Calculate cascading Schooling fees till 10th
                 let schoolingCost = 0;
+                
                 let yearsTo10 = Math.max(0, 10 - grade);
                 for (let i = 1; i <= yearsTo10; i++) {
                     currentYearFee = currentYearFee * (1 + r);
                     schoolingCost += currentYearFee;
                 }
 
-                // 2. Calculate 11th & 12th (Starts in: 11 - grade years)
                 let yearsTo11 = Math.max(0, 11 - grade);
                 let futureCost11_12 = cost11_12 ? (cost11_12 * Math.pow(1 + r, yearsTo11)) : 0;
 
-                // 3. Calculate Degree (Starts in: 13 - grade years)
                 let yearsToDegree = Math.max(0, 13 - grade);
                 let futureCostDegree = costDegree ? (costDegree * Math.pow(1 + r, yearsToDegree)) : 0;
 
-                // 4. Calculate Higher Studies (Starts roughly in: 16 - grade years)
                 let yearsToHigher = Math.max(0, 16 - grade);
                 let futureCostHigher = costHigher ? (costHigher * Math.pow(1 + r, yearsToHigher)) : 0;
 
@@ -327,17 +379,13 @@
             },
 
             suggestInstrument(type, years) {
-                if (type === 'retirement') {
-                    return "Index Funds + EPF/PPF (Accumulation) ➔ SWP + SCSS (Withdrawal Phase)";
-                }
+                if (type === 'retirement') return "Index Funds + EPF/PPF (Accumulation) ➔ SWP + SCSS (Withdrawal)";
                 if (type === 'education') {
-                    if (years <= 3) return "Arbitrage Funds & FDs for immediate school fees. Shift degree funds here soon.";
+                    if (years <= 3) return "Arbitrage Funds & FDs. Shift degree funds here soon.";
                     if (years <= 7) return "Balanced Advantage Funds (for approaching degree costs).";
-                    return "Flexi-Cap Equity MFs & Nifty 50 Index. Shift to Debt 3 years before college starts.";
+                    return "Flexi-Cap Equity MFs & Nifty 50 Index. Shift to Debt 3 yrs before college.";
                 }
-                
-                // Standard Goals
-                if (years <= 3) return "Liquid Mutual Funds, Bank FDs, or Arbitrage Funds (Capital Protection)";
+                if (years <= 3) return "Liquid Mutual Funds, Bank FDs, or Arbitrage Funds";
                 if (years <= 7) return "Balanced Advantage Funds or Aggressive Hybrid Funds";
                 return "Flexi-Cap Equity MFs & Nifty 50 Index Funds (Wealth Creation)";
             },
@@ -349,28 +397,45 @@
                 const name = document.getElementById('goalName').value;
                 const inflation = parseFloat(document.getElementById('inflation').value);
 
+                // Preserve existing investment data if editing
+                let existingInvested = 0;
+                let existingInstrument = "";
+                if (this.editingId) {
+                    const existingGoal = this.goals.find(g => g.id === this.editingId);
+                    if (existingGoal) {
+                        existingInvested = existingGoal.investedValue || 0;
+                        existingInstrument = existingGoal.investedInstrument || "";
+                    }
+                }
+
                 let goalData = {
                     id: this.editingId || Date.now().toString(),
                     type: type,
                     name: name,
-                    inflation: inflation
+                    inflation: inflation,
+                    investedValue: existingInvested,
+                    investedInstrument: existingInstrument
                 };
 
                 if (type === 'standard') {
                     goalData.currentValue = parseFloat(document.getElementById('currentValue').value);
                     goalData.years = parseInt(document.getElementById('years').value);
-                    goalData.targetValue = this.calculateStandardTarget(goalData.currentValue, goalData.years, inflation);
+                    
+                    goalData.presentValue = goalData.currentValue;
+                    goalData.targetValue = goalData.currentValue * Math.pow((1 + (inflation / 100)), goalData.years);
                     goalData.instrument = this.suggestInstrument(type, goalData.years);
-                } else if (type === 'retirement') {
+                } 
+                else if (type === 'retirement') {
                     goalData.monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value);
                     goalData.yearsToRetire = parseInt(document.getElementById('yearsToRetire').value);
                     goalData.yearsInRetirement = parseInt(document.getElementById('yearsInRetirement').value);
                     goalData.postRetirementReturn = parseFloat(document.getElementById('postRetirementReturn').value);
-                    goalData.targetValue = this.calculateRetirementCorpus(
-                        goalData.monthlyExpenses, goalData.yearsToRetire, goalData.yearsInRetirement, inflation, goalData.postRetirementReturn
-                    );
+                    
+                    goalData.presentValue = this.calcRetirementPV(goalData.monthlyExpenses, goalData.yearsInRetirement, inflation, goalData.postRetirementReturn);
+                    goalData.targetValue = this.calcRetirementFV(goalData.monthlyExpenses, goalData.yearsToRetire, goalData.yearsInRetirement, inflation, goalData.postRetirementReturn);
                     goalData.instrument = this.suggestInstrument(type, goalData.yearsToRetire);
-                } else if (type === 'education') {
+                } 
+                else if (type === 'education') {
                     goalData.children = parseInt(document.getElementById('eduChildren').value);
                     goalData.grade = parseInt(document.getElementById('eduGrade').value);
                     goalData.currentFees = parseFloat(document.getElementById('eduCurrentFees').value);
@@ -378,12 +443,9 @@
                     goalData.costDegree = parseFloat(document.getElementById('eduCostDegree').value || 0);
                     goalData.costHigher = parseFloat(document.getElementById('eduCostHigher').value || 0);
                     
-                    goalData.targetValue = this.calculateEducationCorpus(
-                        goalData.children, goalData.grade, goalData.currentFees, inflation, 
-                        goalData.cost11_12, goalData.costDegree, goalData.costHigher
-                    );
+                    goalData.presentValue = this.calcEducationPV(goalData.children, goalData.grade, goalData.currentFees, goalData.cost11_12, goalData.costDegree, goalData.costHigher);
+                    goalData.targetValue = this.calcEducationFV(goalData.children, goalData.grade, goalData.currentFees, inflation, goalData.cost11_12, goalData.costDegree, goalData.costHigher);
                     
-                    // Years to degree for instrument suggestion
                     const yearsToDegree = Math.max(0, 13 - goalData.grade);
                     goalData.instrument = this.suggestInstrument(type, yearsToDegree);
                 }
@@ -412,7 +474,6 @@
 
                 document.getElementById('goalType').value = goal.type;
                 this.toggleFormFields();
-
                 document.getElementById('goalName').value = goal.name;
                 document.getElementById('inflation').value = goal.inflation;
 
@@ -452,8 +513,42 @@
                 }
             },
 
+            // Modal Logic
+            openModal(id) {
+                const goal = this.goals.find(g => g.id === id);
+                if (!goal) return;
+
+                document.getElementById('modalGoalId').value = goal.id;
+                document.getElementById('modalGoalName').innerText = `Track: ${goal.name}`;
+                document.getElementById('investAmount').value = goal.investedValue || '';
+                document.getElementById('investInstrument').value = goal.investedInstrument || '';
+                
+                document.getElementById('investModal').style.display = 'flex';
+            },
+
+            closeModal() {
+                document.getElementById('investModal').style.display = 'none';
+                document.getElementById('investForm').reset();
+            },
+
+            saveInvestment(event) {
+                event.preventDefault();
+                const id = document.getElementById('modalGoalId').value;
+                const amount = parseFloat(document.getElementById('investAmount').value);
+                const instrument = document.getElementById('investInstrument').value;
+
+                const index = this.goals.findIndex(g => g.id === id);
+                if (index > -1) {
+                    this.goals[index].investedValue = amount;
+                    this.goals[index].investedInstrument = instrument;
+                    this.saveState();
+                    this.render();
+                    this.closeModal();
+                }
+            },
+
             saveState() {
-                localStorage.setItem('ananthaGoalsV1_5', JSON.stringify(this.goals));
+                localStorage.setItem('ananthaGoalsV1_6', JSON.stringify(this.goals));
             },
 
             render() {
@@ -474,37 +569,51 @@
                     if (goal.type === 'education') { typeClass = 'education-type'; badgeLabel = 'Education'; }
                     
                     card.className = `goal-card ${typeClass}`;
+                    // Trigger modal click
+                    card.onclick = () => this.openModal(goal.id);
                     
                     let statsHTML = '';
                     if (goal.type === 'standard') {
                         statsHTML = `
-                            <div class="goal-stat"><span>Current Budget:</span><span>${this.formatCurrency(goal.currentValue)}</span></div>
                             <div class="goal-stat"><span>Timeline:</span><span>${goal.years} Years</span></div>
                             <div class="goal-stat"><span>Expected Inflation:</span><span>${goal.inflation}% YoY</span></div>
                         `;
                     } else if (goal.type === 'retirement') {
                         statsHTML = `
-                            <div class="goal-stat"><span>Current Monthly Exp:</span><span>${this.formatCurrency(goal.monthlyExpenses)}</span></div>
                             <div class="goal-stat"><span>Retiring In:</span><span>${goal.yearsToRetire} Years</span></div>
                             <div class="goal-stat"><span>Retirement Duration:</span><span>${goal.yearsInRetirement} Years</span></div>
-                            <div class="goal-stat"><span>Inflation / Return:</span><span>${goal.inflation}% / ${goal.postRetirementReturn}%</span></div>
                         `;
                     } else if (goal.type === 'education') {
                         statsHTML = `
                             <div class="goal-stat"><span>Children / Grade:</span><span>${goal.children} Kids / ${goal.grade}th Std</span></div>
-                            <div class="goal-stat"><span>Current Yearly Fee:</span><span>${this.formatCurrency(goal.currentFees)}</span></div>
                             <div class="goal-stat"><span>Fee Inflation:</span><span>${goal.inflation}% YoY</span></div>
-                            <div class="goal-stat"><span>Degree Estimate (Today):</span><span>${this.formatCurrency(goal.costDegree)}</span></div>
                         `;
                     }
 
-                    // Fallback in case old data doesn't have the instrument yet
-                    let timeHorizon = goal.years;
-                    if (goal.type === 'retirement') timeHorizon = goal.yearsToRetire;
-                    if (goal.type === 'education') timeHorizon = Math.max(0, 13 - goal.grade);
-                    
-                    const instrumentText = goal.instrument || this.suggestInstrument(goal.type, timeHorizon);
+                    const instrumentText = goal.instrument || "Portfolio matching recommended based on timeline.";
 
+                    // Check for existing investments
+                    let investmentHTML = '';
+                    if (goal.investedValue && goal.investedValue > 0) {
+                        let percent = ((goal.investedValue / goal.targetValue) * 100).toFixed(1);
+                        investmentHTML = `
+                            <div class="investment-status">
+                                <div class="investment-header">
+                                    <span>Currently Invested</span>
+                                    <span class="investment-amount">${this.formatCurrency(goal.investedValue)} (${percent}%)</span>
+                                </div>
+                                <div class="user-instrument">Via: ${goal.investedInstrument}</div>
+                            </div>
+                        `;
+                    } else {
+                        investmentHTML = `
+                            <div class="investment-status" style="background: transparent; border: 1px dashed var(--border-color); text-align: center; color: var(--text-secondary);">
+                                + Click to track invested amount
+                            </div>
+                        `;
+                    }
+
+                    // Protect edit/delete buttons from triggering the card modal click
                     card.innerHTML = `
                         <div class="goal-header">
                             <div class="goal-title">
@@ -512,8 +621,8 @@
                                 <span class="goal-type-badge">${badgeLabel}</span>
                             </div>
                             <div class="card-actions">
-                                <button class="icon-btn" onclick="app.editGoal('${goal.id}')" title="Edit Goal">✎</button>
-                                <button class="icon-btn delete" onclick="app.deleteGoal('${goal.id}')" title="Delete Goal">✕</button>
+                                <button class="icon-btn" onclick="event.stopPropagation(); app.editGoal('${goal.id}')" title="Edit Goal">✎</button>
+                                <button class="icon-btn delete" onclick="event.stopPropagation(); app.deleteGoal('${goal.id}')" title="Delete Goal">✕</button>
                             </div>
                         </div>
                         ${statsHTML}
@@ -523,15 +632,31 @@
                             <strong>${instrumentText}</strong>
                         </div>
 
-                        <div class="target-amount">
-                            <span>Total Projected Future Outflow</span>
-                            <div class="target-value">${this.formatCurrency(goal.targetValue)}</div>
+                        ${investmentHTML}
+
+                        <div class="value-tiers">
+                            <div class="value-tier">
+                                <span>Value Required (Today's ₹)</span>
+                                <div class="tier-value pv">${this.formatCurrency(goal.presentValue || goal.currentValue)}</div>
+                            </div>
+                            <div class="value-tier">
+                                <span>Projected Future Target</span>
+                                <div class="tier-value fv">${this.formatCurrency(goal.targetValue)}</div>
+                            </div>
                         </div>
                     `;
                     container.appendChild(card);
                 });
             }
         };
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('investModal');
+            if (event.target === modal) {
+                app.closeModal();
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
