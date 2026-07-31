@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.5</span></h1>
+                <h1>Quadra <span class="version-badge">v6.6</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1518,7 +1518,7 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Robust ICS Parser for Outlook Calendars via Google Apps Script Proxy ---
+        // --- Robust Universal Timezone ICS Parser ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
             let lines = icsText.split(/\r\n|\n|\r/);
@@ -1528,7 +1528,7 @@
                 if (line === 'BEGIN:VEVENT') {
                     currentEvent = {};
                 } else if (line === 'END:VEVENT' && currentEvent) {
-                    if (currentEvent.SUMMARY && (currentEvent.DTSTART || Object.keys(currentEvent).some(k => k.startsWith('DTSTART')))) {
+                    if (currentEvent.SUMMARY && Object.keys(currentEvent).some(k => k.startsWith('DTSTART'))) {
                         events.push(currentEvent);
                     }
                     currentEvent = null;
@@ -1557,42 +1557,41 @@
                 let dtStartVal = ev[dtStartKey];
                 let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
 
-                let parseIcsDate = (valStr) => {
+                // Universal ICS Date Parser supporting native JS Date parsing for any timezone / UTC
+                let parseIcsUniversalDate = (valStr) => {
                     let clean = valStr.trim();
-                    let y = parseInt(clean.substring(0, 4));
-                    let m = parseInt(clean.substring(4, 6)) - 1;
-                    let d = parseInt(clean.substring(6, 8));
-                    let h = 0, min = 0, s = 0;
                     
-                    if (clean.includes('T')) {
-                        let timePart = clean.split('T')[1];
-                        h = parseInt(timePart.substring(0, 2));
-                        min = parseInt(timePart.substring(2, 4));
-                        s = parseInt(timePart.substring(4, 6));
+                    // Standard ICS format: YYYYMMDDTHHMMSS (with optional Z)
+                    let match = clean.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?Z?$/);
+                    if (!match) return null;
+
+                    let y = parseInt(match[1]);
+                    let m = parseInt(match[2]) - 1;
+                    let d = parseInt(match[3]);
+                    let h = match[4] ? parseInt(match[4]) : 0;
+                    let min = match[5] ? parseInt(match[5]) : 0;
+                    let s = match[6] ? parseInt(match[6]) : 0;
+
+                    let dateObj;
+                    if (clean.endsWith('Z')) {
+                        // UTC conversion to local browser time
+                        dateObj = new Date(Date.UTC(y, m, d, h, min, s));
+                    } else {
+                        // Floating or local wall-clock time
+                        dateObj = new Date(y, m, d, h, min, s);
                     }
 
-                    // If it ends with Z, treat as UTC, otherwise treat as local floating time (exact clock hours)
-                    if (clean.endsWith('Z')) {
-                        let utcDate = new Date(Date.UTC(y, m, d, h, min, s));
-                        return {
-                            dateStr: utcDate.toLocaleDateString('en-CA').split('T')[0],
-                            hour: utcDate.getHours() + (utcDate.getMinutes() / 60)
-                        };
-                    } else {
-                        // Local time preservation matching calendar time directly
-                        let localDateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                        return {
-                            dateStr: localDateStr,
-                            hour: h + (min / 60)
-                        };
-                    }
+                    return {
+                        dateStr: dateObj.toLocaleDateString('en-CA').split('T')[0],
+                        hour: dateObj.getHours() + (dateObj.getMinutes() / 60)
+                    };
                 };
 
                 try {
-                    let startParsed = parseIcsDate(dtStartVal);
-                    let endParsed = parseIcsDate(dtEndVal);
+                    let startParsed = parseIcsUniversalDate(dtStartVal);
+                    let endParsed = parseIcsUniversalDate(dtEndVal);
 
-                    if (startParsed.dateStr === targetDateStr) {
+                    if (startParsed && endParsed && startParsed.dateStr === targetDateStr) {
                         let startHour = roundToQuarterHour(startParsed.hour);
                         let endHour = roundToQuarterHour(endParsed.hour);
                         if (endHour <= startHour) endHour += 24;
