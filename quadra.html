@@ -228,8 +228,8 @@
         .tray-header:hover { background: #F9FAFB; }
         .tray-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-main); }
         
-        .tray-content { height: 0; overflow: hidden; display: flex; flex-direction: column; transition: flex-grow 0.3s ease, padding 0.3s ease; background: #F8FAFC; }
-        .tray-content.open { flex-grow: 1; padding: 16px 24px; overflow-y: auto; height: auto; max-height: calc(33vh - 40px); border-bottom: 1px solid var(--border-color); }
+        .tray-content { max-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 0 24px; opacity: 0; transition: max-height 0.25s ease, padding 0.25s ease, opacity 0.2s ease; background: #F8FAFC; }
+        .tray-content.open { max-height: 260px; padding: 16px 24px; opacity: 1; overflow-y: auto; border-bottom: 1px solid var(--border-color); }
 
         /* --- Settings Page View --- */
         #settings-view { display: none; flex-grow: 1; width: 100%; overflow-y: auto; background: #ffffff; padding: 40px; }
@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.7</span></h1>
+                <h1>Quadra <span class="version-badge">v8.8</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -335,7 +335,7 @@
                 <div class="tray-header" onclick="toggleInboxTray()">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <h3>Inbox (<span id="inbox-count">0</span>)</h3>
-                        <button class="icon-btn add-btn" onclick="openTaskModal('inbox', null, event)" title="Add Task">+</button>
+                        <button class="icon-btn add-btn" onclick="event.stopPropagation(); openTaskModal('inbox', null, event)" title="Add Task">+</button>
                     </div>
                     <span id="inbox-chevron">▼</span>
                 </div>
@@ -348,7 +348,7 @@
             <div class="calendar-tray">
                 <div class="tray-header" onclick="toggleCalendarTray()">
                     <h3>Calendar Events (<span id="calendar-count">0</span>)</h3>
-                    <span id="calendar-chevron">▼</span>
+                    <span id="calendar-chevron">▶</span>
                 </div>
                 <div class="tray-content" id="calendar-tray-content">
                     <div class="task-list" id="list-calendar"></div>
@@ -358,7 +358,7 @@
             <div class="closed-tray">
                 <div class="tray-header" onclick="toggleClosedTray()">
                     <h3>Completed (<span id="closed-count">0</span>)</h3>
-                    <span id="closed-chevron">▲</span>
+                    <span id="closed-chevron">▶</span>
                 </div>
                 <div class="tray-content" id="closed-tray-content">
                     <div class="task-list" id="list-closed"></div>
@@ -1659,9 +1659,31 @@
         function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
 
         function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
-        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
-        function toggleCalendarTray() { const content = document.getElementById('calendar-tray-content'); const chevron = document.getElementById('calendar-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
-        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
+        function closeAllTrayContents() {
+            ['inbox-tray-content', 'calendar-tray-content', 'closed-tray-content'].forEach(id => {
+                const content = document.getElementById(id);
+                const chevronId = id.replace('-content', '-chevron');
+                const chevron = document.getElementById(chevronId);
+                if (content) content.classList.remove('open');
+                if (chevron) chevron.innerText = '▶';
+            });
+        }
+        function toggleTray(contentId, chevronId) {
+            const content = document.getElementById(contentId);
+            const chevron = document.getElementById(chevronId);
+            if (!content || !chevron) return;
+
+            const shouldOpen = !content.classList.contains('open');
+            closeAllTrayContents();
+
+            if (shouldOpen) {
+                content.classList.add('open');
+                chevron.innerText = '▼';
+            }
+        }
+        function toggleClosedTray() { toggleTray('closed-tray-content', 'closed-chevron'); }
+        function toggleCalendarTray() { toggleTray('calendar-tray-content', 'calendar-chevron'); }
+        function toggleInboxTray() { toggleTray('inbox-tray-content', 'inbox-chevron'); }
 
         function checkConfigState() {
             if (!appConfig.clientId && appConfig.calSource === 'google') {
