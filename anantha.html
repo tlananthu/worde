@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V1.7</title>
+    <title>Anantha | Wealth OS V1.8</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -55,7 +55,7 @@
 
         /* Layouts */
         .dashboard-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
-        .summary-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .summary-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         
         @media (max-width: 800px) {
             .dashboard-layout { grid-template-columns: 1fr; }
@@ -66,7 +66,7 @@
         .form-card h2 { font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--accent-color); }
         .form-group { margin-bottom: 1.2rem; }
         .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.875rem; color: var(--text-secondary); }
-        .form-group input, .form-group select { width: 100%; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem; border-radius: 4px; font-family: inherit; }
+        .form-group input, .form-group select { width: 100%; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem; border-radius: 4px; font-family: inherit; color-scheme: dark; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-color); }
         .form-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
         .row-group { display: flex; gap: 1rem; }
@@ -84,14 +84,17 @@
         .card.interactive { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
         .card.interactive:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.3); border-color: var(--accent-color); }
         
+        /* Goal Accents */
         .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
         .goal-card.education-type { border-top: 3px solid var(--edu-color); }
         .goal-card.standard-type { border-top: 3px solid var(--accent-color); }
 
+        /* Asset Accents */
         .inv-card.equity-type { border-left: 4px solid var(--accent-color); }
-        .inv-card.debt-type { border-left: 4px solid var(--success-color); }
         .inv-card.hybrid-type { border-left: 4px solid var(--edu-color); }
         .inv-card.assets-type { border-left: 4px solid var(--warning-color); }
+        /* Debt / Fixed Income gets Green */
+        .inv-card.fd-type, .inv-card.rd-type, .inv-card.ppf-type, .inv-card.pomis-type, .inv-card.debt-type { border-left: 4px solid var(--success-color); }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
         .card-title { font-weight: 600; font-size: 1.1rem; }
@@ -117,26 +120,26 @@
         .tier-value.fv { font-size: 1.4rem; color: var(--accent-color); }
 
         /* Dashboard specific */
-        .dash-stat-card { text-align: center; justify-content: center; align-items: center; padding: 2rem 1.5rem; }
-        .dash-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
-        .dash-value { font-size: 2.2rem; font-weight: 700; color: var(--text-primary); }
+        .dash-stat-card { text-align: center; justify-content: center; align-items: center; padding: 1.5rem 1rem; }
+        .dash-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+        .dash-value { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
         .dash-value.highlight { color: var(--accent-color); }
         .dash-value.success { color: var(--success-color); }
 
-        .progress-container { margin-top: 2rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .progress-container { margin-top: 1rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
         .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-color), var(--success-color)); width: 0%; transition: width 1s ease-in-out; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v1.7 (Decoupled Wealth OS)</div>
+        <div class="version">v1.8 (Fixed Income Tracking)</div>
     </header>
 
     <div class="nav-tabs">
-        <button class="tab-btn active" onclick="app.switchView('home')">Home Summary</button>
+        <button class="tab-btn active" onclick="app.switchView('home')">Dashboard Summary</button>
         <button class="tab-btn" onclick="app.switchView('investments')">Asset Portfolio</button>
         <button class="tab-btn" onclick="app.switchView('goals')">Financial Goals</button>
     </div>
@@ -145,15 +148,19 @@
     <div id="view-home" class="view active">
         <div class="summary-layout">
             <div class="card dash-stat-card">
-                <div class="dash-label">Total Invested Assets</div>
+                <div class="dash-label">Assets (Today)</div>
                 <div class="dash-value success" id="dashTotalAssets">₹0</div>
             </div>
             <div class="card dash-stat-card">
-                <div class="dash-label">Goal Target (Today's ₹)</div>
+                <div class="dash-label">Projected Asset FV</div>
+                <div class="dash-value success" id="dashFutureAssets">₹0</div>
+            </div>
+            <div class="card dash-stat-card">
+                <div class="dash-label">Goal Target (Today)</div>
                 <div class="dash-value" id="dashTotalPV">₹0</div>
             </div>
             <div class="card dash-stat-card">
-                <div class="dash-label">Goal Target (Future ₹)</div>
+                <div class="dash-label">Goal Target (Future)</div>
                 <div class="dash-value highlight" id="dashTotalFV">₹0</div>
             </div>
         </div>
@@ -162,7 +169,7 @@
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                 <div>
                     <h3 style="margin-bottom: 0.2rem;">Wealth Progression</h3>
-                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Total Assets vs Future Goals Target</span>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Projected Future Assets vs Future Goals Target</span>
                 </div>
                 <div id="dashPercentage" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-color);">0%</div>
             </div>
@@ -178,23 +185,42 @@
             <aside class="form-card">
                 <h2 id="invFormTitle">Log New Asset / Investment</h2>
                 <form id="invForm" onsubmit="app.handleInvSave(event)">
-                    <div class="form-group">
-                        <label for="invName">Instrument / Asset Name</label>
-                        <input type="text" id="invName" required placeholder="e.g., HDFC Flexi-Cap MF, EPF, Plot">
-                    </div>
+                    
                     <div class="form-group">
                         <label for="invType">Asset Class</label>
-                        <select id="invType">
+                        <select id="invType" onchange="app.handleInvTypeChange()">
                             <option value="equity">Equity (MFs, Stocks)</option>
-                            <option value="debt">Debt (EPF, PPF, FDs, Bonds)</option>
+                            <option value="fd">Fixed Deposit (FD)</option>
+                            <option value="rd">Recurring Deposit (RD)</option>
+                            <option value="ppf">Public Provident Fund (PPF)</option>
+                            <option value="pomis">Post Office MIS</option>
+                            <option value="debt">Other Debt / Bonds</option>
                             <option value="hybrid">Hybrid / Balanced</option>
                             <option value="assets">Physical Assets (Real Estate, Gold)</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label for="invName">Instrument Name / Bank</label>
+                        <input type="text" id="invName" required placeholder="e.g., SBI FD, HDFC Flexi-Cap">
+                    </div>
+                    
                     <div class="form-group">
                         <label for="invValue">Current Valuation (₹)</label>
                         <input type="number" id="invValue" required placeholder="500000" min="0" step="any">
                     </div>
+
+                    <div class="row-group">
+                        <div class="form-group">
+                            <label for="invGrowth">Expected YoY Growth (%)</label>
+                            <input type="number" id="invGrowth" required placeholder="7.1" min="0" max="100" step="0.1" value="12.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="invMaturity">Maturity Date (Optional)</label>
+                            <input type="date" id="invMaturity">
+                        </div>
+                    </div>
+
                     <div class="form-actions">
                         <button type="submit" id="invSubmitBtn" class="btn-action">Save Asset</button>
                         <button type="button" id="invCancelBtn" class="btn-cancel btn-action" onclick="app.cancelInvEdit()">Cancel</button>
@@ -316,6 +342,18 @@
             editingGoalId: null,
             editingInvId: null,
 
+            // India Market Default Growth Rates
+            defaultRates: {
+                equity: 12.0,
+                fd: 7.0,
+                rd: 6.8,
+                ppf: 7.1,
+                pomis: 7.4,
+                debt: 7.0,
+                hybrid: 10.0,
+                assets: 5.0
+            },
+
             init() {
                 this.migrateData();
                 this.toggleGoalFields();
@@ -323,37 +361,30 @@
             },
 
             migrateData() {
-                const savedV1_7 = localStorage.getItem('ananthaDataV1_7');
-                if (savedV1_7) {
-                    this.data = JSON.parse(savedV1_7);
+                const savedV1_8 = localStorage.getItem('ananthaDataV1_8');
+                if (savedV1_8) {
+                    this.data = JSON.parse(savedV1_8);
                     return;
                 }
 
-                // If V1.7 doesn't exist, check for V1.6 and migrate it
-                const savedV1_6 = localStorage.getItem('ananthaGoalsV1_6');
-                if (savedV1_6) {
-                    let oldGoals = JSON.parse(savedV1_6);
-                    oldGoals.forEach(g => {
-                        // Extract invested amounts to decouple them
-                        if (g.investedValue && g.investedValue > 0) {
-                            this.data.investments.push({
-                                id: Date.now().toString() + Math.random().toString().slice(2,8),
-                                name: g.investedInstrument || `${g.name} Reserved Asset`,
-                                type: 'hybrid', // Default fallback
-                                value: g.investedValue
-                            });
-                        }
-                        // Clean up old goal object
-                        delete g.investedValue;
-                        delete g.investedInstrument;
-                        this.data.goals.push(g);
+                // Migrate from V1.7
+                const savedV1_7 = localStorage.getItem('ananthaDataV1_7');
+                if (savedV1_7) {
+                    let oldData = JSON.parse(savedV1_7);
+                    
+                    // Add default growth and maturity fields to old investments
+                    oldData.investments.forEach(inv => {
+                        if (!inv.growthRate) inv.growthRate = this.defaultRates[inv.type] || 7.0;
+                        if (!inv.maturityDate) inv.maturityDate = "";
                     });
+                    
+                    this.data = oldData;
                     this.saveState();
                 }
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV1_7', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV1_8', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -362,11 +393,9 @@
             },
 
             switchView(viewId) {
-                // Handle Tabs
                 document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
                 
-                // Handle Views
                 document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
                 document.getElementById(`view-${viewId}`).classList.add('active');
 
@@ -376,17 +405,42 @@
             /* -------------------------------------------------------------------------- */
             /* INVESTMENTS LOGIC                                                          */
             /* -------------------------------------------------------------------------- */
+            
+            handleInvTypeChange() {
+                const type = document.getElementById('invType').value;
+                document.getElementById('invGrowth').value = this.defaultRates[type] || 0;
+            },
+            
+            calcInvFV(val, rate, matDateStr) {
+                if (!matDateStr || !rate) return val;
+                const matDate = new Date(matDateStr);
+                const today = new Date();
+                
+                // Difference in years
+                const years = (matDate - today) / (1000 * 60 * 60 * 24 * 365.25);
+                
+                // If it's already matured or in the past, return current value
+                if (years <= 0) return val;
+                
+                // Standard Compound Interest
+                return val * Math.pow(1 + (rate / 100), years);
+            },
+
             handleInvSave(event) {
                 event.preventDefault();
-                const name = document.getElementById('invName').value;
                 const type = document.getElementById('invType').value;
-                const value = parseFloat(document.getElementById('invValue').value);
+                const val = parseFloat(document.getElementById('invValue').value);
+                const rate = parseFloat(document.getElementById('invGrowth').value);
+                const matDate = document.getElementById('invMaturity').value;
 
                 let invData = {
                     id: this.editingInvId || Date.now().toString(),
-                    name: name,
+                    name: document.getElementById('invName').value,
                     type: type,
-                    value: value
+                    value: val,
+                    growthRate: rate,
+                    maturityDate: matDate,
+                    futureValue: this.calcInvFV(val, rate, matDate)
                 };
 
                 if (this.editingInvId) {
@@ -413,6 +467,9 @@
                 document.getElementById('invName').value = inv.name;
                 document.getElementById('invType').value = inv.type;
                 document.getElementById('invValue').value = inv.value;
+                document.getElementById('invGrowth').value = inv.growthRate || this.defaultRates[inv.type];
+                document.getElementById('invMaturity').value = inv.maturityDate || "";
+                
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
 
@@ -422,6 +479,7 @@
                 document.getElementById('invSubmitBtn').innerText = "Save Asset";
                 document.getElementById('invCancelBtn').style.display = "none";
                 document.getElementById('invForm').reset();
+                this.handleInvTypeChange(); // Reset default rate
             },
 
             deleteInv(id) {
@@ -446,7 +504,15 @@
                     const card = document.createElement('div');
                     card.className = `card inv-card ${inv.type}-type`;
                     
-                    let typeLabel = inv.type.charAt(0).toUpperCase() + inv.type.slice(1);
+                    let typeLabel = inv.type.toUpperCase();
+                    let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
+                    
+                    // Format maturity date if it exists
+                    let dateDisplay = "N/A";
+                    if (inv.maturityDate) {
+                        const d = new Date(inv.maturityDate);
+                        dateDisplay = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                    }
                     
                     card.innerHTML = `
                         <div class="card-header">
@@ -458,8 +524,19 @@
                                 <button class="icon-btn delete" onclick="app.deleteInv('${inv.id}')">✕</button>
                             </div>
                         </div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-top: auto;">
-                            ${this.formatCurrency(inv.value)}
+                        
+                        <div class="stat-row"><span>Growth Rate:</span><span style="color: var(--success-color); font-weight: 600;">${inv.growthRate}% YoY</span></div>
+                        <div class="stat-row"><span>Maturity Date:</span><span>${dateDisplay}</span></div>
+                        
+                        <div class="value-tiers" style="margin-top: auto;">
+                            <div class="value-tier">
+                                <span>Current Valuation</span>
+                                <div class="tier-value pv">${this.formatCurrency(inv.value)}</div>
+                            </div>
+                            <div class="value-tier">
+                                <span>Projected Future Value</span>
+                                <div class="tier-value fv">${this.formatCurrency(fv)}</div>
+                            </div>
                         </div>
                     `;
                     container.appendChild(card);
@@ -467,7 +544,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC (From V1.6)                                                    */
+            /* GOALS LOGIC (Retained from V1.7)                                           */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -509,7 +586,6 @@
                 }
             },
 
-            // Maths
             calcRetPV(exp, yRet, inf, ret) {
                 const r = ret/100, i = inf/100;
                 const real = ((1+r)/(1+i))-1;
@@ -665,7 +741,6 @@
                             <div class="stat-row"><span>Fee Inf.:</span><span>${goal.inflation}% YoY</span></div>`;
                     }
 
-                    // Handles backward compatibility map from V1.6 if user skipped saving somehow
                     let pv = goal.pv || goal.presentValue || goal.currentValue || 0;
                     let fv = goal.fv || goal.targetValue || 0;
 
@@ -681,7 +756,7 @@
                         <div class="instrument-box"><span>Strategy</span><strong>${goal.inst || 'Determined by Timeline'}</strong></div>
                         <div class="value-tiers">
                             <div class="value-tier">
-                                <span>Value (Today's ₹)</span>
+                                <span>Target (Today's ₹)</span>
                                 <div class="tier-value pv">${this.formatCurrency(pv)}</div>
                             </div>
                             <div class="value-tier">
@@ -698,7 +773,13 @@
             /* DASHBOARD LOGIC                                                            */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
-                let totalInvestments = this.data.investments.reduce((sum, inv) => sum + (inv.value || 0), 0);
+                let totalInvestments = 0;
+                let futureInvestments = 0;
+                
+                this.data.investments.forEach(inv => {
+                    totalInvestments += (inv.value || 0);
+                    futureInvestments += this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
+                });
                 
                 let totalPV = 0;
                 let totalFV = 0;
@@ -708,16 +789,16 @@
                 });
 
                 document.getElementById('dashTotalAssets').innerText = this.formatCurrency(totalInvestments);
+                document.getElementById('dashFutureAssets').innerText = this.formatCurrency(futureInvestments);
                 document.getElementById('dashTotalPV').innerText = this.formatCurrency(totalPV);
                 document.getElementById('dashTotalFV').innerText = this.formatCurrency(totalFV);
 
-                // Progress Bar Math
+                // Progress Bar: Projected Assets vs Future Goals
                 let percentage = 0;
                 if (totalFV > 0) {
-                    percentage = Math.min((totalInvestments / totalFV) * 100, 100);
+                    percentage = Math.min((futureInvestments / totalFV) * 100, 100);
                 }
 
-                // Small timeout to allow DOM transition animation to play
                 setTimeout(() => {
                     document.getElementById('dashPercentage').innerText = `${percentage.toFixed(1)}%`;
                     document.getElementById('dashProgressBar').style.width = `${percentage}%`;
