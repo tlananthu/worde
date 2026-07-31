@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.3</span></h1>
+                <h1>Quadra <span class="version-badge">v8.4</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -386,13 +386,26 @@
             </div>
         </div>
 
+        <!-- Overdue Tasks Full Page View -->
+        <div id="overdue-view">
+            <div class="overdue-container">
+                <div class="overdue-header">
+                    <h2>⚠️ Overdue Tasks (<span id="overdue-count-badge">0</span>)</h2>
+                    <button class="btn btn-outline" onclick="setLayout('grid')">← Back to Matrix</button>
+                </div>
+                <div id="overdue-list-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
         <!-- Time Tracker View -->
         <div id="tracker-view">
             <div class="tracker-layout">
                 <div class="tracker-palette">
                     <div class="palette-header">
                         <h3>Task Palette</h3>
-                        <p>Drag tasks onto the timeline to log hours.</p>
+                        <p>Click or drag tasks onto the timeline.</p>
                     </div>
                     <div class="palette-list" id="tracker-palette-list">
                         <!-- Populated dynamically -->
@@ -411,14 +424,11 @@
                                 <input type="date" id="trackerDate" onchange="renderTrackerTimeline()">
                                 <button class="btn-outline" style="padding: 4px 8px;" onclick="changeTrackerDay(1)">→</button>
                             </h2>
-                            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
-                                🔍 <label for="trackerZoom">Zoom:</label>
-                                <select id="trackerZoom" onchange="setTimelineZoom(this.value)" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px;">
-                                    <option value="1">1x (Normal)</option>
-                                    <option value="1.25">1.25x</option>
-                                    <option value="1.5">1.5x</option>
-                                    <option value="2">2x (Large)</option>
-                                </select>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
+                                🔍 Zoom: 
+                                <button class="btn-outline" style="padding: 2px 8px; font-weight: bold;" onclick="adjustTimelineZoom(-0.25)">−</button>
+                                <span id="zoomLevelDisplay" style="min-width: 36px; text-align: center;">1x</span>
+                                <button class="btn-outline" style="padding: 2px 8px; font-weight: bold;" onclick="adjustTimelineZoom(0.25)">+</button>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -520,7 +530,7 @@
             </div>
 
             <div class="form-group">
-                <textarea id="taskInfoInput" rows="8" placeholder="task info"></textarea>
+                <textarea id="taskInfoInput" rows="6" placeholder="task info"></textarea>
             </div>
 
             <div class="form-group form-row-inline">
@@ -538,7 +548,19 @@
 
                 <div class="form-group form-row-inline" style="margin-bottom: 0;">
                     <label>Hours worked</label>
-                    <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;">
+                    <input type="number" id="taskHoursWorked" step="0.25" min="0" placeholder="0.5" style="width: 120px;" oninput="onHoursChanged()">
+                </div>
+            </div>
+
+            <div class="responsive-date-hours-grid" style="margin-top: 12px;">
+                <div class="form-group form-row-inline" style="margin-bottom: 0;">
+                    <label>Start Time</label>
+                    <input type="time" id="taskStartTime" oninput="onTimesChanged()">
+                </div>
+
+                <div class="form-group form-row-inline" style="margin-bottom: 0;">
+                    <label>End Time</label>
+                    <input type="time" id="taskEndTime" oninput="onTimesChanged()">
                 </div>
             </div>
 
@@ -634,27 +656,36 @@
             
             const matrix = document.getElementById('matrix');
             const tracker = document.getElementById('tracker-view');
+            const overdue = document.getElementById('overdue-view');
             const settingsView = document.getElementById('settings-view');
             const btnGrid = document.getElementById('btnGrid');
             const btnKanban = document.getElementById('btnKanban');
+            const btnOverdue = document.getElementById('btnOverdue');
             const btnTracker = document.getElementById('btnTracker');
 
             if (btnGrid) btnGrid.classList.toggle('active', layout === 'grid');
             if (btnKanban) btnKanban.classList.toggle('active', layout === 'kanban');
+            if (btnOverdue) btnOverdue.classList.toggle('active', layout === 'overdue');
             if (btnTracker) btnTracker.classList.toggle('active', layout === 'tracker');
             
             settingsView.style.display = 'none';
+            matrix.style.display = 'none';
+            tracker.style.display = 'none';
+            overdue.style.display = 'none';
 
             if (layout === 'tracker') {
-                matrix.style.display = 'none'; 
                 tracker.style.display = 'block'; 
                 document.body.classList.remove('sidebar-open');
-                document.getElementById('trackerZoom').value = timelineZoom;
+                updateZoomDisplay();
                 renderTrackerTimeline();
                 startLiveClock();
+            } else if (layout === 'overdue') {
+                overdue.style.display = 'block';
+                document.body.classList.remove('sidebar-open');
+                renderOverdueTasksPage();
+                stopLiveClock();
             } else {
                 matrix.style.display = ''; 
-                tracker.style.display = 'none';
                 matrix.classList.remove('layout-grid', 'layout-kanban');
                 matrix.classList.add(`layout-${layout}`);
                 stopLiveClock();
@@ -666,15 +697,22 @@
             document.getElementById('backNavBtn').style.display = 'none';
         }
 
-        function setTimelineZoom(val) {
-            timelineZoom = parseFloat(val) || 1;
+        function adjustTimelineZoom(amount) {
+            timelineZoom = Math.max(0.5, Math.min(3, roundToQuarterHour(timelineZoom + amount)));
             localStorage.setItem('quadra_zoom', timelineZoom);
+            updateZoomDisplay();
             renderTrackerTimeline();
+        }
+
+        function updateZoomDisplay() {
+            const display = document.getElementById('zoomLevelDisplay');
+            if (display) display.innerText = `${timelineZoom}x`;
         }
 
         function openSettingsPage() {
             document.getElementById('matrix').style.display = 'none';
             document.getElementById('tracker-view').style.display = 'none';
+            document.getElementById('overdue-view').style.display = 'none';
             document.getElementById('settings-view').style.display = 'block';
             document.body.classList.remove('sidebar-open');
             document.getElementById('quick-tags-bar').style.display = 'none';
@@ -785,8 +823,11 @@
             
             filteredNotes.forEach(note => {
                 const el = document.createElement('div');
-                el.className = 'palette-note'; el.draggable = true;
+                el.className = 'palette-note';
+                el.draggable = true;
                 el.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
+                el.onclick = (e) => openTaskModal(null, note.id, e);
+                
                 let title = note.text.split('\n')[0].substring(0, 50);
                 el.innerHTML = `<strong>${note.status === 'closed' ? '✓ ' : ''}</strong> ${parseTags(title)}`;
                 if (note.status === 'closed') el.style.opacity = '0.6';
@@ -991,6 +1032,45 @@
             if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
         }
 
+        // --- Render Overdue Tasks Page ---
+        function renderOverdueTasksPage() {
+            const container = document.getElementById('overdue-list-container');
+            container.innerHTML = '';
+            
+            const overdueNotes = notes.filter(n => {
+                if (n.deleted || n.status === 'closed' || !n.dueDate || n.eventId) return false;
+                return n.dueDate.split('T')[0] < todayStr;
+            });
+
+            overdueNotes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+            document.getElementById('overdue-count-badge').innerText = overdueNotes.length;
+
+            if (overdueNotes.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">🎉 No overdue tasks! All caught up.</p>`;
+                return;
+            }
+
+            overdueNotes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'overdue-card';
+                card.onclick = (e) => openTaskModal(null, note.id, e);
+                card.style.cursor = 'pointer';
+
+                let title = note.text.split('\n')[0];
+                let dueDate = note.dueDate.split('T')[0];
+
+                card.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <strong style="font-size: 15px; color: #9F1239;">${parseTags(title)}</strong>
+                        <span style="font-size: 12px; color: var(--text-muted);">Due: ${dueDate} (${note.quadrant.toUpperCase()})</span>
+                    </div>
+                    <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="completeTask('${note.id}'); event.stopPropagation(); renderOverdueTasksPage();">Complete ✓</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
         // --- Drag & Resize Engine ---
         let dragState = null;
 
@@ -1076,9 +1156,58 @@
             }
         }
 
-        // --- Modals ---
+        // --- Modals & Keyboard Escape Handler ---
         let currentEditingId = null; let currentAddingQuadrant = null;
         
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const taskModal = document.getElementById('taskModal');
+                const editBlockModal = document.getElementById('editTimeBlockModal');
+                if (taskModal && taskModal.style.display === 'flex') {
+                    closeTaskModal();
+                }
+                if (editBlockModal && editBlockModal.style.display === 'flex') {
+                    closeEditBlockModal();
+                }
+            }
+        });
+
+        function timeStrToDecimal(timeStr) {
+            if (!timeStr) return null;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h + (m / 60);
+        }
+
+        function decimalToTimeStr(dec) {
+            let norm = dec % 24;
+            let h = Math.floor(norm);
+            let m = Math.round((norm - h) * 60);
+            if (m === 60) { h++; m = 0; }
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function onTimesChanged() {
+            const startVal = document.getElementById('taskStartTime').value;
+            const endVal = document.getElementById('taskEndTime').value;
+            if (startVal && endVal) {
+                let startDec = timeStrToDecimal(startVal);
+                let endDec = timeStrToDecimal(endVal);
+                if (endDec <= startDec) endDec += 24;
+                let duration = roundToQuarterHour(endDec - startDec);
+                document.getElementById('taskHoursWorked').value = duration;
+            }
+        }
+
+        function onHoursChanged() {
+            const hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
+            const startVal = document.getElementById('taskStartTime').value;
+            if (!isNaN(hoursVal) && startVal) {
+                let startDec = timeStrToDecimal(startVal);
+                let endDec = startDec + hoursVal;
+                document.getElementById('taskEndTime').value = decimalToTimeStr(endDec);
+            }
+        }
+
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
             if (event) event.stopPropagation();
             const modal = document.getElementById('taskModal');
@@ -1087,6 +1216,8 @@
             const dueDateInput = document.getElementById('taskDueDate');
             const selectedDateInput = document.getElementById('taskSelectedDate');
             const hoursWorkedInput = document.getElementById('taskHoursWorked');
+            const startTimeInput = document.getElementById('taskStartTime');
+            const endTimeInput = document.getElementById('taskEndTime');
 
             if (noteId) {
                 currentEditingId = noteId; 
@@ -1103,6 +1234,14 @@
                 selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
                 hoursWorkedInput.value = activeBlock ? roundToQuarterHour(activeBlock.duration) : '';
 
+                if (activeBlock && activeBlock.startHour !== undefined) {
+                    startTimeInput.value = decimalToTimeStr(activeBlock.startHour);
+                    endTimeInput.value = decimalToTimeStr(activeBlock.startHour + activeBlock.duration);
+                } else {
+                    startTimeInput.value = '';
+                    endTimeInput.value = '';
+                }
+
             } else { 
                 currentEditingId = null; 
                 currentAddingQuadrant = quadrant || 'inbox'; 
@@ -1111,10 +1250,20 @@
                 infoInput.value = '';
                 dueDateInput.value = timelineContext ? timelineContext.date : '';
                 selectedDateInput.value = timelineContext ? timelineContext.date : todayStr;
-                hoursWorkedInput.value = '';
+                hoursWorkedInput.value = timelineContext ? '1.0' : '';
+                
+                if (timelineContext && timelineContext.startHour !== undefined) {
+                    startTimeInput.value = decimalToTimeStr(timelineContext.startHour);
+                    endTimeInput.value = decimalToTimeStr(timelineContext.startHour + 1.0);
+                } else {
+                    startTimeInput.value = '';
+                    endTimeInput.value = '';
+                }
+
                 pendingTimelineContext = timelineContext || null;
             }
-            modal.style.display = 'flex'; setTimeout(() => titleInput.focus(), 100);
+            modal.style.display = 'flex'; 
+            setTimeout(() => titleInput.focus(), 100);
         }
 
         let pendingTimelineContext = null;
@@ -1131,10 +1280,18 @@
             const selectedDate = document.getElementById('taskSelectedDate').value;
             let hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
             if (!isNaN(hoursVal)) hoursVal = roundToQuarterHour(hoursVal);
+            const startVal = document.getElementById('taskStartTime').value;
 
             if (!titleText && !infoText) return closeTaskModal();
 
             const fullText = titleText + (infoText ? ('\n' + infoText) : '');
+
+            let calculatedStartHour = 9;
+            if (startVal) {
+                calculatedStartHour = roundToQuarterHour(timeStrToDecimal(startVal));
+            } else if (pendingTimelineContext) {
+                calculatedStartHour = roundToQuarterHour(pendingTimelineContext.startHour);
+            }
 
             if (currentEditingId) { 
                 const note = notes.find(n => n.id === currentEditingId); 
@@ -1147,12 +1304,13 @@
                         if (existingBlock) {
                             existingBlock.date = selectedDate || todayStr;
                             existingBlock.duration = hoursVal;
+                            existingBlock.startHour = calculatedStartHour;
                         } else {
                             if (!note.timeBlocks) note.timeBlocks = [];
                             note.timeBlocks.push({
                                 id: Date.now().toString() + Math.random(),
                                 date: selectedDate || todayStr,
-                                startHour: 9,
+                                startHour: calculatedStartHour,
                                 duration: hoursVal
                             });
                         }
@@ -1167,19 +1325,11 @@
                 let targetQuad = currentAddingQuadrant || 'inbox';
                 
                 if (!isNaN(hoursVal) && hoursVal > 0) {
-                    let startH = pendingTimelineContext ? pendingTimelineContext.startHour : 9;
                     newBlocks.push({
                         id: Date.now().toString() + Math.random(),
                         date: selectedDate || (pendingTimelineContext ? pendingTimelineContext.date : todayStr),
-                        startHour: roundToQuarterHour(startH),
+                        startHour: calculatedStartHour,
                         duration: hoursVal
-                    });
-                } else if (pendingTimelineContext) {
-                    newBlocks.push({
-                        id: Date.now().toString() + Math.random(),
-                        date: pendingTimelineContext.date,
-                        startHour: roundToQuarterHour(pendingTimelineContext.startHour),
-                        duration: 1.0
                     });
                 }
 
@@ -1449,6 +1599,8 @@
             let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
             filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
 
+            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
+
             filteredNotes.forEach(note => {
                 let targetListId = `list-${note.quadrant}`;
                 if (note.eventId) {
@@ -1456,6 +1608,16 @@
                 }
                 const list = document.getElementById(targetListId);
                 if (list) {
+                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
+                        filteredCounts[note.quadrant]++;
+                    }
+                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
+                        filteredCounts['calendar']++;
+                    }
+                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
+                        filteredCounts['inbox']++;
+                    }
+
                     const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
                     if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
 
@@ -1480,13 +1642,12 @@
 
             const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
             document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
-            document.getElementById('inbox-count').innerText = activeNotes.filter(n => n.quadrant === 'inbox').length;
-            document.getElementById('calendar-count').innerText = notes.filter(n => !n.deleted && n.eventId).length;
+            document.getElementById('inbox-count').innerText = filteredCounts.inbox;
+            document.getElementById('calendar-count').innerText = filteredCounts.calendar;
             
             ['q1', 'q2', 'q3', 'q4'].forEach(q => {
-                const count = activeNotes.filter(n => n.quadrant === q).length;
                 const badge = document.getElementById(`badge-${q}`);
-                if (badge) badge.innerText = count;
+                if (badge) badge.innerText = filteredCounts[q];
             });
             
             if (currentLayout === 'tracker') renderTrackerTimeline();
