@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Financial Goals V1.2</title>
+    <title>Anantha | Financial Goals V1.3</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -13,15 +13,12 @@
             --text-secondary: #94a3b8;
             --accent-color: #38bdf8;
             --danger-color: #f43f5e;
+            --warning-color: #fbbf24;
             --border-color: #2dd4bf20;
             --font-family: system-ui, -apple-system, sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background-color: var(--bg-color);
@@ -42,17 +39,8 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        .brand-name {
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .version {
-            color: var(--text-secondary);
-            font-family: monospace;
-        }
+        .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+        .version { color: var(--text-secondary); font-family: monospace; }
 
         .dashboard-layout {
             display: grid;
@@ -61,288 +49,322 @@
         }
 
         @media (max-width: 800px) {
-            .dashboard-layout {
-                grid-template-columns: 1fr;
-            }
+            .dashboard-layout { grid-template-columns: 1fr; }
         }
 
         /* Form Styles */
-        .form-card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            height: fit-content;
-        }
+        .form-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; height: fit-content; }
+        .form-card h2 { font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--accent-color); }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-size: 0.875rem; color: var(--text-secondary); }
+        .form-group input, .form-group select { width: 100%; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem; border-radius: 4px; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-color); }
+        .form-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
 
-        .form-card h2 {
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            color: var(--accent-color);
-        }
-
-        .form-group {
-            margin-bottom: 1.2rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.4rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .form-group input {
-            width: 100%;
-            background: var(--surface-light);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-family: inherit;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        button {
-            width: 100%;
-            background-color: var(--accent-color);
-            color: #000;
-            border: none;
-            padding: 0.75rem;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        button:hover {
-            opacity: 0.9;
-        }
+        button { flex: 1; background-color: var(--accent-color); color: #000; border: none; padding: 0.75rem; border-radius: 4px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
 
         /* Goals Grid */
-        .goals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .goal-card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            position: relative;
-        }
-
-        .goal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--surface-light);
-        }
-
-        .goal-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .delete-btn {
-            background: none;
-            color: var(--text-secondary);
-            width: auto;
-            padding: 0;
-            font-size: 1.2rem;
-        }
+        .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .goal-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; position: relative; }
+        .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
+        .goal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
+        .goal-title { font-weight: 600; font-size: 1.1rem; }
+        .goal-type-badge { font-size: 0.7rem; background: var(--surface-light); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); margin-left: 0.5rem; vertical-align: middle;}
         
-        .delete-btn:hover {
-            color: var(--danger-color);
-        }
-
-        .goal-stat {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .goal-stat span:first-child {
-            color: var(--text-secondary);
-        }
-
-        .target-amount {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px dotted var(--surface-light);
-            text-align: right;
-        }
-
-        .target-amount span {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            margin-bottom: 0.25rem;
-        }
-
-        .target-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-color);
-        }
+        .card-actions { display: flex; gap: 0.75rem; }
+        .icon-btn { background: none; color: var(--text-secondary); width: auto; padding: 0; font-size: 1.1rem; }
+        .icon-btn:hover { color: var(--accent-color); }
+        .icon-btn.delete:hover { color: var(--danger-color); }
+        
+        .goal-stat { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .goal-stat span:first-child { color: var(--text-secondary); }
+        .target-amount { margin-top: 1rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); text-align: right; }
+        .target-amount span { display: block; font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
+        .target-value { font-size: 1.5rem; font-weight: 700; color: var(--accent-color); }
     </style>
 </head>
 <body>
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v1.2 (Target Calculator)</div>
+        <div class="version">v1.3 (Retirement & Edit Features)</div>
     </header>
 
     <div class="dashboard-layout">
         <!-- Input Form -->
         <aside class="form-card">
-            <h2>Define New Goal</h2>
+            <h2 id="formTitle">Define New Goal</h2>
             <form id="goalForm">
+                <div class="form-group">
+                    <label for="goalType">Goal Type</label>
+                    <select id="goalType" onchange="app.toggleFormFields()">
+                        <option value="standard">Standard Financial Goal</option>
+                        <option value="retirement">Retirement Corpus</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label for="goalName">Goal Name</label>
                     <input type="text" id="goalName" required placeholder="e.g., Higher Education">
                 </div>
-                <div class="form-group">
-                    <label for="currentValue">Current Budgeted Value (₹)</label>
-                    <input type="number" id="currentValue" required placeholder="1000000" min="0" step="any">
+
+                <!-- Standard Fields -->
+                <div id="standardFields">
+                    <div class="form-group">
+                        <label for="currentValue">Current Budgeted Value (₹)</label>
+                        <input type="number" id="currentValue" placeholder="1000000" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="years">Years Till Closure</label>
+                        <input type="number" id="years" placeholder="8" min="1" max="100">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="years">Years Till Closure</label>
-                    <input type="number" id="years" required placeholder="8" min="1" max="50">
+
+                <!-- Retirement Fields -->
+                <div id="retirementFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="monthlyExpenses">Current Monthly Expenses (₹)</label>
+                        <input type="number" id="monthlyExpenses" placeholder="50000" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="yearsToRetire">Years To Retirement</label>
+                        <input type="number" id="yearsToRetire" placeholder="15" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="yearsInRetirement">Years In Retirement (Duration)</label>
+                        <input type="number" id="yearsInRetirement" placeholder="25" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="postRetirementReturn">Expected Post-Retirement Return (%)</label>
+                        <input type="number" id="postRetirementReturn" placeholder="8" min="0" max="100" step="0.1">
+                    </div>
                 </div>
+
+                <!-- Shared Field -->
                 <div class="form-group">
-                    <label for="inflation">YoY Inflation Expected (%)</label>
+                    <label for="inflation">Expected YoY Inflation (%)</label>
                     <input type="number" id="inflation" required placeholder="6" min="0" max="100" step="0.1">
                 </div>
-                <button type="submit">Calculate & Save Goal</button>
+
+                <div class="form-actions">
+                    <button type="submit" id="submitBtn">Calculate & Save</button>
+                    <button type="button" id="cancelBtn" class="btn-cancel" onclick="app.cancelEdit()">Cancel</button>
+                </div>
             </form>
         </aside>
 
         <!-- Goals Display Area -->
         <main>
             <div class="goals-grid" id="goalsContainer">
-                <!-- Goal cards will be injected here via JavaScript -->
+                <!-- Goal cards injected here -->
             </div>
         </main>
     </div>
 
     <script>
-        // Anantha V1.2 Logic
         const app = {
             goals: [],
+            editingId: null,
 
             init() {
-                // Load saved goals from local storage
-                const savedGoals = localStorage.getItem('ananthaGoalsV1_2');
+                const savedGoals = localStorage.getItem('ananthaGoalsV1_3');
                 if (savedGoals) {
                     this.goals = JSON.parse(savedGoals);
                 }
-                
-                // Bind form submission
-                document.getElementById('goalForm').addEventListener('submit', (e) => this.addGoal(e));
-                
+                document.getElementById('goalForm').addEventListener('submit', (e) => this.handleSave(e));
+                this.toggleFormFields();
                 this.render();
             },
 
             formatCurrency(amount) {
-                return new Intl.NumberFormat('en-IN', {
-                    style: 'currency',
-                    currency: 'INR',
-                    maximumFractionDigits: 0
-                }).format(amount);
+                return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
             },
 
-            calculateTarget(presentValue, years, inflationRate) {
-                // Formula: Target = PV * (1 + rate)^years
-                const rateAsDecimal = inflationRate / 100;
-                const targetValue = presentValue * Math.pow((1 + rateAsDecimal), years);
-                return targetValue;
+            toggleFormFields() {
+                const type = document.getElementById('goalType').value;
+                const standardFields = document.getElementById('standardFields');
+                const retirementFields = document.getElementById('retirementFields');
+
+                if (type === 'standard') {
+                    standardFields.style.display = 'block';
+                    retirementFields.style.display = 'none';
+                    document.getElementById('currentValue').required = true;
+                    document.getElementById('years').required = true;
+                    document.getElementById('monthlyExpenses').required = false;
+                    document.getElementById('yearsToRetire').required = false;
+                    document.getElementById('yearsInRetirement').required = false;
+                    document.getElementById('postRetirementReturn').required = false;
+                } else {
+                    standardFields.style.display = 'none';
+                    retirementFields.style.display = 'block';
+                    document.getElementById('currentValue').required = false;
+                    document.getElementById('years').required = false;
+                    document.getElementById('monthlyExpenses').required = true;
+                    document.getElementById('yearsToRetire').required = true;
+                    document.getElementById('yearsInRetirement').required = true;
+                    document.getElementById('postRetirementReturn').required = true;
+                    
+                    if(!document.getElementById('goalName').value) {
+                        document.getElementById('goalName').value = "Retirement Fund";
+                    }
+                }
             },
 
-            addGoal(event) {
-                event.preventDefault(); // Prevent page reload
+            calculateStandardTarget(presentValue, years, inflationRate) {
+                return presentValue * Math.pow((1 + (inflationRate / 100)), years);
+            },
 
-                // Get values from form
+            calculateRetirementCorpus(monthlyExp, yearsToRetire, yearsInRetirement, inflationRate, returnRate) {
+                const annualExp = monthlyExp * 12;
+                const expAtRetirement = annualExp * Math.pow((1 + (inflationRate / 100)), yearsToRetire);
+                const rRate = returnRate / 100;
+                const iRate = inflationRate / 100;
+                const realReturn = ((1 + rRate) / (1 + iRate)) - 1;
+
+                let corpus = 0;
+                if (realReturn <= 0) {
+                    corpus = expAtRetirement * yearsInRetirement;
+                } else {
+                    corpus = expAtRetirement * ((1 - Math.pow(1 + realReturn, -yearsInRetirement)) / realReturn) * (1 + realReturn);
+                }
+                return corpus;
+            },
+
+            handleSave(event) {
+                event.preventDefault();
+
+                const type = document.getElementById('goalType').value;
                 const name = document.getElementById('goalName').value;
-                const currentValue = parseFloat(document.getElementById('currentValue').value);
-                const years = parseInt(document.getElementById('years').value);
                 const inflation = parseFloat(document.getElementById('inflation').value);
 
-                // Calculate target
-                const targetValue = this.calculateTarget(currentValue, years, inflation);
-
-                // Create goal object
-                const newGoal = {
-                    id: Date.now().toString(), // unique ID
+                let targetValue = 0;
+                let goalData = {
+                    id: this.editingId || Date.now().toString(),
+                    type: type,
                     name: name,
-                    currentValue: currentValue,
-                    years: years,
-                    inflation: inflation,
-                    targetValue: targetValue
+                    inflation: inflation
                 };
 
-                // Add to array and save
-                this.goals.push(newGoal);
+                if (type === 'standard') {
+                    goalData.currentValue = parseFloat(document.getElementById('currentValue').value);
+                    goalData.years = parseInt(document.getElementById('years').value);
+                    goalData.targetValue = this.calculateStandardTarget(goalData.currentValue, goalData.years, inflation);
+                } else {
+                    goalData.monthlyExpenses = parseFloat(document.getElementById('monthlyExpenses').value);
+                    goalData.yearsToRetire = parseInt(document.getElementById('yearsToRetire').value);
+                    goalData.yearsInRetirement = parseInt(document.getElementById('yearsInRetirement').value);
+                    goalData.postRetirementReturn = parseFloat(document.getElementById('postRetirementReturn').value);
+                    goalData.targetValue = this.calculateRetirementCorpus(
+                        goalData.monthlyExpenses, goalData.yearsToRetire, goalData.yearsInRetirement, inflation, goalData.postRetirementReturn
+                    );
+                }
+
+                if (this.editingId) {
+                    const index = this.goals.findIndex(g => g.id === this.editingId);
+                    this.goals[index] = goalData;
+                } else {
+                    this.goals.push(goalData);
+                }
+
                 this.saveState();
-                
-                // Reset form and re-render
-                document.getElementById('goalForm').reset();
+                this.cancelEdit();
                 this.render();
+            },
+
+            editGoal(id) {
+                const goal = this.goals.find(g => g.id === id);
+                if (!goal) return;
+
+                this.editingId = id;
+                document.getElementById('formTitle').innerText = "Edit Goal";
+                document.getElementById('submitBtn').innerText = "Update Goal";
+                document.getElementById('cancelBtn').style.display = "block";
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                document.getElementById('goalType').value = goal.type;
+                this.toggleFormFields();
+
+                document.getElementById('goalName').value = goal.name;
+                document.getElementById('inflation').value = goal.inflation;
+
+                if (goal.type === 'standard') {
+                    document.getElementById('currentValue').value = goal.currentValue;
+                    document.getElementById('years').value = goal.years;
+                } else {
+                    document.getElementById('monthlyExpenses').value = goal.monthlyExpenses;
+                    document.getElementById('yearsToRetire').value = goal.yearsToRetire;
+                    document.getElementById('yearsInRetirement').value = goal.yearsInRetirement;
+                    document.getElementById('postRetirementReturn').value = goal.postRetirementReturn;
+                }
+            },
+
+            cancelEdit() {
+                this.editingId = null;
+                document.getElementById('formTitle').innerText = "Define New Goal";
+                document.getElementById('submitBtn').innerText = "Calculate & Save";
+                document.getElementById('cancelBtn').style.display = "none";
+                document.getElementById('goalForm').reset();
+                this.toggleFormFields();
             },
 
             deleteGoal(id) {
-                this.goals = this.goals.filter(goal => goal.id !== id);
-                this.saveState();
-                this.render();
+                if(confirm("Are you sure you want to delete this goal?")) {
+                    this.goals = this.goals.filter(goal => goal.id !== id);
+                    if(this.editingId === id) this.cancelEdit();
+                    this.saveState();
+                    this.render();
+                }
             },
 
             saveState() {
-                localStorage.setItem('ananthaGoalsV1_2', JSON.stringify(this.goals));
+                localStorage.setItem('ananthaGoalsV1_3', JSON.stringify(this.goals));
             },
 
             render() {
                 const container = document.getElementById('goalsContainer');
-                container.innerHTML = ''; // Clear current grid
+                container.innerHTML = ''; 
 
                 if (this.goals.length === 0) {
                     container.innerHTML = '<p style="color: var(--text-secondary);">No goals defined yet. Create one to get started.</p>';
                     return;
                 }
 
-                // Render each goal as a card
                 this.goals.forEach(goal => {
                     const card = document.createElement('div');
-                    card.className = 'goal-card';
+                    card.className = `goal-card ${goal.type === 'retirement' ? 'retirement-type' : ''}`;
+                    
+                    let statsHTML = '';
+                    if (goal.type === 'standard') {
+                        statsHTML = `
+                            <div class="goal-stat"><span>Current Budget:</span><span>${this.formatCurrency(goal.currentValue)}</span></div>
+                            <div class="goal-stat"><span>Timeline:</span><span>${goal.years} Years</span></div>
+                            <div class="goal-stat"><span>Expected Inflation:</span><span>${goal.inflation}% YoY</span></div>
+                        `;
+                    } else {
+                        statsHTML = `
+                            <div class="goal-stat"><span>Current Monthly Exp:</span><span>${this.formatCurrency(goal.monthlyExpenses)}</span></div>
+                            <div class="goal-stat"><span>Retiring In:</span><span>${goal.yearsToRetire} Years</span></div>
+                            <div class="goal-stat"><span>Retirement Duration:</span><span>${goal.yearsInRetirement} Years</span></div>
+                            <div class="goal-stat"><span>Inflation / Return:</span><span>${goal.inflation}% / ${goal.postRetirementReturn}%</span></div>
+                        `;
+                    }
+
                     card.innerHTML = `
                         <div class="goal-header">
-                            <div class="goal-title">${goal.name}</div>
-                            <button class="delete-btn" onclick="app.deleteGoal('${goal.id}')" title="Delete Goal">✕</button>
+                            <div class="goal-title">
+                                ${goal.name}
+                                <span class="goal-type-badge">${goal.type === 'retirement' ? 'Retirement' : 'Standard'}</span>
+                            </div>
+                            <div class="card-actions">
+                                <button class="icon-btn" onclick="app.editGoal('${goal.id}')" title="Edit Goal">✎</button>
+                                <button class="icon-btn delete" onclick="app.deleteGoal('${goal.id}')" title="Delete Goal">✕</button>
+                            </div>
                         </div>
-                        <div class="goal-stat">
-                            <span>Current Budget:</span>
-                            <span>${this.formatCurrency(goal.currentValue)}</span>
-                        </div>
-                        <div class="goal-stat">
-                            <span>Timeline:</span>
-                            <span>${goal.years} Years</span>
-                        </div>
-                        <div class="goal-stat">
-                            <span>Expected Inflation:</span>
-                            <span>${goal.inflation}% YoY</span>
-                        </div>
+                        ${statsHTML}
                         <div class="target-amount">
-                            <span>Required at Closure</span>
+                            <span>Required Corpus at Closure</span>
                             <div class="target-value">${this.formatCurrency(goal.targetValue)}</div>
                         </div>
                     `;
@@ -351,7 +373,6 @@
             }
         };
 
-        // Boot the application when DOM is ready
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
 </body>
