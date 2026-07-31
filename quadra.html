@@ -289,7 +289,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.0</span></h1>
+                <h1>Quadra <span class="version-badge">v8.1</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -304,21 +304,16 @@
         
         <div class="header-actions">
             <div class="view-toggle" id="viewToggleGroup">
-                <!-- Icon-Only Navigation Buttons with SVGs and Placeholders -->
                 <button id="btnGrid" onclick="setLayout('grid')" title="Matrix">
-                    <!-- Icon Placeholder: Matrix View -->
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </button>
                 <button id="btnKanban" onclick="setLayout('kanban')" title="Kanban">
-                    <!-- Icon Placeholder: Kanban View -->
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="4" height="18" rx="1"></rect><rect x="10" y="3" width="4" height="18" rx="1"></rect><rect x="17" y="3" width="4" height="18" rx="1"></rect></svg>
                 </button>
                 <button id="btnOverdue" onclick="setLayout('overdue')" title="Overdue">
-                    <!-- Icon Placeholder: Overdue View -->
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 </button>
                 <button id="btnTracker" onclick="setLayout('tracker')" title="Tracker">
-                    <!-- Icon Placeholder: Tracker View -->
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 </button>
             </div>
@@ -900,6 +895,47 @@
             showToast("Signed out successfully.");
         }
 
+        // --- Background Sync Engine ---
+        async function performBackgroundSync() {
+            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+            if (!savedToken || !savedToken.token) return showToast("Please sign in first to sync with Google Tasks.");
+            try {
+                const syncBanner = document.getElementById('sync-banner');
+                if (syncBanner) syncBanner.style.display = 'block';
+                if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
+                    gapi.client.setToken({ access_token: savedToken.token });
+                }
+                const response = await gapi.client.tasks.tasklists.list();
+                const remoteLists = response.result.items || [];
+                const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
+                let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
+                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) { const existingList = remoteLists.find(l => l.title === GAPI_LIST_NAMES[quadKey]); if (existingList) { gapiListIds[quadKey] = existingList.id; } else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: GAPI_LIST_NAMES[quadKey] }); gapiListIds[quadKey] = newListReq.result.id; } }
+                let remoteTaskMap = {};
+                for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
+                const syncSnapshot = JSON.parse(JSON.stringify(notes));
+                for (let sn of syncSnapshot) {
+                    if (sn.eventId) continue; 
+                    if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
+                    if (sn.dirty && !sn.deleted) {
+                        const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
+                        if (remoteObj) { if (remoteObj.listId !== targetListId) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id }); const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} } else { try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){} } delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId]; } else { try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} }
+                        sn.dirty = false;
+                    } else if (!sn.dirty && !sn.deleted) { const remoteObj = remoteTaskMap[sn.id]; if (remoteObj) { sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active'; sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null; delete remoteTaskMap[sn.id]; } }
+                }
+                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], eventId: null, dirty: false, deleted: false }); });
+                let newNotesArray = []; let syncedIds = new Set();
+                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
+                notes = newNotesArray; saveNotes(); handleSearch(); 
+                if (syncBanner) syncBanner.style.display = 'none';
+                showToast("Successfully synced with Google Tasks!");
+            } catch (e) {
+                const syncBanner = document.getElementById('sync-banner');
+                if (syncBanner) syncBanner.style.display = 'none';
+                console.error(e);
+                showToast("Tasks sync failed. Check your API configuration.");
+            }
+        }
+
         // --- Sidebar & Tray Accordion Controllers ---
         function toggleSidebar() { 
             const panel = document.getElementById('sidePanel'); 
@@ -1426,6 +1462,47 @@
             if (scrollArea && scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
         }
 
+        // --- Render Overdue Tasks Page ---
+        function renderOverdueTasksPage() {
+            const container = document.getElementById('overdue-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const overdueNotes = notes.filter(n => {
+                if (n.deleted || n.status === 'closed' || !n.dueDate || n.eventId) return false;
+                return n.dueDate.split('T')[0] < todayStr;
+            });
+
+            overdueNotes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+            const badge = document.getElementById('overdue-count-badge');
+            if (badge) badge.innerText = overdueNotes.length;
+
+            if (overdueNotes.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">🎉 No overdue tasks! All caught up.</p>`;
+                return;
+            }
+
+            overdueNotes.forEach(note => {
+                const card = document.createElement('div');
+                card.className = 'overdue-card';
+                card.onclick = (e) => openTaskModal(null, note.id, e);
+                card.style.cursor = 'pointer';
+
+                let title = note.text.split('\n')[0];
+                let dueDate = note.dueDate.split('T')[0];
+
+                card.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <strong style="font-size: 15px; color: #9F1239;">${parseTags(title)}</strong>
+                        <span style="font-size: 12px; color: var(--text-muted);">Due: ${dueDate} (${note.quadrant.toUpperCase()})</span>
+                    </div>
+                    <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="completeTask('${note.id}'); event.stopPropagation(); renderOverdueTasksPage();">Complete ✓</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
         // --- Drag & Resize Engine ---
         let dragState = null;
 
@@ -1742,6 +1819,66 @@
                 handleSearch();
                 showToast("Calendar event cache cleared!");
             }
+        }
+
+        // --- Export Engine ---
+        function exportTimesheet() {
+            const baseDateStr = document.getElementById('trackerDate').value;
+            const [y, m, d] = baseDateStr.split('-');
+            const baseDate = new Date(y, m - 1, d);
+            let datesToExport = [];
+            
+            if (currentTrackerMode === 'day') {
+                datesToExport.push(baseDateStr);
+            } else {
+                const dayOfWeek = baseDate.getDay();
+                const startOfWeek = new Date(baseDate);
+                startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
+                for(let i=0; i<7; i++) {
+                    let dateIter = new Date(startOfWeek);
+                    dateIter.setDate(startOfWeek.getDate() + i);
+                    
+                    const localY = dateIter.getFullYear();
+                    const localM = String(dateIter.getMonth() + 1).padStart(2, '0');
+                    const localD = String(dateIter.getDate()).padStart(2, '0');
+                    
+                    datesToExport.push(`${localY}-${localM}-${localD}`);
+                }
+            }
+
+            let plainTextLog = `Timesheet Report\n`;
+            let overallTotal = 0;
+
+            datesToExport.forEach(dateStr => {
+                let dailyHrs = 0;
+                let dailyLog = "";
+                notes.forEach(note => {
+                    if (note.deleted || !note.timeBlocks) return;
+                    note.timeBlocks.forEach(tb => { 
+                        if(tb.date === dateStr) {
+                            let dur = roundToQuarterHour(tb.duration);
+                            dailyHrs += dur;
+                            const tags = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
+                            let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
+                            dailyLog += `- [${identifier}] ${dur}h\n`;
+                        }
+                    });
+                });
+                
+                if (dailyHrs > 0 || currentTrackerMode === 'day') {
+                     plainTextLog += `\nDate: ${dateStr}\n------------------------\n`;
+                     if(dailyHrs > 0) plainTextLog += dailyLog;
+                     else plainTextLog += "No time logged.\n";
+                     plainTextLog += `Total: ${roundToQuarterHour(dailyHrs)}h\n`;
+                }
+                overallTotal += dailyHrs;
+            });
+            
+            if (currentTrackerMode === 'week') {
+                 plainTextLog += `\n========================\nWeekly Total: ${roundToQuarterHour(overallTotal)}h\n`;
+            }
+
+            navigator.clipboard.writeText(plainTextLog).then(() => showToast("Timesheet copied to clipboard!")).catch(err => showToast("Copy failed"));
         }
 
         // --- Config Settings & UI ---
