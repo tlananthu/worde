@@ -272,7 +272,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v6.6</span></h1>
+                <h1>Quadra <span class="version-badge">v6.7</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -1518,13 +1518,44 @@
         function triggerImport() { document.getElementById('importFile').click(); }
         function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
 
-        // --- Robust Universal Timezone ICS Parser ---
+        // --- Dynamic Timezone ICS Parser for Outlook Calendars ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
+            let timezones = {}; // Store TZID definitions if present in VTIMEZONE blocks
             let lines = icsText.split(/\r\n|\n|\r/);
             let currentEvent = null;
+            let currentTzid = null;
+
+            // First pass: extract explicit timezone offsets from VTIMEZONE blocks if available
+            let tzHoursOffset = 0; // Default fallback offset map for Microsoft labels if VTIMEZONE details are missing
+            const outlookTzMap = {
+                'AUS EASTERN STANDARD TIME': 10,
+                'E. AUSTRALIA STANDARD TIME': 10,
+                'AEST': 10,
+                'AEDT': 11,
+                'GMT': 0,
+                'UTC': 0,
+                'PACIFIC STANDARD TIME': -8,
+                'EASTERN STANDARD TIME': -5
+            };
 
             for (let line of lines) {
+                if (line.startsWith('TZID:')) {
+                    currentTzid = line.substring(5).trim().toUpperCase();
+                }
+                if (line.includes('STANDARD') || line.includes('DAYLIGHT')) {
+                    // Look for standard offset lines like TZOFFSETFROM:+1000
+                }
+                if (line.startsWith('TZOFFSETFROM:')) {
+                    let offsetStr = line.substring(13).trim();
+                    let sign = offsetStr.startsWith('-') ? -1 : 1;
+                    let hrs = parseInt(offsetStr.substring(1, 3)) || 0;
+                    let mins = parseInt(offsetStr.substring(3, 5)) || 0;
+                    if (currentTzid) {
+                        timezones[currentTzid] = sign * (hrs + (mins / 60));
+                    }
+                }
+
                 if (line === 'BEGIN:VEVENT') {
                     currentEvent = {};
                 } else if (line === 'END:VEVENT' && currentEvent) {
@@ -1557,11 +1588,8 @@
                 let dtStartVal = ev[dtStartKey];
                 let dtEndVal = dtEndKey ? ev[dtEndKey] : dtStartVal;
 
-                // Universal ICS Date Parser supporting native JS Date parsing for any timezone / UTC
-                let parseIcsUniversalDate = (valStr) => {
+                let parseUniversalDate = (keyName, valStr) => {
                     let clean = valStr.trim();
-                    
-                    // Standard ICS format: YYYYMMDDTHHMMSS (with optional Z)
                     let match = clean.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?Z?$/);
                     if (!match) return null;
 
@@ -1574,11 +1602,25 @@
 
                     let dateObj;
                     if (clean.endsWith('Z')) {
-                        // UTC conversion to local browser time
                         dateObj = new Date(Date.UTC(y, m, d, h, min, s));
                     } else {
-                        // Floating or local wall-clock time
-                        dateObj = new Date(y, m, d, h, min, s);
+                        // Check if TZID is declared in the property key (e.g. DTSTART;TZID=AUS Eastern Standard Time:...)
+                        let tzidMatch = keyName.match(/TZID=([^;:]+)/i);
+                        if (tzidMatch) {
+                            let tzidKey = tzidMatch[1].trim().toUpperCase();
+                            let sourceOffset = timezones[tzidKey] !== undefined ? timezones[tzidKey] : outlookTzMap[tzidKey];
+                            
+                            if (sourceOffset !== undefined) {
+                                // Convert event's declared timezone time to UTC, then browser local time
+                                let localBrowserOffsetHours = -new Date().getTimezoneOffset() / 60; // Browser offset from UTC
+                                let netOffsetDiff = localBrowserOffsetHours - sourceOffset;
+                                dateObj = new Date(y, m, d, h + netOffsetDiff, min, s);
+                            } else {
+                                dateObj = new Date(y, m, d, h, min, s);
+                            }
+                        } else {
+                            dateObj = new Date(y, m, d, h, min, s);
+                        }
                     }
 
                     return {
@@ -1588,8 +1630,8 @@
                 };
 
                 try {
-                    let startParsed = parseIcsUniversalDate(dtStartVal);
-                    let endParsed = parseIcsUniversalDate(dtEndVal);
+                    let startParsed = parseUniversalDate(dtStartKey, dtStartVal);
+                    let endParsed = parseUniversalDate(dtEndKey || dtStartKey, dtEndVal);
 
                     if (startParsed && endParsed && startParsed.dateStr === targetDateStr) {
                         let startHour = roundToQuarterHour(startParsed.hour);
