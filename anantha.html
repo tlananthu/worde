@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.26</title>
+    <title>Anantha | Wealth OS V2.27</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -72,10 +72,6 @@
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
         .btn-action { width: auto; flex: 1; }
 
-        /* Investment Cards & Colors */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; padding-top: 1rem; }
-        .card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; position: relative; }
-        
         .year-badge {
             position: absolute;
             top: -14px;
@@ -167,10 +163,12 @@
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
         
+        /* Low Growth Highlight */
         .data-table .low-growth-row { background-color: rgba(244, 63, 94, 0.05) !important; }
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
+        /* Clickable Rows */
         tr.clickable-row { cursor: pointer; transition: background-color 0.2s; }
         tr.clickable-row:hover td { background-color: rgba(56, 189, 248, 0.08) !important; }
 
@@ -432,7 +430,7 @@
 
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
-                    <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will delete ALL current assets and replace them with the newly uploaded template. Continue?')) document.getElementById('bulkUpload').click()">
+                    <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will replace existing assets for the specific profiles found in this file. Data for other profiles will remain safe. Continue?')) document.getElementById('bulkUpload').click()">
                         ⬆ Upload Portfolio Data
                     </button>
                 </div>
@@ -494,9 +492,15 @@
                             <input type="text" id="invRawType" placeholder="e.g. STOCK, MF">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="invRawCategory">Category</label>
-                        <input type="text" id="invRawCategory" placeholder="e.g. Large Cap, Liquid">
+                    <div class="row-group">
+                        <div class="form-group">
+                            <label for="invRawCategory">Category</label>
+                            <input type="text" id="invRawCategory" placeholder="e.g. Large Cap, NA">
+                        </div>
+                        <div class="form-group">
+                            <label for="invRawSector">Sector</label>
+                            <input type="text" id="invRawSector" placeholder="e.g. IT, Auto, NA">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -527,7 +531,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.26</div>
+        <div>Anantha Wealth OS V2.27</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -578,20 +582,20 @@
             },
 
             migrateData() {
-                const savedV2_26 = localStorage.getItem('ananthaDataV2_26');
-                if (savedV2_26) {
-                    this.data = JSON.parse(savedV2_26);
+                const savedV2_27 = localStorage.getItem('ananthaDataV2_27');
+                if (savedV2_27) {
+                    this.data = JSON.parse(savedV2_27);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.dashClassFilters = this.data.dashClassFilters !== undefined ? this.data.dashClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.dashTypeFilters = this.data.dashTypeFilters !== undefined ? this.data.dashTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.dashCategoryFilters = this.data.dashCategoryFilters !== undefined ? this.data.dashCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.dashCategoryFilters = this.data.dashCategoryFilters !== undefined ? this.data.dashCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
 
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
                     
                     this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.sortColumn = this.data.sortColumn || 'year';
@@ -600,22 +604,26 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_25');
+                const savedOld = localStorage.getItem('ananthaDataV2_26');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    this.activeView = this.data.activeView || 'home';
+                    // Migration mapping for new sector fields
+                    this.data.investments.forEach(inv => {
+                        if (!inv.rawSector) inv.rawSector = 'NA';
+                    });
                     
+                    this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.dashClassFilters = this.data.dashClassFilters !== undefined ? this.data.dashClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.dashTypeFilters = this.data.dashTypeFilters !== undefined ? this.data.dashTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.dashCategoryFilters = this.data.dashCategoryFilters !== undefined ? this.data.dashCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.dashCategoryFilters = this.data.dashCategoryFilters !== undefined ? this.data.dashCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
 
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
                     
-                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
+                    this.allocationGroupBy = 'class'; 
                     this.saveState();
                     return;
                 }
@@ -650,7 +658,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_26', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_27', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -796,7 +804,8 @@
 
                 let rClass = document.getElementById('invRawClass').value.trim();
                 let rType = document.getElementById('invRawType').value.trim() || 'Other';
-                let rCategory = document.getElementById('invRawCategory').value.trim() || 'Other';
+                let rCategory = document.getElementById('invRawCategory').value.trim() || 'NA';
+                let rSector = document.getElementById('invRawSector').value.trim() || 'NA';
 
                 let invData = {
                     id: this.editingInvId || Date.now().toString(),
@@ -808,7 +817,8 @@
                     maturityDate: matDate,
                     rawAssetClass: rClass || type,
                     rawAssetType: rType,
-                    rawCategory: rCategory
+                    rawCategory: rCategory,
+                    rawSector: rSector
                 };
 
                 if (this.editingInvId) {
@@ -851,7 +861,8 @@
                 
                 document.getElementById('invRawClass').value = inv.rawAssetClass || inv.type;
                 document.getElementById('invRawType').value = inv.rawAssetType || '';
-                document.getElementById('invRawCategory').value = inv.rawCategory || '';
+                document.getElementById('invRawCategory').value = inv.rawCategory || 'NA';
+                document.getElementById('invRawSector').value = inv.rawSector || 'NA';
 
                 this.openAssetModal();
             },
@@ -931,7 +942,8 @@
                                 let profileName = "Main Portfolio";
                                 let rawType = "Other";
                                 let rawClass = "Other";
-                                let rawCategory = "Other";
+                                let rawCategory = "NA";
+                                let rawSector = "NA";
 
                                 if (!isZerodha) {
                                     // INDmoney Extraction
@@ -941,7 +953,8 @@
                                     profileName = rowObj["First Name"] ? rowObj["First Name"].toString().trim() : "Main Portfolio";
                                     rawType = (rowObj["Asset Type"] || "Other").toString().trim();
                                     rawClass = (rowObj["Asset Class"] || "Other").toString().trim();
-                                    rawCategory = (rowObj["Category"] || "Other").toString().trim();
+                                    rawCategory = (rowObj["Category"] || "NA").toString().trim();
+                                    rawSector = "NA";
                                 } else {
                                     // Zerodha Extraction
                                     invName = rowObj["Symbol"];
@@ -958,6 +971,8 @@
                                     let instType = (rowObj["Instrument Type"] || "").toString().trim();
                                     let sector = (rowObj["Sector"] || "").toString().trim();
 
+                                    rawSector = sector || "NA";
+
                                     // Parse Zerodha's specific Instrument Type field
                                     if (sheetName.toLowerCase().includes("mutual fund") || instType.includes(" - ")) {
                                         rawType = "MF";
@@ -967,12 +982,12 @@
                                             rawCategory = parts[1].trim();
                                         } else {
                                             rawClass = instType || "Mutual Fund";
-                                            rawCategory = "Other";
+                                            rawCategory = "NA";
                                         }
                                     } else {
                                         rawType = "STOCK";
                                         rawClass = "Equity";
-                                        rawCategory = sector || instType || "Other";
+                                        rawCategory = "NA"; 
                                     }
                                 }
 
@@ -1014,7 +1029,8 @@
                                         maturityDate: "",
                                         rawAssetClass: rawClass,
                                         rawAssetType: rawType,
-                                        rawCategory: rawCategory
+                                        rawCategory: rawCategory,
+                                        rawSector: rawSector
                                     });
                                 }
                             }
@@ -1022,8 +1038,15 @@
                     });
                     
                     if(newInvestments.length > 0) {
-                        this.data.investments = newInvestments;
-                        newProfiles.forEach(p => {
+                        let importedProfiles = Array.from(newProfiles);
+                        
+                        // NON-DESTRUCTIVE IMPORT: Only clear old investments for the profiles being uploaded right now.
+                        this.data.investments = this.data.investments.filter(i => !importedProfiles.includes(i.profile || 'Main Portfolio'));
+                        
+                        // Append the new ones
+                        this.data.investments = [...this.data.investments, ...newInvestments];
+
+                        importedProfiles.forEach(p => {
                             if(!this.data.profiles.includes(p)) {
                                 this.data.profiles.push(p);
                                 this.dashProfileFilters.push(p);
@@ -1034,7 +1057,7 @@
                         // Rebuild all filters to include new incoming data
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                         this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                        this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                        this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
 
                         this.dashClassFilters = [...this.invClassFilters];
                         this.dashTypeFilters = [...this.invTypeFilters];
@@ -1044,7 +1067,7 @@
                         this.updateProfileDropdowns();
                         this.renderInvestments();
                         this.renderDashboard();
-                        alert(`Successfully imported ${newInvestments.length} assets from the template!`);
+                        alert(`Successfully imported ${newInvestments.length} assets for profiles: ${importedProfiles.join(", ")}.\n\nData for your other profiles was not modified.`);
                     } else {
                         alert("No valid asset data found in the template.");
                     }
@@ -1087,7 +1110,7 @@
                 if (filterKey.includes('Profile')) items = this.data.profiles;
                 if (filterKey.includes('Class')) items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                 if (filterKey.includes('Type')) items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
                 
                 const btn = document.getElementById(btnId);
                 if (btn) {
@@ -1112,7 +1135,7 @@
                 if (filterKey.includes('Profile')) items = this.data.profiles;
                 if (filterKey.includes('Class')) items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                 if (filterKey.includes('Type')) items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
 
                 if (isAll) {
                     this[filterKey] = [...items];
@@ -1188,7 +1211,7 @@
                 let html = '';
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                 const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
 
                 html += this.buildDropdownHTML('profileFilter', 'Profiles', this.data.profiles, this.invProfileFilters, 'invProfileFilters');
                 html += this.buildDropdownHTML('classFilter', 'Classes', uniqueClasses, this.invClassFilters, 'invClassFilters');
@@ -1205,7 +1228,7 @@
                 let html = '';
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                 const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
 
                 html += this.buildDropdownHTML('dashProfileFilter', 'Profiles', this.data.profiles, this.dashProfileFilters, 'dashProfileFilters');
                 html += this.buildDropdownHTML('dashClassFilter', 'Classes', uniqueClasses, this.dashClassFilters, 'dashClassFilters');
@@ -1237,7 +1260,7 @@
                     const profileMatch = this.invProfileFilters.includes(i.profile || 'Main Portfolio');
                     const classMatch = this.invClassFilters.includes(i.rawAssetClass || i.type);
                     const typeMatch = this.invTypeFilters.includes(i.rawAssetType || 'Other');
-                    const catMatch = this.invCategoryFilters.includes(i.rawCategory || 'Other');
+                    const catMatch = this.invCategoryFilters.includes(i.rawCategory || 'NA');
                     return profileMatch && classMatch && typeMatch && catMatch;
                 });
 
@@ -1276,6 +1299,9 @@
                     let displayClass = (inv.rawAssetClass || inv.type).toUpperCase();
                     
                     const tr = document.createElement('tr');
+                    tr.className = "clickable-row";
+                    tr.setAttribute('onclick', `app.editInv('${inv.id}')`);
+                    
                     tr.innerHTML = `
                         <td>
                             <div class="name-cell">
@@ -1289,8 +1315,8 @@
                         <td style="color: var(--text-secondary);">${inv.matDisplay}</td>
                         <td class="highlight-val">${this.formatCurrency(inv.computedFV)}</td>
                         <td style="text-align: center;">
-                            <button class="icon-btn" onclick="app.editInv('${inv.id}')">✎</button>
-                            <button class="icon-btn delete" onclick="app.deleteInv('${inv.id}')">✕</button>
+                            <button class="icon-btn" onclick="event.stopPropagation(); app.editInv('${inv.id}')">✎</button>
+                            <button class="icon-btn delete" onclick="event.stopPropagation(); app.deleteInv('${inv.id}')">✕</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -1335,11 +1361,11 @@
                 if (grouping === 'class') {
                     this.invClassFilters = [keyStr];
                     this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
                 } else if (grouping === 'type') {
                     this.invTypeFilters = [keyStr];
                     this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
                 } else if (grouping === 'category') {
                     this.invCategoryFilters = [keyStr];
                     this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
@@ -1362,7 +1388,7 @@
                     let key = 'Other';
                     if (this.allocationGroupBy === 'class') key = inv.rawAssetClass || inv.type;
                     else if (this.allocationGroupBy === 'type') key = inv.rawAssetType || 'Other';
-                    else if (this.allocationGroupBy === 'category') key = inv.rawCategory || 'Other';
+                    else if (this.allocationGroupBy === 'category') key = inv.rawCategory || 'NA';
 
                     if (!key || key.trim() === '') key = 'Uncategorized';
 
@@ -1861,7 +1887,7 @@
                     const profileMatch = this.dashProfileFilters.includes(i.profile || 'Main Portfolio');
                     const classMatch = this.dashClassFilters.includes(i.rawAssetClass || i.type);
                     const typeMatch = this.dashTypeFilters.includes(i.rawAssetType || 'Other');
-                    const catMatch = this.dashCategoryFilters.includes(i.rawCategory || 'Other');
+                    const catMatch = this.dashCategoryFilters.includes(i.rawCategory || 'NA');
                     return profileMatch && classMatch && typeMatch && catMatch;
                 });
 
