@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.32</title>
+    <title>Anantha | Wealth OS V2.33</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -71,6 +71,8 @@
         button:hover { opacity: 0.9; }
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
         .btn-action { width: auto; flex: 1; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); }
+        .btn-outline:hover { background-color: rgba(56, 189, 248, 0.1); }
 
         .year-badge {
             position: absolute;
@@ -114,16 +116,15 @@
         .legend-item { display: flex; align-items: center; gap: 0.4rem; color: var(--text-primary); }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
-        /* Multi-Select Custom Dropdowns */
-        .filter-dropdown-container { position: relative; display: inline-block; min-width: 160px; }
-        .filter-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .filter-btn:hover { border-color: var(--accent-color); }
-        .filter-menu { position: absolute; top: calc(100% + 5px); left: 0; min-width: 240px; max-height: 300px; overflow-y: auto; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; }
-        .filter-menu.show { display: block; }
-        .filter-option { display: flex; align-items: center; padding: 0.6rem 1rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; border-bottom: 1px solid var(--surface-light); transition: background 0.2s; }
-        .filter-option:hover { background: var(--surface-light); color: var(--text-primary); }
-        .filter-option input[type="checkbox"] { margin-right: 0.8rem; cursor: pointer; accent-color: var(--accent-color); width: 16px; height: 16px; flex-shrink: 0; }
-        .filter-header { padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; background: var(--surface-light); color: var(--text-primary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 2; text-transform: uppercase; letter-spacing: 1px; }
+        /* Unified Filter Panel */
+        .filter-panel { background: var(--surface-light); border: 1px solid var(--accent-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; display: none; animation: fadeIn 0.2s ease-in-out; }
+        .filter-panel h4 { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.4rem; }
+        .filter-col label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; margin-bottom: 0.4rem; cursor: pointer; color: var(--text-primary); text-transform: uppercase; }
+        .filter-col input[type="checkbox"] { accent-color: var(--accent-color); cursor: pointer; width: 14px; height: 14px; }
+        
+        .pill-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
+        .pill-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
+        .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
 
         /* Sortable Data Tables */
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
@@ -145,9 +146,14 @@
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
         
         /* Low Growth Highlight */
-        .data-table .low-growth-row { background-color: rgba(244, 63, 94, 0.05) !important; }
-        .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
-        .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
+        .data-table .loss-making-row { background-color: rgba(244, 63, 94, 0.12) !important; }
+        .data-table .loss-making-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.25); color: #fecdd3 !important; }
+        .data-table .loss-making-row td:first-child { border-left: 4px solid var(--danger-color); }
+        .data-table .loss-making-row td.highlight-val { color: var(--danger-color) !important; }
+
+        .data-table .low-growth-row { background-color: rgba(251, 191, 36, 0.05) !important; }
+        .data-table .low-growth-row td { border-bottom: 1px solid rgba(251, 191, 36, 0.2); }
+        .data-table .low-growth-row td:first-child { border-left: 4px solid var(--warning-color); }
 
         /* Clickable Rows */
         tr.clickable-row { cursor: pointer; transition: background-color 0.2s; }
@@ -160,14 +166,18 @@
         .close-modal { position: absolute; top: 1rem; right: 1rem; background: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; border: none; padding: 0; width: auto; }
         .close-modal:hover { color: var(--danger-color); }
         
-        .portfolio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-wrap: wrap; gap: 1rem;}
+        .portfolio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; flex-wrap: wrap; gap: 1rem;}
         .portfolio-header h3 { font-size: 1.2rem; color: var(--text-primary); font-weight: 600; margin: 0; }
-        .btn-upload { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); font-weight: 500; width: auto; padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; border-radius: 4px; }
-        .btn-upload:hover { border-color: var(--accent-color); }
-
+        
         /* Settings Card specific styles */
-        .settings-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem; max-width: 600px; margin: 0 auto; }
-        .mapping-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .settings-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
+        .settings-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem; }
+
+        /* Toast */
+        .toast { visibility: hidden; min-width: 280px; background-color: var(--surface-light); color: var(--text-primary); text-align: center; border-radius: 6px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; font-weight: 600; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .toast.show { visibility: visible; animation: fadein 0.4s, fadeout 0.4s 2.5s; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
 
         /* Footer */
         .app-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--surface-light); text-align: center; color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; }
@@ -193,6 +203,52 @@
             <button class="tab-btn" onclick="app.switchView('goals')">Financial Goals / Plan</button>
             <button class="tab-btn" onclick="app.switchView('investments')">Asset Portfolio</button>
             <button class="tab-btn" onclick="app.switchView('settings')">Settings</button>
+        </div>
+
+        <!-- SHARED UNIFIED FILTER PANEL -->
+        <div id="globalFilterPanel" class="filter-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <h3 style="margin: 0; color: var(--accent-color); font-size: 1.1rem;">Tune Data Filters</h3>
+                <button onclick="app.closeFilterPanel()" style="background:transparent; color:var(--text-secondary); width:auto; padding:0; font-size:1.5rem; border:none; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="filter-col">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+                        <h4 style="margin:0;">Profiles</h4>
+                        <div style="font-size:0.75rem;"><a href="#" onclick="app.selectAllTemp('profiles', true); return false;" style="color:var(--accent-color); text-decoration:none;">All</a> | <a href="#" onclick="app.selectAllTemp('profiles', false); return false;" style="color:var(--danger-color); text-decoration:none;">None</a></div>
+                    </div>
+                    <div id="fp-prof" style="display:flex; flex-direction:column; gap:0.4rem; max-height: 200px; overflow-y:auto;"></div>
+                </div>
+
+                <div class="filter-col">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+                        <h4 style="margin:0;">Classes</h4>
+                        <div style="font-size:0.75rem;"><a href="#" onclick="app.selectAllTemp('classes', true); return false;" style="color:var(--accent-color); text-decoration:none;">All</a> | <a href="#" onclick="app.selectAllTemp('classes', false); return false;" style="color:var(--danger-color); text-decoration:none;">None</a></div>
+                    </div>
+                    <div id="fp-class" style="display:flex; flex-direction:column; gap:0.4rem; max-height: 200px; overflow-y:auto;"></div>
+                </div>
+
+                <div class="filter-col">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+                        <h4 style="margin:0;">Types</h4>
+                        <div style="font-size:0.75rem;"><a href="#" onclick="app.selectAllTemp('types', true); return false;" style="color:var(--accent-color); text-decoration:none;">All</a> | <a href="#" onclick="app.selectAllTemp('types', false); return false;" style="color:var(--danger-color); text-decoration:none;">None</a></div>
+                    </div>
+                    <div id="fp-type" style="display:flex; flex-direction:column; gap:0.4rem; max-height: 200px; overflow-y:auto;"></div>
+                </div>
+
+                <div class="filter-col">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+                        <h4 style="margin:0;">Categories</h4>
+                        <div style="font-size:0.75rem;"><a href="#" onclick="app.selectAllTemp('categories', true); return false;" style="color:var(--accent-color); text-decoration:none;">All</a> | <a href="#" onclick="app.selectAllTemp('categories', false); return false;" style="color:var(--danger-color); text-decoration:none;">None</a></div>
+                    </div>
+                    <div id="fp-cat" style="display:flex; flex-direction:column; gap:0.4rem; max-height: 200px; overflow-y:auto;"></div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button onclick="app.applyFilters()" style="width: auto; padding: 0.75rem 2rem;">Apply Filters</button>
+            </div>
         </div>
 
         <!-- VIEW: HOME DASHBOARD -->
@@ -234,15 +290,16 @@
             </div>
 
             <div class="table-container" style="margin-top: 2rem;">
-                <div class="table-header-row" style="flex-direction: column; align-items: flex-start;">
-                    <div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:1rem;">
+                <div class="table-header-row" style="flex-direction: column; align-items: flex-start; padding-bottom: 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items: center; width:100%; flex-wrap:wrap; gap:1rem;">
                         <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Asset Allocation Summary</h3>
-                    </div>
-                    
-                    <div style="width: 100%; margin-top: 1rem; margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 1rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);" id="dashboardFiltersBar">
-                        <!-- Dropdowns injected via JS -->
+                        <button class="btn-outline" style="width: auto; padding: 0.4rem 1rem; border-radius: 20px;" onclick="app.openFilterPanel('dash')">Tune Filters ⚡</button>
                     </div>
                 </div>
+                
+                <!-- Dashboard Specific Filter Inject Point -->
+                <div id="dashFilterContainer"></div>
+
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -363,15 +420,15 @@
             <div class="portfolio-header">
                 <h3>Registered Assets</h3>
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-outline" style="width: auto; padding: 0.4rem 1rem; border-radius: 20px;" onclick="app.openFilterPanel('inv')">Tune Filters ⚡</button>
                     <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
                 </div>
             </div>
             
-            <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);" id="portfolioFiltersBar">
-                <!-- Dropdowns injected via JS -->
-            </div>
+            <!-- Portfolio Specific Filter Inject Point -->
+            <div id="invFilterContainer"></div>
             
-            <div class="table-container">
+            <div class="table-container" style="margin-top: 0;">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -392,60 +449,51 @@
 
         <!-- VIEW: SETTINGS (PROFILES & IMPORT) -->
         <div id="view-settings" class="view">
-            
-            <div class="settings-card" style="margin-bottom: 2rem;">
-                <h2>Profile Management</h2>
-                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">
-                    Create, view, and delete asset owner profiles. Deleting a profile will also permanently delete all manually added assets associated with it.
-                </p>
-                
-                <div id="settingsProfileList" style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
-                    <!-- Profiles injected via JS -->
-                </div>
-
-                <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
-                    <form onsubmit="app.createProfile(event)" style="display: flex; gap: 1rem; align-items: flex-end;">
-                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                            <label for="settingsNewProfileName">New Profile Name</label>
-                            <input type="text" id="settingsNewProfileName" required placeholder="e.g., Anju, Twins">
-                        </div>
-                        <button type="submit" class="btn-action" style="background-color: var(--success-color);">+ Add Profile</button>
-                    </form>
-                </div>
-            </div>
-            
-            <div class="settings-card">
-                <h2>Data Management</h2>
-                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">
-                    Upload your portfolio holdings file to automatically map and populate your dashboard. All uploaded data is safely stored offline in your local browser storage.
-                </p>
-                
-                <div style="background: var(--surface-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--accent-color);">
-                    <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Supported Platforms</h4>
-                    <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6; margin-bottom: 1rem;">
-                        <li><strong>INDMoney</strong> (holdings-family-template.xlsx)</li>
-                        <li><strong>Zerodha</strong> (holdings-template-zerodha.xlsx)</li>
-                    </ul>
+            <div class="settings-layout">
+                <div class="settings-card" style="height: fit-content;">
+                    <h2>Profile Management</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">
+                        Create, view, and delete asset owner profiles. Deleting a profile will permanently remove all assets associated with it.
+                    </p>
                     
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
-                        <h5 style="margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.9rem;">Zerodha Client ID Profile Mapping</h5>
-                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">Zerodha files use a Client ID instead of a name. Map your IDs to your OS Profiles below.</p>
-                        <div id="zerodhaMappingContainer" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                            <!-- Mappings injected via JS -->
-                        </div>
-                        <button type="button" onclick="app.addZerodhaMapping()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-top: 0.5rem; background: var(--surface-color); color: var(--text-primary); border: 1px dashed var(--border-color);">+ Add Mapping ID</button>
+                    <div id="settingsProfileList" style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
+                        <!-- Profiles injected via JS -->
                     </div>
 
-                    <div style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
-                        Will be adding Upstox, Groww, Geojit templates soon.
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                        <form onsubmit="app.createProfile(event)" style="display: flex; gap: 1rem; align-items: flex-end;">
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label for="settingsNewProfileName">New Profile Name</label>
+                                <input type="text" id="settingsNewProfileName" required placeholder="e.g., Anju, Twins">
+                            </div>
+                            <button type="submit" class="btn-action" style="background-color: var(--success-color);">+ Add</button>
+                        </form>
                     </div>
                 </div>
+                
+                <div class="settings-card" style="height: fit-content;">
+                    <h2>Data Management</h2>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">
+                        Upload your portfolio holdings file to automatically populate your dashboard. All uploaded data is safely stored offline in your local browser storage.
+                    </p>
+                    
+                    <div style="background: var(--surface-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--accent-color);">
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Supported Platforms</h4>
+                        <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6;">
+                            <li><strong>INDMoney</strong> (holdings-family-template.xlsx)</li>
+                            <li><strong>Zerodha</strong> (holdings-template-zerodha.xlsx)</li>
+                        </ul>
+                        <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
+                            Zerodha imports will auto-create profiles named after the Client ID. Will be adding Upstox & Groww soon.
+                        </div>
+                    </div>
 
-                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
-                    <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will replace existing assets for the specific profiles found in this file. Data for other profiles will remain safe. Custom mapped categories will be retained. Continue?')) document.getElementById('bulkUpload').click()">
-                        ⬆ Upload Portfolio Data
-                    </button>
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
+                        <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will replace existing assets for the specific profiles found in this file. Data for other profiles will remain safe. Custom mapped categories will be retained. Continue?')) document.getElementById('bulkUpload').click()">
+                            ⬆ Upload Portfolio Data
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -527,9 +575,11 @@
             </div>
         </div>
     </main>
+    
+    <div id="appToast" class="toast"></div>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.32</div>
+        <div>Anantha Wealth OS V2.33</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -538,8 +588,7 @@
             data: {
                 profiles: ['Main Portfolio'],
                 goals: [],
-                investments: [],
-                zerodhaMappings: [] 
+                investments: []
             },
             editingGoalId: null,
             editingBatchId: null,
@@ -564,6 +613,10 @@
             invTypeFilters: [],
             invCategoryFilters: [],
             
+            // Unified Filter Panel State
+            currentFilterMode: 'dash',
+            tempFilters: { profiles: [], classes: [], types: [], categories: [] },
+
             allocationGroupBy: 'class', 
 
             defaultRates: { 
@@ -576,17 +629,23 @@
                 this.migrateData();
                 this.updateProfileDropdowns();
                 this.toggleGoalFields();
-                this.renderZerodhaMappings();
                 this.renderAll();
                 this.switchView(this.activeView);
             },
 
+            showToast(msg, isError = false) {
+                const toast = document.getElementById('appToast');
+                toast.innerText = msg;
+                toast.style.borderColor = isError ? 'var(--danger-color)' : 'var(--success-color)';
+                toast.style.borderLeft = `4px solid ${isError ? 'var(--danger-color)' : 'var(--success-color)'}`;
+                toast.className = "toast show";
+                setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+            },
+
             migrateData() {
-                const savedV2_32 = localStorage.getItem('ananthaDataV2_32');
-                if (savedV2_32) {
-                    this.data = JSON.parse(savedV2_32);
-                    this.data.zerodhaMappings = this.data.zerodhaMappings || [];
-                    
+                const savedV2_33 = localStorage.getItem('ananthaDataV2_33');
+                if (savedV2_33) {
+                    this.data = JSON.parse(savedV2_33);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -607,10 +666,9 @@
                     return;
                 }
 
-                const savedOld = localStorage.getItem('ananthaDataV2_31');
+                const savedOld = localStorage.getItem('ananthaDataV2_32');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    this.data.zerodhaMappings = this.data.zerodhaMappings || [];
                     
                     this.activeView = this.data.activeView || 'home';
                     
@@ -663,7 +721,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_32', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_33', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -678,54 +736,6 @@
                     return parseFloat(cleaned);
                 }
                 return NaN;
-            },
-
-            /* -------------------------------------------------------------------------- */
-            /* ZERODHA MAPPINGS                                                           */
-            /* -------------------------------------------------------------------------- */
-            renderZerodhaMappings() {
-                const container = document.getElementById('zerodhaMappingContainer');
-                if(!container) return;
-                container.innerHTML = '';
-                
-                this.data.zerodhaMappings.forEach((map, idx) => {
-                    let profOpts = this.data.profiles.map(p => `<option value="${p}" ${p === map.profileName ? 'selected' : ''}>${p}</option>`).join('');
-                    
-                    container.innerHTML += `
-                        <div class="mapping-row">
-                            <input type="text" placeholder="Client ID (e.g. CQC949)" value="${map.clientId}" onchange="app.updateZMap(${idx}, 'id', this.value)" style="flex: 1; padding: 0.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
-                            <span style="color: var(--text-secondary);">➔</span>
-                            <select onchange="app.updateZMap(${idx}, 'prof', this.value)" style="flex: 1; padding: 0.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
-                                ${profOpts}
-                            </select>
-                            <button onclick="app.removeZMap(${idx})" style="width: auto; background: transparent; color: var(--danger-color); padding: 0.5rem; cursor: pointer; border: none; font-size: 1.2rem; line-height: 1;">&times;</button>
-                        </div>
-                    `;
-                });
-            },
-
-            addZerodhaMapping() {
-                this.data.zerodhaMappings.push({ clientId: '', profileName: this.data.profiles[0] });
-                this.saveState();
-                this.renderZerodhaMappings();
-            },
-
-            updateZMap(idx, type, val) {
-                if(type === 'id') this.data.zerodhaMappings[idx].clientId = val.toUpperCase().trim();
-                if(type === 'prof') this.data.zerodhaMappings[idx].profileName = val;
-                this.saveState();
-            },
-
-            removeZMap(idx) {
-                this.data.zerodhaMappings.splice(idx, 1);
-                this.saveState();
-                this.renderZerodhaMappings();
-            },
-
-            getMappedProfile(clientId) {
-                const cId = clientId.toUpperCase().trim();
-                const match = this.data.zerodhaMappings.find(m => m.clientId === cId);
-                return match ? match.profileName : null;
             },
 
             /* -------------------------------------------------------------------------- */
@@ -744,7 +754,6 @@
                 });
                 
                 if(currentFormVal && this.data.profiles.includes(currentFormVal)) formSelect.value = currentFormVal;
-                this.renderZerodhaMappings(); 
             },
 
             createProfile(event) {
@@ -761,14 +770,15 @@
                     this.updateProfileDropdowns();
                     input.value = '';
                     this.renderAll();
+                    this.showToast(`Profile '${name}' added successfully.`);
                 } else if (this.data.profiles.includes(name)) {
-                    alert("A profile with this name already exists.");
+                    this.showToast("A profile with this name already exists.", true);
                 }
             },
 
             deleteFullProfile(pName) {
                 if (this.data.profiles.length <= 1) {
-                    alert("You must have at least one profile to use the system.");
+                    this.showToast("You must have at least one profile to use the system.", true);
                     return;
                 }
                 if (confirm(`Are you sure you want to completely delete the profile '${pName}' and ALL its associated assets?`)) {
@@ -778,11 +788,10 @@
                     this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== pName);
                     this.invProfileFilters = this.invProfileFilters.filter(f => f !== pName);
                     
-                    this.data.zerodhaMappings = this.data.zerodhaMappings.filter(m => m.profileName !== pName);
-                    
                     this.saveState();
                     this.updateProfileDropdowns();
                     this.renderAll();
+                    this.showToast(`Profile '${pName}' and assets deleted.`);
                 }
             },
 
@@ -803,6 +812,7 @@
             switchView(viewId) {
                 this.activeView = viewId;
                 this.saveState();
+                this.closeFilterPanel(); 
 
                 document.querySelectorAll('.tab-btn').forEach(btn => {
                     btn.classList.remove('active');
@@ -910,6 +920,7 @@
                 this.closeAssetModal();
                 this.renderInvestments();
                 this.renderDashboard();
+                this.showToast("Asset saved successfully.");
             },
 
             editInv(id) {
@@ -950,6 +961,7 @@
                     this.saveState();
                     this.renderInvestments();
                     this.renderDashboard();
+                    this.showToast("Asset removed.");
                 }
             },
 
@@ -1030,12 +1042,20 @@
                                 let rawClass = "Other";
                                 let rawCategory = "NA";
                                 let rawSector = "NA";
+                                let isLossMaking = false;
 
                                 if (!isZerodha) {
                                     // INDmoney Extraction
                                     invName = rowObj["Investment"];
                                     mVal = this.parseCurrencyStr(rowObj["Market Value"]);
-                                    if(isNaN(mVal)) mVal = this.parseCurrencyStr(rowObj["Invested Amount"]);
+                                    let invested = this.parseCurrencyStr(rowObj["Invested Amount"]);
+                                    if(isNaN(mVal)) mVal = invested;
+
+                                    if (!isNaN(mVal) && !isNaN(invested) && invested > 0) {
+                                        let histReturn = ((mVal - invested) / invested) * 100;
+                                        if (histReturn < 0) isLossMaking = true;
+                                    }
+
                                     profileName = rowObj["First Name"] ? strVal(rowObj["First Name"]) : "Main Portfolio";
                                     rawType = strVal(rowObj["Asset Type"]) || "Other";
                                     rawClass = strVal(rowObj["Asset Class"]) || "Other";
@@ -1046,22 +1066,17 @@
                                     invName = rowObj["Symbol"];
                                     let qty = this.parseCurrencyStr(rowObj["Quantity Available"]);
                                     let price = this.parseCurrencyStr(rowObj["Previous Closing Price"]);
+                                    let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
                                     mVal = qty * price;
                                     
                                     if (isNaN(mVal) || mVal === 0) {
-                                        let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
                                         mVal = qty * avgPrice;
                                     }
 
-                                    // Profile mapping
-                                    if (globalClientId) {
-                                        let mappedProf = this.getMappedProfile(globalClientId);
-                                        if (mappedProf) {
-                                            profileName = mappedProf;
-                                        } else {
-                                            profileName = `Zerodha - ${globalClientId}`; 
-                                        }
-                                    }
+                                    let pnl = this.parseCurrencyStr(rowObj["Unrealized P&L"]);
+                                    if (!isNaN(pnl) && pnl < 0) isLossMaking = true;
+
+                                    if (globalClientId) profileName = `Zerodha - ${globalClientId}`; 
                                     
                                     let instType = strVal(rowObj["Instrument Type"]);
                                     let sector = strVal(rowObj["Sector"]);
@@ -1110,6 +1125,7 @@
                                         else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced') || aCatStr.includes('hybrid')) invType = 'hybrid';
                                     }
                                     
+                                    // Use default expected future growth rate base
                                     let rate = this.defaultRates[invType];
                                     if(rate === undefined) rate = 7.0;
 
@@ -1130,6 +1146,11 @@
                                         maturityDate = existingManual.maturityDate;
                                         objId = existingManual.id;
                                         isManuallyEdited = true;
+                                    }
+
+                                    // If historical loss, mark negative growth
+                                    if (isLossMaking && !isManuallyEdited) {
+                                        rate = -1.0; // Minimal negative for future projection warning
                                     }
 
                                     newInvestments.push({
@@ -1180,9 +1201,9 @@
                         this.updateProfileDropdowns();
                         this.renderInvestments();
                         this.renderDashboard();
-                        alert(`Successfully imported ${newInvestments.length} assets for profiles: ${importedProfiles.join(", ")}.\n\nData for your other profiles was untouched, and all manual category/growth overrides were retained.`);
+                        this.showToast(`Imported ${newInvestments.length} assets for: ${importedProfiles.join(", ")}`);
                     } else {
-                        alert("No valid asset data found in the template.");
+                        this.showToast("No valid asset data found in the template.", true);
                     }
                 };
                 reader.readAsArrayBuffer(file);
@@ -1201,153 +1222,138 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* CUSTOM DROPDOWN FILTERS LOGIC                                              */
+            /* UNIFIED CASCADING FILTER PANEL LOGIC                                       */
             /* -------------------------------------------------------------------------- */
-            toggleFilterDropdown(id) {
-                document.querySelectorAll('.filter-menu').forEach(menu => {
-                    if (menu.id !== id + '-menu') menu.classList.remove('show');
-                });
-                document.getElementById(id + '-menu').classList.toggle('show');
-            },
-
-            toggleFilterItem(filterKey, item, btnId) {
-                const filters = this[filterKey];
-                if (filters.includes(item)) {
-                    this[filterKey] = filters.filter(f => f !== item);
+            openFilterPanel(mode) {
+                this.currentFilterMode = mode;
+                
+                // Load saved state into temp state
+                if (mode === 'dash') {
+                    this.tempFilters.profiles = [...this.dashProfileFilters];
+                    this.tempFilters.classes = [...this.dashClassFilters];
+                    this.tempFilters.types = [...this.dashTypeFilters];
+                    this.tempFilters.categories = [...this.dashCategoryFilters];
                 } else {
-                    this[filterKey].push(item);
-                }
-                this.saveState();
-                
-                let items = [];
-                if (filterKey.includes('Profile')) items = this.data.profiles;
-                if (filterKey.includes('Class')) items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                if (filterKey.includes('Type')) items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
-                
-                const btn = document.getElementById(btnId);
-                if (btn) {
-                    let selectedText = this[filterKey].length === items.length ? 'All' : `${this[filterKey].length} Selected`;
-                    if (this[filterKey].length === 0) selectedText = 'None';
-                    
-                    let label = "Filter";
-                    if (filterKey.includes('Profile')) label = "Profiles";
-                    if (filterKey.includes('Class')) label = "Classes";
-                    if (filterKey.includes('Type')) label = "Types";
-                    if (filterKey.includes('Category')) label = "Categories";
-
-                    btn.innerHTML = `${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>`;
+                    this.tempFilters.profiles = [...this.invProfileFilters];
+                    this.tempFilters.classes = [...this.invClassFilters];
+                    this.tempFilters.types = [...this.invTypeFilters];
+                    this.tempFilters.categories = [...this.invCategoryFilters];
                 }
 
-                if (filterKey.startsWith('dash')) this.renderDashboard();
-                else this.renderPortfolioTable();
-            },
-
-            selectAllFilters(filterKey, isAll, btnId) {
-                let items = [];
-                if (filterKey.includes('Profile')) items = this.data.profiles;
-                if (filterKey.includes('Class')) items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                if (filterKey.includes('Type')) items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
-
-                if (isAll) {
-                    this[filterKey] = [...items];
+                const panel = document.getElementById('globalFilterPanel');
+                panel.style.display = 'block';
+                
+                if (mode === 'dash') {
+                    document.getElementById('dashFilterContainer').appendChild(panel);
                 } else {
-                    this[filterKey] = [];
+                    document.getElementById('invFilterContainer').appendChild(panel);
                 }
-                
-                document.querySelectorAll(`.filter-cb-${filterKey}`).forEach(cb => {
-                    cb.checked = isAll;
-                });
 
+                this.renderFilterPanel();
+            },
+
+            closeFilterPanel() {
+                const panel = document.getElementById('globalFilterPanel');
+                if(panel) panel.style.display = 'none';
+            },
+
+            applyFilters() {
+                if (this.currentFilterMode === 'dash') {
+                    this.dashProfileFilters = [...this.tempFilters.profiles];
+                    this.dashClassFilters = [...this.tempFilters.classes];
+                    this.dashTypeFilters = [...this.tempFilters.types];
+                    this.dashCategoryFilters = [...this.tempFilters.categories];
+                    this.renderDashboard();
+                } else {
+                    this.invProfileFilters = [...this.tempFilters.profiles];
+                    this.invClassFilters = [...this.tempFilters.classes];
+                    this.invTypeFilters = [...this.tempFilters.types];
+                    this.invCategoryFilters = [...this.tempFilters.categories];
+                    this.renderInvestments();
+                }
+                this.closeFilterPanel();
                 this.saveState();
-                
-                let label = "Filter";
-                if (filterKey.includes('Profile')) label = "Profiles";
-                if (filterKey.includes('Class')) label = "Classes";
-                if (filterKey.includes('Type')) label = "Types";
-                if (filterKey.includes('Category')) label = "Categories";
+            },
 
-                let selectedText = isAll ? 'All' : 'None';
-                const btn = document.getElementById(btnId);
-                if (btn) {
-                    btn.innerHTML = `${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>`;
+            updateTempFilter(level, val, isChecked) {
+                if(isChecked) {
+                    if (!this.tempFilters[level].includes(val)) this.tempFilters[level].push(val);
+                } else {
+                    this.tempFilters[level] = this.tempFilters[level].filter(x => x !== val);
                 }
-
-                if (filterKey.startsWith('dash')) this.renderDashboard();
-                else this.renderPortfolioTable();
+                this.renderFilterPanel();
             },
 
-            buildDropdownHTML(id, label, items, activeFilters, filterKey) {
-                let selectedText = activeFilters.length === items.length ? 'All' : `${activeFilters.length} Selected`;
-                if (activeFilters.length === 0) selectedText = 'None';
-                
-                let res = `
-                <div class="filter-dropdown-container">
-                    <button class="filter-btn" id="${id}-btn" onclick="app.toggleFilterDropdown('${id}')">
-                        ${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>
-                    </button>
-                    <div class="filter-menu" id="${id}-menu">
-                        <div class="filter-header">
-                            <span>Select ${label}</span>
-                            <div style="display: flex; gap: 10px;">
-                                <a href="#" onclick="app.selectAllFilters('${filterKey}', true, '${id}-btn'); event.preventDefault();" style="color:var(--accent-color); text-decoration:none;">All</a>
-                                <a href="#" onclick="app.selectAllFilters('${filterKey}', false, '${id}-btn'); event.preventDefault();" style="color:var(--danger-color); text-decoration:none;">None</a>
-                            </div>
-                        </div>
-                `;
-                
-                const sortedItems = [...items].sort();
+            selectAllTemp(level, isAll) {
+                if(level === 'profiles') {
+                    this.tempFilters.profiles = isAll ? [...this.data.profiles] : [];
+                } else if (level === 'classes') {
+                    let dataP = this.data.investments.filter(i => this.tempFilters.profiles.includes(i.profile || 'Main Portfolio'));
+                    this.tempFilters.classes = isAll ? [...new Set(dataP.map(i => i.rawAssetClass || i.type))] : [];
+                } else if (level === 'types') {
+                    let dataP = this.data.investments.filter(i => this.tempFilters.profiles.includes(i.profile || 'Main Portfolio'));
+                    let dataC = dataP.filter(i => this.tempFilters.classes.includes(i.rawAssetClass || i.type));
+                    this.tempFilters.types = isAll ? [...new Set(dataC.map(i => i.rawAssetType || 'Other'))] : [];
+                } else if (level === 'categories') {
+                    let dataP = this.data.investments.filter(i => this.tempFilters.profiles.includes(i.profile || 'Main Portfolio'));
+                    let dataC = dataP.filter(i => this.tempFilters.classes.includes(i.rawAssetClass || i.type));
+                    let dataT = dataC.filter(i => this.tempFilters.types.includes(i.rawAssetType || 'Other'));
+                    this.tempFilters.categories = isAll ? [...new Set(dataT.map(i => i.rawCategory || 'NA'))] : [];
+                }
+                this.renderFilterPanel();
+            },
 
-                sortedItems.forEach(item => {
-                    const isChecked = activeFilters.includes(item) ? 'checked' : '';
-                    res += `
-                        <label class="filter-option" onclick="event.stopPropagation();">
-                            <input type="checkbox" class="filter-cb-${filterKey}" value="${item}" ${isChecked} onchange="app.toggleFilterItem('${filterKey}', '${item}', '${id}-btn')">
-                            <span style="text-transform: uppercase;">${item}</span>
-                        </label>
-                    `;
+            renderFilterPanel() {
+                const fpProf = document.getElementById('fp-prof');
+                const fpClass = document.getElementById('fp-class');
+                const fpType = document.getElementById('fp-type');
+                const fpCat = document.getElementById('fp-cat');
+                if(!fpProf || !fpClass || !fpType || !fpCat) return;
+
+                // 1. Profiles
+                let profHtml = '';
+                [...this.data.profiles].sort().forEach(p => {
+                    let checked = this.tempFilters.profiles.includes(p) ? 'checked' : '';
+                    profHtml += `<label><input type="checkbox" value="${p}" ${checked} onchange="app.updateTempFilter('profiles', this.value, this.checked)"> ${p}</label>`;
                 });
-                res += `</div></div>`;
-                return res;
-            },
+                fpProf.innerHTML = profHtml || '<span style="color:var(--text-secondary);font-size:0.8rem;">No profiles</span>';
 
-            renderPortfolioFilters() {
-                const filterBar = document.getElementById('portfolioFiltersBar');
-                if (!filterBar) return;
+                // Cascade Base Data
+                let dataP = this.data.investments.filter(i => this.tempFilters.profiles.includes(i.profile || 'Main Portfolio'));
+                
+                // 2. Classes
+                let availClasses = [...new Set(dataP.map(i => i.rawAssetClass || i.type))].sort();
+                let classHtml = '';
+                availClasses.forEach(c => {
+                    let checked = this.tempFilters.classes.includes(c) ? 'checked' : '';
+                    classHtml += `<label><input type="checkbox" value="${c}" ${checked} onchange="app.updateTempFilter('classes', this.value, this.checked)"> ${c}</label>`;
+                });
+                fpClass.innerHTML = classHtml || '<span style="color:var(--text-secondary);font-size:0.8rem;">Select profiles first</span>';
 
-                let html = '';
-                const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
+                let dataC = dataP.filter(i => this.tempFilters.classes.includes(i.rawAssetClass || i.type));
 
-                html += this.buildDropdownHTML('profileFilter', 'Profiles', this.data.profiles, this.invProfileFilters, 'invProfileFilters');
-                html += this.buildDropdownHTML('classFilter', 'Classes', uniqueClasses, this.invClassFilters, 'invClassFilters');
-                html += this.buildDropdownHTML('typeFilter', 'Types', uniqueTypes, this.invTypeFilters, 'invTypeFilters');
-                html += this.buildDropdownHTML('catFilter', 'Categories', uniqueCats, this.invCategoryFilters, 'invCategoryFilters');
+                // 3. Types
+                let availTypes = [...new Set(dataC.map(i => i.rawAssetType || 'Other'))].sort();
+                let typeHtml = '';
+                availTypes.forEach(t => {
+                    let checked = this.tempFilters.types.includes(t) ? 'checked' : '';
+                    typeHtml += `<label><input type="checkbox" value="${t}" ${checked} onchange="app.updateTempFilter('types', this.value, this.checked)"> ${t}</label>`;
+                });
+                fpType.innerHTML = typeHtml || '<span style="color:var(--text-secondary);font-size:0.8rem;">Select classes first</span>';
 
-                filterBar.innerHTML = html;
-            },
+                let dataT = dataC.filter(i => this.tempFilters.types.includes(i.rawAssetType || 'Other'));
 
-            renderDashboardFilters() {
-                const filterBar = document.getElementById('dashboardFiltersBar');
-                if (!filterBar) return;
-
-                let html = '';
-                const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
-
-                html += this.buildDropdownHTML('dashProfileFilter', 'Profiles', this.data.profiles, this.dashProfileFilters, 'dashProfileFilters');
-                html += this.buildDropdownHTML('dashClassFilter', 'Classes', uniqueClasses, this.dashClassFilters, 'dashClassFilters');
-                html += this.buildDropdownHTML('dashTypeFilter', 'Types', uniqueTypes, this.dashTypeFilters, 'dashTypeFilters');
-                html += this.buildDropdownHTML('dashCatFilter', 'Categories', uniqueCats, this.dashCategoryFilters, 'dashCategoryFilters');
-
-                filterBar.innerHTML = html;
+                // 4. Categories
+                let availCats = [...new Set(dataT.map(i => i.rawCategory || 'NA'))].sort();
+                let catHtml = '';
+                availCats.forEach(c => {
+                    let checked = this.tempFilters.categories.includes(c) ? 'checked' : '';
+                    catHtml += `<label><input type="checkbox" value="${c}" ${checked} onchange="app.updateTempFilter('categories', this.value, this.checked)"> ${c}</label>`;
+                });
+                fpCat.innerHTML = catHtml || '<span style="color:var(--text-secondary);font-size:0.8rem;">Select types first</span>';
             },
 
             renderInvestments() {
-                this.renderPortfolioFilters();
                 this.renderPortfolioTable();
             },
 
@@ -1410,8 +1416,8 @@
                     let rowClass = "clickable-row";
                     
                     if (inv.growthRate < 0) {
-                        rowClass += " low-growth-row";
-                        warningIcon = `<span title="Loss making asset (Negative Growth)" style="cursor:help; margin-left:5px;">❗</span>`;
+                        rowClass += " loss-making-row";
+                        warningIcon = `<span title="Loss making asset (Negative Growth Based on File)" style="cursor:help; margin-left:5px;">❗</span>`;
                     } else if (inv.growthRate < 7.0 && inv.type !== 'vehicle') {
                         rowClass += " low-growth-row";
                         warningIcon = `<span title="Losing potential to inflation (Growth < 7.0%)" style="cursor:help; margin-left:5px;">⚠️</span>`;
@@ -1743,6 +1749,7 @@
                 this.cancelGoalEdit();
                 this.renderGoals();
                 this.renderDashboard();
+                this.showToast("Goal saved successfully.");
             },
 
             editGoal(id) {
@@ -1818,6 +1825,7 @@
                     this.saveState();
                     this.renderGoals();
                     this.renderDashboard();
+                    this.showToast("Goal removed.");
                 }
             },
 
@@ -2002,8 +2010,6 @@
                     }
                 });
 
-                this.renderDashboardFilters();
-
                 let tableInvestments = this.data.investments.filter(i => {
                     const profileMatch = this.dashProfileFilters.includes(i.profile || 'Main Portfolio');
                     const classMatch = this.dashClassFilters.includes(i.rawAssetClass || i.type);
@@ -2026,10 +2032,6 @@
         window.onclick = function(event) {
             const assetModal = document.getElementById('assetModal');
             if (event.target === assetModal) app.closeAssetModal();
-            
-            if (!event.target.closest('.filter-dropdown-container')) {
-                document.querySelectorAll('.filter-menu').forEach(menu => menu.classList.remove('show'));
-            }
         }
 
         document.addEventListener('DOMContentLoaded', () => app.init());
