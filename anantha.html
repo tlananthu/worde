@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V1.9</title>
+    <title>Anantha | Wealth OS V2.0</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -28,7 +28,7 @@
             font-family: var(--font-family);
             line-height: 1.6;
             padding: 2rem;
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
         }
 
@@ -87,7 +87,7 @@
         .dashboard-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
         .summary-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         
-        @media (max-width: 800px) {
+        @media (max-width: 900px) {
             .dashboard-layout { grid-template-columns: 1fr; }
         }
 
@@ -107,17 +107,10 @@
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
         .btn-action { width: auto; flex: 1; }
 
-        /* Cards & Grids */
+        /* Investment Cards */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-        
         .card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; }
-        .card.interactive { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-        .card.interactive:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.3); border-color: var(--accent-color); }
         
-        .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
-        .goal-card.education-type { border-top: 3px solid var(--edu-color); }
-        .goal-card.standard-type { border-top: 3px solid var(--accent-color); }
-
         .inv-card.equity-type { border-left: 4px solid var(--accent-color); }
         .inv-card.hybrid-type { border-left: 4px solid var(--edu-color); }
         .inv-card.assets-type { border-left: 4px solid var(--warning-color); }
@@ -134,10 +127,6 @@
         
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
         .stat-row span:first-child { color: var(--text-secondary); }
-        
-        .instrument-box { margin-top: auto; padding: 1rem; background-color: rgba(56, 189, 248, 0.05); border-left: 3px solid var(--accent-color); border-radius: 0 4px 4px 0; font-size: 0.85rem; margin-bottom: 1rem; }
-        .instrument-box span { color: var(--text-secondary); display: block; margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;}
-        .instrument-box strong { color: var(--accent-color); font-weight: 500; }
 
         .value-tiers { display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); }
         .value-tier { display: flex; justify-content: space-between; align-items: flex-end; }
@@ -156,6 +145,23 @@
         .progress-container { margin-top: 1rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
         .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
+
+        /* Goal Data Table (V2.0 Update) */
+        .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; }
+        .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
+        .data-table th:first-child, .data-table td:first-child { text-align: left; }
+        .data-table th { background: var(--surface-light); color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; }
+        .data-table td { font-size: 1rem; }
+        .data-table tr:hover:not(.total-row) { background-color: rgba(255, 255, 255, 0.02); }
+        .data-table tr:last-child td { border-bottom: none; }
+        
+        .goal-name-cell { font-weight: 600; color: var(--text-primary); }
+        .goal-type-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; }
+        
+        .data-table .total-row { font-weight: 700; background-color: var(--surface-light); color: var(--text-primary); }
+        .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
+        .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
 
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -176,13 +182,13 @@
             <button onclick="app.openProfileModal()">+ New</button>
             <button class="icon-btn delete" id="deleteProfileBtn" onclick="app.deleteCurrentProfile()" style="display:none;" title="Delete current profile">✕</button>
         </div>
-        <div class="version">v1.9 (Multi-Profile)</div>
+        <div class="version">v2.0 (Plan & Table Display)</div>
     </header>
 
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="app.switchView('home')">Dashboard Summary</button>
+        <button class="tab-btn" onclick="app.switchView('goals')">Financial Goals / Plan</button>
         <button class="tab-btn" onclick="app.switchView('investments')">Asset Portfolio</button>
-        <button class="tab-btn" onclick="app.switchView('goals')">Financial Goals</button>
     </div>
 
     <!-- VIEW: HOME DASHBOARD -->
@@ -197,11 +203,11 @@
                 <div class="dash-value success" id="dashFutureAssets">₹0</div>
             </div>
             <div class="card dash-stat-card">
-                <div class="dash-label">Goal Target (Today)</div>
+                <div class="dash-label">Plan C. Expenses</div>
                 <div class="dash-value" id="dashTotalPV">₹0</div>
             </div>
             <div class="card dash-stat-card">
-                <div class="dash-label">Goal Target (Future)</div>
+                <div class="dash-label">Total Goal Required</div>
                 <div class="dash-value highlight" id="dashTotalFV">₹0</div>
             </div>
         </div>
@@ -217,6 +223,119 @@
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="dashProgressBar"></div>
             </div>
+        </div>
+    </div>
+    
+    <!-- VIEW: GOALS (TABLE FORMAT) -->
+    <div id="view-goals" class="view">
+        <div class="dashboard-layout">
+            <aside class="form-card">
+                <h2 id="goalFormTitle">Define Target Goal</h2>
+                <form id="goalForm" onsubmit="app.handleGoalSave(event)">
+                    <div class="form-group">
+                        <label for="goalType">Goal Type</label>
+                        <select id="goalType" onchange="app.toggleGoalFields()">
+                            <option value="standard">Standard Financial Goal</option>
+                            <option value="retirement">Retirement Corpus</option>
+                            <option value="education">Kids Education Timeline</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="goalName">Goal Name</label>
+                        <input type="text" id="goalName" required placeholder="e.g., Higher Education">
+                    </div>
+
+                    <div id="standardFields">
+                        <div class="form-group">
+                            <label for="currentValue">C. Expenses (Current Value ₹)</label>
+                            <input type="number" id="currentValue" placeholder="1000000" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="years">Years Till Closure</label>
+                            <input type="number" id="years" placeholder="8" min="1" max="100">
+                        </div>
+                    </div>
+
+                    <div id="retirementFields" style="display: none;">
+                        <div class="form-group">
+                            <label for="monthlyExpenses">Current Monthly Expenses (₹)</label>
+                            <input type="number" id="monthlyExpenses" placeholder="50000" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="yearsToRetire">Years To Retirement</label>
+                            <input type="number" id="yearsToRetire" placeholder="15" min="1" max="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="yearsInRetirement">Years In Retirement (Duration)</label>
+                            <input type="number" id="yearsInRetirement" placeholder="25" min="1" max="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="postRetirementReturn">Expected Post-Retirement Return (%)</label>
+                            <input type="number" id="postRetirementReturn" placeholder="8" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+
+                    <div id="educationFields" style="display: none;">
+                        <div class="form-group row-group">
+                            <div>
+                                <label for="eduChildren">No. of Children</label>
+                                <input type="number" id="eduChildren" value="2" min="1" max="10">
+                            </div>
+                            <div>
+                                <label for="eduGrade">Current Grade (1-12)</label>
+                                <input type="number" id="eduGrade" value="4" min="1" max="12">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="eduCurrentFees">Yearly Fees (per child) (₹)</label>
+                            <input type="number" id="eduCurrentFees" placeholder="150000" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="eduCost11_12">11th & 12th Cost (Today's ₹/child)</label>
+                            <input type="number" id="eduCost11_12" placeholder="400000" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="eduCostDegree">Degree Total Cost (Today's ₹/child)</label>
+                            <input type="number" id="eduCostDegree" placeholder="1500000" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="eduCostHigher">Higher Studies (Today's ₹/child)</label>
+                            <input type="number" id="eduCostHigher" placeholder="2500000" min="0" step="any">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="inflationLabel" for="inflation">Inflation (%)</label>
+                        <input type="number" id="inflation" required placeholder="10" min="0" max="100" step="0.1">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" id="goalSubmitBtn" class="btn-action">Calculate & Save</button>
+                        <button type="button" id="goalCancelBtn" class="btn-cancel btn-action" onclick="app.cancelGoalEdit()">Cancel</button>
+                    </div>
+                </form>
+            </aside>
+            <main>
+                <!-- TABLE VIEW FOR GOALS -->
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Goal</th>
+                                <th>Year</th>
+                                <th>C. Expenses</th>
+                                <th>Inflation</th>
+                                <th>Goal Required</th>
+                                <th style="text-align: center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goalsTableBody">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </main>
         </div>
     </div>
 
@@ -276,104 +395,6 @@
         </div>
     </div>
 
-    <!-- VIEW: GOALS -->
-    <div id="view-goals" class="view">
-        <div class="dashboard-layout">
-            <aside class="form-card">
-                <h2 id="goalFormTitle">Define Target Goal</h2>
-                <form id="goalForm" onsubmit="app.handleGoalSave(event)">
-                    <div class="form-group">
-                        <label for="goalType">Goal Type</label>
-                        <select id="goalType" onchange="app.toggleGoalFields()">
-                            <option value="standard">Standard Financial Goal</option>
-                            <option value="retirement">Retirement Corpus</option>
-                            <option value="education">Kids Education Timeline</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="goalName">Goal Name</label>
-                        <input type="text" id="goalName" required placeholder="e.g., Higher Education">
-                    </div>
-
-                    <div id="standardFields">
-                        <div class="form-group">
-                            <label for="currentValue">Current Budgeted Value (₹)</label>
-                            <input type="number" id="currentValue" placeholder="1000000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="years">Years Till Closure</label>
-                            <input type="number" id="years" placeholder="8" min="1" max="100">
-                        </div>
-                    </div>
-
-                    <div id="retirementFields" style="display: none;">
-                        <div class="form-group">
-                            <label for="monthlyExpenses">Current Monthly Expenses (₹)</label>
-                            <input type="number" id="monthlyExpenses" placeholder="50000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="yearsToRetire">Years To Retirement</label>
-                            <input type="number" id="yearsToRetire" placeholder="15" min="1" max="50">
-                        </div>
-                        <div class="form-group">
-                            <label for="yearsInRetirement">Years In Retirement (Duration)</label>
-                            <input type="number" id="yearsInRetirement" placeholder="25" min="1" max="50">
-                        </div>
-                        <div class="form-group">
-                            <label for="postRetirementReturn">Expected Post-Retirement Return (%)</label>
-                            <input type="number" id="postRetirementReturn" placeholder="8" min="0" max="100" step="0.1">
-                        </div>
-                    </div>
-
-                    <div id="educationFields" style="display: none;">
-                        <div class="form-group row-group">
-                            <div>
-                                <label for="eduChildren">No. of Children</label>
-                                <input type="number" id="eduChildren" value="2" min="1" max="10">
-                            </div>
-                            <div>
-                                <label for="eduGrade">Current Grade (1-12)</label>
-                                <input type="number" id="eduGrade" value="4" min="1" max="12">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="eduCurrentFees">Yearly Fees (per child) (₹)</label>
-                            <input type="number" id="eduCurrentFees" placeholder="150000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="eduCost11_12">11th & 12th Cost (Today's ₹/child)</label>
-                            <input type="number" id="eduCost11_12" placeholder="400000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="eduCostDegree">Degree Total Cost (Today's ₹/child)</label>
-                            <input type="number" id="eduCostDegree" placeholder="1500000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="eduCostHigher">Higher Studies (Today's ₹/child)</label>
-                            <input type="number" id="eduCostHigher" placeholder="2500000" min="0" step="any">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label id="inflationLabel" for="inflation">Expected YoY Inflation (%)</label>
-                        <input type="number" id="inflation" required placeholder="6" min="0" max="100" step="0.1">
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" id="goalSubmitBtn" class="btn-action">Calculate & Save</button>
-                        <button type="button" id="goalCancelBtn" class="btn-cancel btn-action" onclick="app.cancelGoalEdit()">Cancel</button>
-                    </div>
-                </form>
-            </aside>
-            <main>
-                <div class="grid-container" id="goalsContainer">
-                    <!-- Goal cards injected here -->
-                </div>
-            </main>
-        </div>
-    </div>
-
     <!-- Profile Modal -->
     <div class="modal-overlay" id="profileModal">
         <div class="modal-content">
@@ -399,18 +420,10 @@
             },
             editingGoalId: null,
             editingInvId: null,
+            currentYear: new Date().getFullYear(), // E.g., 2026
 
             // India Market Default Growth Rates
-            defaultRates: {
-                equity: 12.0,
-                fd: 7.0,
-                rd: 6.8,
-                ppf: 7.1,
-                pomis: 7.4,
-                debt: 7.0,
-                hybrid: 10.0,
-                assets: 5.0
-            },
+            defaultRates: { equity: 12.0, fd: 7.0, rd: 6.8, ppf: 7.1, pomis: 7.4, debt: 7.0, hybrid: 10.0, assets: 5.0 },
 
             init() {
                 this.migrateData();
@@ -423,8 +436,6 @@
                 const savedV1_9 = localStorage.getItem('ananthaDataV1_9');
                 if (savedV1_9) {
                     this.data = JSON.parse(savedV1_9);
-                    
-                    // Safety check if activeProfile got deleted somehow
                     if (!this.data.profiles[this.data.activeProfile]) {
                         this.data.activeProfile = Object.keys(this.data.profiles)[0] || 'Main Portfolio';
                         if (!this.data.profiles['Main Portfolio']) {
@@ -433,14 +444,6 @@
                     }
                     return;
                 }
-
-                // Migrate from V1.8 to V1.9 Nested Structure
-                const savedV1_8 = localStorage.getItem('ananthaDataV1_8');
-                if (savedV1_8) {
-                    const oldData = JSON.parse(savedV1_8);
-                    this.data.profiles['Main Portfolio'] = oldData;
-                    this.saveState();
-                }
             },
 
             saveState() {
@@ -448,8 +451,9 @@
             },
 
             formatCurrency(amount) {
-                if (isNaN(amount) || amount === null) return "₹0";
-                return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+                if (isNaN(amount) || amount === null) return "0";
+                // Using maximumFractionDigits: 0 to match the clean look of the image provided
+                return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(Math.round(amount));
             },
 
             /* -------------------------------------------------------------------------- */
@@ -466,7 +470,6 @@
                     select.appendChild(option);
                 });
                 
-                // Only allow deletion if there is more than 1 profile
                 document.getElementById('deleteProfileBtn').style.display = 
                     Object.keys(this.data.profiles).length > 1 ? 'inline-block' : 'none';
             },
@@ -474,24 +477,14 @@
             switchProfile(profileName) {
                 this.data.activeProfile = profileName;
                 this.saveState();
-                
-                // Clear any ongoing edits
                 this.cancelGoalEdit();
                 this.cancelInvEdit();
-                
                 this.updateProfileDropdown();
                 this.renderAll();
             },
 
-            openProfileModal() {
-                document.getElementById('profileModal').style.display = 'flex';
-                document.getElementById('newProfileName').focus();
-            },
-
-            closeProfileModal() {
-                document.getElementById('profileModal').style.display = 'none';
-                document.getElementById('newProfileName').value = '';
-            },
+            openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); },
+            closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; document.getElementById('newProfileName').value = ''; },
 
             createProfile(event) {
                 event.preventDefault();
@@ -502,7 +495,6 @@
                     this.data.activeProfile = name;
                     this.saveState();
                     this.closeProfileModal();
-                    
                     this.updateProfileDropdown();
                     this.renderAll();
                 } else if (this.data.profiles[name]) {
@@ -514,9 +506,9 @@
                 const current = this.data.activeProfile;
                 if (Object.keys(this.data.profiles).length <= 1) return;
                 
-                if (confirm(`Are you sure you want to delete the entire '${current}' portfolio? All associated goals and assets will be lost forever.`)) {
+                if (confirm(`Are you sure you want to delete the entire '${current}' portfolio?`)) {
                     delete this.data.profiles[current];
-                    this.data.activeProfile = Object.keys(this.data.profiles)[0]; // switch to next available
+                    this.data.activeProfile = Object.keys(this.data.profiles)[0];
                     this.saveState();
                     this.updateProfileDropdown();
                     this.renderAll();
@@ -545,10 +537,8 @@
                 if (!matDateStr || !rate) return val;
                 const matDate = new Date(matDateStr);
                 const today = new Date();
-                
                 const years = (matDate - today) / (1000 * 60 * 60 * 24 * 365.25);
                 if (years <= 0) return val;
-                
                 return val * Math.pow(1 + (rate / 100), years);
             },
 
@@ -661,11 +651,11 @@
                         <div class="value-tiers" style="margin-top: auto;">
                             <div class="value-tier">
                                 <span>Current Valuation</span>
-                                <div class="tier-value pv">${this.formatCurrency(inv.value)}</div>
+                                <div class="tier-value pv">₹${this.formatCurrency(inv.value)}</div>
                             </div>
                             <div class="value-tier">
                                 <span>Projected Future Value</span>
-                                <div class="tier-value fv">${this.formatCurrency(fv)}</div>
+                                <div class="tier-value fv">₹${this.formatCurrency(fv)}</div>
                             </div>
                         </div>
                     `;
@@ -674,14 +664,13 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC                                                                */
+            /* GOALS LOGIC (TABLE FORMAT UPDATE)                                          */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
                 const standard = document.getElementById('standardFields');
                 const retirement = document.getElementById('retirementFields');
                 const education = document.getElementById('educationFields');
-                const infLabel = document.getElementById('inflationLabel');
 
                 document.getElementById('currentValue').required = false;
                 document.getElementById('years').required = false;
@@ -698,19 +687,16 @@
 
                 if (type === 'standard') {
                     standard.style.display = 'block';
-                    infLabel.innerText = "Expected YoY Inflation (%)";
                     document.getElementById('currentValue').required = true;
                     document.getElementById('years').required = true;
                 } else if (type === 'retirement') {
                     retirement.style.display = 'block';
-                    infLabel.innerText = "Expected YoY Inflation (%)";
                     document.getElementById('monthlyExpenses').required = true;
                     document.getElementById('yearsToRetire').required = true;
                     document.getElementById('yearsInRetirement').required = true;
                     document.getElementById('postRetirementReturn').required = true;
                 } else if (type === 'education') {
                     education.style.display = 'block';
-                    infLabel.innerText = "Expected Education Fee Inflation (%)";
                     document.getElementById('eduCurrentFees').required = true;
                     document.getElementById('eduCostDegree').required = true;
                 }
@@ -738,11 +724,6 @@
                 const fHi = cHi ? cHi*Math.pow(1+r, Math.max(0,16-g)) : 0;
                 return c * (sch + f11 + fDeg + fHi);
             },
-            sugInst(type, yrs) {
-                if (type === 'retirement') return "Index Funds + EPF ➔ SWP + SCSS";
-                if (type === 'education') return yrs <= 3 ? "Arbitrage & FDs" : yrs <= 7 ? "Balanced Advantage" : "Flexi-Cap Equity. Shift to Debt near college.";
-                return yrs <= 3 ? "Liquid MFs & FDs" : yrs <= 7 ? "Aggressive Hybrid" : "Flexi-Cap & Nifty 50 Index";
-            },
 
             handleGoalSave(event) {
                 event.preventDefault();
@@ -761,7 +742,7 @@
                     goalData.yrs = parseInt(document.getElementById('years').value);
                     goalData.pv = goalData.cv;
                     goalData.fv = goalData.cv * Math.pow((1+(inf/100)), goalData.yrs);
-                    goalData.inst = this.sugInst(type, goalData.yrs);
+                    goalData.targetYear = this.currentYear + goalData.yrs;
                 } else if (type === 'retirement') {
                     goalData.exp = parseFloat(document.getElementById('monthlyExpenses').value);
                     goalData.yTo = parseInt(document.getElementById('yearsToRetire').value);
@@ -769,7 +750,7 @@
                     goalData.pRet = parseFloat(document.getElementById('postRetirementReturn').value);
                     goalData.pv = this.calcRetPV(goalData.exp, goalData.yIn, inf, goalData.pRet);
                     goalData.fv = this.calcRetFV(goalData.exp, goalData.yTo, goalData.yIn, inf, goalData.pRet);
-                    goalData.inst = this.sugInst(type, goalData.yTo);
+                    goalData.targetYear = this.currentYear + goalData.yTo;
                 } else if (type === 'education') {
                     goalData.c = parseInt(document.getElementById('eduChildren').value);
                     goalData.g = parseInt(document.getElementById('eduGrade').value);
@@ -779,7 +760,7 @@
                     goalData.cHi = parseFloat(document.getElementById('eduCostHigher').value || 0);
                     goalData.pv = this.calcEduPV(goalData.c, goalData.g, goalData.fees, goalData.c11, goalData.cDeg, goalData.cHi);
                     goalData.fv = this.calcEduFV(goalData.c, goalData.g, goalData.fees, inf, goalData.c11, goalData.cDeg, goalData.cHi);
-                    goalData.inst = this.sugInst(type, Math.max(0, 13-goalData.g));
+                    goalData.targetYear = this.currentYear + Math.max(0, 13 - goalData.g); // Approx Degree Year
                 }
 
                 const currentProfile = this.data.profiles[this.data.activeProfile];
@@ -812,8 +793,8 @@
                 document.getElementById('inflation').value = g.inflation;
 
                 if (g.type === 'standard') {
-                    document.getElementById('currentValue').value = g.cv;
-                    document.getElementById('years').value = g.yrs;
+                    document.getElementById('currentValue').value = g.cv || g.pv || g.currentValue;
+                    document.getElementById('years').value = g.yrs || (g.targetYear ? g.targetYear - this.currentYear : 0);
                 } else if (g.type === 'retirement') {
                     document.getElementById('monthlyExpenses').value = g.exp;
                     document.getElementById('yearsToRetire').value = g.yTo;
@@ -850,58 +831,65 @@
             },
 
             renderGoals() {
-                const container = document.getElementById('goalsContainer');
-                container.innerHTML = ''; 
+                const tbody = document.getElementById('goalsTableBody');
+                tbody.innerHTML = ''; 
                 const currentProfile = this.data.profiles[this.data.activeProfile];
 
                 if (currentProfile.goals.length === 0) {
-                    container.innerHTML = `<p style="color: var(--text-secondary);">No goals defined yet for ${this.data.activeProfile}.</p>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No goals defined yet in ${this.data.activeProfile}.</td></tr>`;
                     return;
                 }
 
-                currentProfile.goals.forEach(goal => {
-                    const card = document.createElement('div');
-                    card.className = `card goal-card ${goal.type}-type`;
+                let totalPV = 0;
+                let totalFV = 0;
+
+                // Sort goals by Target Year
+                const sortedGoals = [...currentProfile.goals].sort((a, b) => (a.targetYear || 2026) - (b.targetYear || 2026));
+
+                sortedGoals.forEach(goal => {
+                    let pv = goal.pv || goal.presentValue || goal.currentValue || goal.cv || 0;
+                    let fv = goal.fv || goal.targetValue || 0;
                     
-                    let statsHTML = '';
-                    if (goal.type === 'standard') {
-                        statsHTML = `<div class="stat-row"><span>Timeline:</span><span>${goal.yrs} Years</span></div>`;
-                    } else if (goal.type === 'retirement') {
-                        statsHTML = `
-                            <div class="stat-row"><span>Retiring In:</span><span>${goal.yTo} Years</span></div>
-                            <div class="stat-row"><span>Duration:</span><span>${goal.yIn} Years</span></div>`;
-                    } else if (goal.type === 'education') {
-                        statsHTML = `
-                            <div class="stat-row"><span>Kids / Grade:</span><span>${goal.c} / ${goal.g}th Std</span></div>
-                            <div class="stat-row"><span>Fee Inf.:</span><span>${goal.inflation}% YoY</span></div>`;
+                    // Fallback calculation for older migrated data missing 'targetYear'
+                    let tYear = goal.targetYear;
+                    if (!tYear) {
+                        if (goal.type === 'standard') tYear = this.currentYear + (goal.yrs || 0);
+                        else if (goal.type === 'retirement') tYear = this.currentYear + (goal.yTo || 0);
+                        else if (goal.type === 'education') tYear = this.currentYear + Math.max(0, 13 - (goal.g || 0));
+                        else tYear = this.currentYear;
                     }
 
-                    let pv = goal.pv || goal.presentValue || goal.currentValue || 0;
-                    let fv = goal.fv || goal.targetValue || 0;
+                    totalPV += pv;
+                    totalFV += fv;
 
-                    card.innerHTML = `
-                        <div class="card-header">
-                            <div class="card-title">${goal.name} <span class="badge">${goal.type}</span></div>
-                            <div class="card-actions">
-                                <button class="icon-btn" onclick="app.editGoal('${goal.id}')">✎</button>
-                                <button class="icon-btn delete" onclick="app.deleteGoal('${goal.id}')">✕</button>
-                            </div>
-                        </div>
-                        ${statsHTML}
-                        <div class="instrument-box"><span>Strategy</span><strong>${goal.inst || 'Determined by Timeline'}</strong></div>
-                        <div class="value-tiers">
-                            <div class="value-tier">
-                                <span>Target (Today's ₹)</span>
-                                <div class="tier-value pv">${this.formatCurrency(pv)}</div>
-                            </div>
-                            <div class="value-tier">
-                                <span>Future Target</span>
-                                <div class="tier-value fv">${this.formatCurrency(fv)}</div>
-                            </div>
-                        </div>
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="goal-name-cell">${goal.name}</div>
+                        </td>
+                        <td>${tYear}</td>
+                        <td>${this.formatCurrency(pv)}</td>
+                        <td>${goal.inflation}%</td>
+                        <td class="highlight-val">${this.formatCurrency(fv)}</td>
+                        <td style="text-align: center;">
+                            <button class="icon-btn" onclick="app.editGoal('${goal.id}')">✎</button>
+                            <button class="icon-btn delete" onclick="app.deleteGoal('${goal.id}')">✕</button>
+                        </td>
                     `;
-                    container.appendChild(card);
+                    tbody.appendChild(tr);
                 });
+
+                // Add Totals Row
+                const totalRow = document.createElement('tr');
+                totalRow.className = 'total-row';
+                totalRow.innerHTML = `
+                    <td colspan="2">TOTAL</td>
+                    <td>${this.formatCurrency(totalPV)}</td>
+                    <td></td>
+                    <td class="highlight-val">${this.formatCurrency(totalFV)}</td>
+                    <td></td>
+                `;
+                tbody.appendChild(totalRow);
             },
 
             /* -------------------------------------------------------------------------- */
@@ -921,14 +909,14 @@
                 let totalPV = 0;
                 let totalFV = 0;
                 currentProfile.goals.forEach(g => {
-                    totalPV += (g.pv || g.presentValue || g.currentValue || 0);
+                    totalPV += (g.pv || g.presentValue || g.currentValue || g.cv || 0);
                     totalFV += (g.fv || g.targetValue || 0);
                 });
 
-                document.getElementById('dashTotalAssets').innerText = this.formatCurrency(totalInvestments);
-                document.getElementById('dashFutureAssets').innerText = this.formatCurrency(futureInvestments);
-                document.getElementById('dashTotalPV').innerText = this.formatCurrency(totalPV);
-                document.getElementById('dashTotalFV').innerText = this.formatCurrency(totalFV);
+                document.getElementById('dashTotalAssets').innerText = '₹' + this.formatCurrency(totalInvestments);
+                document.getElementById('dashFutureAssets').innerText = '₹' + this.formatCurrency(futureInvestments);
+                document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalPV);
+                document.getElementById('dashTotalFV').innerText = '₹' + this.formatCurrency(totalFV);
 
                 let percentage = 0;
                 if (totalFV > 0) {
