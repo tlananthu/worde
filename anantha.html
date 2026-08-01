@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.3</title>
+    <title>Anantha | Wealth OS V2.4</title>
+    <!-- SheetJS Library for reading Excel files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -172,8 +174,10 @@
         .close-modal { position: absolute; top: 1rem; right: 1rem; background: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; border: none; padding: 0; width: auto; }
         .close-modal:hover { color: var(--danger-color); }
         
-        .portfolio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        .portfolio-header h3 { font-size: 1.2rem; color: var(--text-primary); font-weight: 600; }
+        .portfolio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-wrap: wrap; gap: 1rem;}
+        .portfolio-header h3 { font-size: 1.2rem; color: var(--text-primary); font-weight: 600; margin: 0; }
+        .btn-upload { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); font-weight: 500; width: auto; padding: 0.4rem 1rem; font-size: 0.85rem;}
+        .btn-upload:hover { border-color: var(--accent-color); }
     </style>
 </head>
 <body>
@@ -393,11 +397,17 @@
             <main>
                 <div class="portfolio-header">
                     <h3>Registered Assets</h3>
-                    <div class="profile-manager">
-                        <select id="assetProfileFilter" onchange="app.renderInvestments()">
-                            <!-- Injected by JS -->
-                        </select>
-                        <button onclick="app.openProfileModal()">+ New Profile</button>
+                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
+                        <button class="btn-upload" onclick="if(confirm('Warning: This will delete ALL current assets and replace them with the uploaded template. Continue?')) document.getElementById('bulkUpload').click()">
+                            ⬆ Upload holdings-family-template.xlsx
+                        </button>
+                        <div class="profile-manager">
+                            <select id="assetProfileFilter" onchange="app.renderInvestments()">
+                                <!-- Injected by JS -->
+                            </select>
+                            <button onclick="app.openProfileModal()">+ New Profile</button>
+                        </div>
                     </div>
                 </div>
                 <div class="grid-container" id="investmentsContainer">
@@ -443,14 +453,14 @@
             },
 
             migrateData() {
-                const savedV2_3 = localStorage.getItem('ananthaDataV2_3');
-                if (savedV2_3) {
-                    this.data = JSON.parse(savedV2_3);
+                const savedV2_4 = localStorage.getItem('ananthaDataV2_4');
+                if (savedV2_4) {
+                    this.data = JSON.parse(savedV2_4);
                     return;
                 }
 
                 // Migrate from older versions
-                const savedOld = localStorage.getItem('ananthaDataV2_2');
+                const savedOld = localStorage.getItem('ananthaDataV2_3');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -458,12 +468,21 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_3', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_4', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
                 if (isNaN(amount) || amount === null) return "0";
                 return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(Math.round(amount));
+            },
+
+            parseCurrencyStr(val) {
+                if (typeof val === 'number') return val;
+                if (typeof val === 'string') {
+                    const cleaned = val.replace(/,/g, '').replace(/[^0-9.-]/g, '');
+                    return parseFloat(cleaned);
+                }
+                return NaN;
             },
 
             /* -------------------------------------------------------------------------- */
@@ -524,7 +543,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* INVESTMENTS LOGIC                                                          */
+            /* INVESTMENTS & BULK UPLOAD LOGIC                                            */
             /* -------------------------------------------------------------------------- */
             handleInvTypeChange() {
                 const type = document.getElementById('invType').value;
@@ -608,6 +627,97 @@
                     this.renderInvestments();
                     this.renderDashboard();
                 }
+            },
+
+            handleBulkUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    let newInvestments = [];
+                    let newProfiles = new Set();
+                    
+                    workbook.SheetNames.forEach(sheetName => {
+                        if (sheetName.toLowerCase().includes('report')) return;
+                        
+                        const worksheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                        
+                        let headerRowIndex = -1;
+                        for(let i=0; i<rows.length; i++) {
+                            if(rows[i] && (rows[i].includes("First Name") || rows[i].includes("Investment"))) {
+                                headerRowIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (headerRowIndex !== -1) {
+                            const headers = rows[headerRowIndex];
+                            for(let i = headerRowIndex + 1; i < rows.length; i++) {
+                                const rowData = rows[i];
+                                if(!rowData || rowData.length === 0) continue;
+                                
+                                let rowObj = {};
+                                headers.forEach((h, idx) => {
+                                    if(h) rowObj[h.toString().trim()] = rowData[idx];
+                                });
+                                
+                                let mVal = this.parseCurrencyStr(rowObj["Market Value"]);
+                                if(isNaN(mVal)) mVal = this.parseCurrencyStr(rowObj["Invested Amount"]);
+
+                                if (rowObj["Investment"] && !isNaN(mVal)) {
+                                    let profileName = rowObj["First Name"] ? rowObj["First Name"].toString().trim() : sheetName;
+                                    newProfiles.add(profileName);
+                                    
+                                    let ac = (rowObj["Asset Class"] || rowObj["Asset Type"] || "").toString().toLowerCase();
+                                    let invType = 'equity';
+                                    if (ac.includes('debt')) invType = 'debt';
+                                    else if (ac.includes('hybrid') || ac.includes('balanced')) invType = 'hybrid';
+                                    else if (ac.includes('fd') || ac.includes('fixed')) invType = 'fd';
+                                    else if (ac.includes('ppf')) invType = 'ppf';
+                                    else if (ac.includes('gold') || ac.includes('property') || ac.includes('real estate')) invType = 'assets';
+                                    
+                                    let rate = this.defaultRates[invType] || 7.0;
+
+                                    newInvestments.push({
+                                        id: Date.now().toString() + Math.random().toString().slice(2,8),
+                                        profile: profileName,
+                                        name: rowObj["Investment"],
+                                        type: invType,
+                                        value: mVal,
+                                        growthRate: rate,
+                                        maturityDate: "",
+                                        futureValue: this.calcInvFV(mVal, rate, "")
+                                    });
+                                }
+                            }
+                        }
+                    });
+                    
+                    if(newInvestments.length > 0) {
+                        this.data.investments = newInvestments; // Purges existing
+                        
+                        newProfiles.forEach(p => {
+                            if(!this.data.profiles.includes(p)) {
+                                this.data.profiles.push(p);
+                            }
+                        });
+                        
+                        this.saveState();
+                        this.updateProfileDropdowns();
+                        this.renderInvestments();
+                        this.renderDashboard();
+                        alert(`Successfully imported ${newInvestments.length} assets from the template!`);
+                    } else {
+                        alert("No valid asset data found in the template. Please ensure columns like 'First Name', 'Investment', and 'Market Value' exist.");
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+                event.target.value = ''; // Reset file input
             },
 
             renderInvestments() {
