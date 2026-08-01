@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.1</title>
+    <title>Anantha | Wealth OS V2.2</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -49,7 +49,7 @@
             align-items: center;
             gap: 0.5rem;
             background: var(--surface-color);
-            padding: 0.5rem;
+            padding: 0.5rem 1rem;
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
@@ -70,6 +70,9 @@
             font-size: 0.75rem;
             background: var(--surface-light);
             color: var(--accent-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
         /* Navigation Tabs */
@@ -117,8 +120,9 @@
         .inv-card.fd-type, .inv-card.rd-type, .inv-card.ppf-type, .inv-card.pomis-type, .inv-card.debt-type { border-left: 4px solid var(--success-color); }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
-        .card-title { font-weight: 600; font-size: 1.1rem; }
-        .badge { font-size: 0.7rem; background: var(--surface-light); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); margin-left: 0.5rem; vertical-align: middle;}
+        .card-title { font-weight: 600; font-size: 1.1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+        .badge { font-size: 0.7rem; background: var(--surface-light); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); vertical-align: middle; text-transform: uppercase;}
+        .badge.profile-badge { background: var(--accent-color); color: #000; font-weight: 600; }
         
         .card-actions { display: flex; gap: 0.75rem; z-index: 10; }
         .icon-btn { background: none; color: var(--text-secondary); width: auto; padding: 0; font-size: 1.1rem; }
@@ -168,20 +172,16 @@
         .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); font-size: 1.2rem; }
         .close-modal { position: absolute; top: 1rem; right: 1rem; background: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; border: none; padding: 0; width: auto; }
         .close-modal:hover { color: var(--danger-color); }
+        
+        .portfolio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .portfolio-header h3 { font-size: 1.2rem; color: var(--text-primary); font-weight: 600; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="profile-manager">
-            <select id="profileDropdown" onchange="app.switchProfile(this.value)">
-                <!-- Options injected via JS -->
-            </select>
-            <button onclick="app.openProfileModal()">+ New</button>
-            <button class="icon-btn delete" id="deleteProfileBtn" onclick="app.deleteCurrentProfile()" style="display:none;" title="Delete current profile">✕</button>
-        </div>
-        <div class="version">v2.1 (Yearly Expenses Fix)</div>
+        <div class="version">v2.2 (Asset Profiles)</div>
     </header>
 
     <div class="nav-tabs">
@@ -316,7 +316,6 @@
                 </form>
             </aside>
             <main>
-                <!-- TABLE VIEW FOR GOALS -->
                 <div class="table-container">
                     <table class="data-table">
                         <thead>
@@ -342,9 +341,16 @@
     <div id="view-investments" class="view">
         <div class="dashboard-layout">
             <aside class="form-card">
-                <h2 id="invFormTitle">Log New Asset / Investment</h2>
+                <h2 id="invFormTitle">Log New Asset</h2>
                 <form id="invForm" onsubmit="app.handleInvSave(event)">
                     
+                    <div class="form-group">
+                        <label for="invProfile">Owner / Profile</label>
+                        <select id="invProfile">
+                            <!-- Injected by JS -->
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="invType">Asset Class</label>
                         <select id="invType" onchange="app.handleInvTypeChange()">
@@ -387,6 +393,15 @@
                 </form>
             </aside>
             <main>
+                <div class="portfolio-header">
+                    <h3>Registered Assets</h3>
+                    <div class="profile-manager">
+                        <select id="assetProfileFilter" onchange="app.renderInvestments()">
+                            <!-- Injected by JS -->
+                        </select>
+                        <button onclick="app.openProfileModal()">+ New Profile</button>
+                    </div>
+                </div>
                 <div class="grid-container" id="investmentsContainer">
                     <!-- Investment cards injected here -->
                 </div>
@@ -398,13 +413,13 @@
     <div class="modal-overlay" id="profileModal">
         <div class="modal-content">
             <button class="close-modal" onclick="app.closeProfileModal()">✕</button>
-            <h3>Create New Portfolio Profile</h3>
+            <h3>Create Asset Profile</h3>
             <form onsubmit="app.createProfile(event)">
                 <div class="form-group">
-                    <label for="newProfileName">Profile Name</label>
+                    <label for="newProfileName">Profile / Owner Name</label>
                     <input type="text" id="newProfileName" required placeholder="e.g., Anju, Family, Twins">
                 </div>
-                <button type="submit" style="background-color: var(--success-color);">Initialize Profile</button>
+                <button type="submit" style="background-color: var(--success-color);">Add Profile</button>
             </form>
         </div>
     </div>
@@ -412,41 +427,55 @@
     <script>
         const app = {
             data: {
-                activeProfile: 'Main Portfolio',
-                profiles: {
-                    'Main Portfolio': { goals: [], investments: [] }
-                }
+                profiles: ['Main Portfolio'],
+                goals: [],
+                investments: []
             },
             editingGoalId: null,
             editingInvId: null,
             currentYear: new Date().getFullYear(),
 
-            // India Market Default Growth Rates
             defaultRates: { equity: 12.0, fd: 7.0, rd: 6.8, ppf: 7.1, pomis: 7.4, debt: 7.0, hybrid: 10.0, assets: 5.0 },
 
             init() {
                 this.migrateData();
-                this.updateProfileDropdown();
+                this.updateProfileDropdowns();
                 this.toggleGoalFields();
                 this.renderAll();
             },
 
             migrateData() {
-                const savedV1_9 = localStorage.getItem('ananthaDataV1_9');
-                if (savedV1_9) {
-                    this.data = JSON.parse(savedV1_9);
-                    if (!this.data.profiles[this.data.activeProfile]) {
-                        this.data.activeProfile = Object.keys(this.data.profiles)[0] || 'Main Portfolio';
-                        if (!this.data.profiles['Main Portfolio']) {
-                            this.data.profiles['Main Portfolio'] = { goals: [], investments: [] };
-                        }
-                    }
+                const savedV2_2 = localStorage.getItem('ananthaDataV2_2');
+                if (savedV2_2) {
+                    this.data = JSON.parse(savedV2_2);
                     return;
+                }
+
+                // Migrate from older versions (v1.9 / v2.1) which used nested profile objects
+                const savedOld = localStorage.getItem('ananthaDataV1_9');
+                if (savedOld) {
+                    const oldData = JSON.parse(savedOld);
+                    
+                    if (oldData.profiles && !Array.isArray(oldData.profiles)) {
+                        // Flatten nested objects into global arrays
+                        this.data.profiles = Object.keys(oldData.profiles);
+                        Object.keys(oldData.profiles).forEach(pName => {
+                            const p = oldData.profiles[pName];
+                            
+                            p.goals.forEach(g => this.data.goals.push(g));
+                            
+                            p.investments.forEach(i => {
+                                i.profile = pName;
+                                this.data.investments.push(i);
+                            });
+                        });
+                    }
+                    this.saveState();
                 }
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV1_9', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_2', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -455,30 +484,34 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* PROFILE MANAGEMENT                                                         */
+            /* PROFILE MANAGEMENT (ASSETS ONLY)                                           */
             /* -------------------------------------------------------------------------- */
-            updateProfileDropdown() {
-                const select = document.getElementById('profileDropdown');
-                select.innerHTML = '';
-                Object.keys(this.data.profiles).forEach(profileName => {
-                    const option = document.createElement('option');
-                    option.value = profileName;
-                    option.innerText = profileName;
-                    if (profileName === this.data.activeProfile) option.selected = true;
-                    select.appendChild(option);
+            updateProfileDropdowns() {
+                const formSelect = document.getElementById('invProfile');
+                const filterSelect = document.getElementById('assetProfileFilter');
+                
+                // Store current selection if any
+                const currentFormVal = formSelect.value;
+                const currentFilterVal = filterSelect.value;
+                
+                formSelect.innerHTML = '';
+                filterSelect.innerHTML = '<option value="ALL">All Profiles</option>';
+                
+                this.data.profiles.forEach(profileName => {
+                    const formOpt = document.createElement('option');
+                    formOpt.value = profileName;
+                    formOpt.innerText = profileName;
+                    formSelect.appendChild(formOpt);
+
+                    const filterOpt = document.createElement('option');
+                    filterOpt.value = profileName;
+                    filterOpt.innerText = profileName;
+                    filterSelect.appendChild(filterOpt);
                 });
                 
-                document.getElementById('deleteProfileBtn').style.display = 
-                    Object.keys(this.data.profiles).length > 1 ? 'inline-block' : 'none';
-            },
-
-            switchProfile(profileName) {
-                this.data.activeProfile = profileName;
-                this.saveState();
-                this.cancelGoalEdit();
-                this.cancelInvEdit();
-                this.updateProfileDropdown();
-                this.renderAll();
+                // Restore selections
+                if(currentFormVal && this.data.profiles.includes(currentFormVal)) formSelect.value = currentFormVal;
+                if(currentFilterVal && (this.data.profiles.includes(currentFilterVal) || currentFilterVal === "ALL")) filterSelect.value = currentFilterVal;
             },
 
             openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); },
@@ -488,28 +521,15 @@
                 event.preventDefault();
                 const name = document.getElementById('newProfileName').value.trim();
                 
-                if (name && !this.data.profiles[name]) {
-                    this.data.profiles[name] = { goals: [], investments: [] };
-                    this.data.activeProfile = name;
+                if (name && !this.data.profiles.includes(name)) {
+                    this.data.profiles.push(name);
                     this.saveState();
+                    this.updateProfileDropdowns();
+                    // Auto-select the newly created profile in the form
+                    document.getElementById('invProfile').value = name;
                     this.closeProfileModal();
-                    this.updateProfileDropdown();
-                    this.renderAll();
-                } else if (this.data.profiles[name]) {
+                } else {
                     alert("A profile with this name already exists.");
-                }
-            },
-
-            deleteCurrentProfile() {
-                const current = this.data.activeProfile;
-                if (Object.keys(this.data.profiles).length <= 1) return;
-                
-                if (confirm(`Are you sure you want to delete the entire '${current}' portfolio?`)) {
-                    delete this.data.profiles[current];
-                    this.data.activeProfile = Object.keys(this.data.profiles)[0];
-                    this.saveState();
-                    this.updateProfileDropdown();
-                    this.renderAll();
                 }
             },
 
@@ -542,6 +562,7 @@
 
             handleInvSave(event) {
                 event.preventDefault();
+                const profile = document.getElementById('invProfile').value;
                 const type = document.getElementById('invType').value;
                 const val = parseFloat(document.getElementById('invValue').value);
                 const rate = parseFloat(document.getElementById('invGrowth').value);
@@ -549,6 +570,7 @@
 
                 let invData = {
                     id: this.editingInvId || Date.now().toString(),
+                    profile: profile,
                     name: document.getElementById('invName').value,
                     type: type,
                     value: val,
@@ -557,23 +579,21 @@
                     futureValue: this.calcInvFV(val, rate, matDate)
                 };
 
-                const currentProfile = this.data.profiles[this.data.activeProfile];
-
                 if (this.editingInvId) {
-                    const index = currentProfile.investments.findIndex(i => i.id === this.editingInvId);
-                    currentProfile.investments[index] = invData;
+                    const index = this.data.investments.findIndex(i => i.id === this.editingInvId);
+                    this.data.investments[index] = invData;
                 } else {
-                    currentProfile.investments.push(invData);
+                    this.data.investments.push(invData);
                 }
 
                 this.saveState();
                 this.cancelInvEdit();
                 this.renderInvestments();
+                this.renderDashboard();
             },
 
             editInv(id) {
-                const currentProfile = this.data.profiles[this.data.activeProfile];
-                const inv = currentProfile.investments.find(i => i.id === id);
+                const inv = this.data.investments.find(i => i.id === id);
                 if (!inv) return;
                 
                 this.editingInvId = id;
@@ -581,6 +601,7 @@
                 document.getElementById('invSubmitBtn').innerText = "Update Asset";
                 document.getElementById('invCancelBtn').style.display = "block";
                 
+                document.getElementById('invProfile').value = inv.profile || this.data.profiles[0];
                 document.getElementById('invName').value = inv.name;
                 document.getElementById('invType').value = inv.type;
                 document.getElementById('invValue').value = inv.value;
@@ -592,7 +613,7 @@
 
             cancelInvEdit() {
                 this.editingInvId = null;
-                document.getElementById('invFormTitle').innerText = "Log New Asset / Investment";
+                document.getElementById('invFormTitle').innerText = "Log New Asset";
                 document.getElementById('invSubmitBtn').innerText = "Save Asset";
                 document.getElementById('invCancelBtn').style.display = "none";
                 document.getElementById('invForm').reset();
@@ -601,29 +622,34 @@
 
             deleteInv(id) {
                 if(confirm("Delete this asset from your portfolio?")) {
-                    const currentProfile = this.data.profiles[this.data.activeProfile];
-                    currentProfile.investments = currentProfile.investments.filter(i => i.id !== id);
+                    this.data.investments = this.data.investments.filter(i => i.id !== id);
                     if(this.editingInvId === id) this.cancelInvEdit();
                     this.saveState();
                     this.renderInvestments();
+                    this.renderDashboard();
                 }
             },
 
             renderInvestments() {
                 const container = document.getElementById('investmentsContainer');
                 container.innerHTML = '';
-                const currentProfile = this.data.profiles[this.data.activeProfile];
+                
+                const filterVal = document.getElementById('assetProfileFilter').value;
+                let filteredInvestments = this.data.investments;
+                
+                if(filterVal !== "ALL") {
+                    filteredInvestments = this.data.investments.filter(i => i.profile === filterVal);
+                }
 
-                if (currentProfile.investments.length === 0) {
-                    container.innerHTML = `<p style="color: var(--text-secondary);">No assets logged yet for ${this.data.activeProfile}.</p>`;
+                if (filteredInvestments.length === 0) {
+                    container.innerHTML = `<p style="color: var(--text-secondary);">No assets logged${filterVal !== "ALL" ? " for " + filterVal : ""}.</p>`;
                     return;
                 }
 
-                currentProfile.investments.forEach(inv => {
+                filteredInvestments.forEach(inv => {
                     const card = document.createElement('div');
                     card.className = `card inv-card ${inv.type}-type`;
                     
-                    let typeLabel = inv.type.toUpperCase();
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     
                     let dateDisplay = "N/A";
@@ -635,7 +661,9 @@
                     card.innerHTML = `
                         <div class="card-header">
                             <div class="card-title">
-                                ${inv.name} <span class="badge">${typeLabel}</span>
+                                ${inv.name} 
+                                <span class="badge">${inv.type}</span>
+                                <span class="badge profile-badge">${inv.profile || 'Main'}</span>
                             </div>
                             <div class="card-actions">
                                 <button class="icon-btn" onclick="app.editInv('${inv.id}')">✎</button>
@@ -662,7 +690,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC (Yearly Total C. Expenses Fix)                                 */
+            /* GLOBAL GOALS LOGIC                                                         */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -732,7 +760,7 @@
                     goalData.cv = parseFloat(document.getElementById('currentValue').value);
                     goalData.yrs = parseInt(document.getElementById('years').value);
                     
-                    goalData.cExp = goalData.cv; // Yearly/Base Current Expense
+                    goalData.cExp = goalData.cv; 
                     goalData.fv = goalData.cv * Math.pow((1+(inf/100)), goalData.yrs);
                     goalData.targetYear = this.currentYear + goalData.yrs;
                 } else if (type === 'retirement') {
@@ -741,7 +769,7 @@
                     goalData.yIn = parseInt(document.getElementById('yearsInRetirement').value);
                     goalData.pRet = parseFloat(document.getElementById('postRetirementReturn').value);
                     
-                    goalData.cExp = goalData.exp * 12; // Base Annual Current Expense
+                    goalData.cExp = goalData.exp * 12; 
                     goalData.fv = this.calcRetFV(goalData.exp, goalData.yTo, goalData.yIn, inf, goalData.pRet);
                     goalData.targetYear = this.currentYear + goalData.yTo;
                 } else if (type === 'education') {
@@ -752,29 +780,26 @@
                     goalData.cDeg = parseFloat(document.getElementById('eduCostDegree').value || 0);
                     goalData.cHi = parseFloat(document.getElementById('eduCostHigher').value || 0);
                     
-                    // Base lump sum of all components in today's money (without years multiplier)
                     goalData.cExp = (goalData.fees + (goalData.c11 || 0) + (goalData.cDeg || 0) + (goalData.cHi || 0)) * goalData.c;
                     goalData.fv = this.calcEduFV(goalData.c, goalData.g, goalData.fees, inf, goalData.c11, goalData.cDeg, goalData.cHi);
                     goalData.targetYear = this.currentYear + Math.max(0, 13 - goalData.g); 
                 }
 
-                const currentProfile = this.data.profiles[this.data.activeProfile];
-
                 if (this.editingGoalId) {
-                    const idx = currentProfile.goals.findIndex(g => g.id === this.editingGoalId);
-                    currentProfile.goals[idx] = goalData;
+                    const idx = this.data.goals.findIndex(g => g.id === this.editingGoalId);
+                    this.data.goals[idx] = goalData;
                 } else {
-                    currentProfile.goals.push(goalData);
+                    this.data.goals.push(goalData);
                 }
 
                 this.saveState();
                 this.cancelGoalEdit();
                 this.renderGoals();
+                this.renderDashboard();
             },
 
             editGoal(id) {
-                const currentProfile = this.data.profiles[this.data.activeProfile];
-                const g = currentProfile.goals.find(g => g.id === id);
+                const g = this.data.goals.find(g => g.id === id);
                 if (!g) return;
 
                 this.editingGoalId = id;
@@ -817,31 +842,29 @@
 
             deleteGoal(id) {
                 if(confirm("Remove this goal?")) {
-                    const currentProfile = this.data.profiles[this.data.activeProfile];
-                    currentProfile.goals = currentProfile.goals.filter(g => g.id !== id);
+                    this.data.goals = this.data.goals.filter(g => g.id !== id);
                     if(this.editingGoalId === id) this.cancelGoalEdit();
                     this.saveState();
                     this.renderGoals();
+                    this.renderDashboard();
                 }
             },
 
             renderGoals() {
                 const tbody = document.getElementById('goalsTableBody');
                 tbody.innerHTML = ''; 
-                const currentProfile = this.data.profiles[this.data.activeProfile];
 
-                if (currentProfile.goals.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No goals defined yet in ${this.data.activeProfile}.</td></tr>`;
+                if (this.data.goals.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No goals defined yet.</td></tr>`;
                     return;
                 }
 
                 let totalCExp = 0;
                 let totalFV = 0;
 
-                const sortedGoals = [...currentProfile.goals].sort((a, b) => (a.targetYear || this.currentYear) - (b.targetYear || this.currentYear));
+                const sortedGoals = [...this.data.goals].sort((a, b) => (a.targetYear || this.currentYear) - (b.targetYear || this.currentYear));
 
                 sortedGoals.forEach(goal => {
-                    // Backwards compatibility for older saved PV data
                     let cExp = goal.cExp || (goal.type === 'retirement' ? (goal.exp * 12) : (goal.type === 'education' ? ((goal.fees + (goal.c11||0) + (goal.cDeg||0) + (goal.cHi||0))*goal.c) : (goal.cv || goal.pv || 0)));
                     let fv = goal.fv || goal.targetValue || 0;
                     
@@ -886,22 +909,21 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC                                                            */
+            /* GLOBAL DASHBOARD LOGIC                                                     */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
-                const currentProfile = this.data.profiles[this.data.activeProfile];
-                
                 let totalInvestments = 0;
                 let futureInvestments = 0;
                 
-                currentProfile.investments.forEach(inv => {
+                // Dashboard rolls up ALL investments across all profiles
+                this.data.investments.forEach(inv => {
                     totalInvestments += (inv.value || 0);
                     futureInvestments += this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                 });
                 
                 let totalCExp = 0;
                 let totalFV = 0;
-                currentProfile.goals.forEach(goal => {
+                this.data.goals.forEach(goal => {
                     let cExp = goal.cExp || (goal.type === 'retirement' ? (goal.exp * 12) : (goal.type === 'education' ? ((goal.fees + (goal.c11||0) + (goal.cDeg||0) + (goal.cHi||0))*goal.c) : (goal.cv || goal.pv || 0)));
                     totalCExp += cExp;
                     totalFV += (goal.fv || goal.targetValue || 0);
