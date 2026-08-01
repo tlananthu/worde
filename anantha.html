@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.18</title>
+    <title>Anantha | Wealth OS V2.19</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -164,6 +164,7 @@
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
+        /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; border: 1px solid var(--border-color); position: relative; }
         .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); font-size: 1.2rem; margin-top: 0; }
@@ -172,7 +173,7 @@
         
         .portfolio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; flex-wrap: wrap; gap: 1rem;}
         .portfolio-header h3 { font-size: 1.2rem; color: var(--text-primary); font-weight: 600; margin: 0; }
-        .btn-upload { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); font-weight: 500; width: auto; padding: 0.4rem 1rem; font-size: 0.85rem;}
+        .btn-upload { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); font-weight: 500; width: auto; padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; border-radius: 4px; }
         .btn-upload:hover { border-color: var(--accent-color); }
     </style>
 </head>
@@ -534,7 +535,7 @@
             dashProfileFilters: [], 
             invProfileFilters: [],
             invClassFilters: [],
-            allocationGroupBy: 'class', // 'class', 'type', 'category'
+            allocationGroupBy: 'class', 
 
             defaultRates: { 
                 equity: 12.0, debt: 7.0, hybrid: 10.0, liquid: 4.0, fd: 7.0, rd: 6.8, nps: 10.0, epf: 8.1, ppf: 7.1, pomis: 7.4, gold_silver: 8.0, real_estate: 6.0, vehicle: -10.0 
@@ -544,37 +545,53 @@
 
             init() {
                 this.migrateData();
-                
-                this.dashProfileFilters = [...this.data.profiles];
-                this.invProfileFilters = [...this.data.profiles];
-                this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                
                 this.updateProfileDropdowns();
                 this.toggleGoalFields();
                 this.renderAll();
             },
 
             migrateData() {
-                const savedV2_18 = localStorage.getItem('ananthaDataV2_18');
-                if (savedV2_18) {
-                    this.data = JSON.parse(savedV2_18);
+                const savedV2_19 = localStorage.getItem('ananthaDataV2_19');
+                if (savedV2_19) {
+                    this.data = JSON.parse(savedV2_19);
+                    this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
+                    this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
+                    this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
+                    
+                    this.sortColumn = this.data.sortColumn || 'year';
+                    this.sortAsc = this.data.sortAsc !== undefined ? this.data.sortAsc : true;
+                    this.invSortColumn = this.data.invSortColumn || 'fv';
+                    this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_17');
+                const savedOld = localStorage.getItem('ananthaDataV2_18');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    // Migration: Ensure new raw properties exist
-                    this.data.investments.forEach(inv => {
-                        if (!inv.rawAssetClass) inv.rawAssetClass = inv.type;
-                        if (!inv.rawAssetType) inv.rawAssetType = 'Other';
-                        if (!inv.rawCategory) inv.rawCategory = 'Other';
-                    });
+                    this.dashProfileFilters = [...this.data.profiles];
+                    this.invProfileFilters = [...this.data.profiles];
+                    this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.allocationGroupBy = 'class';
                     this.saveState();
+                    return;
                 }
+                
+                this.dashProfileFilters = [...this.data.profiles];
+                this.invProfileFilters = [...this.data.profiles];
+                this.invClassFilters = [];
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_18', JSON.stringify(this.data));
+                this.data.dashProfileFilters = this.dashProfileFilters;
+                this.data.invProfileFilters = this.invProfileFilters;
+                this.data.invClassFilters = this.invClassFilters;
+                this.data.allocationGroupBy = this.allocationGroupBy;
+                this.data.sortColumn = this.sortColumn;
+                this.data.sortAsc = this.sortAsc;
+                this.data.invSortColumn = this.invSortColumn;
+                this.data.invSortAsc = this.invSortAsc;
+                
+                localStorage.setItem('ananthaDataV2_19', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -882,7 +899,6 @@
                             }
                         });
 
-                        // Rebuild class filters
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                         
                         this.saveState();
@@ -905,11 +921,11 @@
                     this.invSortColumn = column;
                     this.invSortAsc = true;
                 }
+                this.saveState();
                 this.renderInvestments();
             },
 
             renderInvestments() {
-                // 1. Render Profile Toggles
                 const profContainer = document.getElementById('invProfileToggles');
                 profContainer.innerHTML = '';
                 this.data.profiles.forEach(p => {
@@ -922,6 +938,7 @@
                     textSpan.onclick = () => {
                         if (isActive) this.invProfileFilters = this.invProfileFilters.filter(f => f !== p);
                         else this.invProfileFilters.push(p);
+                        this.saveState();
                         this.renderInvestments();
                     };
 
@@ -936,7 +953,6 @@
                     profContainer.appendChild(pill);
                 });
                 
-                // 2. Render Class Toggles
                 const classContainer = document.getElementById('invClassToggles');
                 classContainer.innerHTML = '';
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
@@ -948,18 +964,17 @@
                     pill.onclick = () => {
                         if (isActive) this.invClassFilters = this.invClassFilters.filter(f => f !== c);
                         else this.invClassFilters.push(c);
+                        this.saveState();
                         this.renderInvestments();
                     };
                     classContainer.appendChild(pill);
                 });
 
-                // Update grouping toggles
                 document.querySelectorAll('.alloc-group-btn').forEach(btn => {
                     btn.classList.remove('active');
                     if (btn.dataset.group === this.allocationGroupBy) btn.classList.add('active');
                 });
 
-                // Update Table Data
                 const tbody = document.getElementById('investmentsTableBody');
                 tbody.innerHTML = '';
                 
@@ -977,7 +992,6 @@
                     return profileMatch && classMatch;
                 });
 
-                // Render Allocation Summary for Portfolio
                 this.renderAllocationTable('portAssetSummaryBody', 'portAllocColHeader', filteredInvestments);
 
                 if (filteredInvestments.length === 0) {
@@ -1013,7 +1027,6 @@
                     totalFV += inv.computedFV;
 
                     let displayClass = (inv.rawAssetClass || inv.type).toUpperCase();
-                    let colorClass = `${inv.type}-type`;
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -1067,6 +1080,7 @@
             /* -------------------------------------------------------------------------- */
             setAllocationGroupBy(group) {
                 this.allocationGroupBy = group;
+                this.saveState();
                 this.renderDashboard();
                 this.renderInvestments();
             },
@@ -1391,6 +1405,7 @@
                     this.sortColumn = column;
                     this.sortAsc = true; 
                 }
+                this.saveState();
                 this.renderGoals();
             },
 
@@ -1483,7 +1498,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC                                                            */
+            /* DASHBOARD LOGIC (Profile Breakdown & Table Filter)                         */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let globalInvestments = 0;
@@ -1569,14 +1584,19 @@
                 
                 this.data.profiles.forEach(p => {
                     const isActive = this.dashProfileFilters.includes(p);
+                    
                     const pill = document.createElement('div');
                     pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
                     
                     const textSpan = document.createElement('span');
                     textSpan.innerText = p;
                     textSpan.onclick = () => {
-                        if (isActive) this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== p);
-                        else this.dashProfileFilters.push(p);
+                        if (isActive) {
+                            this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== p);
+                        } else {
+                            this.dashProfileFilters.push(p);
+                        }
+                        this.saveState();
                         this.renderDashboard();
                     };
 
@@ -1584,7 +1604,10 @@
                     delSpan.innerHTML = '&times;';
                     delSpan.className = 'pill-delete';
                     delSpan.title = "Delete Profile Permanently";
-                    delSpan.onclick = (e) => { e.stopPropagation(); this.deleteFullProfile(p); };
+                    delSpan.onclick = (e) => {
+                        e.stopPropagation();
+                        this.deleteFullProfile(p);
+                    };
 
                     pill.appendChild(textSpan);
                     pill.appendChild(delSpan);
