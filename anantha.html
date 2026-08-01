@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.20</title>
+    <title>Anantha | Wealth OS V2.21</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -39,10 +39,6 @@
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
         .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
         
-        .profile-manager { display: flex; align-items: center; gap: 0.5rem; background: var(--surface-color); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
-        .profile-manager select { background: transparent; color: var(--text-primary); border: none; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer; }
-        .profile-manager button { width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem; background: var(--surface-light); color: var(--accent-color); border: none; border-radius: 4px; cursor: pointer; }
-
         .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); overflow-x: auto; }
         .tab-btn { background: transparent; border: none; color: var(--text-secondary); padding: 1rem 1.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; border-radius: 0; white-space: nowrap; transition: color 0.2s; }
         .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
@@ -381,19 +377,23 @@
                 <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
             </div>
         </div>
-
-        <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+        
+        <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
             <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                 <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Profiles:</span>
-                <div id="invProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <!-- Injected via JS -->
-                </div>
+                <div id="invProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
             </div>
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
                 <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Classes:</span>
-                <div id="invClassToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <!-- Injected via JS -->
-                </div>
+                <div id="invClassToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Types:</span>
+                <div id="invTypeToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Categories:</span>
+                <div id="invCategoryToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
             </div>
         </div>
         
@@ -514,7 +514,8 @@
             editingInvId: null,
             currentYear: new Date().getFullYear(),
             
-            // Sorting & Filter State
+            // App State
+            activeView: 'home',
             sortColumn: 'year',
             sortAsc: true,
             invSortColumn: 'fv',
@@ -522,6 +523,8 @@
             dashProfileFilters: [], 
             invProfileFilters: [],
             invClassFilters: [],
+            invTypeFilters: [],
+            invCategoryFilters: [],
             allocationGroupBy: 'class', 
 
             defaultRates: { 
@@ -535,15 +538,19 @@
                 this.updateProfileDropdowns();
                 this.toggleGoalFields();
                 this.renderAll();
+                this.switchView(this.activeView);
             },
 
             migrateData() {
-                const savedV2_20 = localStorage.getItem('ananthaDataV2_20');
-                if (savedV2_20) {
-                    this.data = JSON.parse(savedV2_20);
+                const savedV2_21 = localStorage.getItem('ananthaDataV2_21');
+                if (savedV2_21) {
+                    this.data = JSON.parse(savedV2_21);
+                    this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                     this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     
                     this.sortColumn = this.data.sortColumn || 'year';
@@ -552,12 +559,15 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_19');
+                const savedOld = localStorage.getItem('ananthaDataV2_20');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
+                    this.activeView = 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                     this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.saveState();
                     return;
@@ -566,19 +576,24 @@
                 this.dashProfileFilters = [...this.data.profiles];
                 this.invProfileFilters = [...this.data.profiles];
                 this.invClassFilters = [];
+                this.invTypeFilters = [];
+                this.invCategoryFilters = [];
             },
 
             saveState() {
+                this.data.activeView = this.activeView;
                 this.data.dashProfileFilters = this.dashProfileFilters;
                 this.data.invProfileFilters = this.invProfileFilters;
                 this.data.invClassFilters = this.invClassFilters;
+                this.data.invTypeFilters = this.invTypeFilters;
+                this.data.invCategoryFilters = this.invCategoryFilters;
                 this.data.allocationGroupBy = this.allocationGroupBy;
                 this.data.sortColumn = this.sortColumn;
                 this.data.sortAsc = this.sortAsc;
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_20', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_21', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -654,11 +669,19 @@
             },
 
             switchView(viewId) {
-                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                event.target.classList.add('active');
+                this.activeView = viewId;
+                this.saveState();
+
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('onclick').includes(viewId)) {
+                        btn.classList.add('active');
+                    }
+                });
                 
                 document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
-                document.getElementById(`view-${viewId}`).classList.add('active');
+                const viewEl = document.getElementById(`view-${viewId}`);
+                if(viewEl) viewEl.classList.add('active');
 
                 if (viewId === 'home') this.renderDashboard();
                 if (viewId === 'investments') this.renderInvestments();
@@ -715,8 +738,8 @@
                 const matDate = document.getElementById('invMaturity').value;
 
                 let rClass = document.getElementById('invRawClass').value.trim();
-                let rType = document.getElementById('invRawType').value.trim();
-                let rCategory = document.getElementById('invRawCategory').value.trim();
+                let rType = document.getElementById('invRawType').value.trim() || 'Other';
+                let rCategory = document.getElementById('invRawCategory').value.trim() || 'Other';
 
                 let invData = {
                     id: this.editingInvId || Date.now().toString(),
@@ -727,8 +750,8 @@
                     growthRate: rate,
                     maturityDate: matDate,
                     rawAssetClass: rClass || type,
-                    rawAssetType: rType || 'Other',
-                    rawCategory: rCategory || 'Other'
+                    rawAssetType: rType,
+                    rawCategory: rCategory
                 };
 
                 if (this.editingInvId) {
@@ -740,6 +763,8 @@
                 
                 const cMatch = invData.rawAssetClass;
                 if (!this.invClassFilters.includes(cMatch)) this.invClassFilters.push(cMatch);
+                if (!this.invTypeFilters.includes(rType)) this.invTypeFilters.push(rType);
+                if (!this.invCategoryFilters.includes(rCategory)) this.invCategoryFilters.push(rCategory);
 
                 this.saveState();
                 this.closeAssetModal();
@@ -886,8 +911,10 @@
                             }
                         });
 
-                        // Rebuild class filters
+                        // Rebuild all filters to include new incoming data
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                        this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                        this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                         
                         this.saveState();
                         this.updateProfileDropdowns();
@@ -960,7 +987,42 @@
                     classContainer.appendChild(pill);
                 });
 
-                // 3. Render Table
+                // 3. Render Type Toggles
+                const typeContainer = document.getElementById('invTypeToggles');
+                typeContainer.innerHTML = '';
+                const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                uniqueTypes.forEach(t => {
+                    const isActive = this.invTypeFilters.includes(t);
+                    const pill = document.createElement('div');
+                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
+                    pill.innerText = t.toUpperCase();
+                    pill.onclick = () => {
+                        if (isActive) this.invTypeFilters = this.invTypeFilters.filter(f => f !== t);
+                        else this.invTypeFilters.push(t);
+                        this.saveState();
+                        this.renderInvestments();
+                    };
+                    typeContainer.appendChild(pill);
+                });
+
+                // 4. Render Category Toggles
+                const catContainer = document.getElementById('invCategoryToggles');
+                catContainer.innerHTML = '';
+                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                uniqueCats.forEach(c => {
+                    const isActive = this.invCategoryFilters.includes(c);
+                    const pill = document.createElement('div');
+                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
+                    pill.innerText = c.toUpperCase();
+                    pill.onclick = () => {
+                        if (isActive) this.invCategoryFilters = this.invCategoryFilters.filter(f => f !== c);
+                        else this.invCategoryFilters.push(c);
+                        this.saveState();
+                        this.renderInvestments();
+                    };
+                    catContainer.appendChild(pill);
+                });
+
                 const tbody = document.getElementById('investmentsTableBody');
                 tbody.innerHTML = '';
                 
@@ -975,7 +1037,9 @@
                 let filteredInvestments = this.data.investments.filter(i => {
                     const profileMatch = this.invProfileFilters.includes(i.profile || 'Main Portfolio');
                     const classMatch = this.invClassFilters.includes(i.rawAssetClass || i.type);
-                    return profileMatch && classMatch;
+                    const typeMatch = this.invTypeFilters.includes(i.rawAssetType || 'Other');
+                    const catMatch = this.invCategoryFilters.includes(i.rawCategory || 'Other');
+                    return profileMatch && classMatch && typeMatch && catMatch;
                 });
 
                 if (filteredInvestments.length === 0) {
@@ -987,7 +1051,7 @@
                 const processedInv = filteredInvestments.map(inv => {
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     let matDisplay = inv.maturityDate ? new Date(inv.maturityDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '';
-                    let sortMat = inv.maturityDate ? new Date(inv.maturityDate).getTime() : 9999999999999; // Ongoing pushed to end
+                    let sortMat = inv.maturityDate ? new Date(inv.maturityDate).getTime() : 9999999999999; 
                     return { ...inv, computedFV: fv, matDisplay: matDisplay, sortMat: sortMat };
                 });
 
