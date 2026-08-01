@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V1.8</title>
+    <title>Anantha | Wealth OS V1.9</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -37,10 +37,40 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
         .version { color: var(--text-secondary); font-family: monospace; }
+        
+        .profile-manager {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--surface-color);
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .profile-manager select {
+            background: transparent;
+            color: var(--text-primary);
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .profile-manager button {
+            width: auto;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
+            background: var(--surface-light);
+            color: var(--accent-color);
+        }
 
         /* Navigation Tabs */
         .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); overflow-x: auto; }
@@ -84,16 +114,13 @@
         .card.interactive { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
         .card.interactive:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.3); border-color: var(--accent-color); }
         
-        /* Goal Accents */
         .goal-card.retirement-type { border-top: 3px solid var(--warning-color); }
         .goal-card.education-type { border-top: 3px solid var(--edu-color); }
         .goal-card.standard-type { border-top: 3px solid var(--accent-color); }
 
-        /* Asset Accents */
         .inv-card.equity-type { border-left: 4px solid var(--accent-color); }
         .inv-card.hybrid-type { border-left: 4px solid var(--edu-color); }
         .inv-card.assets-type { border-left: 4px solid var(--warning-color); }
-        /* Debt / Fixed Income gets Green */
         .inv-card.fd-type, .inv-card.rd-type, .inv-card.ppf-type, .inv-card.pomis-type, .inv-card.debt-type { border-left: 4px solid var(--success-color); }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
@@ -129,13 +156,27 @@
         .progress-container { margin-top: 1rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
         .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; border: 1px solid var(--border-color); position: relative; }
+        .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); font-size: 1.2rem; }
+        .close-modal { position: absolute; top: 1rem; right: 1rem; background: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; border: none; padding: 0; width: auto; }
+        .close-modal:hover { color: var(--danger-color); }
     </style>
 </head>
 <body>
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v1.8 (Fixed Income Tracking)</div>
+        <div class="profile-manager">
+            <select id="profileDropdown" onchange="app.switchProfile(this.value)">
+                <!-- Options injected via JS -->
+            </select>
+            <button onclick="app.openProfileModal()">+ New</button>
+            <button class="icon-btn delete" id="deleteProfileBtn" onclick="app.deleteCurrentProfile()" style="display:none;" title="Delete current profile">✕</button>
+        </div>
+        <div class="version">v1.9 (Multi-Profile)</div>
     </header>
 
     <div class="nav-tabs">
@@ -333,11 +374,28 @@
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="app.closeProfileModal()">✕</button>
+            <h3>Create New Portfolio Profile</h3>
+            <form onsubmit="app.createProfile(event)">
+                <div class="form-group">
+                    <label for="newProfileName">Profile Name</label>
+                    <input type="text" id="newProfileName" required placeholder="e.g., Anju, Family, Twins">
+                </div>
+                <button type="submit" style="background-color: var(--success-color);">Initialize Profile</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         const app = {
             data: {
-                goals: [],
-                investments: []
+                activeProfile: 'Main Portfolio',
+                profiles: {
+                    'Main Portfolio': { goals: [], investments: [] }
+                }
             },
             editingGoalId: null,
             editingInvId: null,
@@ -356,40 +414,113 @@
 
             init() {
                 this.migrateData();
+                this.updateProfileDropdown();
                 this.toggleGoalFields();
                 this.renderAll();
             },
 
             migrateData() {
-                const savedV1_8 = localStorage.getItem('ananthaDataV1_8');
-                if (savedV1_8) {
-                    this.data = JSON.parse(savedV1_8);
+                const savedV1_9 = localStorage.getItem('ananthaDataV1_9');
+                if (savedV1_9) {
+                    this.data = JSON.parse(savedV1_9);
+                    
+                    // Safety check if activeProfile got deleted somehow
+                    if (!this.data.profiles[this.data.activeProfile]) {
+                        this.data.activeProfile = Object.keys(this.data.profiles)[0] || 'Main Portfolio';
+                        if (!this.data.profiles['Main Portfolio']) {
+                            this.data.profiles['Main Portfolio'] = { goals: [], investments: [] };
+                        }
+                    }
                     return;
                 }
 
-                // Migrate from V1.7
-                const savedV1_7 = localStorage.getItem('ananthaDataV1_7');
-                if (savedV1_7) {
-                    let oldData = JSON.parse(savedV1_7);
-                    
-                    // Add default growth and maturity fields to old investments
-                    oldData.investments.forEach(inv => {
-                        if (!inv.growthRate) inv.growthRate = this.defaultRates[inv.type] || 7.0;
-                        if (!inv.maturityDate) inv.maturityDate = "";
-                    });
-                    
-                    this.data = oldData;
+                // Migrate from V1.8 to V1.9 Nested Structure
+                const savedV1_8 = localStorage.getItem('ananthaDataV1_8');
+                if (savedV1_8) {
+                    const oldData = JSON.parse(savedV1_8);
+                    this.data.profiles['Main Portfolio'] = oldData;
                     this.saveState();
                 }
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV1_8', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV1_9', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
                 if (isNaN(amount) || amount === null) return "₹0";
                 return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+            },
+
+            /* -------------------------------------------------------------------------- */
+            /* PROFILE MANAGEMENT                                                         */
+            /* -------------------------------------------------------------------------- */
+            updateProfileDropdown() {
+                const select = document.getElementById('profileDropdown');
+                select.innerHTML = '';
+                Object.keys(this.data.profiles).forEach(profileName => {
+                    const option = document.createElement('option');
+                    option.value = profileName;
+                    option.innerText = profileName;
+                    if (profileName === this.data.activeProfile) option.selected = true;
+                    select.appendChild(option);
+                });
+                
+                // Only allow deletion if there is more than 1 profile
+                document.getElementById('deleteProfileBtn').style.display = 
+                    Object.keys(this.data.profiles).length > 1 ? 'inline-block' : 'none';
+            },
+
+            switchProfile(profileName) {
+                this.data.activeProfile = profileName;
+                this.saveState();
+                
+                // Clear any ongoing edits
+                this.cancelGoalEdit();
+                this.cancelInvEdit();
+                
+                this.updateProfileDropdown();
+                this.renderAll();
+            },
+
+            openProfileModal() {
+                document.getElementById('profileModal').style.display = 'flex';
+                document.getElementById('newProfileName').focus();
+            },
+
+            closeProfileModal() {
+                document.getElementById('profileModal').style.display = 'none';
+                document.getElementById('newProfileName').value = '';
+            },
+
+            createProfile(event) {
+                event.preventDefault();
+                const name = document.getElementById('newProfileName').value.trim();
+                
+                if (name && !this.data.profiles[name]) {
+                    this.data.profiles[name] = { goals: [], investments: [] };
+                    this.data.activeProfile = name;
+                    this.saveState();
+                    this.closeProfileModal();
+                    
+                    this.updateProfileDropdown();
+                    this.renderAll();
+                } else if (this.data.profiles[name]) {
+                    alert("A profile with this name already exists.");
+                }
+            },
+
+            deleteCurrentProfile() {
+                const current = this.data.activeProfile;
+                if (Object.keys(this.data.profiles).length <= 1) return;
+                
+                if (confirm(`Are you sure you want to delete the entire '${current}' portfolio? All associated goals and assets will be lost forever.`)) {
+                    delete this.data.profiles[current];
+                    this.data.activeProfile = Object.keys(this.data.profiles)[0]; // switch to next available
+                    this.saveState();
+                    this.updateProfileDropdown();
+                    this.renderAll();
+                }
             },
 
             switchView(viewId) {
@@ -405,7 +536,6 @@
             /* -------------------------------------------------------------------------- */
             /* INVESTMENTS LOGIC                                                          */
             /* -------------------------------------------------------------------------- */
-            
             handleInvTypeChange() {
                 const type = document.getElementById('invType').value;
                 document.getElementById('invGrowth').value = this.defaultRates[type] || 0;
@@ -416,13 +546,9 @@
                 const matDate = new Date(matDateStr);
                 const today = new Date();
                 
-                // Difference in years
                 const years = (matDate - today) / (1000 * 60 * 60 * 24 * 365.25);
-                
-                // If it's already matured or in the past, return current value
                 if (years <= 0) return val;
                 
-                // Standard Compound Interest
                 return val * Math.pow(1 + (rate / 100), years);
             },
 
@@ -443,11 +569,13 @@
                     futureValue: this.calcInvFV(val, rate, matDate)
                 };
 
+                const currentProfile = this.data.profiles[this.data.activeProfile];
+
                 if (this.editingInvId) {
-                    const index = this.data.investments.findIndex(i => i.id === this.editingInvId);
-                    this.data.investments[index] = invData;
+                    const index = currentProfile.investments.findIndex(i => i.id === this.editingInvId);
+                    currentProfile.investments[index] = invData;
                 } else {
-                    this.data.investments.push(invData);
+                    currentProfile.investments.push(invData);
                 }
 
                 this.saveState();
@@ -456,7 +584,8 @@
             },
 
             editInv(id) {
-                const inv = this.data.investments.find(i => i.id === id);
+                const currentProfile = this.data.profiles[this.data.activeProfile];
+                const inv = currentProfile.investments.find(i => i.id === id);
                 if (!inv) return;
                 
                 this.editingInvId = id;
@@ -479,12 +608,13 @@
                 document.getElementById('invSubmitBtn').innerText = "Save Asset";
                 document.getElementById('invCancelBtn').style.display = "none";
                 document.getElementById('invForm').reset();
-                this.handleInvTypeChange(); // Reset default rate
+                this.handleInvTypeChange(); 
             },
 
             deleteInv(id) {
                 if(confirm("Delete this asset from your portfolio?")) {
-                    this.data.investments = this.data.investments.filter(i => i.id !== id);
+                    const currentProfile = this.data.profiles[this.data.activeProfile];
+                    currentProfile.investments = currentProfile.investments.filter(i => i.id !== id);
                     if(this.editingInvId === id) this.cancelInvEdit();
                     this.saveState();
                     this.renderInvestments();
@@ -494,20 +624,20 @@
             renderInvestments() {
                 const container = document.getElementById('investmentsContainer');
                 container.innerHTML = '';
+                const currentProfile = this.data.profiles[this.data.activeProfile];
 
-                if (this.data.investments.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-secondary);">No assets logged yet.</p>';
+                if (currentProfile.investments.length === 0) {
+                    container.innerHTML = `<p style="color: var(--text-secondary);">No assets logged yet for ${this.data.activeProfile}.</p>`;
                     return;
                 }
 
-                this.data.investments.forEach(inv => {
+                currentProfile.investments.forEach(inv => {
                     const card = document.createElement('div');
                     card.className = `card inv-card ${inv.type}-type`;
                     
                     let typeLabel = inv.type.toUpperCase();
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     
-                    // Format maturity date if it exists
                     let dateDisplay = "N/A";
                     if (inv.maturityDate) {
                         const d = new Date(inv.maturityDate);
@@ -544,7 +674,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC (Retained from V1.7)                                           */
+            /* GOALS LOGIC                                                                */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -652,11 +782,13 @@
                     goalData.inst = this.sugInst(type, Math.max(0, 13-goalData.g));
                 }
 
+                const currentProfile = this.data.profiles[this.data.activeProfile];
+
                 if (this.editingGoalId) {
-                    const idx = this.data.goals.findIndex(g => g.id === this.editingGoalId);
-                    this.data.goals[idx] = goalData;
+                    const idx = currentProfile.goals.findIndex(g => g.id === this.editingGoalId);
+                    currentProfile.goals[idx] = goalData;
                 } else {
-                    this.data.goals.push(goalData);
+                    currentProfile.goals.push(goalData);
                 }
 
                 this.saveState();
@@ -665,7 +797,8 @@
             },
 
             editGoal(id) {
-                const g = this.data.goals.find(g => g.id === id);
+                const currentProfile = this.data.profiles[this.data.activeProfile];
+                const g = currentProfile.goals.find(g => g.id === id);
                 if (!g) return;
 
                 this.editingGoalId = id;
@@ -708,7 +841,8 @@
 
             deleteGoal(id) {
                 if(confirm("Remove this goal?")) {
-                    this.data.goals = this.data.goals.filter(g => g.id !== id);
+                    const currentProfile = this.data.profiles[this.data.activeProfile];
+                    currentProfile.goals = currentProfile.goals.filter(g => g.id !== id);
                     if(this.editingGoalId === id) this.cancelGoalEdit();
                     this.saveState();
                     this.renderGoals();
@@ -718,13 +852,14 @@
             renderGoals() {
                 const container = document.getElementById('goalsContainer');
                 container.innerHTML = ''; 
+                const currentProfile = this.data.profiles[this.data.activeProfile];
 
-                if (this.data.goals.length === 0) {
-                    container.innerHTML = '<p style="color: var(--text-secondary);">No goals defined yet.</p>';
+                if (currentProfile.goals.length === 0) {
+                    container.innerHTML = `<p style="color: var(--text-secondary);">No goals defined yet for ${this.data.activeProfile}.</p>`;
                     return;
                 }
 
-                this.data.goals.forEach(goal => {
+                currentProfile.goals.forEach(goal => {
                     const card = document.createElement('div');
                     card.className = `card goal-card ${goal.type}-type`;
                     
@@ -773,17 +908,19 @@
             /* DASHBOARD LOGIC                                                            */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
+                const currentProfile = this.data.profiles[this.data.activeProfile];
+                
                 let totalInvestments = 0;
                 let futureInvestments = 0;
                 
-                this.data.investments.forEach(inv => {
+                currentProfile.investments.forEach(inv => {
                     totalInvestments += (inv.value || 0);
                     futureInvestments += this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                 });
                 
                 let totalPV = 0;
                 let totalFV = 0;
-                this.data.goals.forEach(g => {
+                currentProfile.goals.forEach(g => {
                     totalPV += (g.pv || g.presentValue || g.currentValue || 0);
                     totalFV += (g.fv || g.targetValue || 0);
                 });
@@ -793,7 +930,6 @@
                 document.getElementById('dashTotalPV').innerText = this.formatCurrency(totalPV);
                 document.getElementById('dashTotalFV').innerText = this.formatCurrency(totalFV);
 
-                // Progress Bar: Projected Assets vs Future Goals
                 let percentage = 0;
                 if (totalFV > 0) {
                     percentage = Math.min((futureInvestments / totalFV) * 100, 100);
@@ -811,6 +947,13 @@
                 this.renderDashboard();
             }
         };
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('profileModal');
+            if (event.target === modal) {
+                app.closeProfileModal();
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => app.init());
     </script>
