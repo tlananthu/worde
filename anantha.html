@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.11</title>
+    <title>Anantha | Wealth OS V2.12</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -132,8 +132,13 @@
         .dash-value.success { color: var(--success-color); }
 
         .progress-container { margin-top: 1rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
-        .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
+        .progress-bar-bg { display: flex; width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
+        .progress-bar-segment { height: 100%; transition: width 1s ease-in-out; }
+        
+        /* Legends for stacked bar */
+        .progress-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: 0.8rem; }
+        .legend-item { display: flex; align-items: center; gap: 0.4rem; color: var(--text-primary); }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
         /* Sortable Data Tables */
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
@@ -215,8 +220,13 @@
                 </div>
                 <div id="dashPercentage" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-color);">0%</div>
             </div>
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="dashProgressBar"></div>
+            
+            <div class="progress-bar-bg" id="dashProgressBarContainer">
+                <!-- Segments injected via JS -->
+            </div>
+            
+            <div class="progress-legend" id="dashProgressLegend">
+                <!-- Legends injected via JS -->
             </div>
         </div>
 
@@ -454,6 +464,9 @@
             defaultRates: { 
                 equity: 12.0, debt: 7.0, hybrid: 10.0, liquid: 4.0, fd: 7.0, rd: 6.8, nps: 10.0, epf: 8.1, ppf: 7.1, pomis: 7.4, gold_silver: 8.0, real_estate: 6.0, vehicle: -10.0 
             },
+            
+            // Profile Colors for Progress Bar
+            profileColors: ['#38bdf8', '#34d399', '#a78bfa', '#fbbf24', '#f43f5e', '#ec4899', '#14b8a6', '#6366f1'],
 
             init() {
                 this.migrateData();
@@ -463,12 +476,12 @@
             },
 
             migrateData() {
-                const savedV2_11 = localStorage.getItem('ananthaDataV2_11');
-                if (savedV2_11) {
-                    this.data = JSON.parse(savedV2_11);
+                const savedV2_12 = localStorage.getItem('ananthaDataV2_12');
+                if (savedV2_12) {
+                    this.data = JSON.parse(savedV2_12);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_10');
+                const savedOld = localStorage.getItem('ananthaDataV2_11');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -476,7 +489,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_11', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_12', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -826,7 +839,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC (Education Batch Editing)                                      */
+            /* GOALS LOGIC                                                                */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -1167,12 +1180,13 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC (With Growth Highlights)                                   */
+            /* DASHBOARD LOGIC (Profile Breakdown)                                        */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let totalInvestments = 0;
                 let futureInvestments = 0;
                 let typeTotals = {};
+                let profileTotals = {}; // Track FV by profile
                 const maxYear = this.getMaxGoalYear();
                 
                 this.data.investments.forEach(inv => {
@@ -1181,10 +1195,16 @@
                     totalInvestments += (inv.value || 0);
                     futureInvestments += fv;
 
+                    // Type Breakdown
                     if (!typeTotals[inv.type]) typeTotals[inv.type] = { cv: 0, fv: 0, weightedGrowth: 0 };
                     typeTotals[inv.type].cv += (inv.value || 0);
                     typeTotals[inv.type].fv += fv;
                     typeTotals[inv.type].weightedGrowth += ((inv.value || 0) * (inv.growthRate || 0));
+
+                    // Profile Breakdown
+                    let pName = inv.profile || 'Main Portfolio';
+                    if (!profileTotals[pName]) profileTotals[pName] = { fv: 0 };
+                    profileTotals[pName].fv += fv;
                 });
                 
                 let totalCExp = 0;
@@ -1210,16 +1230,54 @@
                 if (badgeF1) badgeF1.innerText = `TO ${maxYear}`;
                 if (badgeF2) badgeF2.innerText = `TO ${maxYear}`;
 
-                let percentage = 0;
+                // Process Multi-Color Progress Bar
+                let totalPct = 0;
                 if (totalFV > 0) {
-                    percentage = Math.min((futureInvestments / totalFV) * 100, 100);
+                    totalPct = Math.min((futureInvestments / totalFV) * 100, 100);
                 }
+                document.getElementById('dashPercentage').innerText = `${totalPct.toFixed(1)}%`;
 
-                setTimeout(() => {
-                    document.getElementById('dashPercentage').innerText = `${percentage.toFixed(1)}%`;
-                    document.getElementById('dashProgressBar').style.width = `${percentage}%`;
-                }, 100);
+                const progressContainer = document.getElementById('dashProgressBarContainer');
+                const progressLegend = document.getElementById('dashProgressLegend');
+                progressContainer.innerHTML = '';
+                progressLegend.innerHTML = '';
 
+                // Calculate widths and build legend
+                let colorIdx = 0;
+                const sortedProfiles = Object.keys(profileTotals).sort((a,b) => profileTotals[b].fv - profileTotals[a].fv);
+                
+                sortedProfiles.forEach(pName => {
+                    const pFV = profileTotals[pName].fv;
+                    if (pFV > 0 && totalFV > 0) {
+                        const pPctOfGoal = (pFV / totalFV) * 100;
+                        const color = this.profileColors[colorIdx % this.profileColors.length];
+                        
+                        // Add segment to bar
+                        const seg = document.createElement('div');
+                        seg.className = 'progress-bar-segment';
+                        seg.style.background = color;
+                        seg.style.width = '0%'; // Start at 0 for animation
+                        progressContainer.appendChild(seg);
+                        
+                        // Add to legend
+                        const leg = document.createElement('div');
+                        leg.className = 'legend-item';
+                        leg.innerHTML = `<div class="legend-color" style="background:${color};"></div><span><strong>${pName}</strong>: ${pPctOfGoal.toFixed(1)}%</span>`;
+                        progressLegend.appendChild(leg);
+
+                        // Trigger animation
+                        setTimeout(() => {
+                            // If total exceeds 100%, we need to normalize the visual width of the segments
+                            // so they don't break out of the container
+                            const visualWidth = totalPct >= 100 ? (pFV / futureInvestments) * 100 : pPctOfGoal;
+                            seg.style.width = `${visualWidth}%`;
+                        }, 100);
+                        
+                        colorIdx++;
+                    }
+                });
+
+                // Populate the Asset Allocation Table
                 const assetSummaryBody = document.getElementById('dashAssetSummaryBody');
                 assetSummaryBody.innerHTML = '';
                 
