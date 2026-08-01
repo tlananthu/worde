@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.22</title>
+    <title>Anantha | Wealth OS V2.23</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -76,15 +76,6 @@
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; padding-top: 1rem; }
         .card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; position: relative; }
         
-        .inv-card.equity-type { border-left: 4px solid var(--accent-color); }
-        .inv-card.hybrid-type { border-left: 4px solid var(--edu-color); }
-        .inv-card.fd-type, .inv-card.rd-type, .inv-card.ppf-type, .inv-card.pomis-type, .inv-card.debt-type { border-left: 4px solid var(--success-color); }
-        .inv-card.liquid-type { border-left: 4px solid var(--liquid-color); }
-        .inv-card.nps-type, .inv-card.epf-type { border-left: 4px solid var(--warning-color); }
-        .inv-card.gold_silver-type { border-left: 4px solid var(--warning-color); }
-        .inv-card.real_estate-type { border-left: 4px solid var(--realestate-color); }
-        .inv-card.vehicle-type { border-left: 4px solid var(--vehicle-color); }
-
         .year-badge {
             position: absolute;
             top: -14px;
@@ -140,16 +131,28 @@
         .legend-item { display: flex; align-items: center; gap: 0.4rem; color: var(--text-primary); }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
-        /* Sortable Data Tables & Toggles */
-        .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
-        .table-header-row { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1.5rem 0.5rem; flex-wrap: wrap; gap: 1rem; }
+        /* Multi-Select Custom Dropdowns */
+        .filter-dropdown-container { position: relative; display: inline-block; min-width: 180px; }
+        .filter-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .filter-btn:hover { border-color: var(--accent-color); }
+        .filter-menu { position: absolute; top: calc(100% + 5px); left: 0; min-width: 240px; max-height: 300px; overflow-y: auto; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; }
+        .filter-menu.show { display: block; }
+        .filter-option { display: flex; align-items: center; padding: 0.6rem 1rem; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer; border-bottom: 1px solid var(--surface-light); transition: background 0.2s; }
+        .filter-option:hover { background: var(--surface-light); color: var(--text-primary); }
+        .filter-option input[type="checkbox"] { margin-right: 0.8rem; cursor: pointer; accent-color: var(--accent-color); width: 16px; height: 16px; flex-shrink: 0; }
+        .filter-header { padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; background: var(--surface-light); color: var(--text-primary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 2; text-transform: uppercase; letter-spacing: 1px; }
         
+        /* Pills (Used on Dashboard) */
         .pill-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
         .pill-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
         .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
         .pill-delete { cursor: pointer; opacity: 0.6; font-size: 1.1rem; line-height: 1; padding-left: 0.2rem; }
         .pill-delete:hover { opacity: 1; color: var(--danger-color); }
 
+        /* Sortable Data Tables */
+        .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
+        .table-header-row { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1.5rem 0.5rem; flex-wrap: wrap; gap: 1rem; }
+        
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
         .data-table th:first-child, .data-table td:first-child { text-align: left; }
@@ -182,25 +185,10 @@
         .btn-upload:hover { border-color: var(--accent-color); }
 
         /* Settings Card specific styles */
-        .settings-card {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 2rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        .settings-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem; max-width: 600px; margin: 0 auto; }
 
         /* Footer */
-        .app-footer {
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--surface-light);
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-        }
+        .app-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--surface-light); text-align: center; color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -403,31 +391,8 @@
                 </div>
             </div>
             
-            <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Profiles:</span>
-                    <div id="invProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Classes:</span>
-                    <div id="invClassToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Types:</span>
-                    <div id="invTypeToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Categories:</span>
-                    <div id="invCategoryToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
+            <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);" id="portfolioFiltersBar">
+                <!-- Dropdowns injected via JS -->
             </div>
             
             <div class="table-container">
@@ -564,7 +529,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.22</div>
+        <div>Anantha Wealth OS V2.23</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -608,9 +573,9 @@
             },
 
             migrateData() {
-                const savedV2_22 = localStorage.getItem('ananthaDataV2_22');
-                if (savedV2_22) {
-                    this.data = JSON.parse(savedV2_22);
+                const savedV2_23 = localStorage.getItem('ananthaDataV2_23');
+                if (savedV2_23) {
+                    this.data = JSON.parse(savedV2_23);
                     this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
@@ -625,7 +590,7 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_21');
+                const savedOld = localStorage.getItem('ananthaDataV2_22');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.activeView = this.data.activeView || 'home';
@@ -659,7 +624,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_22', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_23', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -1005,86 +970,147 @@
                 this.renderInvestments();
             },
 
-            renderInvestments() {
-                const profContainer = document.getElementById('invProfileToggles');
-                profContainer.innerHTML = '';
-                this.data.profiles.forEach(p => {
-                    const isActive = this.invProfileFilters.includes(p);
-                    const pill = document.createElement('div');
-                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
-                    
-                    const textSpan = document.createElement('span');
-                    textSpan.innerText = p;
-                    textSpan.onclick = () => {
-                        if (isActive) this.invProfileFilters = this.invProfileFilters.filter(f => f !== p);
-                        else this.invProfileFilters.push(p);
-                        this.saveState();
-                        this.renderInvestments();
-                    };
-
-                    const delSpan = document.createElement('span');
-                    delSpan.innerHTML = '&times;';
-                    delSpan.className = 'pill-delete';
-                    delSpan.title = "Delete Profile Permanently";
-                    delSpan.onclick = (e) => { e.stopPropagation(); this.deleteFullProfile(p); };
-
-                    pill.appendChild(textSpan);
-                    pill.appendChild(delSpan);
-                    profContainer.appendChild(pill);
+            /* -------------------------------------------------------------------------- */
+            /* CUSTOM DROPDOWN FILTERS LOGIC                                              */
+            /* -------------------------------------------------------------------------- */
+            toggleFilterDropdown(id) {
+                document.querySelectorAll('.filter-menu').forEach(menu => {
+                    if (menu.id !== id + '-menu') menu.classList.remove('show');
                 });
+                document.getElementById(id + '-menu').classList.toggle('show');
+            },
+
+            toggleFilterItem(filterKey, item, btnId) {
+                const filters = this[filterKey];
+                if (filters.includes(item)) {
+                    this[filterKey] = filters.filter(f => f !== item);
+                } else {
+                    this[filterKey].push(item);
+                }
+                this.saveState();
                 
-                const classContainer = document.getElementById('invClassToggles');
-                classContainer.innerHTML = '';
+                let items = [];
+                if (filterKey === 'invProfileFilters') items = this.data.profiles;
+                if (filterKey === 'invClassFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                if (filterKey === 'invTypeFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                if (filterKey === 'invCategoryFilters') items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    let selectedText = this[filterKey].length === items.length ? 'All' : `${this[filterKey].length} Selected`;
+                    if (this[filterKey].length === 0) selectedText = 'None';
+                    
+                    let label = "Filter";
+                    if (filterKey === 'invProfileFilters') label = "Profiles";
+                    if (filterKey === 'invClassFilters') label = "Classes";
+                    if (filterKey === 'invTypeFilters') label = "Types";
+                    if (filterKey === 'invCategoryFilters') label = "Categories";
+
+                    btn.innerHTML = `${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>`;
+                }
+
+                this.renderPortfolioTable();
+            },
+
+            selectAllFilters(filterKey, isAll, btnId) {
+                let items = [];
+                if (filterKey === 'invProfileFilters') items = this.data.profiles;
+                if (filterKey === 'invClassFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                if (filterKey === 'invTypeFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                if (filterKey === 'invCategoryFilters') items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+
+                if (isAll) {
+                    this[filterKey] = [...items];
+                } else {
+                    this[filterKey] = [];
+                }
+                
+                document.querySelectorAll(`.filter-cb-${filterKey}`).forEach(cb => {
+                    cb.checked = isAll;
+                });
+
+                this.saveState();
+                
+                let label = "Filter";
+                if (filterKey === 'invProfileFilters') label = "Profiles";
+                if (filterKey === 'invClassFilters') label = "Classes";
+                if (filterKey === 'invTypeFilters') label = "Types";
+                if (filterKey === 'invCategoryFilters') label = "Categories";
+
+                let selectedText = isAll ? 'All' : 'None';
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    btn.innerHTML = `${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>`;
+                }
+
+                this.renderPortfolioTable();
+            },
+
+            buildDropdownHTML(id, label, items, activeFilters, filterKey) {
+                let selectedText = activeFilters.length === items.length ? 'All' : `${activeFilters.length} Selected`;
+                if (activeFilters.length === 0) selectedText = 'None';
+                
+                let res = `
+                <div class="filter-dropdown-container">
+                    <button class="filter-btn" id="${id}-btn" onclick="app.toggleFilterDropdown('${id}')">
+                        ${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>
+                    </button>
+                    <div class="filter-menu" id="${id}-menu">
+                        <div class="filter-header">
+                            <span>Select ${label}</span>
+                            <div style="display: flex; gap: 10px;">
+                                <a href="#" onclick="app.selectAllFilters('${filterKey}', true, '${id}-btn'); event.preventDefault();" style="color:var(--accent-color); text-decoration:none;">All</a>
+                                <a href="#" onclick="app.selectAllFilters('${filterKey}', false, '${id}-btn'); event.preventDefault();" style="color:var(--danger-color); text-decoration:none;">None</a>
+                            </div>
+                        </div>
+                `;
+                
+                const sortedItems = [...items].sort();
+
+                sortedItems.forEach(item => {
+                    const isChecked = activeFilters.includes(item) ? 'checked' : '';
+                    let delBtn = '';
+                    if (filterKey === 'invProfileFilters') {
+                        delBtn = `<span title="Delete Profile" onclick="event.stopPropagation(); app.deleteFullProfile('${item}');" style="margin-left:auto; color:var(--danger-color); font-size:1.1rem;">&times;</span>`;
+                    }
+                    res += `
+                        <label class="filter-option" onclick="event.stopPropagation();">
+                            <input type="checkbox" class="filter-cb-${filterKey}" value="${item}" ${isChecked} onchange="app.toggleFilterItem('${filterKey}', '${item}', '${id}-btn')">
+                            <span style="text-transform: uppercase;">${item}</span>
+                            ${delBtn}
+                        </label>
+                    `;
+                });
+                res += `</div></div>`;
+                return res;
+            },
+
+            renderPortfolioFilters() {
+                const filterBar = document.getElementById('portfolioFiltersBar');
+                if (!filterBar) return;
+
+                let html = '';
+                
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                uniqueClasses.forEach(c => {
-                    const isActive = this.invClassFilters.includes(c);
-                    const pill = document.createElement('div');
-                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
-                    pill.innerText = c.toUpperCase();
-                    pill.onclick = () => {
-                        if (isActive) this.invClassFilters = this.invClassFilters.filter(f => f !== c);
-                        else this.invClassFilters.push(c);
-                        this.saveState();
-                        this.renderInvestments();
-                    };
-                    classContainer.appendChild(pill);
-                });
-
-                const typeContainer = document.getElementById('invTypeToggles');
-                typeContainer.innerHTML = '';
                 const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                uniqueTypes.forEach(t => {
-                    const isActive = this.invTypeFilters.includes(t);
-                    const pill = document.createElement('div');
-                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
-                    pill.innerText = t.toUpperCase();
-                    pill.onclick = () => {
-                        if (isActive) this.invTypeFilters = this.invTypeFilters.filter(f => f !== t);
-                        else this.invTypeFilters.push(t);
-                        this.saveState();
-                        this.renderInvestments();
-                    };
-                    typeContainer.appendChild(pill);
-                });
-
-                const catContainer = document.getElementById('invCategoryToggles');
-                catContainer.innerHTML = '';
                 const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
-                uniqueCats.forEach(c => {
-                    const isActive = this.invCategoryFilters.includes(c);
-                    const pill = document.createElement('div');
-                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
-                    pill.innerText = c.toUpperCase();
-                    pill.onclick = () => {
-                        if (isActive) this.invCategoryFilters = this.invCategoryFilters.filter(f => f !== c);
-                        else this.invCategoryFilters.push(c);
-                        this.saveState();
-                        this.renderInvestments();
-                    };
-                    catContainer.appendChild(pill);
-                });
 
+                html += this.buildDropdownHTML('profileFilter', 'Profiles', this.data.profiles, this.invProfileFilters, 'invProfileFilters');
+                html += this.buildDropdownHTML('classFilter', 'Classes', uniqueClasses, this.invClassFilters, 'invClassFilters');
+                html += this.buildDropdownHTML('typeFilter', 'Types', uniqueTypes, this.invTypeFilters, 'invTypeFilters');
+                html += this.buildDropdownHTML('catFilter', 'Categories', uniqueCats, this.invCategoryFilters, 'invCategoryFilters');
+
+                filterBar.innerHTML = html;
+            },
+
+            renderInvestments() {
+                this.renderPortfolioFilters();
+                this.renderPortfolioTable();
+            },
+
+            renderPortfolioTable() {
                 const tbody = document.getElementById('investmentsTableBody');
+                if(!tbody) return;
                 tbody.innerHTML = '';
                 
                 ['name', 'value', 'growth', 'maturity', 'fv'].forEach(col => {
@@ -1747,6 +1773,10 @@
             const assetModal = document.getElementById('assetModal');
             if (event.target === profileModal) app.closeProfileModal();
             if (event.target === assetModal) app.closeAssetModal();
+            
+            if (!event.target.closest('.filter-dropdown-container')) {
+                document.querySelectorAll('.filter-menu').forEach(menu => menu.classList.remove('show'));
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => app.init());
