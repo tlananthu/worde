@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.13</title>
+    <title>Anantha | Wealth OS V2.14</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -143,9 +143,11 @@
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
         .table-header-row { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1.5rem 0.5rem; flex-wrap: wrap; gap: 1rem; }
         
-        .pill-toggle { background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .pill-toggle:hover { background: #323846; color: var(--text-primary); }
+        .pill-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
+        .pill-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
         .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
+        .pill-delete { cursor: pointer; opacity: 0.6; font-size: 1.1rem; line-height: 1; padding-left: 0.2rem; }
+        .pill-delete:hover { opacity: 1; color: var(--danger-color); }
 
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
@@ -239,7 +241,7 @@
             <div class="table-header-row">
                 <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">Asset Allocation by Class</h3>
                 <div id="dashProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <!-- Toggles injected via JS -->
+                    <!-- Multi-select pills injected via JS -->
                 </div>
             </div>
             <table class="data-table">
@@ -470,7 +472,7 @@
             // App State
             sortColumn: 'year',
             sortAsc: true,
-            dashProfileFilter: 'ALL',
+            dashProfileFilters: [], // Multi-select array for dashboard table
 
             defaultRates: { 
                 equity: 12.0, debt: 7.0, hybrid: 10.0, liquid: 4.0, fd: 7.0, rd: 6.8, nps: 10.0, epf: 8.1, ppf: 7.1, pomis: 7.4, gold_silver: 8.0, real_estate: 6.0, vehicle: -10.0 
@@ -480,18 +482,22 @@
 
             init() {
                 this.migrateData();
+                
+                // Initialize default multi-select filters to include ALL profiles
+                this.dashProfileFilters = [...this.data.profiles];
+                
                 this.updateProfileDropdowns();
                 this.toggleGoalFields();
                 this.renderAll();
             },
 
             migrateData() {
-                const savedV2_13 = localStorage.getItem('ananthaDataV2_13');
-                if (savedV2_13) {
-                    this.data = JSON.parse(savedV2_13);
+                const savedV2_14 = localStorage.getItem('ananthaDataV2_14');
+                if (savedV2_14) {
+                    this.data = JSON.parse(savedV2_14);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_12');
+                const savedOld = localStorage.getItem('ananthaDataV2_13');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -499,7 +505,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_13', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_14', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -554,12 +560,30 @@
                 
                 if (name && !this.data.profiles.includes(name)) {
                     this.data.profiles.push(name);
+                    this.dashProfileFilters.push(name); // Add to dashboard filters auto
                     this.saveState();
                     this.updateProfileDropdowns();
                     document.getElementById('invProfile').value = name;
                     this.closeProfileModal();
+                    this.renderDashboard();
                 } else {
                     alert("A profile with this name already exists.");
+                }
+            },
+
+            deleteFullProfile(pName) {
+                if (this.data.profiles.length <= 1) {
+                    alert("You must have at least one profile to use the system.");
+                    return;
+                }
+                if (confirm(`Are you sure you want to completely delete the profile '${pName}' and ALL its associated assets?`)) {
+                    this.data.profiles = this.data.profiles.filter(p => p !== pName);
+                    this.data.investments = this.data.investments.filter(i => (i.profile || 'Main Portfolio') !== pName);
+                    this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== pName);
+                    
+                    this.saveState();
+                    this.updateProfileDropdowns();
+                    this.renderAll();
                 }
             },
 
@@ -761,7 +785,10 @@
                     if(newInvestments.length > 0) {
                         this.data.investments = newInvestments;
                         newProfiles.forEach(p => {
-                            if(!this.data.profiles.includes(p)) this.data.profiles.push(p);
+                            if(!this.data.profiles.includes(p)) {
+                                this.data.profiles.push(p);
+                                this.dashProfileFilters.push(p); // Include in active filters auto
+                            }
                         });
                         
                         this.saveState();
@@ -1193,7 +1220,7 @@
             /* DASHBOARD LOGIC (Profile Breakdown & Table Filter)                         */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
-                // 1. Calculate Global Household Stats (Always all profiles)
+                // Global Household Stats (Always all profiles)
                 let globalInvestments = 0;
                 let globalFutureInvestments = 0;
                 let profileTotals = {};
@@ -1217,7 +1244,6 @@
                     totalFV += (goal.fv || goal.targetValue || 0);
                 });
 
-                // Update Top Summary Cards
                 document.getElementById('dashTotalAssets').innerText = '₹' + this.formatCurrency(globalInvestments);
                 document.getElementById('dashFutureAssets').innerText = '₹' + this.formatCurrency(globalFutureInvestments);
                 document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalCExp);
@@ -1233,7 +1259,6 @@
                 if (badgeF1) badgeF1.innerText = `TO ${maxYear}`;
                 if (badgeF2) badgeF2.innerText = `TO ${maxYear}`;
 
-                // Process Multi-Color Progress Bar
                 let totalPct = 0;
                 if (totalFV > 0) {
                     totalPct = Math.min((globalFutureInvestments / totalFV) * 100, 100);
@@ -1274,29 +1299,45 @@
                     }
                 });
 
-                // 2. Render Table Profile Toggles
+                // Render Multi-Select Profile Toggles
                 const toggleContainer = document.getElementById('dashProfileToggles');
                 toggleContainer.innerHTML = '';
                 
-                const allBtn = document.createElement('button');
-                allBtn.className = `pill-toggle ${this.dashProfileFilter === 'ALL' ? 'active' : ''}`;
-                allBtn.innerText = 'Overall';
-                allBtn.onclick = () => { this.dashProfileFilter = 'ALL'; this.renderDashboard(); };
-                toggleContainer.appendChild(allBtn);
-
                 this.data.profiles.forEach(p => {
-                    const btn = document.createElement('button');
-                    btn.className = `pill-toggle ${this.dashProfileFilter === p ? 'active' : ''}`;
-                    btn.innerText = p;
-                    btn.onclick = () => { this.dashProfileFilter = p; this.renderDashboard(); };
-                    toggleContainer.appendChild(btn);
+                    const isActive = this.dashProfileFilters.includes(p);
+                    
+                    const pill = document.createElement('div');
+                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.innerText = p;
+                    textSpan.onclick = () => {
+                        if (isActive) {
+                            this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== p);
+                        } else {
+                            this.dashProfileFilters.push(p);
+                        }
+                        this.renderDashboard();
+                    };
+
+                    const delSpan = document.createElement('span');
+                    delSpan.innerHTML = '&times;';
+                    delSpan.className = 'pill-delete';
+                    delSpan.title = "Delete Profile Permanently";
+                    delSpan.onclick = (e) => {
+                        e.stopPropagation();
+                        this.deleteFullProfile(p);
+                    };
+
+                    pill.appendChild(textSpan);
+                    pill.appendChild(delSpan);
+                    toggleContainer.appendChild(pill);
                 });
 
-                // 3. Filter Table Data
-                let tableInvestments = this.data.investments;
-                if (this.dashProfileFilter !== 'ALL') {
-                    tableInvestments = tableInvestments.filter(i => (i.profile || 'Main Portfolio') === this.dashProfileFilter);
-                }
+                // Filter Table Data based on active toggles
+                let tableInvestments = this.data.investments.filter(i => 
+                    this.dashProfileFilters.includes(i.profile || 'Main Portfolio')
+                );
 
                 let tableTotalInvestments = 0;
                 let typeTotals = {};
@@ -1311,14 +1352,13 @@
                     typeTotals[inv.type].weightedGrowth += ((inv.value || 0) * (inv.growthRate || 0));
                 });
 
-                // 4. Populate the Asset Allocation Table
                 const assetSummaryBody = document.getElementById('dashAssetSummaryBody');
                 assetSummaryBody.innerHTML = '';
                 
                 const sortedTypes = Object.keys(typeTotals).sort((a, b) => typeTotals[b].cv - typeTotals[a].cv);
                 
                 if (sortedTypes.length === 0) {
-                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No assets logged for ${this.dashProfileFilter === 'ALL' ? 'any profile' : this.dashProfileFilter}.</td></tr>`;
+                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No profiles selected, or no assets logged.</td></tr>`;
                     return;
                 }
 
