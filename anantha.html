@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.12</title>
+    <title>Anantha | Wealth OS V2.13</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -135,13 +135,18 @@
         .progress-bar-bg { display: flex; width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
         .progress-bar-segment { height: 100%; transition: width 1s ease-in-out; }
         
-        /* Legends for stacked bar */
         .progress-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; font-size: 0.8rem; }
         .legend-item { display: flex; align-items: center; gap: 0.4rem; color: var(--text-primary); }
         .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
-        /* Sortable Data Tables */
+        /* Sortable Data Tables & Profile Toggles */
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
+        .table-header-row { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 1.5rem 0.5rem; flex-wrap: wrap; gap: 1rem; }
+        
+        .pill-toggle { background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .pill-toggle:hover { background: #323846; color: var(--text-primary); }
+        .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
+
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
         .data-table th:first-child, .data-table td:first-child { text-align: left; }
@@ -231,7 +236,12 @@
         </div>
 
         <div class="table-container" style="margin-top: 2rem;">
-            <h3 style="padding: 1.5rem 1.5rem 0.5rem; margin: 0; font-size: 1.2rem; color: var(--text-primary);">Asset Allocation by Class</h3>
+            <div class="table-header-row">
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary);">Asset Allocation by Class</h3>
+                <div id="dashProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <!-- Toggles injected via JS -->
+                </div>
+            </div>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -457,15 +467,15 @@
             editingInvId: null,
             currentYear: new Date().getFullYear(),
             
-            // Sorting State
+            // App State
             sortColumn: 'year',
             sortAsc: true,
+            dashProfileFilter: 'ALL',
 
             defaultRates: { 
                 equity: 12.0, debt: 7.0, hybrid: 10.0, liquid: 4.0, fd: 7.0, rd: 6.8, nps: 10.0, epf: 8.1, ppf: 7.1, pomis: 7.4, gold_silver: 8.0, real_estate: 6.0, vehicle: -10.0 
             },
             
-            // Profile Colors for Progress Bar
             profileColors: ['#38bdf8', '#34d399', '#a78bfa', '#fbbf24', '#f43f5e', '#ec4899', '#14b8a6', '#6366f1'],
 
             init() {
@@ -476,12 +486,12 @@
             },
 
             migrateData() {
-                const savedV2_12 = localStorage.getItem('ananthaDataV2_12');
-                if (savedV2_12) {
-                    this.data = JSON.parse(savedV2_12);
+                const savedV2_13 = localStorage.getItem('ananthaDataV2_13');
+                if (savedV2_13) {
+                    this.data = JSON.parse(savedV2_13);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_11');
+                const savedOld = localStorage.getItem('ananthaDataV2_12');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -489,7 +499,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_12', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_13', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -775,7 +785,7 @@
                 let filteredInvestments = this.data.investments;
                 
                 if(filterVal !== "ALL") {
-                    filteredInvestments = this.data.investments.filter(i => i.profile === filterVal);
+                    filteredInvestments = this.data.investments.filter(i => (i.profile || 'Main Portfolio') === filterVal);
                 }
 
                 if (filteredInvestments.length === 0) {
@@ -1180,28 +1190,20 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC (Profile Breakdown)                                        */
+            /* DASHBOARD LOGIC (Profile Breakdown & Table Filter)                         */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
-                let totalInvestments = 0;
-                let futureInvestments = 0;
-                let typeTotals = {};
-                let profileTotals = {}; // Track FV by profile
+                // 1. Calculate Global Household Stats (Always all profiles)
+                let globalInvestments = 0;
+                let globalFutureInvestments = 0;
+                let profileTotals = {};
                 const maxYear = this.getMaxGoalYear();
                 
                 this.data.investments.forEach(inv => {
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
-                    
-                    totalInvestments += (inv.value || 0);
-                    futureInvestments += fv;
+                    globalInvestments += (inv.value || 0);
+                    globalFutureInvestments += fv;
 
-                    // Type Breakdown
-                    if (!typeTotals[inv.type]) typeTotals[inv.type] = { cv: 0, fv: 0, weightedGrowth: 0 };
-                    typeTotals[inv.type].cv += (inv.value || 0);
-                    typeTotals[inv.type].fv += fv;
-                    typeTotals[inv.type].weightedGrowth += ((inv.value || 0) * (inv.growthRate || 0));
-
-                    // Profile Breakdown
                     let pName = inv.profile || 'Main Portfolio';
                     if (!profileTotals[pName]) profileTotals[pName] = { fv: 0 };
                     profileTotals[pName].fv += fv;
@@ -1215,8 +1217,9 @@
                     totalFV += (goal.fv || goal.targetValue || 0);
                 });
 
-                document.getElementById('dashTotalAssets').innerText = '₹' + this.formatCurrency(totalInvestments);
-                document.getElementById('dashFutureAssets').innerText = '₹' + this.formatCurrency(futureInvestments);
+                // Update Top Summary Cards
+                document.getElementById('dashTotalAssets').innerText = '₹' + this.formatCurrency(globalInvestments);
+                document.getElementById('dashFutureAssets').innerText = '₹' + this.formatCurrency(globalFutureInvestments);
                 document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalCExp);
                 document.getElementById('dashTotalFV').innerText = '₹' + this.formatCurrency(totalFV);
 
@@ -1233,7 +1236,7 @@
                 // Process Multi-Color Progress Bar
                 let totalPct = 0;
                 if (totalFV > 0) {
-                    totalPct = Math.min((futureInvestments / totalFV) * 100, 100);
+                    totalPct = Math.min((globalFutureInvestments / totalFV) * 100, 100);
                 }
                 document.getElementById('dashPercentage').innerText = `${totalPct.toFixed(1)}%`;
 
@@ -1242,7 +1245,6 @@
                 progressContainer.innerHTML = '';
                 progressLegend.innerHTML = '';
 
-                // Calculate widths and build legend
                 let colorIdx = 0;
                 const sortedProfiles = Object.keys(profileTotals).sort((a,b) => profileTotals[b].fv - profileTotals[a].fv);
                 
@@ -1252,24 +1254,19 @@
                         const pPctOfGoal = (pFV / totalFV) * 100;
                         const color = this.profileColors[colorIdx % this.profileColors.length];
                         
-                        // Add segment to bar
                         const seg = document.createElement('div');
                         seg.className = 'progress-bar-segment';
                         seg.style.background = color;
-                        seg.style.width = '0%'; // Start at 0 for animation
+                        seg.style.width = '0%'; 
                         progressContainer.appendChild(seg);
                         
-                        // Add to legend
                         const leg = document.createElement('div');
                         leg.className = 'legend-item';
                         leg.innerHTML = `<div class="legend-color" style="background:${color};"></div><span><strong>${pName}</strong>: ${pPctOfGoal.toFixed(1)}%</span>`;
                         progressLegend.appendChild(leg);
 
-                        // Trigger animation
                         setTimeout(() => {
-                            // If total exceeds 100%, we need to normalize the visual width of the segments
-                            // so they don't break out of the container
-                            const visualWidth = totalPct >= 100 ? (pFV / futureInvestments) * 100 : pPctOfGoal;
+                            const visualWidth = totalPct >= 100 ? (pFV / globalFutureInvestments) * 100 : pPctOfGoal;
                             seg.style.width = `${visualWidth}%`;
                         }, 100);
                         
@@ -1277,20 +1274,57 @@
                     }
                 });
 
-                // Populate the Asset Allocation Table
+                // 2. Render Table Profile Toggles
+                const toggleContainer = document.getElementById('dashProfileToggles');
+                toggleContainer.innerHTML = '';
+                
+                const allBtn = document.createElement('button');
+                allBtn.className = `pill-toggle ${this.dashProfileFilter === 'ALL' ? 'active' : ''}`;
+                allBtn.innerText = 'Overall';
+                allBtn.onclick = () => { this.dashProfileFilter = 'ALL'; this.renderDashboard(); };
+                toggleContainer.appendChild(allBtn);
+
+                this.data.profiles.forEach(p => {
+                    const btn = document.createElement('button');
+                    btn.className = `pill-toggle ${this.dashProfileFilter === p ? 'active' : ''}`;
+                    btn.innerText = p;
+                    btn.onclick = () => { this.dashProfileFilter = p; this.renderDashboard(); };
+                    toggleContainer.appendChild(btn);
+                });
+
+                // 3. Filter Table Data
+                let tableInvestments = this.data.investments;
+                if (this.dashProfileFilter !== 'ALL') {
+                    tableInvestments = tableInvestments.filter(i => (i.profile || 'Main Portfolio') === this.dashProfileFilter);
+                }
+
+                let tableTotalInvestments = 0;
+                let typeTotals = {};
+                
+                tableInvestments.forEach(inv => {
+                    let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
+                    tableTotalInvestments += (inv.value || 0);
+
+                    if (!typeTotals[inv.type]) typeTotals[inv.type] = { cv: 0, fv: 0, weightedGrowth: 0 };
+                    typeTotals[inv.type].cv += (inv.value || 0);
+                    typeTotals[inv.type].fv += fv;
+                    typeTotals[inv.type].weightedGrowth += ((inv.value || 0) * (inv.growthRate || 0));
+                });
+
+                // 4. Populate the Asset Allocation Table
                 const assetSummaryBody = document.getElementById('dashAssetSummaryBody');
                 assetSummaryBody.innerHTML = '';
                 
                 const sortedTypes = Object.keys(typeTotals).sort((a, b) => typeTotals[b].cv - typeTotals[a].cv);
                 
                 if (sortedTypes.length === 0) {
-                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No assets logged yet.</td></tr>`;
+                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No assets logged for ${this.dashProfileFilter === 'ALL' ? 'any profile' : this.dashProfileFilter}.</td></tr>`;
                     return;
                 }
 
                 sortedTypes.forEach(type => {
                     const tr = document.createElement('tr');
-                    const pct = totalInvestments > 0 ? ((typeTotals[type].cv / totalInvestments) * 100).toFixed(1) : 0;
+                    const pct = tableTotalInvestments > 0 ? ((typeTotals[type].cv / tableTotalInvestments) * 100).toFixed(1) : 0;
                     const avgGrowth = typeTotals[type].cv > 0 ? (typeTotals[type].weightedGrowth / typeTotals[type].cv).toFixed(1) : 0;
                     
                     let displayType = type.replace('_', ' ');
