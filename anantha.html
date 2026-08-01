@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.9</title>
+    <title>Anantha | Wealth OS V2.10</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -125,7 +125,7 @@
         .tier-value.fv { font-size: 1.4rem; color: var(--accent-color); }
 
         /* Dashboard specific */
-        .dash-stat-card { text-align: center; justify-content: center; align-items: center; padding: 1.5rem 1rem; }
+        .dash-stat-card { text-align: center; justify-content: center; align-items: center; padding: 1.5rem 1rem; margin-top: 10px; }
         .dash-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
         .dash-value { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
         .dash-value.highlight { color: var(--accent-color); }
@@ -181,18 +181,22 @@
     <div id="view-home" class="view active">
         <div class="summary-layout">
             <div class="card dash-stat-card">
+                <div class="year-badge ongoing" id="badgeDashToday1">----</div>
                 <div class="dash-label">Assets (Today)</div>
                 <div class="dash-value success" id="dashTotalAssets">₹0</div>
             </div>
             <div class="card dash-stat-card">
+                <div class="year-badge" id="badgeDashFV1">TO ----</div>
                 <div class="dash-label">Projected Asset FV</div>
                 <div class="dash-value success" id="dashFutureAssets">₹0</div>
             </div>
             <div class="card dash-stat-card">
+                <div class="year-badge ongoing" id="badgeDashToday2">----</div>
                 <div class="dash-label">Plan C. Expenses</div>
                 <div class="dash-value" id="dashTotalPV">₹0</div>
             </div>
             <div class="card dash-stat-card">
+                <div class="year-badge" id="badgeDashFV2">TO ----</div>
                 <div class="dash-label">Total Goal Required</div>
                 <div class="dash-value highlight" id="dashTotalFV">₹0</div>
             </div>
@@ -241,8 +245,7 @@
                             <option value="standard">Standard Financial Goal</option>
                             <option value="retirement">Retirement Corpus</option>
                             <option value="education">Kids Education Planner (Multi-Stage)</option>
-                            <!-- Hidden fallback option for migrating old disconnected edu stages -->
-                            <option value="edu_stage" style="display:none;">Education Milestone</option>
+                            <option value="edu_stage" style="display:none;">Education Milestone (Edit)</option>
                         </select>
                     </div>
 
@@ -454,12 +457,12 @@
             },
 
             migrateData() {
-                const savedV2_9 = localStorage.getItem('ananthaDataV2_9');
-                if (savedV2_9) {
-                    this.data = JSON.parse(savedV2_9);
+                const savedV2_10 = localStorage.getItem('ananthaDataV2_10');
+                if (savedV2_10) {
+                    this.data = JSON.parse(savedV2_10);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_8');
+                const savedOld = localStorage.getItem('ananthaDataV2_9');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -467,7 +470,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_9', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_10', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -853,7 +856,6 @@
                     education.style.display = 'block';
                     nameLabel.innerText = "Child Name / Goal Prefix";
                     
-                    // Only generate fresh timeline if we aren't currently loading an existing batch
                     if (!this.editingBatchId) {
                         this.generateEduTimeline();
                     }
@@ -906,20 +908,18 @@
                 const baseName = document.getElementById('goalName').value;
                 
                 if (type === 'education') {
-                    // Batch Saving Logic
                     const inputs = document.querySelectorAll('.edu-cost-input');
                     const batchId = this.editingBatchId || Date.now().toString();
                     const grade = parseInt(document.getElementById('eduCurrentGrade').value) || 1;
                     let addedCount = 0;
                     
-                    // If editing, clear old batch first
                     if (this.editingBatchId) {
                         this.data.goals = this.data.goals.filter(g => g.batchId !== this.editingBatchId);
                     }
                     
                     inputs.forEach(input => {
                         const cost = parseFloat(input.value);
-                        if (cost > 0) { // If left blank or cleared with X, it won't be saved
+                        if (cost > 0) { 
                             const targetYear = parseInt(input.getAttribute('data-year'));
                             const yrs = parseInt(input.getAttribute('data-yrs'));
                             const stageName = input.getAttribute('data-name');
@@ -949,7 +949,6 @@
                     }
 
                 } else {
-                    // Standard / Retirement Logic
                     let goalData = {
                         id: this.editingGoalId || Date.now().toString(),
                         type: type,
@@ -991,7 +990,6 @@
                 const g = this.data.goals.find(g => g.id === id);
                 if (!g) return;
 
-                // Check if this is part of an Education Batch
                 if (g.type === 'edu_stage' && g.batchId) {
                     this.editingBatchId = g.batchId;
                     this.editingGoalId = null;
@@ -1003,14 +1001,12 @@
                     document.getElementById('goalType').value = 'education';
                     document.getElementById('eduCurrentGrade').value = g.batchGrade || 1;
                     
-                    // We must generate the timeline BEFORE toggling fields so inputs exist to be populated
                     this.generateEduTimeline();
                     this.toggleGoalFields();
                     
                     document.getElementById('goalName').value = g.batchName;
                     document.getElementById('inflation').value = g.inflation;
 
-                    // Populate the inputs with all goals in the batch
                     const batchGoals = this.data.goals.filter(goal => goal.batchId === g.batchId);
                     batchGoals.forEach(bg => {
                         const input = document.querySelector(`.edu-cost-input[data-name="${bg.stageName}"]`);
@@ -1021,7 +1017,6 @@
                     return;
                 }
 
-                // Standard Edit Logic
                 this.editingGoalId = id;
                 this.editingBatchId = null;
                 document.getElementById('goalFormTitle').innerText = "Edit Goal";
@@ -1172,6 +1167,7 @@
                 let totalInvestments = 0;
                 let futureInvestments = 0;
                 let typeTotals = {};
+                const maxYear = this.getMaxGoalYear();
                 
                 this.data.investments.forEach(inv => {
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
@@ -1196,6 +1192,17 @@
                 document.getElementById('dashFutureAssets').innerText = '₹' + this.formatCurrency(futureInvestments);
                 document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalCExp);
                 document.getElementById('dashTotalFV').innerText = '₹' + this.formatCurrency(totalFV);
+
+                // Update Dynamic Tags
+                const badgeT1 = document.getElementById('badgeDashToday1');
+                const badgeT2 = document.getElementById('badgeDashToday2');
+                const badgeF1 = document.getElementById('badgeDashFV1');
+                const badgeF2 = document.getElementById('badgeDashFV2');
+                
+                if (badgeT1) badgeT1.innerText = this.currentYear;
+                if (badgeT2) badgeT2.innerText = this.currentYear;
+                if (badgeF1) badgeF1.innerText = `TO ${maxYear}`;
+                if (badgeF2) badgeF2.innerText = `TO ${maxYear}`;
 
                 let percentage = 0;
                 if (totalFV > 0) {
