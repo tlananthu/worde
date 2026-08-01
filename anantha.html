@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.14</title>
+    <title>Anantha | Wealth OS V2.15</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -164,12 +164,10 @@
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
         
-        /* Low Growth Highlight */
         .data-table .low-growth-row { background-color: rgba(244, 63, 94, 0.05) !important; }
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
-        /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; border: 1px solid var(--border-color); position: relative; }
         .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); font-size: 1.2rem; }
@@ -420,21 +418,33 @@
                 </form>
             </aside>
             <main>
-                <div class="portfolio-header">
-                    <h3>Registered Assets</h3>
+                <!-- NEW ASSET PORTFOLIO HEADER -->
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Registered Assets</h3>
                     <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                         <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
                         <button class="btn-upload" onclick="if(confirm('Warning: This will delete ALL current assets and replace them with the uploaded template. Continue?')) document.getElementById('bulkUpload').click()">
                             ⬆ Upload holdings-family-template.xlsx
                         </button>
-                        <div class="profile-manager">
-                            <select id="assetProfileFilter" onchange="app.renderInvestments()">
-                                <!-- Injected by JS -->
-                            </select>
-                            <button onclick="app.openProfileModal()">+ New Profile</button>
+                        <button class="btn-upload" onclick="app.openProfileModal()" style="background: var(--accent-color); color: #000; border: none;">+ New Profile</button>
+                    </div>
+                </div>
+                
+                <div style="width: 100%; margin-top: 1rem; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Profiles:</span>
+                        <div id="invProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Classes:</span>
+                        <div id="invClassToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <!-- Injected via JS -->
                         </div>
                     </div>
                 </div>
+                
                 <div class="grid-container" id="investmentsContainer">
                     <!-- Investment cards injected here -->
                 </div>
@@ -472,7 +482,9 @@
             // App State
             sortColumn: 'year',
             sortAsc: true,
-            dashProfileFilters: [], // Multi-select array for dashboard table
+            dashProfileFilters: [], 
+            invProfileFilters: [],
+            invClassFilters: [],
 
             defaultRates: { 
                 equity: 12.0, debt: 7.0, hybrid: 10.0, liquid: 4.0, fd: 7.0, rd: 6.8, nps: 10.0, epf: 8.1, ppf: 7.1, pomis: 7.4, gold_silver: 8.0, real_estate: 6.0, vehicle: -10.0 
@@ -483,8 +495,10 @@
             init() {
                 this.migrateData();
                 
-                // Initialize default multi-select filters to include ALL profiles
+                // Initialize default multi-select filters to include ALL profiles/classes
                 this.dashProfileFilters = [...this.data.profiles];
+                this.invProfileFilters = [...this.data.profiles];
+                this.invClassFilters = [...new Set(this.data.investments.map(i => i.type))];
                 
                 this.updateProfileDropdowns();
                 this.toggleGoalFields();
@@ -492,12 +506,12 @@
             },
 
             migrateData() {
-                const savedV2_14 = localStorage.getItem('ananthaDataV2_14');
-                if (savedV2_14) {
-                    this.data = JSON.parse(savedV2_14);
+                const savedV2_15 = localStorage.getItem('ananthaDataV2_15');
+                if (savedV2_15) {
+                    this.data = JSON.parse(savedV2_15);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_13');
+                const savedOld = localStorage.getItem('ananthaDataV2_14');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -505,7 +519,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_14', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_15', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -527,28 +541,18 @@
             /* -------------------------------------------------------------------------- */
             updateProfileDropdowns() {
                 const formSelect = document.getElementById('invProfile');
-                const filterSelect = document.getElementById('assetProfileFilter');
-                
                 const currentFormVal = formSelect.value;
-                const currentFilterVal = filterSelect.value;
                 
                 formSelect.innerHTML = '';
-                filterSelect.innerHTML = '<option value="ALL">All Profiles</option>';
                 
                 this.data.profiles.forEach(profileName => {
                     const formOpt = document.createElement('option');
                     formOpt.value = profileName;
                     formOpt.innerText = profileName;
                     formSelect.appendChild(formOpt);
-
-                    const filterOpt = document.createElement('option');
-                    filterOpt.value = profileName;
-                    filterOpt.innerText = profileName;
-                    filterSelect.appendChild(filterOpt);
                 });
                 
                 if(currentFormVal && this.data.profiles.includes(currentFormVal)) formSelect.value = currentFormVal;
-                if(currentFilterVal && (this.data.profiles.includes(currentFilterVal) || currentFilterVal === "ALL")) filterSelect.value = currentFilterVal;
             },
 
             openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); },
@@ -560,12 +564,14 @@
                 
                 if (name && !this.data.profiles.includes(name)) {
                     this.data.profiles.push(name);
-                    this.dashProfileFilters.push(name); // Add to dashboard filters auto
+                    this.dashProfileFilters.push(name);
+                    this.invProfileFilters.push(name);
+                    
                     this.saveState();
                     this.updateProfileDropdowns();
                     document.getElementById('invProfile').value = name;
                     this.closeProfileModal();
-                    this.renderDashboard();
+                    this.renderAll();
                 } else {
                     alert("A profile with this name already exists.");
                 }
@@ -579,7 +585,9 @@
                 if (confirm(`Are you sure you want to completely delete the profile '${pName}' and ALL its associated assets?`)) {
                     this.data.profiles = this.data.profiles.filter(p => p !== pName);
                     this.data.investments = this.data.investments.filter(i => (i.profile || 'Main Portfolio') !== pName);
+                    
                     this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== pName);
+                    this.invProfileFilters = this.invProfileFilters.filter(f => f !== pName);
                     
                     this.saveState();
                     this.updateProfileDropdowns();
@@ -595,6 +603,7 @@
                 document.getElementById(`view-${viewId}`).classList.add('active');
 
                 if (viewId === 'home') this.renderDashboard();
+                if (viewId === 'investments') this.renderInvestments();
             },
 
             /* -------------------------------------------------------------------------- */
@@ -654,6 +663,8 @@
                 } else {
                     this.data.investments.push(invData);
                 }
+                
+                if (!this.invClassFilters.includes(type)) this.invClassFilters.push(type);
 
                 this.saveState();
                 this.cancelInvEdit();
@@ -767,6 +778,8 @@
                                     
                                     let rate = this.defaultRates[invType];
                                     if(rate === undefined) rate = 7.0;
+                                    
+                                    if (!this.invClassFilters.includes(invType)) this.invClassFilters.push(invType);
 
                                     newInvestments.push({
                                         id: Date.now().toString() + Math.random().toString().slice(2,8),
@@ -787,7 +800,8 @@
                         newProfiles.forEach(p => {
                             if(!this.data.profiles.includes(p)) {
                                 this.data.profiles.push(p);
-                                this.dashProfileFilters.push(p); // Include in active filters auto
+                                this.dashProfileFilters.push(p);
+                                this.invProfileFilters.push(p);
                             }
                         });
                         
@@ -805,18 +819,68 @@
             },
 
             renderInvestments() {
+                // 1. Render Portfolio Profile Filter Pills
+                const profContainer = document.getElementById('invProfileToggles');
+                profContainer.innerHTML = '';
+                
+                this.data.profiles.forEach(p => {
+                    const isActive = this.invProfileFilters.includes(p);
+                    const pill = document.createElement('div');
+                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.innerText = p;
+                    textSpan.onclick = () => {
+                        if (isActive) this.invProfileFilters = this.invProfileFilters.filter(f => f !== p);
+                        else this.invProfileFilters.push(p);
+                        this.renderInvestments();
+                    };
+
+                    const delSpan = document.createElement('span');
+                    delSpan.innerHTML = '&times;';
+                    delSpan.className = 'pill-delete';
+                    delSpan.title = "Delete Profile Permanently";
+                    delSpan.onclick = (e) => {
+                        e.stopPropagation();
+                        this.deleteFullProfile(p);
+                    };
+
+                    pill.appendChild(textSpan);
+                    pill.appendChild(delSpan);
+                    profContainer.appendChild(pill);
+                });
+                
+                // 2. Render Portfolio Asset Class Filter Pills
+                const classContainer = document.getElementById('invClassToggles');
+                classContainer.innerHTML = '';
+                const uniqueClasses = [...new Set(this.data.investments.map(i => i.type))];
+                
+                uniqueClasses.forEach(c => {
+                    const isActive = this.invClassFilters.includes(c);
+                    const pill = document.createElement('div');
+                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
+                    let displayType = c.replace('_', ' ');
+                    pill.innerText = displayType.toUpperCase();
+                    pill.onclick = () => {
+                        if (isActive) this.invClassFilters = this.invClassFilters.filter(f => f !== c);
+                        else this.invClassFilters.push(c);
+                        this.renderInvestments();
+                    };
+                    classContainer.appendChild(pill);
+                });
+
+                // 3. Render Cards
                 const container = document.getElementById('investmentsContainer');
                 container.innerHTML = '';
                 
-                const filterVal = document.getElementById('assetProfileFilter').value;
-                let filteredInvestments = this.data.investments;
-                
-                if(filterVal !== "ALL") {
-                    filteredInvestments = this.data.investments.filter(i => (i.profile || 'Main Portfolio') === filterVal);
-                }
+                let filteredInvestments = this.data.investments.filter(i => {
+                    const profileMatch = this.invProfileFilters.includes(i.profile || 'Main Portfolio');
+                    const classMatch = this.invClassFilters.includes(i.type);
+                    return profileMatch && classMatch;
+                });
 
                 if (filteredInvestments.length === 0) {
-                    container.innerHTML = `<p style="color: var(--text-secondary);">No assets logged${filterVal !== "ALL" ? " for " + filterVal : ""}.</p>`;
+                    container.innerHTML = `<p style="color: var(--text-secondary);">No assets match your selected filters.</p>`;
                     return;
                 }
 
@@ -826,17 +890,19 @@
                     
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     
-                    let dateDisplay = "N/A";
+                    let dateDisplay = "";
                     let projLabel = "Projected Future Value";
                     let tagYear = "ONGOING";
                     let isOngoing = true;
                     
+                    let maturityHTML = '';
                     if (inv.maturityDate) {
                         const d = new Date(inv.maturityDate);
                         dateDisplay = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
                         projLabel = "Value at Maturity";
                         tagYear = d.getFullYear();
                         isOngoing = false;
+                        maturityHTML = `<div class="stat-row"><span>Maturity Date:</span><span>${dateDisplay}</span></div>`;
                     } else {
                         projLabel = `Projected Value (to ${this.getMaxGoalYear()})`;
                     }
@@ -858,7 +924,7 @@
                         </div>
                         
                         <div class="stat-row"><span>Growth Rate:</span><span style="color: ${inv.growthRate < 0 ? 'var(--danger-color)' : 'var(--success-color)'}; font-weight: 600;">${inv.growthRate}% YoY</span></div>
-                        <div class="stat-row"><span>Maturity Date:</span><span>${dateDisplay}</span></div>
+                        ${maturityHTML}
                         
                         <div class="value-tiers" style="margin-top: auto;">
                             <div class="value-tier">
@@ -1217,10 +1283,9 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC (Profile Breakdown & Table Filter)                         */
+            /* DASHBOARD LOGIC                                                            */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
-                // Global Household Stats (Always all profiles)
                 let globalInvestments = 0;
                 let globalFutureInvestments = 0;
                 let profileTotals = {};
@@ -1334,7 +1399,7 @@
                     toggleContainer.appendChild(pill);
                 });
 
-                // Filter Table Data based on active toggles
+                // Filter Table Data
                 let tableInvestments = this.data.investments.filter(i => 
                     this.dashProfileFilters.includes(i.profile || 'Main Portfolio')
                 );
@@ -1358,7 +1423,7 @@
                 const sortedTypes = Object.keys(typeTotals).sort((a, b) => typeTotals[b].cv - typeTotals[a].cv);
                 
                 if (sortedTypes.length === 0) {
-                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No profiles selected, or no assets logged.</td></tr>`;
+                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No assets logged for selected profiles.</td></tr>`;
                     return;
                 }
 
