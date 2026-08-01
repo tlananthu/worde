@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.33</title>
+    <title>Anantha | Wealth OS V2.34</title>
+    <!-- Link to PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f1115">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -297,7 +300,6 @@
                     </div>
                 </div>
                 
-                <!-- Dashboard Specific Filter Inject Point -->
                 <div id="dashFilterContainer"></div>
 
                 <table class="data-table">
@@ -425,7 +427,6 @@
                 </div>
             </div>
             
-            <!-- Portfolio Specific Filter Inject Point -->
             <div id="invFilterContainer"></div>
             
             <div class="table-container" style="margin-top: 0;">
@@ -482,9 +483,10 @@
                         <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6;">
                             <li><strong>INDMoney</strong> (holdings-family-template.xlsx)</li>
                             <li><strong>Zerodha</strong> (holdings-template-zerodha.xlsx)</li>
+                            <li><strong>Upstox</strong> (holdings_report_Upstox.xlsx) <span style="color:var(--success-color);font-size:0.7rem;">NEW!</span></li>
                         </ul>
                         <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
-                            Zerodha imports will auto-create profiles named after the Client ID. Will be adding Upstox & Groww soon.
+                            Zerodha imports will auto-create profiles named after the Client ID. Upstox imports use the Report Name.
                         </div>
                     </div>
 
@@ -493,6 +495,13 @@
                         <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will replace existing assets for the specific profiles found in this file. Data for other profiles will remain safe. Custom mapped categories will be retained. Continue?')) document.getElementById('bulkUpload').click()">
                             ⬆ Upload Portfolio Data
                         </button>
+                    </div>
+                    
+                    <!-- PWA Installation Container -->
+                    <div id="installAppContainer" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Install Application</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">Install Wealth OS on your home screen for quick, offline access.</p>
+                        <button onclick="app.installPWA()" style="background-color: var(--edu-color); color: #fff;">📲 Install App</button>
                     </div>
                 </div>
             </div>
@@ -579,11 +588,30 @@
     <div id="appToast" class="toast"></div>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.33</div>
+        <div>Anantha Wealth OS V2.34</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
     <script>
+        // PWA Installation Setup
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installAppContainer').style.display = 'block';
+        });
+        
+        // Register Service Worker if supported
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('SW registered: ', registration);
+                }).catch(registrationError => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            });
+        }
+
         const app = {
             data: {
                 profiles: ['Main Portfolio'],
@@ -633,6 +661,17 @@
                 this.switchView(this.activeView);
             },
 
+            async installPWA() {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        document.getElementById('installAppContainer').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                }
+            },
+
             showToast(msg, isError = false) {
                 const toast = document.getElementById('appToast');
                 toast.innerText = msg;
@@ -643,9 +682,9 @@
             },
 
             migrateData() {
-                const savedV2_33 = localStorage.getItem('ananthaDataV2_33');
-                if (savedV2_33) {
-                    this.data = JSON.parse(savedV2_33);
+                const savedV2_34 = localStorage.getItem('ananthaDataV2_34');
+                if (savedV2_34) {
+                    this.data = JSON.parse(savedV2_34);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -666,7 +705,7 @@
                     return;
                 }
 
-                const savedOld = localStorage.getItem('ananthaDataV2_32');
+                const savedOld = localStorage.getItem('ananthaDataV2_33');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     
@@ -721,7 +760,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_33', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_34', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -997,12 +1036,17 @@
                         
                         let headerRowIndex = -1;
                         let isZerodha = false;
+                        let isUpstox = false;
                         let globalClientId = "";
+                        let upstoxProfileName = "Main Portfolio";
 
                         for(let i=0; i<rows.length; i++) {
                             if(rows[i]) {
                                 const rowStr = rows[i].join(" ").toLowerCase();
                                 
+                                function strVal(v) { return v ? v.toString().trim() : ""; }
+
+                                // Zerodha Profile Extract
                                 if (rowStr.includes("client id")) {
                                     let idx = rows[i].findIndex(cell => strVal(cell).toLowerCase() === 'client id');
                                     if (idx !== -1 && rows[i].length > idx + 1) {
@@ -1010,13 +1054,31 @@
                                     }
                                 }
 
+                                // Upstox Profile Extract
+                                if (rowStr.includes("upstox") || (rowStr.includes("isin") && rowStr.includes("scrip name") && rowStr.includes("valuation"))) {
+                                    isUpstox = true;
+                                }
+                                if (isUpstox && rows[i][0] && strVal(rows[i][0]).toLowerCase() === "name") {
+                                    if (rows[i].length > 1 && strVal(rows[i][1])) {
+                                        upstoxProfileName = strVal(rows[i][1]);
+                                    }
+                                }
+
+                                // Header Row Detect
                                 if(rowStr.includes("investment") && rowStr.includes("market value")) {
                                     headerRowIndex = i;
                                     isZerodha = false;
+                                    isUpstox = false;
                                     break;
                                 } else if (rowStr.includes("symbol") && rowStr.includes("quantity available")) {
                                     headerRowIndex = i;
                                     isZerodha = true;
+                                    isUpstox = false;
+                                    break;
+                                } else if (rowStr.includes("isin") && rowStr.includes("scrip name") && rowStr.includes("valuation") && rowStr.includes("current qty")) {
+                                    headerRowIndex = i;
+                                    isUpstox = true;
+                                    isZerodha = false;
                                     break;
                                 }
                             }
@@ -1044,7 +1106,16 @@
                                 let rawSector = "NA";
                                 let isLossMaking = false;
 
-                                if (!isZerodha) {
+                                if (isUpstox) {
+                                    invName = rowObj["Scrip Name"];
+                                    mVal = this.parseCurrencyStr(rowObj["Valuation"]);
+                                    profileName = upstoxProfileName;
+                                    rawType = "STOCK";
+                                    rawClass = "Equity";
+                                    rawCategory = "NA";
+                                    rawSector = "NA";
+                                    // No historic invested amount, rely on default positive rate
+                                } else if (!isZerodha) {
                                     // INDmoney Extraction
                                     invName = rowObj["Investment"];
                                     mVal = this.parseCurrencyStr(rowObj["Market Value"]);
@@ -1227,7 +1298,6 @@
             openFilterPanel(mode) {
                 this.currentFilterMode = mode;
                 
-                // Load saved state into temp state
                 if (mode === 'dash') {
                     this.tempFilters.profiles = [...this.dashProfileFilters];
                     this.tempFilters.classes = [...this.dashClassFilters];
@@ -1436,7 +1506,7 @@
                             </div>
                         </td>
                         <td>${this.formatCurrency(inv.value)}</td>
-                        <td style="color: ${inv.growthRate < 0 ? 'var(--danger-color)' : 'var(--success-color)'};">${parseFloat(inv.growthRate).toFixed(1)}%</td>
+                        <td class="highlight-val">${parseFloat(inv.growthRate).toFixed(1)}%</td>
                         <td style="color: var(--text-secondary);">${inv.matDisplay}</td>
                         <td class="highlight-val">${this.formatCurrency(inv.computedFV)}</td>
                         <td style="text-align: center;">
@@ -1553,7 +1623,7 @@
                     
                     const isVehicle = Array.from(data.internalTypes).every(t => t === 'vehicle');
                     if (avgGrowth < 0) {
-                        rowClass = "low-growth-row";
+                        rowClass = "loss-making-row";
                         warningIcon = `<span title="Loss making category (Negative Avg Growth)" style="cursor:help; margin-left:5px;">❗</span>`;
                     } else if (avgGrowth < 7.0 && !isVehicle) {
                         rowClass = "low-growth-row";
@@ -1572,7 +1642,7 @@
                     tr.innerHTML = `
                         <td style="text-transform: capitalize; font-weight: 500;">${typeKey} ${warningIcon}</td>
                         <td>₹${this.formatCurrency(data.cv)}</td>
-                        <td style="color: ${avgGrowth < 0 ? 'var(--danger-color)' : 'var(--text-primary)'}; font-weight: 600;">${avgGrowth}%</td>
+                        <td class="highlight-val">${avgGrowth}%</td>
                         <td style="color: var(--accent-color); font-weight: 600;">₹${this.formatCurrency(data.fv)}</td>
                         <td>${pct}%</td>
                     `;
