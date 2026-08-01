@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.0</title>
+    <title>Anantha | Wealth OS V2.1</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -146,7 +146,7 @@
         .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
 
-        /* Goal Data Table (V2.0 Update) */
+        /* Goal Data Table */
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; }
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
@@ -157,7 +157,6 @@
         .data-table tr:last-child td { border-bottom: none; }
         
         .goal-name-cell { font-weight: 600; color: var(--text-primary); }
-        .goal-type-sub { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; }
         
         .data-table .total-row { font-weight: 700; background-color: var(--surface-light); color: var(--text-primary); }
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
@@ -182,7 +181,7 @@
             <button onclick="app.openProfileModal()">+ New</button>
             <button class="icon-btn delete" id="deleteProfileBtn" onclick="app.deleteCurrentProfile()" style="display:none;" title="Delete current profile">✕</button>
         </div>
-        <div class="version">v2.0 (Plan & Table Display)</div>
+        <div class="version">v2.1 (Yearly Expenses Fix)</div>
     </header>
 
     <div class="nav-tabs">
@@ -420,7 +419,7 @@
             },
             editingGoalId: null,
             editingInvId: null,
-            currentYear: new Date().getFullYear(), // E.g., 2026
+            currentYear: new Date().getFullYear(),
 
             // India Market Default Growth Rates
             defaultRates: { equity: 12.0, fd: 7.0, rd: 6.8, ppf: 7.1, pomis: 7.4, debt: 7.0, hybrid: 10.0, assets: 5.0 },
@@ -452,7 +451,6 @@
 
             formatCurrency(amount) {
                 if (isNaN(amount) || amount === null) return "0";
-                // Using maximumFractionDigits: 0 to match the clean look of the image provided
                 return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(Math.round(amount));
             },
 
@@ -664,7 +662,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC (TABLE FORMAT UPDATE)                                          */
+            /* GOALS LOGIC (Yearly Total C. Expenses Fix)                                 */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -702,20 +700,13 @@
                 }
             },
 
-            calcRetPV(exp, yRet, inf, ret) {
-                const r = ret/100, i = inf/100;
-                const real = ((1+r)/(1+i))-1;
-                return real <= 0 ? (exp*12)*yRet : (exp*12) * ((1-Math.pow(1+real, -yRet))/real) * (1+real);
-            },
             calcRetFV(exp, yrsTo, yRet, inf, ret) {
                 const fExp = (exp*12) * Math.pow((1+(inf/100)), yrsTo);
                 const r = ret/100, i = inf/100;
                 const real = ((1+r)/(1+i))-1;
                 return real <= 0 ? fExp*yRet : fExp * ((1-Math.pow(1+real, -yRet))/real) * (1+real);
             },
-            calcEduPV(c, g, fees, c11, cDeg, cHi) {
-                return c * ((Math.max(0,10-g)*fees) + (c11||0) + (cDeg||0) + (cHi||0));
-            },
+            
             calcEduFV(c, g, fees, inf, c11, cDeg, cHi) {
                 const r = inf/100; let fee=fees, sch=0;
                 for(let i=1; i<=Math.max(0,10-g); i++){ fee*=(1+r); sch+=fee; }
@@ -740,7 +731,8 @@
                 if (type === 'standard') {
                     goalData.cv = parseFloat(document.getElementById('currentValue').value);
                     goalData.yrs = parseInt(document.getElementById('years').value);
-                    goalData.pv = goalData.cv;
+                    
+                    goalData.cExp = goalData.cv; // Yearly/Base Current Expense
                     goalData.fv = goalData.cv * Math.pow((1+(inf/100)), goalData.yrs);
                     goalData.targetYear = this.currentYear + goalData.yrs;
                 } else if (type === 'retirement') {
@@ -748,7 +740,8 @@
                     goalData.yTo = parseInt(document.getElementById('yearsToRetire').value);
                     goalData.yIn = parseInt(document.getElementById('yearsInRetirement').value);
                     goalData.pRet = parseFloat(document.getElementById('postRetirementReturn').value);
-                    goalData.pv = this.calcRetPV(goalData.exp, goalData.yIn, inf, goalData.pRet);
+                    
+                    goalData.cExp = goalData.exp * 12; // Base Annual Current Expense
                     goalData.fv = this.calcRetFV(goalData.exp, goalData.yTo, goalData.yIn, inf, goalData.pRet);
                     goalData.targetYear = this.currentYear + goalData.yTo;
                 } else if (type === 'education') {
@@ -758,9 +751,11 @@
                     goalData.c11 = parseFloat(document.getElementById('eduCost11_12').value || 0);
                     goalData.cDeg = parseFloat(document.getElementById('eduCostDegree').value || 0);
                     goalData.cHi = parseFloat(document.getElementById('eduCostHigher').value || 0);
-                    goalData.pv = this.calcEduPV(goalData.c, goalData.g, goalData.fees, goalData.c11, goalData.cDeg, goalData.cHi);
+                    
+                    // Base lump sum of all components in today's money (without years multiplier)
+                    goalData.cExp = (goalData.fees + (goalData.c11 || 0) + (goalData.cDeg || 0) + (goalData.cHi || 0)) * goalData.c;
                     goalData.fv = this.calcEduFV(goalData.c, goalData.g, goalData.fees, inf, goalData.c11, goalData.cDeg, goalData.cHi);
-                    goalData.targetYear = this.currentYear + Math.max(0, 13 - goalData.g); // Approx Degree Year
+                    goalData.targetYear = this.currentYear + Math.max(0, 13 - goalData.g); 
                 }
 
                 const currentProfile = this.data.profiles[this.data.activeProfile];
@@ -793,7 +788,7 @@
                 document.getElementById('inflation').value = g.inflation;
 
                 if (g.type === 'standard') {
-                    document.getElementById('currentValue').value = g.cv || g.pv || g.currentValue;
+                    document.getElementById('currentValue').value = g.cv || g.cExp || g.pv || g.currentValue;
                     document.getElementById('years').value = g.yrs || (g.targetYear ? g.targetYear - this.currentYear : 0);
                 } else if (g.type === 'retirement') {
                     document.getElementById('monthlyExpenses').value = g.exp;
@@ -840,17 +835,16 @@
                     return;
                 }
 
-                let totalPV = 0;
+                let totalCExp = 0;
                 let totalFV = 0;
 
-                // Sort goals by Target Year
-                const sortedGoals = [...currentProfile.goals].sort((a, b) => (a.targetYear || 2026) - (b.targetYear || 2026));
+                const sortedGoals = [...currentProfile.goals].sort((a, b) => (a.targetYear || this.currentYear) - (b.targetYear || this.currentYear));
 
                 sortedGoals.forEach(goal => {
-                    let pv = goal.pv || goal.presentValue || goal.currentValue || goal.cv || 0;
+                    // Backwards compatibility for older saved PV data
+                    let cExp = goal.cExp || (goal.type === 'retirement' ? (goal.exp * 12) : (goal.type === 'education' ? ((goal.fees + (goal.c11||0) + (goal.cDeg||0) + (goal.cHi||0))*goal.c) : (goal.cv || goal.pv || 0)));
                     let fv = goal.fv || goal.targetValue || 0;
                     
-                    // Fallback calculation for older migrated data missing 'targetYear'
                     let tYear = goal.targetYear;
                     if (!tYear) {
                         if (goal.type === 'standard') tYear = this.currentYear + (goal.yrs || 0);
@@ -859,7 +853,7 @@
                         else tYear = this.currentYear;
                     }
 
-                    totalPV += pv;
+                    totalCExp += cExp;
                     totalFV += fv;
 
                     const tr = document.createElement('tr');
@@ -868,7 +862,7 @@
                             <div class="goal-name-cell">${goal.name}</div>
                         </td>
                         <td>${tYear}</td>
-                        <td>${this.formatCurrency(pv)}</td>
+                        <td>${this.formatCurrency(cExp)}</td>
                         <td>${goal.inflation}%</td>
                         <td class="highlight-val">${this.formatCurrency(fv)}</td>
                         <td style="text-align: center;">
@@ -879,12 +873,11 @@
                     tbody.appendChild(tr);
                 });
 
-                // Add Totals Row
                 const totalRow = document.createElement('tr');
                 totalRow.className = 'total-row';
                 totalRow.innerHTML = `
                     <td colspan="2">TOTAL</td>
-                    <td>${this.formatCurrency(totalPV)}</td>
+                    <td>${this.formatCurrency(totalCExp)}</td>
                     <td></td>
                     <td class="highlight-val">${this.formatCurrency(totalFV)}</td>
                     <td></td>
@@ -906,16 +899,17 @@
                     futureInvestments += this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                 });
                 
-                let totalPV = 0;
+                let totalCExp = 0;
                 let totalFV = 0;
-                currentProfile.goals.forEach(g => {
-                    totalPV += (g.pv || g.presentValue || g.currentValue || g.cv || 0);
-                    totalFV += (g.fv || g.targetValue || 0);
+                currentProfile.goals.forEach(goal => {
+                    let cExp = goal.cExp || (goal.type === 'retirement' ? (goal.exp * 12) : (goal.type === 'education' ? ((goal.fees + (goal.c11||0) + (goal.cDeg||0) + (goal.cHi||0))*goal.c) : (goal.cv || goal.pv || 0)));
+                    totalCExp += cExp;
+                    totalFV += (goal.fv || goal.targetValue || 0);
                 });
 
                 document.getElementById('dashTotalAssets').innerText = '₹' + this.formatCurrency(totalInvestments);
                 document.getElementById('dashFutureAssets').innerText = '₹' + this.formatCurrency(futureInvestments);
-                document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalPV);
+                document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalCExp);
                 document.getElementById('dashTotalFV').innerText = '₹' + this.formatCurrency(totalFV);
 
                 let percentage = 0;
