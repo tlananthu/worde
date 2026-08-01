@@ -164,7 +164,6 @@
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
-        /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; border: 1px solid var(--border-color); position: relative; }
         .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); font-size: 1.2rem; margin-top: 0; }
@@ -369,30 +368,6 @@
                 <button class="btn-upload" onclick="app.openProfileModal()" style="background: var(--surface-light); color: var(--text-primary);">+ New Profile</button>
                 <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
             </div>
-        </div>
-
-        <div class="table-container" style="margin-bottom: 2rem;">
-            <div class="table-header-row" style="flex-direction: column; align-items: flex-start;">
-                <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Asset Allocation Summary</h3>
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Group By:</span>
-                    <button class="pill-toggle alloc-group-btn" data-group="class" onclick="app.setAllocationGroupBy('class')">Asset Class</button>
-                    <button class="pill-toggle alloc-group-btn" data-group="type" onclick="app.setAllocationGroupBy('type')">Asset Type</button>
-                    <button class="pill-toggle alloc-group-btn" data-group="category" onclick="app.setAllocationGroupBy('category')">Category</button>
-                </div>
-            </div>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th id="portAllocColHeader">Asset Class</th>
-                        <th>Current Valuation</th>
-                        <th>Avg. Growth Rate</th>
-                        <th>Projected Future Value</th>
-                        <th>% of Portfolio</th>
-                    </tr>
-                </thead>
-                <tbody id="portAssetSummaryBody"></tbody>
-            </table>
         </div>
         
         <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
@@ -899,6 +874,7 @@
                             }
                         });
 
+                        // Rebuild class filters
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                         
                         this.saveState();
@@ -926,6 +902,7 @@
             },
 
             renderInvestments() {
+                // 1. Render Profile Toggles
                 const profContainer = document.getElementById('invProfileToggles');
                 profContainer.innerHTML = '';
                 this.data.profiles.forEach(p => {
@@ -953,6 +930,7 @@
                     profContainer.appendChild(pill);
                 });
                 
+                // 2. Render Class Toggles
                 const classContainer = document.getElementById('invClassToggles');
                 classContainer.innerHTML = '';
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
@@ -970,11 +948,7 @@
                     classContainer.appendChild(pill);
                 });
 
-                document.querySelectorAll('.alloc-group-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.group === this.allocationGroupBy) btn.classList.add('active');
-                });
-
+                // 3. Render Table
                 const tbody = document.getElementById('investmentsTableBody');
                 tbody.innerHTML = '';
                 
@@ -992,17 +966,16 @@
                     return profileMatch && classMatch;
                 });
 
-                this.renderAllocationTable('portAssetSummaryBody', 'portAllocColHeader', filteredInvestments);
-
                 if (filteredInvestments.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No assets match your selected filters.</td></tr>`;
                     return;
                 }
 
+                // Compute data for sorting/display
                 const processedInv = filteredInvestments.map(inv => {
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     let matDisplay = inv.maturityDate ? new Date(inv.maturityDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '';
-                    let sortMat = inv.maturityDate ? new Date(inv.maturityDate).getTime() : 9999999999999; 
+                    let sortMat = inv.maturityDate ? new Date(inv.maturityDate).getTime() : 9999999999999; // Ongoing pushed to end
                     return { ...inv, computedFV: fv, matDisplay: matDisplay, sortMat: sortMat };
                 });
 
@@ -1082,7 +1055,6 @@
                 this.allocationGroupBy = group;
                 this.saveState();
                 this.renderDashboard();
-                this.renderInvestments();
             },
 
             renderAllocationTable(tbodyId, colHeaderId, investmentsList) {
@@ -1498,7 +1470,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC (Profile Breakdown & Table Filter)                         */
+            /* DASHBOARD LOGIC                                                            */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let globalInvestments = 0;
