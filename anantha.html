@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.8</title>
+    <title>Anantha | Wealth OS V2.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -52,7 +52,7 @@
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .dashboard-layout { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; }
+        .dashboard-layout { display: grid; grid-template-columns: 400px 1fr; gap: 2rem; }
         .summary-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         @media (max-width: 900px) { .dashboard-layout { grid-template-columns: 1fr; } }
 
@@ -241,7 +241,8 @@
                             <option value="standard">Standard Financial Goal</option>
                             <option value="retirement">Retirement Corpus</option>
                             <option value="education">Kids Education Planner (Multi-Stage)</option>
-                            <option value="edu_stage" style="display:none;">Education Milestone (Edit)</option>
+                            <!-- Hidden fallback option for migrating old disconnected edu stages -->
+                            <option value="edu_stage" style="display:none;">Education Milestone</option>
                         </select>
                     </div>
 
@@ -290,7 +291,7 @@
                             <div id="eduTimelineGrid" style="display:flex; flex-direction:column; gap:0.5rem; background: var(--bg-color); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); max-height: 350px; overflow-y: auto;">
                                 <!-- Auto generated via JS -->
                             </div>
-                            <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:0.5rem;">*Leave cost empty for stages you do not want to track.</span>
+                            <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:0.5rem;">*Leave cost empty or click '✕' for stages you do not want to track.</span>
                         </div>
                     </div>
 
@@ -433,6 +434,7 @@
                 investments: []
             },
             editingGoalId: null,
+            editingBatchId: null,
             editingInvId: null,
             currentYear: new Date().getFullYear(),
             
@@ -452,12 +454,12 @@
             },
 
             migrateData() {
-                const savedV2_8 = localStorage.getItem('ananthaDataV2_8');
-                if (savedV2_8) {
-                    this.data = JSON.parse(savedV2_8);
+                const savedV2_9 = localStorage.getItem('ananthaDataV2_9');
+                if (savedV2_9) {
+                    this.data = JSON.parse(savedV2_9);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_7');
+                const savedOld = localStorage.getItem('ananthaDataV2_8');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -465,7 +467,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_8', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_9', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -815,7 +817,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC & SORTING                                                      */
+            /* GOALS LOGIC (Education Batch Editing)                                      */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -850,7 +852,11 @@
                 } else if (type === 'education') {
                     education.style.display = 'block';
                     nameLabel.innerText = "Child Name / Goal Prefix";
-                    this.generateEduTimeline();
+                    
+                    // Only generate fresh timeline if we aren't currently loading an existing batch
+                    if (!this.editingBatchId) {
+                        this.generateEduTimeline();
+                    }
                 }
             },
 
@@ -873,11 +879,14 @@
                     const targetYear = this.currentYear + stage.yearOffset;
                     container.innerHTML += `
                         <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-light); padding:0.6rem; border-radius:4px; border: 1px solid transparent; transition: 0.2s;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='transparent'">
-                            <div style="display:flex; flex-direction:column;">
+                            <div style="display:flex; flex-direction:column; flex:1;">
                                 <span style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">${stage.name}</span>
                                 <span style="font-size:0.75rem; color:var(--accent-color);">Target Year: ${targetYear}</span>
                             </div>
-                            <input type="number" class="edu-cost-input" data-name="${stage.name}" data-year="${targetYear}" data-yrs="${stage.yearOffset}" placeholder="₹ Cost Today" style="width:130px; padding:0.5rem; font-size:0.9rem; background: var(--surface-color);">
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <input type="number" class="edu-cost-input" data-name="${stage.name}" data-year="${targetYear}" data-yrs="${stage.yearOffset}" placeholder="₹ Cost Today" style="width:130px; padding:0.5rem; font-size:0.9rem; background: var(--surface-color);">
+                                <button type="button" class="icon-btn delete" onclick="this.previousElementSibling.value=''; this.previousElementSibling.focus();" title="Clear / Delete this year">✕</button>
+                            </div>
                         </div>
                     `;
                 });
@@ -897,18 +906,30 @@
                 const baseName = document.getElementById('goalName').value;
                 
                 if (type === 'education') {
+                    // Batch Saving Logic
                     const inputs = document.querySelectorAll('.edu-cost-input');
+                    const batchId = this.editingBatchId || Date.now().toString();
+                    const grade = parseInt(document.getElementById('eduCurrentGrade').value) || 1;
                     let addedCount = 0;
+                    
+                    // If editing, clear old batch first
+                    if (this.editingBatchId) {
+                        this.data.goals = this.data.goals.filter(g => g.batchId !== this.editingBatchId);
+                    }
                     
                     inputs.forEach(input => {
                         const cost = parseFloat(input.value);
-                        if (cost > 0) {
+                        if (cost > 0) { // If left blank or cleared with X, it won't be saved
                             const targetYear = parseInt(input.getAttribute('data-year'));
                             const yrs = parseInt(input.getAttribute('data-yrs'));
                             const stageName = input.getAttribute('data-name');
                             
                             let goalData = {
                                 id: Date.now().toString() + Math.random().toString().slice(2,8),
+                                batchId: batchId,
+                                batchName: baseName,
+                                batchGrade: grade,
+                                stageName: stageName,
                                 type: 'edu_stage',
                                 name: `${baseName} - ${stageName}`,
                                 inflation: inf,
@@ -922,12 +943,13 @@
                         }
                     });
                     
-                    if(addedCount === 0) {
+                    if(addedCount === 0 && !this.editingBatchId) {
                         alert("Please enter a cost for at least one educational stage to save the plan.");
                         return;
                     }
 
                 } else {
+                    // Standard / Retirement Logic
                     let goalData = {
                         id: this.editingGoalId || Date.now().toString(),
                         type: type,
@@ -969,7 +991,39 @@
                 const g = this.data.goals.find(g => g.id === id);
                 if (!g) return;
 
+                // Check if this is part of an Education Batch
+                if (g.type === 'edu_stage' && g.batchId) {
+                    this.editingBatchId = g.batchId;
+                    this.editingGoalId = null;
+                    
+                    document.getElementById('goalFormTitle').innerText = "Edit Education Plan";
+                    document.getElementById('goalSubmitBtn').innerText = "Update Entire Plan";
+                    document.getElementById('goalCancelBtn').style.display = "block";
+                    
+                    document.getElementById('goalType').value = 'education';
+                    document.getElementById('eduCurrentGrade').value = g.batchGrade || 1;
+                    
+                    // We must generate the timeline BEFORE toggling fields so inputs exist to be populated
+                    this.generateEduTimeline();
+                    this.toggleGoalFields();
+                    
+                    document.getElementById('goalName').value = g.batchName;
+                    document.getElementById('inflation').value = g.inflation;
+
+                    // Populate the inputs with all goals in the batch
+                    const batchGoals = this.data.goals.filter(goal => goal.batchId === g.batchId);
+                    batchGoals.forEach(bg => {
+                        const input = document.querySelector(`.edu-cost-input[data-name="${bg.stageName}"]`);
+                        if (input) input.value = bg.cExp;
+                    });
+                    
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                // Standard Edit Logic
                 this.editingGoalId = id;
+                this.editingBatchId = null;
                 document.getElementById('goalFormTitle').innerText = "Edit Goal";
                 document.getElementById('goalSubmitBtn').innerText = "Update Goal";
                 document.getElementById('goalCancelBtn').style.display = "block";
@@ -994,6 +1048,7 @@
 
             cancelGoalEdit() {
                 this.editingGoalId = null;
+                this.editingBatchId = null;
                 document.getElementById('goalFormTitle').innerText = "Define Target Goal";
                 document.getElementById('goalSubmitBtn').innerText = "Calculate & Save";
                 document.getElementById('goalCancelBtn').style.display = "none";
@@ -1003,7 +1058,7 @@
             },
 
             deleteGoal(id) {
-                if(confirm("Remove this goal?")) {
+                if(confirm("Remove this specific goal?")) {
                     this.data.goals = this.data.goals.filter(g => g.id !== id);
                     if(this.editingGoalId === id) this.cancelGoalEdit();
                     this.saveState();
@@ -1014,10 +1069,10 @@
 
             sortGoals(column) {
                 if (this.sortColumn === column) {
-                    this.sortAsc = !this.sortAsc; // Toggle direction
+                    this.sortAsc = !this.sortAsc; 
                 } else {
                     this.sortColumn = column;
-                    this.sortAsc = true; // Default to ascending on new column
+                    this.sortAsc = true; 
                 }
                 this.renderGoals();
             },
@@ -1026,7 +1081,6 @@
                 const tbody = document.getElementById('goalsTableBody');
                 tbody.innerHTML = ''; 
 
-                // Update Header Sort Icons
                 ['name', 'year', 'cExp', 'inflation', 'fv'].forEach(col => {
                     const iconEl = document.getElementById(`sort-${col}`);
                     if(iconEl) {
@@ -1046,7 +1100,6 @@
                 let totalCExp = 0;
                 let totalFV = 0;
 
-                // Process and Sort Goals
                 const processedGoals = this.data.goals.map(goal => {
                     let cExp = goal.cExp || (goal.type === 'retirement' ? (goal.exp * 12) : (goal.cv || goal.pv || 0));
                     let fv = goal.fv || goal.targetValue || 0;
