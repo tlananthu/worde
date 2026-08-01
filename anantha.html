@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.4</title>
-    <!-- SheetJS Library for reading Excel files -->
+    <title>Anantha | Wealth OS V2.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -111,7 +110,7 @@
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
         .btn-action { width: auto; flex: 1; }
 
-        /* Investment Cards */
+        /* Cards & Grids */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
         .card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; }
         
@@ -151,8 +150,8 @@
         .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
 
-        /* Goal Data Table */
-        .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; }
+        /* Data Tables */
+        .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
         .data-table th:first-child, .data-table td:first-child { text-align: left; }
@@ -162,7 +161,6 @@
         .data-table tr:last-child td { border-bottom: none; }
         
         .goal-name-cell { font-weight: 600; color: var(--text-primary); }
-        
         .data-table .total-row { font-weight: 700; background-color: var(--surface-light); color: var(--text-primary); }
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
@@ -224,6 +222,24 @@
             <div class="progress-bar-bg">
                 <div class="progress-bar-fill" id="dashProgressBar"></div>
             </div>
+        </div>
+
+        <!-- NEW: Asset Allocation Summary -->
+        <div class="table-container" style="margin-top: 2rem;">
+            <h3 style="padding: 1.5rem 1.5rem 0.5rem; margin: 0; font-size: 1.2rem; color: var(--text-primary);">Asset Allocation by Class</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Asset Class</th>
+                        <th>Current Valuation</th>
+                        <th>Projected Future Value</th>
+                        <th>% of Portfolio</th>
+                    </tr>
+                </thead>
+                <tbody id="dashAssetSummaryBody">
+                    <!-- Injected via JS -->
+                </tbody>
+            </table>
         </div>
     </div>
     
@@ -453,14 +469,12 @@
             },
 
             migrateData() {
-                const savedV2_4 = localStorage.getItem('ananthaDataV2_4');
-                if (savedV2_4) {
-                    this.data = JSON.parse(savedV2_4);
+                const savedV2_5 = localStorage.getItem('ananthaDataV2_5');
+                if (savedV2_5) {
+                    this.data = JSON.parse(savedV2_5);
                     return;
                 }
-
-                // Migrate from older versions
-                const savedOld = localStorage.getItem('ananthaDataV2_3');
+                const savedOld = localStorage.getItem('ananthaDataV2_4');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -468,7 +482,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_4', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_5', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -486,7 +500,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* PROFILE MANAGEMENT (ASSETS ONLY)                                           */
+            /* PROFILE MANAGEMENT                                                         */
             /* -------------------------------------------------------------------------- */
             updateProfileDropdowns() {
                 const formSelect = document.getElementById('invProfile');
@@ -543,18 +557,38 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* INVESTMENTS & BULK UPLOAD LOGIC                                            */
+            /* INVESTMENTS LOGIC                                                          */
             /* -------------------------------------------------------------------------- */
+            
+            // Computes the maximum year among all goals to serve as a global projection horizon
+            getMaxGoalYear() {
+                let maxYear = this.currentYear + 10; // Default to 10 years if no goals exist
+                if (this.data.goals && this.data.goals.length > 0) {
+                    const goalYears = this.data.goals.map(g => g.targetYear || this.currentYear);
+                    maxYear = Math.max(...goalYears);
+                }
+                return maxYear;
+            },
+            
             handleInvTypeChange() {
                 const type = document.getElementById('invType').value;
                 document.getElementById('invGrowth').value = this.defaultRates[type] || 0;
             },
             
             calcInvFV(val, rate, matDateStr) {
-                if (!matDateStr || !rate) return val;
-                const matDate = new Date(matDateStr);
-                const today = new Date();
-                const years = (matDate - today) / (1000 * 60 * 60 * 24 * 365.25);
+                if (!rate) return val;
+                let years = 0;
+
+                if (matDateStr) {
+                    // Compound to explicit maturity date
+                    const matDate = new Date(matDateStr);
+                    const today = new Date();
+                    years = (matDate - today) / (1000 * 60 * 60 * 24 * 365.25);
+                } else {
+                    // Automatically compound to the furthest goal horizon if no maturity is set
+                    years = this.getMaxGoalYear() - this.currentYear;
+                }
+                
                 if (years <= 0) return val;
                 return val * Math.pow(1 + (rate / 100), years);
             },
@@ -574,8 +608,7 @@
                     type: type,
                     value: val,
                     growthRate: rate,
-                    maturityDate: matDate,
-                    futureValue: this.calcInvFV(val, rate, matDate)
+                    maturityDate: matDate
                 };
 
                 if (this.editingInvId) {
@@ -690,8 +723,7 @@
                                         type: invType,
                                         value: mVal,
                                         growthRate: rate,
-                                        maturityDate: "",
-                                        futureValue: this.calcInvFV(mVal, rate, "")
+                                        maturityDate: ""
                                     });
                                 }
                             }
@@ -699,12 +731,9 @@
                     });
                     
                     if(newInvestments.length > 0) {
-                        this.data.investments = newInvestments; // Purges existing
-                        
+                        this.data.investments = newInvestments;
                         newProfiles.forEach(p => {
-                            if(!this.data.profiles.includes(p)) {
-                                this.data.profiles.push(p);
-                            }
+                            if(!this.data.profiles.includes(p)) this.data.profiles.push(p);
                         });
                         
                         this.saveState();
@@ -713,11 +742,11 @@
                         this.renderDashboard();
                         alert(`Successfully imported ${newInvestments.length} assets from the template!`);
                     } else {
-                        alert("No valid asset data found in the template. Please ensure columns like 'First Name', 'Investment', and 'Market Value' exist.");
+                        alert("No valid asset data found in the template.");
                     }
                 };
                 reader.readAsArrayBuffer(file);
-                event.target.value = ''; // Reset file input
+                event.target.value = ''; 
             },
 
             renderInvestments() {
@@ -743,9 +772,14 @@
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     
                     let dateDisplay = "N/A";
+                    let projLabel = "Projected Future Value";
+                    
                     if (inv.maturityDate) {
                         const d = new Date(inv.maturityDate);
                         dateDisplay = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                        projLabel = "Value at Maturity";
+                    } else {
+                        projLabel = `Projected Value (to ${this.getMaxGoalYear()})`;
                     }
                     
                     card.innerHTML = `
@@ -770,7 +804,7 @@
                                 <div class="tier-value pv">₹${this.formatCurrency(inv.value)}</div>
                             </div>
                             <div class="value-tier">
-                                <span>Projected Future Value</span>
+                                <span>${projLabel}</span>
                                 <div class="tier-value fv">₹${this.formatCurrency(fv)}</div>
                             </div>
                         </div>
@@ -780,7 +814,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GLOBAL GOALS LOGIC                                                         */
+            /* GOALS LOGIC                                                                */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -849,7 +883,6 @@
                 if (type === 'standard') {
                     goalData.cv = parseFloat(document.getElementById('currentValue').value);
                     goalData.yrs = parseInt(document.getElementById('years').value);
-                    
                     goalData.cExp = goalData.cv; 
                     goalData.fv = goalData.cv * Math.pow((1+(inf/100)), goalData.yrs);
                     goalData.targetYear = this.currentYear + goalData.yrs;
@@ -858,7 +891,6 @@
                     goalData.yTo = parseInt(document.getElementById('yearsToRetire').value);
                     goalData.yIn = parseInt(document.getElementById('yearsInRetirement').value);
                     goalData.pRet = parseFloat(document.getElementById('postRetirementReturn').value);
-                    
                     goalData.cExp = goalData.exp * 12; 
                     goalData.fv = this.calcRetFV(goalData.exp, goalData.yTo, goalData.yIn, inf, goalData.pRet);
                     goalData.targetYear = this.currentYear + goalData.yTo;
@@ -869,7 +901,6 @@
                     goalData.c11 = parseFloat(document.getElementById('eduCost11_12').value || 0);
                     goalData.cDeg = parseFloat(document.getElementById('eduCostDegree').value || 0);
                     goalData.cHi = parseFloat(document.getElementById('eduCostHigher').value || 0);
-                    
                     goalData.cExp = (goalData.fees + (goalData.c11 || 0) + (goalData.cDeg || 0) + (goalData.cHi || 0)) * goalData.c;
                     goalData.fv = this.calcEduFV(goalData.c, goalData.g, goalData.fees, inf, goalData.c11, goalData.cDeg, goalData.cHi);
                     goalData.targetYear = this.currentYear + Math.max(0, 13 - goalData.g); 
@@ -999,15 +1030,24 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GLOBAL DASHBOARD LOGIC                                                     */
+            /* DASHBOARD LOGIC (Includes Summary by Type)                                 */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let totalInvestments = 0;
                 let futureInvestments = 0;
                 
+                // Track breakdown by asset type
+                let typeTotals = {};
+                
                 this.data.investments.forEach(inv => {
+                    let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
+                    
                     totalInvestments += (inv.value || 0);
-                    futureInvestments += this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
+                    futureInvestments += fv;
+
+                    if (!typeTotals[inv.type]) typeTotals[inv.type] = { cv: 0, fv: 0 };
+                    typeTotals[inv.type].cv += (inv.value || 0);
+                    typeTotals[inv.type].fv += fv;
                 });
                 
                 let totalCExp = 0;
@@ -1032,6 +1072,36 @@
                     document.getElementById('dashPercentage').innerText = `${percentage.toFixed(1)}%`;
                     document.getElementById('dashProgressBar').style.width = `${percentage}%`;
                 }, 100);
+
+                // Populate the Asset Allocation Table
+                const assetSummaryBody = document.getElementById('dashAssetSummaryBody');
+                assetSummaryBody.innerHTML = '';
+                
+                const sortedTypes = Object.keys(typeTotals).sort((a, b) => typeTotals[b].cv - typeTotals[a].cv);
+                
+                if (sortedTypes.length === 0) {
+                    assetSummaryBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No assets logged yet.</td></tr>`;
+                    return;
+                }
+
+                sortedTypes.forEach(type => {
+                    const tr = document.createElement('tr');
+                    const pct = totalInvestments > 0 ? ((typeTotals[type].cv / totalInvestments) * 100).toFixed(1) : 0;
+                    
+                    let displayType = type;
+                    if (type === 'fd') displayType = "Fixed Deposit (FD)";
+                    if (type === 'rd') displayType = "Recurring Deposit (RD)";
+                    if (type === 'ppf') displayType = "PPF";
+                    if (type === 'pomis') displayType = "PO MIS";
+
+                    tr.innerHTML = `
+                        <td style="text-transform: capitalize; font-weight: 500;">${displayType}</td>
+                        <td>₹${this.formatCurrency(typeTotals[type].cv)}</td>
+                        <td style="color: var(--accent-color); font-weight: 600;">₹${this.formatCurrency(typeTotals[type].fv)}</td>
+                        <td>${pct}%</td>
+                    `;
+                    assetSummaryBody.appendChild(tr);
+                });
             },
 
             renderAll() {
