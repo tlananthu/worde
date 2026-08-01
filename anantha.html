@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.31</title>
+    <title>Anantha | Wealth OS V2.32</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -124,12 +124,6 @@
         .filter-option:hover { background: var(--surface-light); color: var(--text-primary); }
         .filter-option input[type="checkbox"] { margin-right: 0.8rem; cursor: pointer; accent-color: var(--accent-color); width: 16px; height: 16px; flex-shrink: 0; }
         .filter-header { padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; background: var(--surface-light); color: var(--text-primary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 2; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .pill-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
-        .pill-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
-        .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
-        .pill-delete { cursor: pointer; opacity: 0.6; font-size: 1.1rem; line-height: 1; padding-left: 0.2rem; }
-        .pill-delete:hover { opacity: 1; color: var(--danger-color); }
 
         /* Sortable Data Tables */
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
@@ -369,7 +363,6 @@
             <div class="portfolio-header">
                 <h3>Registered Assets</h3>
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                    <button class="btn-upload" onclick="app.openProfileModal()" style="background: var(--surface-light); color: var(--text-primary);">+ New Profile</button>
                     <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
                 </div>
             </div>
@@ -397,8 +390,30 @@
             </div>
         </div>
 
-        <!-- VIEW: SETTINGS (IMPORT) -->
+        <!-- VIEW: SETTINGS (PROFILES & IMPORT) -->
         <div id="view-settings" class="view">
+            
+            <div class="settings-card" style="margin-bottom: 2rem;">
+                <h2>Profile Management</h2>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5;">
+                    Create, view, and delete asset owner profiles. Deleting a profile will also permanently delete all manually added assets associated with it.
+                </p>
+                
+                <div id="settingsProfileList" style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
+                    <!-- Profiles injected via JS -->
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <form onsubmit="app.createProfile(event)" style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label for="settingsNewProfileName">New Profile Name</label>
+                            <input type="text" id="settingsNewProfileName" required placeholder="e.g., Anju, Twins">
+                        </div>
+                        <button type="submit" class="btn-action" style="background-color: var(--success-color);">+ Add Profile</button>
+                    </form>
+                </div>
+            </div>
+            
             <div class="settings-card">
                 <h2>Data Management</h2>
                 <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">
@@ -432,21 +447,6 @@
                         ⬆ Upload Portfolio Data
                     </button>
                 </div>
-            </div>
-        </div>
-
-        <!-- Modals -->
-        <div class="modal-overlay" id="profileModal">
-            <div class="modal-content">
-                <button class="close-modal" onclick="app.closeProfileModal()">✕</button>
-                <h3>Create Asset Profile</h3>
-                <form onsubmit="app.createProfile(event)">
-                    <div class="form-group">
-                        <label for="newProfileName">Profile / Owner Name</label>
-                        <input type="text" id="newProfileName" required placeholder="e.g., Anju, Family, Twins">
-                    </div>
-                    <button type="submit" style="background-color: var(--success-color);">Add Profile</button>
-                </form>
             </div>
         </div>
 
@@ -529,7 +529,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.31</div>
+        <div>Anantha Wealth OS V2.32</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -582,9 +582,9 @@
             },
 
             migrateData() {
-                const savedV2_31 = localStorage.getItem('ananthaDataV2_31');
-                if (savedV2_31) {
-                    this.data = JSON.parse(savedV2_31);
+                const savedV2_32 = localStorage.getItem('ananthaDataV2_32');
+                if (savedV2_32) {
+                    this.data = JSON.parse(savedV2_32);
                     this.data.zerodhaMappings = this.data.zerodhaMappings || [];
                     
                     this.activeView = this.data.activeView || 'home';
@@ -607,7 +607,7 @@
                     return;
                 }
 
-                const savedOld = localStorage.getItem('ananthaDataV2_30');
+                const savedOld = localStorage.getItem('ananthaDataV2_31');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.data.zerodhaMappings = this.data.zerodhaMappings || [];
@@ -663,7 +663,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_31', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_32', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -747,12 +747,10 @@
                 this.renderZerodhaMappings(); 
             },
 
-            openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); },
-            closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; document.getElementById('newProfileName').value = ''; },
-
             createProfile(event) {
                 event.preventDefault();
-                const name = document.getElementById('newProfileName').value.trim();
+                const input = document.getElementById('settingsNewProfileName');
+                const name = input.value.trim();
                 
                 if (name && !this.data.profiles.includes(name)) {
                     this.data.profiles.push(name);
@@ -761,10 +759,9 @@
                     
                     this.saveState();
                     this.updateProfileDropdowns();
-                    document.getElementById('invProfile').value = name;
-                    this.closeProfileModal();
+                    input.value = '';
                     this.renderAll();
-                } else {
+                } else if (this.data.profiles.includes(name)) {
                     alert("A profile with this name already exists.");
                 }
             },
@@ -787,6 +784,20 @@
                     this.updateProfileDropdowns();
                     this.renderAll();
                 }
+            },
+
+            renderSettingsProfiles() {
+                const container = document.getElementById('settingsProfileList');
+                if(!container) return;
+                container.innerHTML = '';
+                this.data.profiles.forEach(p => {
+                    container.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--surface-light); padding: 0.8rem 1.2rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                            <span style="font-weight: 600; color: var(--text-primary); text-transform: uppercase; font-size: 0.9rem;">${p}</span>
+                            <button onclick="app.deleteFullProfile('${p}')" style="width: auto; background: rgba(244, 63, 94, 0.1); color: var(--danger-color); padding: 0.4rem 0.8rem; border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 4px; font-size: 0.8rem; cursor: pointer;">Delete</button>
+                        </div>
+                    `;
+                });
             },
 
             switchView(viewId) {
@@ -1099,7 +1110,6 @@
                                         else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced') || aCatStr.includes('hybrid')) invType = 'hybrid';
                                     }
                                     
-                                    // Use default expected future growth rate base
                                     let rate = this.defaultRates[invType];
                                     if(rate === undefined) rate = 7.0;
 
@@ -1291,15 +1301,10 @@
 
                 sortedItems.forEach(item => {
                     const isChecked = activeFilters.includes(item) ? 'checked' : '';
-                    let delBtn = '';
-                    if (filterKey.includes('ProfileFilters')) {
-                        delBtn = `<span title="Delete Profile" onclick="event.stopPropagation(); app.deleteFullProfile('${item}');" style="margin-left:auto; color:var(--danger-color); font-size:1.1rem;">&times;</span>`;
-                    }
                     res += `
                         <label class="filter-option" onclick="event.stopPropagation();">
                             <input type="checkbox" class="filter-cb-${filterKey}" value="${item}" ${isChecked} onchange="app.toggleFilterItem('${filterKey}', '${item}', '${id}-btn')">
                             <span style="text-transform: uppercase;">${item}</span>
-                            ${delBtn}
                         </label>
                     `;
                 });
@@ -2014,13 +2019,12 @@
                 this.renderGoals();
                 this.renderInvestments();
                 this.renderDashboard();
+                this.renderSettingsProfiles();
             }
         };
 
         window.onclick = function(event) {
-            const profileModal = document.getElementById('profileModal');
             const assetModal = document.getElementById('assetModal');
-            if (event.target === profileModal) app.closeProfileModal();
             if (event.target === assetModal) app.closeAssetModal();
             
             if (!event.target.closest('.filter-dropdown-container')) {
