@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.29</title>
+    <title>Anantha | Wealth OS V2.30</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -529,7 +529,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.29</div>
+        <div>Anantha Wealth OS V2.30</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -539,7 +539,7 @@
                 profiles: ['Main Portfolio'],
                 goals: [],
                 investments: [],
-                zerodhaMappings: [] // {clientId: '', profileName: ''}
+                zerodhaMappings: [] 
             },
             editingGoalId: null,
             editingBatchId: null,
@@ -582,9 +582,9 @@
             },
 
             migrateData() {
-                const savedV2_29 = localStorage.getItem('ananthaDataV2_29');
-                if (savedV2_29) {
-                    this.data = JSON.parse(savedV2_29);
+                const savedV2_30 = localStorage.getItem('ananthaDataV2_30');
+                if (savedV2_30) {
+                    this.data = JSON.parse(savedV2_30);
                     this.data.zerodhaMappings = this.data.zerodhaMappings || [];
                     
                     this.activeView = this.data.activeView || 'home';
@@ -606,10 +606,10 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_28');
+                const savedOld = localStorage.getItem('ananthaDataV2_29');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    this.data.zerodhaMappings = [];
+                    this.data.zerodhaMappings = this.data.zerodhaMappings || [];
                     
                     this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -657,7 +657,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_29', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_30', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -738,7 +738,7 @@
                 });
                 
                 if(currentFormVal && this.data.profiles.includes(currentFormVal)) formSelect.value = currentFormVal;
-                this.renderZerodhaMappings(); // Re-render to update selects
+                this.renderZerodhaMappings(); 
             },
 
             openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); },
@@ -775,7 +775,6 @@
                     this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== pName);
                     this.invProfileFilters = this.invProfileFilters.filter(f => f !== pName);
                     
-                    // Clean up mappings
                     this.data.zerodhaMappings = this.data.zerodhaMappings.filter(m => m.profileName !== pName);
                     
                     this.saveState();
@@ -975,7 +974,6 @@
                             if(rows[i]) {
                                 const rowStr = rows[i].join(" ").toLowerCase();
                                 
-                                // Grab Client ID if present
                                 if (rowStr.includes("client id")) {
                                     let idx = rows[i].findIndex(cell => strVal(cell).toLowerCase() === 'client id');
                                     if (idx !== -1 && rows[i].length > idx + 1) {
@@ -1015,7 +1013,6 @@
                                 let rawClass = "Other";
                                 let rawCategory = "NA";
                                 let rawSector = "NA";
-                                let calcRate = NaN;
 
                                 if (!isZerodha) {
                                     // INDmoney Extraction
@@ -1069,17 +1066,9 @@
                                         rawClass = "Equity";
                                         rawCategory = "NA"; 
                                     }
-
-                                    // Zerodha Growth Calculation
-                                    let pnlPctStr = rowObj["Unrealized P&L Pct."] || rowObj["Unrealize P&L Pct."];
-                                    calcRate = this.parseCurrencyStr(pnlPctStr);
-                                    if (isNaN(calcRate)) {
-                                        let pnl = this.parseCurrencyStr(rowObj["Unrealized P&L"]);
-                                        let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
-                                        if (!isNaN(pnl) && !isNaN(avgPrice) && !isNaN(qty) && avgPrice * qty > 0) {
-                                            calcRate = (pnl / (avgPrice * qty)) * 100;
-                                        }
-                                    }
+                                    
+                                    // Note: P&L percentage is total return, NOT annualized. 
+                                    // Do NOT use it for future growth projections.
                                 }
 
                                 if (invName && !isNaN(mVal)) {
@@ -1107,7 +1096,7 @@
                                         else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced') || aCatStr.includes('hybrid')) invType = 'hybrid';
                                     }
                                     
-                                    let rate = !isNaN(calcRate) ? calcRate : this.defaultRates[invType];
+                                    let rate = this.defaultRates[invType];
                                     if(rate === undefined) rate = 7.0;
 
                                     let isManuallyEdited = false;
@@ -1177,7 +1166,7 @@
                         this.updateProfileDropdowns();
                         this.renderInvestments();
                         this.renderDashboard();
-                        alert(`Successfully imported ${newInvestments.length} assets for profiles: ${importedProfiles.join(", ")}.\n\nData for your other profiles was untouched, and all manual category overrides were retained.`);
+                        alert(`Successfully imported ${newInvestments.length} assets for profiles: ${importedProfiles.join(", ")}.\n\nData for your other profiles was untouched, and all manual category/growth overrides were retained.`);
                     } else {
                         alert("No valid asset data found in the template.");
                     }
