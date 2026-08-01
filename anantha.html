@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.23</title>
+    <title>Anantha | Wealth OS V2.24</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -132,7 +132,7 @@
         .legend-color { width: 12px; height: 12px; border-radius: 3px; }
 
         /* Multi-Select Custom Dropdowns */
-        .filter-dropdown-container { position: relative; display: inline-block; min-width: 180px; }
+        .filter-dropdown-container { position: relative; display: inline-block; min-width: 160px; }
         .filter-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--surface-light); border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .filter-btn:hover { border-color: var(--accent-color); }
         .filter-menu { position: absolute; top: calc(100% + 5px); left: 0; min-width: 240px; max-height: 300px; overflow-y: auto; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; z-index: 50; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; }
@@ -142,7 +142,7 @@
         .filter-option input[type="checkbox"] { margin-right: 0.8rem; cursor: pointer; accent-color: var(--accent-color); width: 16px; height: 16px; flex-shrink: 0; }
         .filter-header { padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; background: var(--surface-light); color: var(--text-primary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 2; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Pills (Used on Dashboard) */
+        /* Pills (Used on Dashboard grouping) */
         .pill-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
         .pill-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
         .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
@@ -168,9 +168,14 @@
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
         
+        /* Low Growth Highlight */
         .data-table .low-growth-row { background-color: rgba(244, 63, 94, 0.05) !important; }
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
+
+        /* Clickable Dashboard Rows */
+        tr.clickable-row { cursor: pointer; transition: background-color 0.2s; }
+        tr.clickable-row:hover td { background-color: rgba(56, 189, 248, 0.08) !important; }
 
         /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -255,10 +260,12 @@
                 <div class="table-header-row" style="flex-direction: column; align-items: flex-start;">
                     <div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:1rem;">
                         <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Asset Allocation Summary</h3>
-                        <div id="dashProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <!-- Multi-select pills injected via JS -->
-                        </div>
                     </div>
+                    
+                    <div style="width: 100%; margin-top: 1rem; margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 1rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);" id="dashboardFiltersBar">
+                        <!-- Dropdowns injected via JS -->
+                    </div>
+
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem; align-items: center; flex-wrap: wrap;">
                         <span style="font-size: 0.85rem; color: var(--text-secondary);">Group By:</span>
                         <button class="pill-toggle alloc-group-btn" data-group="class" onclick="app.setAllocationGroupBy('class')">Asset Class</button>
@@ -529,7 +536,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.23</div>
+        <div>Anantha Wealth OS V2.24</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -551,11 +558,18 @@
             sortAsc: true,
             invSortColumn: 'fv',
             invSortAsc: false,
-            dashProfileFilters: [], 
+            
+            // Filters
+            dashProfileFilters: [],
+            dashClassFilters: [],
+            dashTypeFilters: [],
+            dashCategoryFilters: [],
+
             invProfileFilters: [],
             invClassFilters: [],
             invTypeFilters: [],
             invCategoryFilters: [],
+            
             allocationGroupBy: 'class', 
 
             defaultRates: { 
@@ -573,38 +587,53 @@
             },
 
             migrateData() {
-                const savedV2_23 = localStorage.getItem('ananthaDataV2_23');
-                if (savedV2_23) {
-                    this.data = JSON.parse(savedV2_23);
+                const savedV2_24 = localStorage.getItem('ananthaDataV2_24');
+                if (savedV2_24) {
+                    this.data = JSON.parse(savedV2_24);
                     this.activeView = this.data.activeView || 'home';
+                    
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
+                    this.dashClassFilters = this.data.dashClassFilters !== undefined ? this.data.dashClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.dashTypeFilters = this.data.dashTypeFilters !== undefined ? this.data.dashTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.dashCategoryFilters = this.data.dashCategoryFilters !== undefined ? this.data.dashCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                     this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
-                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     
+                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.sortColumn = this.data.sortColumn || 'year';
                     this.sortAsc = this.data.sortAsc !== undefined ? this.data.sortAsc : true;
                     this.invSortColumn = this.data.invSortColumn || 'fv';
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_22');
+                const savedOld = localStorage.getItem('ananthaDataV2_23');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.activeView = this.data.activeView || 'home';
+                    
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
+                    this.dashClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.dashTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.dashCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                     this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    
                     this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.saveState();
                     return;
                 }
                 
                 this.dashProfileFilters = [...this.data.profiles];
+                this.dashClassFilters = [];
+                this.dashTypeFilters = [];
+                this.dashCategoryFilters = [];
+
                 this.invProfileFilters = [...this.data.profiles];
                 this.invClassFilters = [];
                 this.invTypeFilters = [];
@@ -613,18 +642,24 @@
 
             saveState() {
                 this.data.activeView = this.activeView;
+                
                 this.data.dashProfileFilters = this.dashProfileFilters;
+                this.data.dashClassFilters = this.dashClassFilters;
+                this.data.dashTypeFilters = this.dashTypeFilters;
+                this.data.dashCategoryFilters = this.dashCategoryFilters;
+
                 this.data.invProfileFilters = this.invProfileFilters;
                 this.data.invClassFilters = this.invClassFilters;
                 this.data.invTypeFilters = this.invTypeFilters;
                 this.data.invCategoryFilters = this.invCategoryFilters;
+                
                 this.data.allocationGroupBy = this.allocationGroupBy;
                 this.data.sortColumn = this.sortColumn;
                 this.data.sortAsc = this.sortAsc;
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_23', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_24', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -794,8 +829,13 @@
                 
                 const cMatch = invData.rawAssetClass;
                 if (!this.invClassFilters.includes(cMatch)) this.invClassFilters.push(cMatch);
+                if (!this.dashClassFilters.includes(cMatch)) this.dashClassFilters.push(cMatch);
+                
                 if (!this.invTypeFilters.includes(rType)) this.invTypeFilters.push(rType);
+                if (!this.dashTypeFilters.includes(rType)) this.dashTypeFilters.push(rType);
+
                 if (!this.invCategoryFilters.includes(rCategory)) this.invCategoryFilters.push(rCategory);
+                if (!this.dashCategoryFilters.includes(rCategory)) this.dashCategoryFilters.push(rCategory);
 
                 this.saveState();
                 this.closeAssetModal();
@@ -945,6 +985,10 @@
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                         this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                         this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+
+                        this.dashClassFilters = [...this.invClassFilters];
+                        this.dashTypeFilters = [...this.invTypeFilters];
+                        this.dashCategoryFilters = [...this.invCategoryFilters];
                         
                         this.saveState();
                         this.updateProfileDropdowns();
@@ -990,10 +1034,10 @@
                 this.saveState();
                 
                 let items = [];
-                if (filterKey === 'invProfileFilters') items = this.data.profiles;
-                if (filterKey === 'invClassFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                if (filterKey === 'invTypeFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                if (filterKey === 'invCategoryFilters') items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                if (filterKey.includes('Profile')) items = this.data.profiles;
+                if (filterKey.includes('Class')) items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                if (filterKey.includes('Type')) items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                 
                 const btn = document.getElementById(btnId);
                 if (btn) {
@@ -1001,23 +1045,24 @@
                     if (this[filterKey].length === 0) selectedText = 'None';
                     
                     let label = "Filter";
-                    if (filterKey === 'invProfileFilters') label = "Profiles";
-                    if (filterKey === 'invClassFilters') label = "Classes";
-                    if (filterKey === 'invTypeFilters') label = "Types";
-                    if (filterKey === 'invCategoryFilters') label = "Categories";
+                    if (filterKey.includes('Profile')) label = "Profiles";
+                    if (filterKey.includes('Class')) label = "Classes";
+                    if (filterKey.includes('Type')) label = "Types";
+                    if (filterKey.includes('Category')) label = "Categories";
 
                     btn.innerHTML = `${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>`;
                 }
 
-                this.renderPortfolioTable();
+                if (filterKey.startsWith('dash')) this.renderDashboard();
+                else this.renderPortfolioTable();
             },
 
             selectAllFilters(filterKey, isAll, btnId) {
                 let items = [];
-                if (filterKey === 'invProfileFilters') items = this.data.profiles;
-                if (filterKey === 'invClassFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                if (filterKey === 'invTypeFilters') items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                if (filterKey === 'invCategoryFilters') items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                if (filterKey.includes('Profile')) items = this.data.profiles;
+                if (filterKey.includes('Class')) items = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                if (filterKey.includes('Type')) items = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                if (filterKey.includes('Category')) items = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
 
                 if (isAll) {
                     this[filterKey] = [...items];
@@ -1032,10 +1077,10 @@
                 this.saveState();
                 
                 let label = "Filter";
-                if (filterKey === 'invProfileFilters') label = "Profiles";
-                if (filterKey === 'invClassFilters') label = "Classes";
-                if (filterKey === 'invTypeFilters') label = "Types";
-                if (filterKey === 'invCategoryFilters') label = "Categories";
+                if (filterKey.includes('Profile')) label = "Profiles";
+                if (filterKey.includes('Class')) label = "Classes";
+                if (filterKey.includes('Type')) label = "Types";
+                if (filterKey.includes('Category')) label = "Categories";
 
                 let selectedText = isAll ? 'All' : 'None';
                 const btn = document.getElementById(btnId);
@@ -1043,7 +1088,8 @@
                     btn.innerHTML = `${label} (${selectedText}) <span style="font-size:0.7rem;">▼</span>`;
                 }
 
-                this.renderPortfolioTable();
+                if (filterKey.startsWith('dash')) this.renderDashboard();
+                else this.renderPortfolioTable();
             },
 
             buildDropdownHTML(id, label, items, activeFilters, filterKey) {
@@ -1070,7 +1116,7 @@
                 sortedItems.forEach(item => {
                     const isChecked = activeFilters.includes(item) ? 'checked' : '';
                     let delBtn = '';
-                    if (filterKey === 'invProfileFilters') {
+                    if (filterKey.includes('ProfileFilters')) {
                         delBtn = `<span title="Delete Profile" onclick="event.stopPropagation(); app.deleteFullProfile('${item}');" style="margin-left:auto; color:var(--danger-color); font-size:1.1rem;">&times;</span>`;
                     }
                     res += `
@@ -1090,7 +1136,6 @@
                 if (!filterBar) return;
 
                 let html = '';
-                
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                 const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                 const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
@@ -1099,6 +1144,23 @@
                 html += this.buildDropdownHTML('classFilter', 'Classes', uniqueClasses, this.invClassFilters, 'invClassFilters');
                 html += this.buildDropdownHTML('typeFilter', 'Types', uniqueTypes, this.invTypeFilters, 'invTypeFilters');
                 html += this.buildDropdownHTML('catFilter', 'Categories', uniqueCats, this.invCategoryFilters, 'invCategoryFilters');
+
+                filterBar.innerHTML = html;
+            },
+
+            renderDashboardFilters() {
+                const filterBar = document.getElementById('dashboardFiltersBar');
+                if (!filterBar) return;
+
+                let html = '';
+                const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+
+                html += this.buildDropdownHTML('dashProfileFilter', 'Profiles', this.data.profiles, this.dashProfileFilters, 'dashProfileFilters');
+                html += this.buildDropdownHTML('dashClassFilter', 'Classes', uniqueClasses, this.dashClassFilters, 'dashClassFilters');
+                html += this.buildDropdownHTML('dashTypeFilter', 'Types', uniqueTypes, this.dashTypeFilters, 'dashTypeFilters');
+                html += this.buildDropdownHTML('dashCatFilter', 'Categories', uniqueCats, this.dashCategoryFilters, 'dashCategoryFilters');
 
                 filterBar.innerHTML = html;
             },
@@ -1211,7 +1273,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* ALLOCATION GROUPING LOGIC                                                  */
+            /* ALLOCATION GROUPING LOGIC & CROSS-LINKING                                  */
             /* -------------------------------------------------------------------------- */
             setAllocationGroupBy(group) {
                 this.allocationGroupBy = group;
@@ -1219,7 +1281,27 @@
                 this.renderDashboard();
             },
 
-            renderAllocationTable(tbodyId, colHeaderId, investmentsList) {
+            goToPortfolioFilter(grouping, keyStr) {
+                if (grouping === 'class') {
+                    this.invClassFilters = [keyStr];
+                    this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                } else if (grouping === 'type') {
+                    this.invTypeFilters = [keyStr];
+                    this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                } else if (grouping === 'category') {
+                    this.invCategoryFilters = [keyStr];
+                    this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                }
+                
+                this.invProfileFilters = [...this.dashProfileFilters];
+                this.saveState();
+                this.switchView('investments');
+            },
+
+            renderAllocationTable(tbodyId, colHeaderId, investmentsList, isDashboard = false) {
                 let typeTotals = {};
                 let totalVal = 0;
 
@@ -1275,6 +1357,15 @@
                     }
 
                     tr.className = rowClass;
+                    
+                    // Cross-link to Portfolio
+                    if (isDashboard) {
+                        tr.className += " clickable-row";
+                        const safeKey = typeKey.replace(/'/g, "\\'");
+                        tr.setAttribute('onclick', `app.goToPortfolioFilter('${this.allocationGroupBy}', '${safeKey}')`);
+                        tr.title = `View ${typeKey} in Portfolio`;
+                    }
+
                     tr.innerHTML = `
                         <td style="text-transform: capitalize; font-weight: 500;">${typeKey} ${warningIcon}</td>
                         <td>₹${this.formatCurrency(data.cv)}</td>
@@ -1714,51 +1805,22 @@
                     }
                 });
 
-                const toggleContainer = document.getElementById('dashProfileToggles');
-                toggleContainer.innerHTML = '';
-                
-                this.data.profiles.forEach(p => {
-                    const isActive = this.dashProfileFilters.includes(p);
-                    
-                    const pill = document.createElement('div');
-                    pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
-                    
-                    const textSpan = document.createElement('span');
-                    textSpan.innerText = p;
-                    textSpan.onclick = () => {
-                        if (isActive) {
-                            this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== p);
-                        } else {
-                            this.dashProfileFilters.push(p);
-                        }
-                        this.saveState();
-                        this.renderDashboard();
-                    };
-
-                    const delSpan = document.createElement('span');
-                    delSpan.innerHTML = '&times;';
-                    delSpan.className = 'pill-delete';
-                    delSpan.title = "Delete Profile Permanently";
-                    delSpan.onclick = (e) => {
-                        e.stopPropagation();
-                        this.deleteFullProfile(p);
-                    };
-
-                    pill.appendChild(textSpan);
-                    pill.appendChild(delSpan);
-                    toggleContainer.appendChild(pill);
-                });
+                this.renderDashboardFilters();
 
                 document.querySelectorAll('.alloc-group-btn').forEach(btn => {
                     btn.classList.remove('active');
                     if (btn.dataset.group === this.allocationGroupBy) btn.classList.add('active');
                 });
 
-                let tableInvestments = this.data.investments.filter(i => 
-                    this.dashProfileFilters.includes(i.profile || 'Main Portfolio')
-                );
+                let tableInvestments = this.data.investments.filter(i => {
+                    const profileMatch = this.dashProfileFilters.includes(i.profile || 'Main Portfolio');
+                    const classMatch = this.dashClassFilters.includes(i.rawAssetClass || i.type);
+                    const typeMatch = this.dashTypeFilters.includes(i.rawAssetType || 'Other');
+                    const catMatch = this.dashCategoryFilters.includes(i.rawCategory || 'Other');
+                    return profileMatch && classMatch && typeMatch && catMatch;
+                });
 
-                this.renderAllocationTable('dashAssetSummaryBody', 'dashAllocColHeader', tableInvestments);
+                this.renderAllocationTable('dashAssetSummaryBody', 'dashAllocColHeader', tableInvestments, true);
             },
 
             renderAll() {
