@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.28</title>
+    <title>Anantha | Wealth OS V2.29</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -173,6 +173,7 @@
 
         /* Settings Card specific styles */
         .settings-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 2rem; max-width: 600px; margin: 0 auto; }
+        .mapping-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
 
         /* Footer */
         .app-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--surface-light); text-align: center; color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; }
@@ -406,12 +407,22 @@
                 
                 <div style="background: var(--surface-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--accent-color);">
                     <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Supported Platforms</h4>
-                    <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6;">
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6; margin-bottom: 1rem;">
                         <li><strong>INDMoney</strong> (holdings-family-template.xlsx)</li>
                         <li><strong>Zerodha</strong> (holdings-template-zerodha.xlsx)</li>
                     </ul>
-                    <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
-                        Currently supported platforms are INDMoney and Zerodha. Will be adding Upstox, Groww, Geojit templates.
+                    
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+                        <h5 style="margin-bottom: 0.5rem; color: var(--text-primary); font-size: 0.9rem;">Zerodha Client ID Profile Mapping</h5>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.8rem;">Zerodha files use a Client ID instead of a name. Map your IDs to your OS Profiles below.</p>
+                        <div id="zerodhaMappingContainer" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <!-- Mappings injected via JS -->
+                        </div>
+                        <button type="button" onclick="app.addZerodhaMapping()" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.8rem; margin-top: 0.5rem; background: var(--surface-color); color: var(--text-primary); border: 1px dashed var(--border-color);">+ Add Mapping ID</button>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
+                        Will be adding Upstox, Groww, Geojit templates soon.
                     </div>
                 </div>
 
@@ -518,7 +529,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.28</div>
+        <div>Anantha Wealth OS V2.29</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -527,7 +538,8 @@
             data: {
                 profiles: ['Main Portfolio'],
                 goals: [],
-                investments: []
+                investments: [],
+                zerodhaMappings: [] // {clientId: '', profileName: ''}
             },
             editingGoalId: null,
             editingBatchId: null,
@@ -564,14 +576,17 @@
                 this.migrateData();
                 this.updateProfileDropdowns();
                 this.toggleGoalFields();
+                this.renderZerodhaMappings();
                 this.renderAll();
                 this.switchView(this.activeView);
             },
 
             migrateData() {
-                const savedV2_28 = localStorage.getItem('ananthaDataV2_28');
-                if (savedV2_28) {
-                    this.data = JSON.parse(savedV2_28);
+                const savedV2_29 = localStorage.getItem('ananthaDataV2_29');
+                if (savedV2_29) {
+                    this.data = JSON.parse(savedV2_29);
+                    this.data.zerodhaMappings = this.data.zerodhaMappings || [];
+                    
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -591,9 +606,10 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_27');
+                const savedOld = localStorage.getItem('ananthaDataV2_28');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
+                    this.data.zerodhaMappings = [];
                     
                     this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -641,7 +657,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_28', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_29', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -656,6 +672,54 @@
                     return parseFloat(cleaned);
                 }
                 return NaN;
+            },
+
+            /* -------------------------------------------------------------------------- */
+            /* ZERODHA MAPPINGS                                                           */
+            /* -------------------------------------------------------------------------- */
+            renderZerodhaMappings() {
+                const container = document.getElementById('zerodhaMappingContainer');
+                if(!container) return;
+                container.innerHTML = '';
+                
+                this.data.zerodhaMappings.forEach((map, idx) => {
+                    let profOpts = this.data.profiles.map(p => `<option value="${p}" ${p === map.profileName ? 'selected' : ''}>${p}</option>`).join('');
+                    
+                    container.innerHTML += `
+                        <div class="mapping-row">
+                            <input type="text" placeholder="Client ID (e.g. CQC949)" value="${map.clientId}" onchange="app.updateZMap(${idx}, 'id', this.value)" style="flex: 1; padding: 0.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                            <span style="color: var(--text-secondary);">➔</span>
+                            <select onchange="app.updateZMap(${idx}, 'prof', this.value)" style="flex: 1; padding: 0.5rem; background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                                ${profOpts}
+                            </select>
+                            <button onclick="app.removeZMap(${idx})" style="width: auto; background: transparent; color: var(--danger-color); padding: 0.5rem; cursor: pointer; border: none; font-size: 1.2rem; line-height: 1;">&times;</button>
+                        </div>
+                    `;
+                });
+            },
+
+            addZerodhaMapping() {
+                this.data.zerodhaMappings.push({ clientId: '', profileName: this.data.profiles[0] });
+                this.saveState();
+                this.renderZerodhaMappings();
+            },
+
+            updateZMap(idx, type, val) {
+                if(type === 'id') this.data.zerodhaMappings[idx].clientId = val.toUpperCase().trim();
+                if(type === 'prof') this.data.zerodhaMappings[idx].profileName = val;
+                this.saveState();
+            },
+
+            removeZMap(idx) {
+                this.data.zerodhaMappings.splice(idx, 1);
+                this.saveState();
+                this.renderZerodhaMappings();
+            },
+
+            getMappedProfile(clientId) {
+                const cId = clientId.toUpperCase().trim();
+                const match = this.data.zerodhaMappings.find(m => m.clientId === cId);
+                return match ? match.profileName : null;
             },
 
             /* -------------------------------------------------------------------------- */
@@ -674,6 +738,7 @@
                 });
                 
                 if(currentFormVal && this.data.profiles.includes(currentFormVal)) formSelect.value = currentFormVal;
+                this.renderZerodhaMappings(); // Re-render to update selects
             },
 
             openProfileModal() { document.getElementById('profileModal').style.display = 'flex'; document.getElementById('newProfileName').focus(); },
@@ -709,6 +774,9 @@
                     
                     this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== pName);
                     this.invProfileFilters = this.invProfileFilters.filter(f => f !== pName);
+                    
+                    // Clean up mappings
+                    this.data.zerodhaMappings = this.data.zerodhaMappings.filter(m => m.profileName !== pName);
                     
                     this.saveState();
                     this.updateProfileDropdowns();
@@ -802,7 +870,7 @@
                     rawAssetType: rType,
                     rawCategory: rCategory,
                     rawSector: rSector,
-                    isManuallyEdited: true // Flag to retain on future uploads
+                    isManuallyEdited: true 
                 };
 
                 if (this.editingInvId) {
@@ -884,7 +952,6 @@
                     let newInvestments = [];
                     let newProfiles = new Set();
 
-                    // 1. Build a map of manually edited existing items
                     let manualOverrides = {};
                     this.data.investments.forEach(i => {
                         if (i.isManuallyEdited) {
@@ -902,10 +969,20 @@
                         
                         let headerRowIndex = -1;
                         let isZerodha = false;
+                        let globalClientId = "";
 
                         for(let i=0; i<rows.length; i++) {
                             if(rows[i]) {
                                 const rowStr = rows[i].join(" ").toLowerCase();
+                                
+                                // Grab Client ID if present
+                                if (rowStr.includes("client id")) {
+                                    let idx = rows[i].findIndex(cell => strVal(cell).toLowerCase() === 'client id');
+                                    if (idx !== -1 && rows[i].length > idx + 1) {
+                                        globalClientId = strVal(rows[i][idx + 1]);
+                                    }
+                                }
+
                                 if(rowStr.includes("investment") && rowStr.includes("market value")) {
                                     headerRowIndex = i;
                                     isZerodha = false;
@@ -917,6 +994,8 @@
                                 }
                             }
                         }
+
+                        function strVal(v) { return v ? v.toString().trim() : ""; }
                         
                         if (headerRowIndex !== -1) {
                             const headers = rows[headerRowIndex];
@@ -943,10 +1022,10 @@
                                     invName = rowObj["Investment"];
                                     mVal = this.parseCurrencyStr(rowObj["Market Value"]);
                                     if(isNaN(mVal)) mVal = this.parseCurrencyStr(rowObj["Invested Amount"]);
-                                    profileName = rowObj["First Name"] ? rowObj["First Name"].toString().trim() : "Main Portfolio";
-                                    rawType = (rowObj["Asset Type"] || "Other").toString().trim();
-                                    rawClass = (rowObj["Asset Class"] || "Other").toString().trim();
-                                    rawCategory = (rowObj["Category"] || "NA").toString().trim();
+                                    profileName = rowObj["First Name"] ? strVal(rowObj["First Name"]) : "Main Portfolio";
+                                    rawType = strVal(rowObj["Asset Type"]) || "Other";
+                                    rawClass = strVal(rowObj["Asset Class"]) || "Other";
+                                    rawCategory = strVal(rowObj["Category"]) || "NA";
                                     rawSector = "NA";
                                 } else {
                                     // Zerodha Extraction
@@ -959,9 +1038,19 @@
                                         let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
                                         mVal = qty * avgPrice;
                                     }
+
+                                    // Profile mapping
+                                    if (globalClientId) {
+                                        let mappedProf = this.getMappedProfile(globalClientId);
+                                        if (mappedProf) {
+                                            profileName = mappedProf;
+                                        } else {
+                                            profileName = `Zerodha - ${globalClientId}`; 
+                                        }
+                                    }
                                     
-                                    let instType = (rowObj["Instrument Type"] || "").toString().trim();
-                                    let sector = (rowObj["Sector"] || "").toString().trim();
+                                    let instType = strVal(rowObj["Instrument Type"]);
+                                    let sector = strVal(rowObj["Sector"]);
 
                                     rawSector = sector || "NA";
 
@@ -1036,7 +1125,7 @@
                                         rawCategory = existingManual.rawCategory;
                                         rawSector = existingManual.rawSector;
                                         maturityDate = existingManual.maturityDate;
-                                        objId = existingManual.id; // Maintain internal ID
+                                        objId = existingManual.id;
                                         isManuallyEdited = true;
                                     }
 
@@ -1062,10 +1151,9 @@
                     if(newInvestments.length > 0) {
                         let importedProfiles = Array.from(newProfiles);
                         
-                        // NON-DESTRUCTIVE IMPORT: Only clear old investments for the profiles being uploaded right now.
+                        // NON-DESTRUCTIVE IMPORT
                         this.data.investments = this.data.investments.filter(i => !importedProfiles.includes(i.profile || 'Main Portfolio'));
                         
-                        // Append the new ones
                         this.data.investments = [...this.data.investments, ...newInvestments];
 
                         importedProfiles.forEach(p => {
@@ -1341,7 +1429,7 @@
                             </div>
                         </td>
                         <td>${this.formatCurrency(inv.value)}</td>
-                        <td style="color: ${inv.growthRate < 0 ? 'var(--danger-color)' : 'var(--success-color)'};">${inv.growthRate}%</td>
+                        <td style="color: ${inv.growthRate < 0 ? 'var(--danger-color)' : 'var(--success-color)'};">${parseFloat(inv.growthRate).toFixed(1)}%</td>
                         <td style="color: var(--text-secondary);">${inv.matDisplay}</td>
                         <td class="highlight-val">${this.formatCurrency(inv.computedFV)}</td>
                         <td style="text-align: center;">
@@ -1467,7 +1555,7 @@
                     if (isDashboard) {
                         tr.className += " clickable-row";
                         const safeKey = typeKey.replace(/'/g, "\\'");
-                        tr.setAttribute('onclick', `app.goToPortfolioFilter('class', '${safeKey}')`);
+                        tr.setAttribute('onclick', `app.goToPortfolioFilter('${this.allocationGroupBy}', '${safeKey}')`);
                         tr.title = `View ${typeKey} in Portfolio`;
                     }
 
@@ -1910,45 +1998,15 @@
                     }
                 });
 
-                const toggleContainer = document.getElementById('dashProfileToggles');
-                if (toggleContainer) {
-                    toggleContainer.innerHTML = '';
-                    this.data.profiles.forEach(p => {
-                        const isActive = this.dashProfileFilters.includes(p);
-                        
-                        const pill = document.createElement('div');
-                        pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
-                        
-                        const textSpan = document.createElement('span');
-                        textSpan.innerText = p;
-                        textSpan.onclick = () => {
-                            if (isActive) {
-                                this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== p);
-                            } else {
-                                this.dashProfileFilters.push(p);
-                            }
-                            this.saveState();
-                            this.renderDashboard();
-                        };
+                this.renderDashboardFilters();
 
-                        const delSpan = document.createElement('span');
-                        delSpan.innerHTML = '&times;';
-                        delSpan.className = 'pill-delete';
-                        delSpan.title = "Delete Profile Permanently";
-                        delSpan.onclick = (e) => {
-                            e.stopPropagation();
-                            this.deleteFullProfile(p);
-                        };
-
-                        pill.appendChild(textSpan);
-                        pill.appendChild(delSpan);
-                        toggleContainer.appendChild(pill);
-                    });
-                }
-
-                let tableInvestments = this.data.investments.filter(i => 
-                    this.dashProfileFilters.includes(i.profile || 'Main Portfolio')
-                );
+                let tableInvestments = this.data.investments.filter(i => {
+                    const profileMatch = this.dashProfileFilters.includes(i.profile || 'Main Portfolio');
+                    const classMatch = this.dashClassFilters.includes(i.rawAssetClass || i.type);
+                    const typeMatch = this.dashTypeFilters.includes(i.rawAssetType || 'Other');
+                    const catMatch = this.dashCategoryFilters.includes(i.rawCategory || 'NA');
+                    return profileMatch && classMatch && typeMatch && catMatch;
+                });
 
                 this.renderAllocationTable('dashAssetSummaryBody', 'dashAllocColHeader', tableInvestments, true);
             },
