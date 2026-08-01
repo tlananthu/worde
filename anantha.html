@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.19</title>
+    <title>Anantha | Wealth OS V2.20</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -39,6 +39,10 @@
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
         .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
         
+        .profile-manager { display: flex; align-items: center; gap: 0.5rem; background: var(--surface-color); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .profile-manager select { background: transparent; color: var(--text-primary); border: none; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer; }
+        .profile-manager button { width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem; background: var(--surface-light); color: var(--accent-color); border: none; border-radius: 4px; cursor: pointer; }
+
         .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); overflow-x: auto; }
         .tab-btn { background: transparent; border: none; color: var(--text-secondary); padding: 1rem 1.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; border-radius: 0; white-space: nowrap; transition: color 0.2s; }
         .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
@@ -179,7 +183,15 @@
 <body>
 
     <header>
-        <div class="brand-name">Anantha</div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 8a4 4 0 1 0 0 8c4 0 7.33-8 11.33-8a4 4 0 1 1 0 8c-4 0-7.33-8-11.33-8z" />
+            </svg>
+            <div style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="brand-name" style="line-height: 1; letter-spacing: 2px;">ANANTHA</div>
+                <div style="font-size: 0.65rem; color: var(--accent-color); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 0.25rem; font-weight: 600; opacity: 0.9;">Infinite Possibilities</div>
+            </div>
+        </div>
     </header>
 
     <div class="nav-tabs">
@@ -369,7 +381,7 @@
                 <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
             </div>
         </div>
-        
+
         <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
             <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                 <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Profiles:</span>
@@ -526,9 +538,9 @@
             },
 
             migrateData() {
-                const savedV2_19 = localStorage.getItem('ananthaDataV2_19');
-                if (savedV2_19) {
-                    this.data = JSON.parse(savedV2_19);
+                const savedV2_20 = localStorage.getItem('ananthaDataV2_20');
+                if (savedV2_20) {
+                    this.data = JSON.parse(savedV2_20);
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
@@ -540,13 +552,13 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_18');
+                const savedOld = localStorage.getItem('ananthaDataV2_19');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    this.dashProfileFilters = [...this.data.profiles];
-                    this.invProfileFilters = [...this.data.profiles];
-                    this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                    this.allocationGroupBy = 'class';
+                    this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
+                    this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
+                    this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.saveState();
                     return;
                 }
@@ -566,7 +578,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_19', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_20', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -1080,6 +1092,7 @@
                 });
 
                 const tbody = document.getElementById(tbodyId);
+                if (!tbody) return;
                 tbody.innerHTML = '';
                 
                 const colHeader = document.getElementById(colHeaderId);
