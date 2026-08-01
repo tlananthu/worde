@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.7</title>
+    <title>Anantha | Wealth OS V2.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -84,7 +84,6 @@
         .inv-card.real_estate-type { border-left: 4px solid var(--realestate-color); }
         .inv-card.vehicle-type { border-left: 4px solid var(--vehicle-color); }
 
-        /* Visually Appealing Year Badge for Cards */
         .year-badge {
             position: absolute;
             top: -14px;
@@ -136,12 +135,14 @@
         .progress-bar-bg { width: 100%; height: 20px; background: var(--surface-light); border-radius: 10px; overflow: hidden; margin-top: 1rem; }
         .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success-color), var(--accent-color)); width: 0%; transition: width 1s ease-in-out; }
 
-        /* Data Tables */
+        /* Sortable Data Tables */
         .table-container { width: 100%; overflow-x: auto; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 1rem; }
         .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
         .data-table th, .data-table td { padding: 1.25rem 1rem; text-align: right; border-bottom: 1px solid var(--surface-light); }
         .data-table th:first-child, .data-table td:first-child { text-align: left; }
-        .data-table th { background: var(--surface-light); color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; }
+        .data-table th { background: var(--surface-light); color: var(--text-secondary); font-weight: 600; font-size: 0.85rem; cursor: pointer; user-select: none; transition: background 0.2s, color 0.2s; }
+        .data-table th:hover { background: #323846; color: var(--text-primary); }
+        .data-table th span.sort-icon { margin-left: 0.4rem; font-size: 0.75rem; color: var(--accent-color); }
         .data-table td { font-size: 1rem; }
         .data-table tr:hover:not(.total-row) { background-color: rgba(255, 255, 255, 0.02); }
         .data-table tr:last-child td { border-bottom: none; }
@@ -309,11 +310,11 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Goal</th>
-                                <th>Year</th>
-                                <th>C. Expenses</th>
-                                <th>Inflation</th>
-                                <th>Goal Required</th>
+                                <th onclick="app.sortGoals('name')">Goal <span id="sort-name" class="sort-icon"></span></th>
+                                <th onclick="app.sortGoals('year')">Year <span id="sort-year" class="sort-icon"></span></th>
+                                <th onclick="app.sortGoals('cExp')">C. Expenses <span id="sort-cExp" class="sort-icon"></span></th>
+                                <th onclick="app.sortGoals('inflation')">Inflation <span id="sort-inflation" class="sort-icon"></span></th>
+                                <th onclick="app.sortGoals('fv')">Goal Required <span id="sort-fv" class="sort-icon"></span></th>
                                 <th style="text-align: center;">Actions</th>
                             </tr>
                         </thead>
@@ -434,6 +435,10 @@
             editingGoalId: null,
             editingInvId: null,
             currentYear: new Date().getFullYear(),
+            
+            // Sorting State
+            sortColumn: 'year',
+            sortAsc: true,
 
             defaultRates: { 
                 equity: 12.0, debt: 7.0, hybrid: 10.0, liquid: 4.0, fd: 7.0, rd: 6.8, nps: 10.0, epf: 8.1, ppf: 7.1, pomis: 7.4, gold_silver: 8.0, real_estate: 6.0, vehicle: -10.0 
@@ -447,12 +452,12 @@
             },
 
             migrateData() {
-                const savedV2_7 = localStorage.getItem('ananthaDataV2_7');
-                if (savedV2_7) {
-                    this.data = JSON.parse(savedV2_7);
+                const savedV2_8 = localStorage.getItem('ananthaDataV2_8');
+                if (savedV2_8) {
+                    this.data = JSON.parse(savedV2_8);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_6');
+                const savedOld = localStorage.getItem('ananthaDataV2_7');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -460,7 +465,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_7', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_8', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -810,7 +815,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* GOALS LOGIC (Education Multi-stage overhaul)                               */
+            /* GOALS LOGIC & SORTING                                                      */
             /* -------------------------------------------------------------------------- */
             toggleGoalFields() {
                 const type = document.getElementById('goalType').value;
@@ -855,7 +860,6 @@
                 container.innerHTML = '';
 
                 const stages = [];
-                // Generate individual grades
                 for (let i = grade + 1; i <= 10; i++) {
                     stages.push({ name: `Grade ${i}`, yearOffset: i - grade });
                 }
@@ -893,7 +897,6 @@
                 const baseName = document.getElementById('goalName').value;
                 
                 if (type === 'education') {
-                    // Handle dynamic multi-stage creation
                     const inputs = document.querySelectorAll('.edu-cost-input');
                     let addedCount = 0;
                     
@@ -925,7 +928,6 @@
                     }
 
                 } else {
-                    // Handle Standard, Edu_Stage (Edit), Retirement
                     let goalData = {
                         id: this.editingGoalId || Date.now().toString(),
                         type: type,
@@ -1010,9 +1012,31 @@
                 }
             },
 
+            sortGoals(column) {
+                if (this.sortColumn === column) {
+                    this.sortAsc = !this.sortAsc; // Toggle direction
+                } else {
+                    this.sortColumn = column;
+                    this.sortAsc = true; // Default to ascending on new column
+                }
+                this.renderGoals();
+            },
+
             renderGoals() {
                 const tbody = document.getElementById('goalsTableBody');
                 tbody.innerHTML = ''; 
+
+                // Update Header Sort Icons
+                ['name', 'year', 'cExp', 'inflation', 'fv'].forEach(col => {
+                    const iconEl = document.getElementById(`sort-${col}`);
+                    if(iconEl) {
+                        if (this.sortColumn === col) {
+                            iconEl.innerText = this.sortAsc ? ' ▲' : ' ▼';
+                        } else {
+                            iconEl.innerText = '';
+                        }
+                    }
+                });
 
                 if (this.data.goals.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No goals defined yet.</td></tr>`;
@@ -1022,21 +1046,35 @@
                 let totalCExp = 0;
                 let totalFV = 0;
 
-                const sortedGoals = [...this.data.goals].sort((a, b) => (a.targetYear || this.currentYear) - (b.targetYear || this.currentYear));
-
-                sortedGoals.forEach(goal => {
+                // Process and Sort Goals
+                const processedGoals = this.data.goals.map(goal => {
                     let cExp = goal.cExp || (goal.type === 'retirement' ? (goal.exp * 12) : (goal.cv || goal.pv || 0));
                     let fv = goal.fv || goal.targetValue || 0;
-                    
                     let tYear = goal.targetYear;
                     if (!tYear) {
                         if (goal.type === 'standard' || goal.type === 'edu_stage') tYear = this.currentYear + (goal.yrs || 0);
                         else if (goal.type === 'retirement') tYear = this.currentYear + (goal.yTo || 0);
                         else tYear = this.currentYear;
                     }
+                    return { ...goal, computedCExp: cExp, computedFV: fv, computedYear: tYear };
+                });
 
-                    totalCExp += cExp;
-                    totalFV += fv;
+                processedGoals.sort((a, b) => {
+                    let valA, valB;
+                    if (this.sortColumn === 'name') { valA = a.name.toLowerCase(); valB = b.name.toLowerCase(); }
+                    else if (this.sortColumn === 'year') { valA = a.computedYear; valB = b.computedYear; }
+                    else if (this.sortColumn === 'cExp') { valA = a.computedCExp; valB = b.computedCExp; }
+                    else if (this.sortColumn === 'inflation') { valA = a.inflation; valB = b.inflation; }
+                    else if (this.sortColumn === 'fv') { valA = a.computedFV; valB = b.computedFV; }
+
+                    if (valA < valB) return this.sortAsc ? -1 : 1;
+                    if (valA > valB) return this.sortAsc ? 1 : -1;
+                    return 0;
+                });
+
+                processedGoals.forEach(goal => {
+                    totalCExp += goal.computedCExp;
+                    totalFV += goal.computedFV;
 
                     const displayType = goal.type === 'edu_stage' ? 'Education' : goal.type;
                     const badgeColor = goal.type === 'edu_stage' || goal.type === 'education' ? 'var(--edu-color)' : (goal.type === 'retirement' ? 'var(--warning-color)' : 'var(--surface-light)');
@@ -1050,10 +1088,10 @@
                                 <span class="badge" style="background:${badgeColor}; color:${badgeTextColor}; font-size:0.6rem;">${displayType}</span>
                             </div>
                         </td>
-                        <td>${tYear}</td>
-                        <td>${this.formatCurrency(cExp)}</td>
+                        <td>${goal.computedYear}</td>
+                        <td>${this.formatCurrency(goal.computedCExp)}</td>
                         <td>${goal.inflation}%</td>
-                        <td class="highlight-val">${this.formatCurrency(fv)}</td>
+                        <td class="highlight-val">${this.formatCurrency(goal.computedFV)}</td>
                         <td style="text-align: center;">
                             <button class="icon-btn" onclick="app.editGoal('${goal.id}')">✎</button>
                             <button class="icon-btn delete" onclick="app.deleteGoal('${goal.id}')">✕</button>
