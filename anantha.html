@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.5</title>
+    <title>Anantha | Wealth OS V2.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -18,6 +18,9 @@
             --edu-color: #a78bfa;
             --success-color: #34d399;
             --border-color: #2dd4bf20;
+            --liquid-color: #818cf8;
+            --vehicle-color: #9ca3af;
+            --realestate-color: #d97706;
             --font-family: system-ui, -apple-system, sans-serif;
         }
 
@@ -33,49 +36,13 @@
             margin: 0 auto;
         }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
         .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
         
-        .profile-manager {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--surface-color);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .profile-manager select {
-            background: transparent;
-            color: var(--text-primary);
-            border: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            outline: none;
-            cursor: pointer;
-        }
-        
-        .profile-manager button {
-            width: auto;
-            padding: 0.3rem 0.6rem;
-            font-size: 0.75rem;
-            background: var(--surface-light);
-            color: var(--accent-color);
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+        .profile-manager { display: flex; align-items: center; gap: 0.5rem; background: var(--surface-color); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); }
+        .profile-manager select { background: transparent; color: var(--text-primary); border: none; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer; }
+        .profile-manager button { width: auto; padding: 0.3rem 0.6rem; font-size: 0.75rem; background: var(--surface-light); color: var(--accent-color); border: none; border-radius: 4px; cursor: pointer; }
 
-        /* Navigation Tabs */
         .nav-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); overflow-x: auto; }
         .tab-btn { background: transparent; border: none; color: var(--text-secondary); padding: 1rem 1.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; border-radius: 0; white-space: nowrap; transition: color 0.2s; }
         .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
@@ -83,18 +50,12 @@
         
         .view { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view.active { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Layouts */
         .dashboard-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
         .summary-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        
-        @media (max-width: 900px) {
-            .dashboard-layout { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 900px) { .dashboard-layout { grid-template-columns: 1fr; } }
 
-        /* Forms */
         .form-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; height: fit-content; }
         .form-card h2 { font-size: 1.1rem; margin-bottom: 1.5rem; color: var(--accent-color); }
         .form-group { margin-bottom: 1.2rem; }
@@ -110,14 +71,18 @@
         .btn-cancel { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); display: none; }
         .btn-action { width: auto; flex: 1; }
 
-        /* Cards & Grids */
+        /* Investment Cards & Colors */
         .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
         .card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; }
         
         .inv-card.equity-type { border-left: 4px solid var(--accent-color); }
         .inv-card.hybrid-type { border-left: 4px solid var(--edu-color); }
-        .inv-card.assets-type { border-left: 4px solid var(--warning-color); }
         .inv-card.fd-type, .inv-card.rd-type, .inv-card.ppf-type, .inv-card.pomis-type, .inv-card.debt-type { border-left: 4px solid var(--success-color); }
+        .inv-card.liquid-type { border-left: 4px solid var(--liquid-color); }
+        .inv-card.nps-type, .inv-card.epf-type { border-left: 4px solid var(--warning-color); }
+        .inv-card.gold_silver-type { border-left: 4px solid var(--warning-color); }
+        .inv-card.real_estate-type { border-left: 4px solid var(--realestate-color); }
+        .inv-card.vehicle-type { border-left: 4px solid var(--vehicle-color); }
         
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
         .card-title { font-weight: 600; font-size: 1.1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
@@ -224,7 +189,6 @@
             </div>
         </div>
 
-        <!-- NEW: Asset Allocation Summary -->
         <div class="table-container" style="margin-top: 2rem;">
             <h3 style="padding: 1.5rem 1.5rem 0.5rem; margin: 0; font-size: 1.2rem; color: var(--text-primary);">Asset Allocation by Class</h3>
             <table class="data-table">
@@ -243,7 +207,7 @@
         </div>
     </div>
     
-    <!-- VIEW: GOALS (TABLE FORMAT) -->
+    <!-- VIEW: GOALS -->
     <div id="view-goals" class="view">
         <div class="dashboard-layout">
             <aside class="form-card">
@@ -373,18 +337,23 @@
                         <label for="invType">Asset Class</label>
                         <select id="invType" onchange="app.handleInvTypeChange()">
                             <option value="equity">Equity (MFs, Stocks)</option>
+                            <option value="debt">Debt / Bonds</option>
+                            <option value="hybrid">Hybrid / Balanced</option>
+                            <option value="liquid">Liquid / Savings Accounts (SA)</option>
                             <option value="fd">Fixed Deposit (FD)</option>
                             <option value="rd">Recurring Deposit (RD)</option>
-                            <option value="ppf">Public Provident Fund (PPF)</option>
+                            <option value="nps">NPS (Retirement)</option>
+                            <option value="epf">EPF (Retirement)</option>
+                            <option value="ppf">PPF</option>
                             <option value="pomis">Post Office MIS</option>
-                            <option value="debt">Other Debt / Bonds</option>
-                            <option value="hybrid">Hybrid / Balanced</option>
-                            <option value="assets">Physical Assets (Real Estate, Gold)</option>
+                            <option value="gold_silver">Gold & Silver</option>
+                            <option value="real_estate">Real Estate</option>
+                            <option value="vehicle">Vehicles</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="invName">Instrument Name / Bank</label>
+                        <label for="invName">Instrument Name / Details</label>
                         <input type="text" id="invName" required placeholder="e.g., SBI FD, HDFC Flexi-Cap">
                     </div>
                     
@@ -396,7 +365,7 @@
                     <div class="row-group">
                         <div class="form-group">
                             <label for="invGrowth">Expected YoY Growth (%)</label>
-                            <input type="number" id="invGrowth" required placeholder="7.1" min="0" max="100" step="0.1" value="12.0">
+                            <input type="number" id="invGrowth" required placeholder="7.1" step="0.1" value="12.0">
                         </div>
                         <div class="form-group">
                             <label for="invMaturity">Maturity Date (Optional)</label>
@@ -459,7 +428,22 @@
             editingInvId: null,
             currentYear: new Date().getFullYear(),
 
-            defaultRates: { equity: 12.0, fd: 7.0, rd: 6.8, ppf: 7.1, pomis: 7.4, debt: 7.0, hybrid: 10.0, assets: 5.0 },
+            // Updated Default Rates based on precise asset mapping
+            defaultRates: { 
+                equity: 12.0, 
+                debt: 7.0, 
+                hybrid: 10.0, 
+                liquid: 4.0, 
+                fd: 7.0, 
+                rd: 6.8, 
+                nps: 10.0, 
+                epf: 8.1, 
+                ppf: 7.1, 
+                pomis: 7.4, 
+                gold_silver: 8.0, 
+                real_estate: 6.0, 
+                vehicle: -10.0 
+            },
 
             init() {
                 this.migrateData();
@@ -469,12 +453,12 @@
             },
 
             migrateData() {
-                const savedV2_5 = localStorage.getItem('ananthaDataV2_5');
-                if (savedV2_5) {
-                    this.data = JSON.parse(savedV2_5);
+                const savedV2_6 = localStorage.getItem('ananthaDataV2_6');
+                if (savedV2_6) {
+                    this.data = JSON.parse(savedV2_6);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_4');
+                const savedOld = localStorage.getItem('ananthaDataV2_5');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -482,7 +466,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_5', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_6', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -559,10 +543,8 @@
             /* -------------------------------------------------------------------------- */
             /* INVESTMENTS LOGIC                                                          */
             /* -------------------------------------------------------------------------- */
-            
-            // Computes the maximum year among all goals to serve as a global projection horizon
             getMaxGoalYear() {
-                let maxYear = this.currentYear + 10; // Default to 10 years if no goals exist
+                let maxYear = this.currentYear + 10; 
                 if (this.data.goals && this.data.goals.length > 0) {
                     const goalYears = this.data.goals.map(g => g.targetYear || this.currentYear);
                     maxYear = Math.max(...goalYears);
@@ -576,16 +558,14 @@
             },
             
             calcInvFV(val, rate, matDateStr) {
-                if (!rate) return val;
+                if (!rate && rate !== 0) return val;
                 let years = 0;
 
                 if (matDateStr) {
-                    // Compound to explicit maturity date
                     const matDate = new Date(matDateStr);
                     const today = new Date();
                     years = (matDate - today) / (1000 * 60 * 60 * 24 * 365.25);
                 } else {
-                    // Automatically compound to the furthest goal horizon if no maturity is set
                     years = this.getMaxGoalYear() - this.currentYear;
                 }
                 
@@ -637,7 +617,7 @@
                 document.getElementById('invName').value = inv.name;
                 document.getElementById('invType').value = inv.type;
                 document.getElementById('invValue').value = inv.value;
-                document.getElementById('invGrowth').value = inv.growthRate || this.defaultRates[inv.type];
+                document.getElementById('invGrowth').value = inv.growthRate || inv.growthRate === 0 ? inv.growthRate : this.defaultRates[inv.type];
                 document.getElementById('invMaturity').value = inv.maturityDate || "";
                 
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -706,15 +686,31 @@
                                     let profileName = rowObj["First Name"] ? rowObj["First Name"].toString().trim() : sheetName;
                                     newProfiles.add(profileName);
                                     
-                                    let ac = (rowObj["Asset Class"] || rowObj["Asset Type"] || "").toString().toLowerCase();
-                                    let invType = 'equity';
-                                    if (ac.includes('debt')) invType = 'debt';
-                                    else if (ac.includes('hybrid') || ac.includes('balanced')) invType = 'hybrid';
-                                    else if (ac.includes('fd') || ac.includes('fixed')) invType = 'fd';
-                                    else if (ac.includes('ppf')) invType = 'ppf';
-                                    else if (ac.includes('gold') || ac.includes('property') || ac.includes('real estate')) invType = 'assets';
+                                    let aType = (rowObj["Asset Type"] || "").toString().toUpperCase();
+                                    let aClass = (rowObj["Asset Class"] || "").toString();
                                     
-                                    let rate = this.defaultRates[invType] || 7.0;
+                                    let invType = 'equity'; // default fallback
+                                    
+                                    if (aType === 'VEHICLE' || aClass === 'Vehicle') invType = 'vehicle';
+                                    else if (aType === 'NPS') invType = 'nps';
+                                    else if (aType === 'EPF') invType = 'epf';
+                                    else if (aType === 'PPF') invType = 'ppf';
+                                    else if (aType === 'FD') invType = 'fd';
+                                    else if (aType === 'SA' || aClass === 'Liquid') invType = 'liquid';
+                                    else if (aClass === 'Gold' || aClass === 'Silver' || aType === 'PHYSICAL_GOLD') invType = 'gold_silver';
+                                    else if (aType === 'REAL_ESTATE' || aClass === 'Real Estate') invType = 'real_estate';
+                                    else if (aClass === 'Debt' || aType === 'BOND') invType = 'debt';
+                                    else if (aType === 'MF') {
+                                        let c = aClass.toLowerCase();
+                                        if (c.includes('debt')) invType = 'debt';
+                                        else if (c.includes('liquid')) invType = 'liquid';
+                                        else if (c.includes('gold') || c.includes('silver')) invType = 'gold_silver';
+                                        // hybrid falls through if not explicit in template image, but we can catch it
+                                        else if (c.includes('hybrid') || c.includes('balanced')) invType = 'hybrid';
+                                    }
+                                    
+                                    let rate = this.defaultRates[invType];
+                                    if(rate === undefined) rate = 7.0;
 
                                     newInvestments.push({
                                         id: Date.now().toString() + Math.random().toString().slice(2,8),
@@ -781,12 +777,15 @@
                     } else {
                         projLabel = `Projected Value (to ${this.getMaxGoalYear()})`;
                     }
+
+                    // Format type string for display
+                    let displayType = inv.type.replace('_', ' ');
                     
                     card.innerHTML = `
                         <div class="card-header">
                             <div class="card-title">
                                 ${inv.name} 
-                                <span class="badge">${inv.type}</span>
+                                <span class="badge">${displayType}</span>
                                 <span class="badge profile-badge">${inv.profile || 'Main'}</span>
                             </div>
                             <div class="card-actions">
@@ -795,7 +794,7 @@
                             </div>
                         </div>
                         
-                        <div class="stat-row"><span>Growth Rate:</span><span style="color: var(--success-color); font-weight: 600;">${inv.growthRate}% YoY</span></div>
+                        <div class="stat-row"><span>Growth Rate:</span><span style="color: ${inv.growthRate < 0 ? 'var(--danger-color)' : 'var(--success-color)'}; font-weight: 600;">${inv.growthRate}% YoY</span></div>
                         <div class="stat-row"><span>Maturity Date:</span><span>${dateDisplay}</span></div>
                         
                         <div class="value-tiers" style="margin-top: auto;">
@@ -916,7 +915,7 @@
                 this.saveState();
                 this.cancelGoalEdit();
                 this.renderGoals();
-                this.renderDashboard();
+                this.renderDashboard(); // Re-render dashboard to update max year projections
             },
 
             editGoal(id) {
@@ -967,7 +966,7 @@
                     if(this.editingGoalId === id) this.cancelGoalEdit();
                     this.saveState();
                     this.renderGoals();
-                    this.renderDashboard();
+                    this.renderDashboard(); // Re-render to update projections
                 }
             },
 
@@ -1030,13 +1029,11 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC (Includes Summary by Type)                                 */
+            /* DASHBOARD LOGIC                                                            */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let totalInvestments = 0;
                 let futureInvestments = 0;
-                
-                // Track breakdown by asset type
                 let typeTotals = {};
                 
                 this.data.investments.forEach(inv => {
@@ -1073,7 +1070,6 @@
                     document.getElementById('dashProgressBar').style.width = `${percentage}%`;
                 }, 100);
 
-                // Populate the Asset Allocation Table
                 const assetSummaryBody = document.getElementById('dashAssetSummaryBody');
                 assetSummaryBody.innerHTML = '';
                 
@@ -1088,11 +1084,14 @@
                     const tr = document.createElement('tr');
                     const pct = totalInvestments > 0 ? ((typeTotals[type].cv / totalInvestments) * 100).toFixed(1) : 0;
                     
-                    let displayType = type;
+                    let displayType = type.replace('_', ' ');
                     if (type === 'fd') displayType = "Fixed Deposit (FD)";
-                    if (type === 'rd') displayType = "Recurring Deposit (RD)";
-                    if (type === 'ppf') displayType = "PPF";
-                    if (type === 'pomis') displayType = "PO MIS";
+                    else if (type === 'rd') displayType = "Recurring Deposit (RD)";
+                    else if (type === 'ppf') displayType = "PPF";
+                    else if (type === 'pomis') displayType = "PO MIS";
+                    else if (type === 'nps') displayType = "NPS";
+                    else if (type === 'epf') displayType = "EPF";
+                    else if (type === 'gold_silver') displayType = "Gold & Silver";
 
                     tr.innerHTML = `
                         <td style="text-transform: capitalize; font-weight: 500;">${displayType}</td>
@@ -1105,8 +1104,9 @@
             },
 
             renderAll() {
-                this.renderInvestments();
+                // Must render goals first so the max year is available for asset FV calculations
                 this.renderGoals();
+                this.renderInvestments();
                 this.renderDashboard();
             }
         };
