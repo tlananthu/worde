@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.15</title>
+    <title>Anantha | Wealth OS V2.16</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -418,7 +418,6 @@
                 </form>
             </aside>
             <main>
-                <!-- NEW ASSET PORTFOLIO HEADER -->
                 <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Registered Assets</h3>
                     <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
@@ -495,7 +494,6 @@
             init() {
                 this.migrateData();
                 
-                // Initialize default multi-select filters to include ALL profiles/classes
                 this.dashProfileFilters = [...this.data.profiles];
                 this.invProfileFilters = [...this.data.profiles];
                 this.invClassFilters = [...new Set(this.data.investments.map(i => i.type))];
@@ -506,12 +504,12 @@
             },
 
             migrateData() {
-                const savedV2_15 = localStorage.getItem('ananthaDataV2_15');
-                if (savedV2_15) {
-                    this.data = JSON.parse(savedV2_15);
+                const savedV2_16 = localStorage.getItem('ananthaDataV2_16');
+                if (savedV2_16) {
+                    this.data = JSON.parse(savedV2_16);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_14');
+                const savedOld = localStorage.getItem('ananthaDataV2_15');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -519,7 +517,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_15', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_16', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -819,7 +817,6 @@
             },
 
             renderInvestments() {
-                // 1. Render Portfolio Profile Filter Pills
                 const profContainer = document.getElementById('invProfileToggles');
                 profContainer.innerHTML = '';
                 
@@ -850,7 +847,6 @@
                     profContainer.appendChild(pill);
                 });
                 
-                // 2. Render Portfolio Asset Class Filter Pills
                 const classContainer = document.getElementById('invClassToggles');
                 classContainer.innerHTML = '';
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.type))];
@@ -869,7 +865,6 @@
                     classContainer.appendChild(pill);
                 });
 
-                // 3. Render Cards
                 const container = document.getElementById('investmentsContainer');
                 container.innerHTML = '';
                 
@@ -950,6 +945,7 @@
                 const retirement = document.getElementById('retirementFields');
                 const education = document.getElementById('educationFields');
                 const nameLabel = document.getElementById('goalNameLabel');
+                const nameInput = document.getElementById('goalName');
 
                 document.getElementById('currentValue').required = false;
                 document.getElementById('years').required = false;
@@ -967,6 +963,7 @@
                     document.getElementById('currentValue').required = true;
                     document.getElementById('years').required = true;
                     nameLabel.innerText = "Goal Name";
+                    nameInput.placeholder = "e.g., Higher Education";
                 } else if (type === 'retirement') {
                     retirement.style.display = 'block';
                     document.getElementById('monthlyExpenses').required = true;
@@ -974,9 +971,11 @@
                     document.getElementById('yearsInRetirement').required = true;
                     document.getElementById('postRetirementReturn').required = true;
                     nameLabel.innerText = "Goal Name";
+                    nameInput.placeholder = "e.g., Retirement Corpus";
                 } else if (type === 'education') {
                     education.style.display = 'block';
-                    nameLabel.innerText = "Child Name / Goal Prefix";
+                    nameLabel.innerText = "Child Name";
+                    nameInput.placeholder = "e.g., Arjun";
                     
                     if (!this.editingBatchId) {
                         this.generateEduTimeline();
@@ -1283,7 +1282,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC                                                            */
+            /* DASHBOARD LOGIC (Profile Breakdown & Table Filter)                         */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let globalInvestments = 0;
