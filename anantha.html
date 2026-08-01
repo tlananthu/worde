@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.25</title>
+    <title>Anantha | Wealth OS V2.26</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -142,7 +142,6 @@
         .filter-option input[type="checkbox"] { margin-right: 0.8rem; cursor: pointer; accent-color: var(--accent-color); width: 16px; height: 16px; flex-shrink: 0; }
         .filter-header { padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 700; background: var(--surface-light); color: var(--text-primary); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 2; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Pills (Used on Dashboard grouping) */
         .pill-toggle { display: inline-flex; align-items: center; gap: 0.4rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; user-select: none; }
         .pill-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
         .pill-toggle.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); }
@@ -168,12 +167,10 @@
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
         
-        /* Low Growth Highlight */
         .data-table .low-growth-row { background-color: rgba(244, 63, 94, 0.05) !important; }
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
-        /* Clickable Dashboard Rows */
         tr.clickable-row { cursor: pointer; transition: background-color 0.2s; }
         tr.clickable-row:hover td { background-color: rgba(56, 189, 248, 0.08) !important; }
 
@@ -426,9 +423,10 @@
                     <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Supported Platforms</h4>
                     <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6;">
                         <li><strong>INDMoney</strong> (holdings-family-template.xlsx)</li>
+                        <li><strong>Zerodha</strong> (holdings-template-zerodha.xlsx)</li>
                     </ul>
                     <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
-                        Currently supported platforms are INDMoney. Will be adding Zerodha, Upstox, Groww, Geojit templates.
+                        Currently supported platforms are INDMoney and Zerodha. Will be adding Upstox, Groww, Geojit templates.
                     </div>
                 </div>
 
@@ -529,7 +527,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.25</div>
+        <div>Anantha Wealth OS V2.26</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -580,9 +578,9 @@
             },
 
             migrateData() {
-                const savedV2_25 = localStorage.getItem('ananthaDataV2_25');
-                if (savedV2_25) {
-                    this.data = JSON.parse(savedV2_25);
+                const savedV2_26 = localStorage.getItem('ananthaDataV2_26');
+                if (savedV2_26) {
+                    this.data = JSON.parse(savedV2_26);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -602,7 +600,7 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_24');
+                const savedOld = localStorage.getItem('ananthaDataV2_25');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.activeView = this.data.activeView || 'home';
@@ -617,7 +615,7 @@
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                     this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                     
-                    this.allocationGroupBy = 'class'; // Defaulted back to class as we removed the toggle
+                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.saveState();
                     return;
                 }
@@ -631,7 +629,6 @@
                 this.invClassFilters = [];
                 this.invTypeFilters = [];
                 this.invCategoryFilters = [];
-                this.allocationGroupBy = 'class';
             },
 
             saveState() {
@@ -653,7 +650,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_25', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_26', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -877,6 +874,9 @@
                 }
             },
 
+            /* -------------------------------------------------------------------------- */
+            /* SMART PLATFORM-AWARE BULK UPLOAD                                           */
+            /* -------------------------------------------------------------------------- */
             handleBulkUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -890,16 +890,28 @@
                     let newProfiles = new Set();
                     
                     workbook.SheetNames.forEach(sheetName => {
+                        // Skip system sheets and specifically the Zerodha combined sheet to prevent duplicates
                         if (sheetName.toLowerCase().includes('report')) return;
-                        
+                        if (sheetName.toLowerCase() === 'combined') return; 
+
                         const worksheet = workbook.Sheets[sheetName];
                         const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
                         
                         let headerRowIndex = -1;
+                        let isZerodha = false;
+
                         for(let i=0; i<rows.length; i++) {
-                            if(rows[i] && (rows[i].includes("First Name") || rows[i].includes("Investment"))) {
-                                headerRowIndex = i;
-                                break;
+                            if(rows[i]) {
+                                const rowStr = rows[i].join(" ").toLowerCase();
+                                if(rowStr.includes("investment") && rowStr.includes("market value")) {
+                                    headerRowIndex = i;
+                                    isZerodha = false;
+                                    break;
+                                } else if (rowStr.includes("symbol") && rowStr.includes("quantity available")) {
+                                    headerRowIndex = i;
+                                    isZerodha = true;
+                                    break;
+                                }
                             }
                         }
                         
@@ -914,19 +926,62 @@
                                     if(h) rowObj[h.toString().trim()] = rowData[idx];
                                 });
                                 
-                                let mVal = this.parseCurrencyStr(rowObj["Market Value"]);
-                                if(isNaN(mVal)) mVal = this.parseCurrencyStr(rowObj["Invested Amount"]);
+                                let invName = "";
+                                let mVal = NaN;
+                                let profileName = "Main Portfolio";
+                                let rawType = "Other";
+                                let rawClass = "Other";
+                                let rawCategory = "Other";
 
-                                if (rowObj["Investment"] && !isNaN(mVal)) {
-                                    let profileName = rowObj["First Name"] ? rowObj["First Name"].toString().trim() : sheetName;
+                                if (!isZerodha) {
+                                    // INDmoney Extraction
+                                    invName = rowObj["Investment"];
+                                    mVal = this.parseCurrencyStr(rowObj["Market Value"]);
+                                    if(isNaN(mVal)) mVal = this.parseCurrencyStr(rowObj["Invested Amount"]);
+                                    profileName = rowObj["First Name"] ? rowObj["First Name"].toString().trim() : "Main Portfolio";
+                                    rawType = (rowObj["Asset Type"] || "Other").toString().trim();
+                                    rawClass = (rowObj["Asset Class"] || "Other").toString().trim();
+                                    rawCategory = (rowObj["Category"] || "Other").toString().trim();
+                                } else {
+                                    // Zerodha Extraction
+                                    invName = rowObj["Symbol"];
+                                    let qty = this.parseCurrencyStr(rowObj["Quantity Available"]);
+                                    let price = this.parseCurrencyStr(rowObj["Previous Closing Price"]);
+                                    mVal = qty * price;
+                                    
+                                    // Fallback if Previous Close is missing
+                                    if (isNaN(mVal) || mVal === 0) {
+                                        let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
+                                        mVal = qty * avgPrice;
+                                    }
+                                    
+                                    let instType = (rowObj["Instrument Type"] || "").toString().trim();
+                                    let sector = (rowObj["Sector"] || "").toString().trim();
+
+                                    // Parse Zerodha's specific Instrument Type field
+                                    if (sheetName.toLowerCase().includes("mutual fund") || instType.includes(" - ")) {
+                                        rawType = "MF";
+                                        if (instType.includes(" - ")) {
+                                            let parts = instType.split(" - ");
+                                            rawClass = parts[0].trim();
+                                            rawCategory = parts[1].trim();
+                                        } else {
+                                            rawClass = instType || "Mutual Fund";
+                                            rawCategory = "Other";
+                                        }
+                                    } else {
+                                        rawType = "STOCK";
+                                        rawClass = "Equity";
+                                        rawCategory = sector || instType || "Other";
+                                    }
+                                }
+
+                                if (invName && !isNaN(mVal)) {
                                     newProfiles.add(profileName);
                                     
-                                    let rawType = (rowObj["Asset Type"] || "Other").toString().trim();
-                                    let rawClass = (rowObj["Asset Class"] || "Other").toString().trim();
-                                    let rawCategory = (rowObj["Category"] || "Other").toString().trim();
-
                                     let aTypeStr = rawType.toUpperCase();
                                     let aClassStr = rawClass.toLowerCase();
+                                    let aCatStr = rawCategory.toLowerCase();
                                     
                                     let invType = 'equity'; 
                                     
@@ -935,15 +990,15 @@
                                     else if (aTypeStr === 'EPF') invType = 'epf';
                                     else if (aTypeStr === 'PPF') invType = 'ppf';
                                     else if (aTypeStr === 'FD') invType = 'fd';
-                                    else if (aTypeStr === 'SA' || aClassStr === 'liquid') invType = 'liquid';
-                                    else if (aClassStr === 'gold' || aClassStr === 'silver' || aTypeStr === 'PHYSICAL_GOLD') invType = 'gold_silver';
-                                    else if (aTypeStr === 'REAL_ESTATE' || aClassStr === 'real estate') invType = 'real_estate';
-                                    else if (aClassStr === 'debt' || aTypeStr === 'BOND') invType = 'debt';
+                                    else if (aTypeStr === 'SA' || aClassStr === 'liquid' || aCatStr.includes('liquid')) invType = 'liquid';
+                                    else if (aClassStr.includes('gold') || aClassStr.includes('silver') || aTypeStr === 'PHYSICAL_GOLD' || aCatStr.includes('gold') || aCatStr.includes('silver')) invType = 'gold_silver';
+                                    else if (aTypeStr === 'REAL_ESTATE' || aClassStr.includes('real estate')) invType = 'real_estate';
+                                    else if (aClassStr.includes('debt') || aTypeStr === 'BOND' || aCatStr.includes('debt')) invType = 'debt';
                                     else if (aTypeStr === 'MF') {
-                                        if (aClassStr.includes('debt')) invType = 'debt';
-                                        else if (aClassStr.includes('liquid')) invType = 'liquid';
-                                        else if (aClassStr.includes('gold') || aClassStr.includes('silver')) invType = 'gold_silver';
-                                        else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced')) invType = 'hybrid';
+                                        if (aClassStr.includes('debt') || aCatStr.includes('debt')) invType = 'debt';
+                                        else if (aClassStr.includes('liquid') || aCatStr.includes('liquid')) invType = 'liquid';
+                                        else if (aClassStr.includes('gold') || aClassStr.includes('silver') || aCatStr.includes('gold')) invType = 'gold_silver';
+                                        else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced') || aCatStr.includes('hybrid')) invType = 'hybrid';
                                     }
                                     
                                     let rate = this.defaultRates[invType];
@@ -952,7 +1007,7 @@
                                     newInvestments.push({
                                         id: Date.now().toString() + Math.random().toString().slice(2,8),
                                         profile: profileName,
-                                        name: rowObj["Investment"],
+                                        name: invName,
                                         type: invType,
                                         value: mVal,
                                         growthRate: rate,
@@ -976,6 +1031,7 @@
                             }
                         });
 
+                        // Rebuild all filters to include new incoming data
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                         this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                         this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
@@ -1356,7 +1412,7 @@
                     if (isDashboard) {
                         tr.className += " clickable-row";
                         const safeKey = typeKey.replace(/'/g, "\\'");
-                        tr.setAttribute('onclick', `app.goToPortfolioFilter('class', '${safeKey}')`); // Fixed to use 'class' by default
+                        tr.setAttribute('onclick', `app.goToPortfolioFilter('${this.allocationGroupBy}', '${safeKey}')`);
                         tr.title = `View ${typeKey} in Portfolio`;
                     }
 
