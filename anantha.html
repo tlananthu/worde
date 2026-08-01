@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.21</title>
+    <title>Anantha | Wealth OS V2.22</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -34,7 +34,12 @@
             padding: 2rem;
             max-width: 1300px;
             margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
+        
+        main.app-content { flex: 1; }
 
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
         .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
@@ -164,6 +169,7 @@
         .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
         .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
+        /* Modals */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal-content { background: var(--surface-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; border: 1px solid var(--border-color); position: relative; }
         .modal-content h3 { margin-bottom: 1.5rem; color: var(--accent-color); font-size: 1.2rem; margin-top: 0; }
@@ -174,6 +180,27 @@
         .portfolio-header h3 { font-size: 1.2rem; color: var(--text-primary); font-weight: 600; margin: 0; }
         .btn-upload { background-color: var(--surface-light); color: var(--text-primary); border: 1px solid var(--border-color); font-weight: 500; width: auto; padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; border-radius: 4px; }
         .btn-upload:hover { border-color: var(--accent-color); }
+
+        /* Settings Card specific styles */
+        .settings-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Footer */
+        .app-footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--surface-light);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
@@ -190,317 +217,356 @@
         </div>
     </header>
 
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="app.switchView('home')">Dashboard Summary</button>
-        <button class="tab-btn" onclick="app.switchView('goals')">Financial Goals / Plan</button>
-        <button class="tab-btn" onclick="app.switchView('investments')">Asset Portfolio</button>
-    </div>
-
-    <!-- VIEW: HOME DASHBOARD -->
-    <div id="view-home" class="view active">
-        <div class="summary-layout">
-            <div class="card dash-stat-card">
-                <div class="year-badge ongoing" id="badgeDashToday1">----</div>
-                <div class="dash-label">Assets (Today)</div>
-                <div class="dash-value success" id="dashTotalAssets">₹0</div>
-            </div>
-            <div class="card dash-stat-card">
-                <div class="year-badge" id="badgeDashFV1">TO ----</div>
-                <div class="dash-label">Projected Asset FV</div>
-                <div class="dash-value success" id="dashFutureAssets">₹0</div>
-            </div>
-            <div class="card dash-stat-card">
-                <div class="year-badge ongoing" id="badgeDashToday2">----</div>
-                <div class="dash-label">Plan C. Expenses</div>
-                <div class="dash-value" id="dashTotalPV">₹0</div>
-            </div>
-            <div class="card dash-stat-card">
-                <div class="year-badge" id="badgeDashFV2">TO ----</div>
-                <div class="dash-label">Total Goal Required</div>
-                <div class="dash-value highlight" id="dashTotalFV">₹0</div>
-            </div>
+    <main class="app-content">
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="app.switchView('home')">Dashboard Summary</button>
+            <button class="tab-btn" onclick="app.switchView('goals')">Financial Goals / Plan</button>
+            <button class="tab-btn" onclick="app.switchView('investments')">Asset Portfolio</button>
+            <button class="tab-btn" onclick="app.switchView('settings')">Settings</button>
         </div>
 
-        <div class="progress-container">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div>
-                    <h3 style="margin-bottom: 0.2rem;">Wealth Progression</h3>
-                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Projected Future Assets vs Future Goals Target</span>
+        <!-- VIEW: HOME DASHBOARD -->
+        <div id="view-home" class="view active">
+            <div class="summary-layout">
+                <div class="card dash-stat-card">
+                    <div class="year-badge ongoing" id="badgeDashToday1">----</div>
+                    <div class="dash-label">Assets (Today)</div>
+                    <div class="dash-value success" id="dashTotalAssets">₹0</div>
                 </div>
-                <div id="dashPercentage" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-color);">0%</div>
+                <div class="card dash-stat-card">
+                    <div class="year-badge" id="badgeDashFV1">TO ----</div>
+                    <div class="dash-label">Projected Asset FV</div>
+                    <div class="dash-value success" id="dashFutureAssets">₹0</div>
+                </div>
+                <div class="card dash-stat-card">
+                    <div class="year-badge ongoing" id="badgeDashToday2">----</div>
+                    <div class="dash-label">Plan C. Expenses</div>
+                    <div class="dash-value" id="dashTotalPV">₹0</div>
+                </div>
+                <div class="card dash-stat-card">
+                    <div class="year-badge" id="badgeDashFV2">TO ----</div>
+                    <div class="dash-label">Total Goal Required</div>
+                    <div class="dash-value highlight" id="dashTotalFV">₹0</div>
+                </div>
             </div>
-            
-            <div class="progress-bar-bg" id="dashProgressBarContainer"></div>
-            <div class="progress-legend" id="dashProgressLegend"></div>
-        </div>
 
-        <div class="table-container" style="margin-top: 2rem;">
-            <div class="table-header-row" style="flex-direction: column; align-items: flex-start;">
-                <div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:1rem;">
-                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Asset Allocation Summary</h3>
-                    <div id="dashProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <!-- Multi-select pills injected via JS -->
+            <div class="progress-container">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h3 style="margin-bottom: 0.2rem;">Wealth Progression</h3>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Projected Future Assets vs Future Goals Target</span>
+                    </div>
+                    <div id="dashPercentage" style="font-size: 1.2rem; font-weight: 700; color: var(--accent-color);">0%</div>
+                </div>
+                
+                <div class="progress-bar-bg" id="dashProgressBarContainer"></div>
+                <div class="progress-legend" id="dashProgressLegend"></div>
+            </div>
+
+            <div class="table-container" style="margin-top: 2rem;">
+                <div class="table-header-row" style="flex-direction: column; align-items: flex-start;">
+                    <div style="display:flex; justify-content:space-between; width:100%; flex-wrap:wrap; gap:1rem;">
+                        <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 600;">Asset Allocation Summary</h3>
+                        <div id="dashProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <!-- Multi-select pills injected via JS -->
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem; align-items: center; flex-wrap: wrap;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Group By:</span>
+                        <button class="pill-toggle alloc-group-btn" data-group="class" onclick="app.setAllocationGroupBy('class')">Asset Class</button>
+                        <button class="pill-toggle alloc-group-btn" data-group="type" onclick="app.setAllocationGroupBy('type')">Asset Type</button>
+                        <button class="pill-toggle alloc-group-btn" data-group="category" onclick="app.setAllocationGroupBy('category')">Category</button>
                     </div>
                 </div>
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem; align-items: center; flex-wrap: wrap;">
-                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Group By:</span>
-                    <button class="pill-toggle alloc-group-btn" data-group="class" onclick="app.setAllocationGroupBy('class')">Asset Class</button>
-                    <button class="pill-toggle alloc-group-btn" data-group="type" onclick="app.setAllocationGroupBy('type')">Asset Type</button>
-                    <button class="pill-toggle alloc-group-btn" data-group="category" onclick="app.setAllocationGroupBy('category')">Category</button>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th id="dashAllocColHeader">Asset Class</th>
+                            <th>Current Valuation</th>
+                            <th>Avg. Growth Rate</th>
+                            <th>Projected Future Value</th>
+                            <th>% of Portfolio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashAssetSummaryBody">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- VIEW: GOALS -->
+        <div id="view-goals" class="view">
+            <div class="dashboard-layout">
+                <aside class="form-card">
+                    <h2 id="goalFormTitle">Define Target Goal</h2>
+                    <form id="goalForm" onsubmit="app.handleGoalSave(event)">
+                        <div class="form-group">
+                            <label for="goalType">Goal Type</label>
+                            <select id="goalType" onchange="app.toggleGoalFields()">
+                                <option value="standard">Standard Financial Goal</option>
+                                <option value="retirement">Retirement Corpus</option>
+                                <option value="education">Kids Education Planner (Multi-Stage)</option>
+                                <option value="edu_stage" style="display:none;">Education Milestone (Edit)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="goalName" id="goalNameLabel">Goal Name</label>
+                            <input type="text" id="goalName" required placeholder="e.g., Higher Education">
+                        </div>
+
+                        <div id="standardFields">
+                            <div class="form-group">
+                                <label for="currentValue">C. Expenses (Current Value ₹)</label>
+                                <input type="number" id="currentValue" placeholder="1000000" min="0" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label for="years">Years Till Closure</label>
+                                <input type="number" id="years" placeholder="8" min="1" max="100">
+                            </div>
+                        </div>
+
+                        <div id="retirementFields" style="display: none;">
+                            <div class="form-group">
+                                <label for="monthlyExpenses">Current Monthly Expenses (₹)</label>
+                                <input type="number" id="monthlyExpenses" placeholder="50000" min="0" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label for="yearsToRetire">Years To Retirement</label>
+                                <input type="number" id="yearsToRetire" placeholder="15" min="1" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="yearsInRetirement">Years In Retirement (Duration)</label>
+                                <input type="number" id="yearsInRetirement" placeholder="25" min="1" max="50">
+                            </div>
+                            <div class="form-group">
+                                <label for="postRetirementReturn">Expected Post-Retirement Return (%)</label>
+                                <input type="number" id="postRetirementReturn" placeholder="8" min="0" max="100" step="0.1">
+                            </div>
+                        </div>
+
+                        <div id="educationFields" style="display: none;">
+                            <div class="form-group">
+                                <label for="eduCurrentGrade">Current Grade of Child (1-12)</label>
+                                <input type="number" id="eduCurrentGrade" value="4" min="1" max="12" oninput="app.generateEduTimeline()" onchange="app.generateEduTimeline()">
+                            </div>
+                            <div class="form-group">
+                                <label style="color: var(--accent-color); margin-bottom: 0.8rem;">Define Upcoming Stages (Today's ₹ Cost)</label>
+                                <div id="eduTimelineGrid" style="display:flex; flex-direction:column; gap:0.5rem; background: var(--bg-color); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); max-height: 350px; overflow-y: auto;">
+                                    <!-- Auto generated via JS -->
+                                </div>
+                                <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:0.5rem;">*Leave cost empty or click '✕' for stages you do not want to track.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label id="inflationLabel" for="inflation">Inflation (%)</label>
+                            <input type="number" id="inflation" required placeholder="10" min="0" max="100" step="0.1">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="goalSubmitBtn" class="btn-action">Calculate & Save</button>
+                            <button type="button" id="goalCancelBtn" class="btn-cancel btn-action" onclick="app.cancelGoalEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </aside>
+                <main>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th onclick="app.sortGoals('name')">Goal <span id="sort-name" class="sort-icon"></span></th>
+                                    <th onclick="app.sortGoals('year')">Year <span id="sort-year" class="sort-icon"></span></th>
+                                    <th onclick="app.sortGoals('cExp')">C. Expenses <span id="sort-cExp" class="sort-icon"></span></th>
+                                    <th onclick="app.sortGoals('inflation')">Inflation <span id="sort-inflation" class="sort-icon"></span></th>
+                                    <th onclick="app.sortGoals('fv')">Goal Required <span id="sort-fv" class="sort-icon"></span></th>
+                                    <th style="text-align: center;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="goalsTableBody">
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- VIEW: INVESTMENTS (TABULAR) -->
+        <div id="view-investments" class="view">
+            <div class="portfolio-header">
+                <h3>Registered Assets</h3>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-upload" onclick="app.openProfileModal()" style="background: var(--surface-light); color: var(--text-primary);">+ New Profile</button>
+                    <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
                 </div>
             </div>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th id="dashAllocColHeader">Asset Class</th>
-                        <th>Current Valuation</th>
-                        <th>Avg. Growth Rate</th>
-                        <th>Projected Future Value</th>
-                        <th>% of Portfolio</th>
-                    </tr>
-                </thead>
-                <tbody id="dashAssetSummaryBody">
-                    <!-- Injected via JS -->
-                </tbody>
-            </table>
+            
+            <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Profiles:</span>
+                    <div id="invProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Classes:</span>
+                    <div id="invClassToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Types:</span>
+                    <div id="invTypeToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Categories:</span>
+                    <div id="invCategoryToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th onclick="app.sortInvestments('name')">Asset / Instrument <span id="sort-inv-name" class="sort-icon"></span></th>
+                            <th onclick="app.sortInvestments('value')">Valuation <span id="sort-inv-value" class="sort-icon"></span></th>
+                            <th onclick="app.sortInvestments('growth')">Growth <span id="sort-inv-growth" class="sort-icon"></span></th>
+                            <th onclick="app.sortInvestments('maturity')">Maturity <span id="sort-inv-maturity" class="sort-icon"></span></th>
+                            <th onclick="app.sortInvestments('fv')">Projected FV <span id="sort-inv-fv" class="sort-icon"></span></th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="investmentsTableBody">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-    
-    <!-- VIEW: GOALS -->
-    <div id="view-goals" class="view">
-        <div class="dashboard-layout">
-            <aside class="form-card">
-                <h2 id="goalFormTitle">Define Target Goal</h2>
-                <form id="goalForm" onsubmit="app.handleGoalSave(event)">
+
+        <!-- VIEW: SETTINGS (IMPORT) -->
+        <div id="view-settings" class="view">
+            <div class="settings-card">
+                <h2>Data Management</h2>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem; line-height: 1.5;">
+                    Upload your portfolio holdings file to automatically map and populate your dashboard. All uploaded data is safely stored offline in your local browser storage.
+                </p>
+                
+                <div style="background: var(--surface-light); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 4px solid var(--accent-color);">
+                    <h4 style="margin-bottom: 0.5rem; color: var(--text-primary);">Supported Platforms</h4>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem; line-height: 1.6;">
+                        <li><strong>INDMoney</strong> (holdings-family-template.xlsx)</li>
+                    </ul>
+                    <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--warning-color); font-style: italic;">
+                        Currently supported platforms are INDMoney. Will be adding Zerodha, Upstox, Groww, Geojit templates.
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
+                    <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will delete ALL current assets and replace them with the newly uploaded template. Continue?')) document.getElementById('bulkUpload').click()">
+                        ⬆ Upload Portfolio Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div class="modal-overlay" id="profileModal">
+            <div class="modal-content">
+                <button class="close-modal" onclick="app.closeProfileModal()">✕</button>
+                <h3>Create Asset Profile</h3>
+                <form onsubmit="app.createProfile(event)">
                     <div class="form-group">
-                        <label for="goalType">Goal Type</label>
-                        <select id="goalType" onchange="app.toggleGoalFields()">
-                            <option value="standard">Standard Financial Goal</option>
-                            <option value="retirement">Retirement Corpus</option>
-                            <option value="education">Kids Education Planner (Multi-Stage)</option>
-                            <option value="edu_stage" style="display:none;">Education Milestone (Edit)</option>
+                        <label for="newProfileName">Profile / Owner Name</label>
+                        <input type="text" id="newProfileName" required placeholder="e.g., Anju, Family, Twins">
+                    </div>
+                    <button type="submit" style="background-color: var(--success-color);">Add Profile</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Asset Form Modal -->
+        <div class="modal-overlay" id="assetModal">
+            <div class="modal-content" style="max-width: 500px;">
+                <button class="close-modal" onclick="app.closeAssetModal()">✕</button>
+                <h3 id="invFormTitle">Log New Asset</h3>
+                <form id="invForm" onsubmit="app.handleInvSave(event)">
+                    <div class="form-group">
+                        <label for="invProfile">Owner / Profile</label>
+                        <select id="invProfile"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="invType">System Asset Class (Color/Mapping)</label>
+                        <select id="invType" onchange="app.handleInvTypeChange()">
+                            <option value="equity">Equity (MFs, Stocks)</option>
+                            <option value="debt">Debt / Bonds</option>
+                            <option value="hybrid">Hybrid / Balanced</option>
+                            <option value="liquid">Liquid / Savings Accounts (SA)</option>
+                            <option value="fd">Fixed Deposit (FD)</option>
+                            <option value="rd">Recurring Deposit (RD)</option>
+                            <option value="nps">NPS (Retirement)</option>
+                            <option value="epf">EPF (Retirement)</option>
+                            <option value="ppf">PPF</option>
+                            <option value="pomis">Post Office MIS</option>
+                            <option value="gold_silver">Gold & Silver</option>
+                            <option value="real_estate">Real Estate</option>
+                            <option value="vehicle">Vehicles</option>
                         </select>
                     </div>
 
+                    <div class="row-group">
+                        <div class="form-group">
+                            <label for="invRawClass">Asset Class</label>
+                            <input type="text" id="invRawClass" placeholder="e.g. Equity, Debt">
+                        </div>
+                        <div class="form-group">
+                            <label for="invRawType">Asset Type</label>
+                            <input type="text" id="invRawType" placeholder="e.g. STOCK, MF">
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <label for="goalName" id="goalNameLabel">Goal Name</label>
-                        <input type="text" id="goalName" required placeholder="e.g., Higher Education">
-                    </div>
-
-                    <div id="standardFields">
-                        <div class="form-group">
-                            <label for="currentValue">C. Expenses (Current Value ₹)</label>
-                            <input type="number" id="currentValue" placeholder="1000000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="years">Years Till Closure</label>
-                            <input type="number" id="years" placeholder="8" min="1" max="100">
-                        </div>
-                    </div>
-
-                    <div id="retirementFields" style="display: none;">
-                        <div class="form-group">
-                            <label for="monthlyExpenses">Current Monthly Expenses (₹)</label>
-                            <input type="number" id="monthlyExpenses" placeholder="50000" min="0" step="any">
-                        </div>
-                        <div class="form-group">
-                            <label for="yearsToRetire">Years To Retirement</label>
-                            <input type="number" id="yearsToRetire" placeholder="15" min="1" max="50">
-                        </div>
-                        <div class="form-group">
-                            <label for="yearsInRetirement">Years In Retirement (Duration)</label>
-                            <input type="number" id="yearsInRetirement" placeholder="25" min="1" max="50">
-                        </div>
-                        <div class="form-group">
-                            <label for="postRetirementReturn">Expected Post-Retirement Return (%)</label>
-                            <input type="number" id="postRetirementReturn" placeholder="8" min="0" max="100" step="0.1">
-                        </div>
-                    </div>
-
-                    <div id="educationFields" style="display: none;">
-                        <div class="form-group">
-                            <label for="eduCurrentGrade">Current Grade of Child (1-12)</label>
-                            <input type="number" id="eduCurrentGrade" value="4" min="1" max="12" oninput="app.generateEduTimeline()" onchange="app.generateEduTimeline()">
-                        </div>
-                        <div class="form-group">
-                            <label style="color: var(--accent-color); margin-bottom: 0.8rem;">Define Upcoming Stages (Today's ₹ Cost)</label>
-                            <div id="eduTimelineGrid" style="display:flex; flex-direction:column; gap:0.5rem; background: var(--bg-color); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); max-height: 350px; overflow-y: auto;">
-                                <!-- Auto generated via JS -->
-                            </div>
-                            <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:0.5rem;">*Leave cost empty or click '✕' for stages you do not want to track.</span>
-                        </div>
+                        <label for="invRawCategory">Category</label>
+                        <input type="text" id="invRawCategory" placeholder="e.g. Large Cap, Liquid">
                     </div>
 
                     <div class="form-group">
-                        <label id="inflationLabel" for="inflation">Inflation (%)</label>
-                        <input type="number" id="inflation" required placeholder="10" min="0" max="100" step="0.1">
+                        <label for="invName">Instrument Name / Details</label>
+                        <input type="text" id="invName" required placeholder="e.g., SBI FD, HDFC Flexi-Cap">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="invValue">Current Valuation (₹)</label>
+                        <input type="number" id="invValue" required placeholder="500000" min="0" step="any">
                     </div>
 
-                    <div class="form-actions">
-                        <button type="submit" id="goalSubmitBtn" class="btn-action">Calculate & Save</button>
-                        <button type="button" id="goalCancelBtn" class="btn-cancel btn-action" onclick="app.cancelGoalEdit()">Cancel</button>
+                    <div class="row-group">
+                        <div class="form-group">
+                            <label for="invGrowth">Expected YoY Growth (%)</label>
+                            <input type="number" id="invGrowth" required placeholder="7.1" step="0.1" value="12.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="invMaturity">Maturity Date (Optional)</label>
+                            <input type="date" id="invMaturity">
+                        </div>
                     </div>
+
+                    <button type="submit" id="invSubmitBtn">Save Asset</button>
                 </form>
-            </aside>
-            <main>
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th onclick="app.sortGoals('name')">Goal <span id="sort-name" class="sort-icon"></span></th>
-                                <th onclick="app.sortGoals('year')">Year <span id="sort-year" class="sort-icon"></span></th>
-                                <th onclick="app.sortGoals('cExp')">C. Expenses <span id="sort-cExp" class="sort-icon"></span></th>
-                                <th onclick="app.sortGoals('inflation')">Inflation <span id="sort-inflation" class="sort-icon"></span></th>
-                                <th onclick="app.sortGoals('fv')">Goal Required <span id="sort-fv" class="sort-icon"></span></th>
-                                <th style="text-align: center;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="goalsTableBody">
-                            <!-- Rows injected via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <!-- VIEW: INVESTMENTS (TABULAR) -->
-    <div id="view-investments" class="view">
-        <div class="portfolio-header">
-            <h3>Registered Assets</h3>
-            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
-                <button class="btn-upload" onclick="if(confirm('Warning: This will delete ALL current assets and replace them with the uploaded template. Continue?')) document.getElementById('bulkUpload').click()">
-                    ⬆ Upload holdings-family-template.xlsx
-                </button>
-                <button class="btn-upload" onclick="app.openProfileModal()" style="background: var(--surface-light); color: var(--text-primary);">+ New Profile</button>
-                <button class="btn-upload" onclick="app.openAssetModal()" style="background: var(--accent-color); color: #000; border: none;">+ Add Asset</button>
             </div>
         </div>
-        
-        <div style="width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; background: var(--surface-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Profiles:</span>
-                <div id="invProfileToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Classes:</span>
-                <div id="invClassToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Types:</span>
-                <div id="invTypeToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-                <span style="font-size: 0.85rem; color: var(--text-secondary); min-width: 80px;">Categories:</span>
-                <div id="invCategoryToggles" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th onclick="app.sortInvestments('name')">Asset / Instrument <span id="sort-inv-name" class="sort-icon"></span></th>
-                        <th onclick="app.sortInvestments('value')">Valuation <span id="sort-inv-value" class="sort-icon"></span></th>
-                        <th onclick="app.sortInvestments('growth')">Growth <span id="sort-inv-growth" class="sort-icon"></span></th>
-                        <th onclick="app.sortInvestments('maturity')">Maturity <span id="sort-inv-maturity" class="sort-icon"></span></th>
-                        <th onclick="app.sortInvestments('fv')">Projected FV <span id="sort-inv-fv" class="sort-icon"></span></th>
-                        <th style="text-align: center;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="investmentsTableBody">
-                    <!-- Rows injected via JS -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+    </main>
 
-    <!-- Modals -->
-    <div class="modal-overlay" id="profileModal">
-        <div class="modal-content">
-            <button class="close-modal" onclick="app.closeProfileModal()">✕</button>
-            <h3>Create Asset Profile</h3>
-            <form onsubmit="app.createProfile(event)">
-                <div class="form-group">
-                    <label for="newProfileName">Profile / Owner Name</label>
-                    <input type="text" id="newProfileName" required placeholder="e.g., Anju, Family, Twins">
-                </div>
-                <button type="submit" style="background-color: var(--success-color);">Add Profile</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Asset Form Modal -->
-    <div class="modal-overlay" id="assetModal">
-        <div class="modal-content" style="max-width: 500px;">
-            <button class="close-modal" onclick="app.closeAssetModal()">✕</button>
-            <h3 id="invFormTitle">Log New Asset</h3>
-            <form id="invForm" onsubmit="app.handleInvSave(event)">
-                <div class="form-group">
-                    <label for="invProfile">Owner / Profile</label>
-                    <select id="invProfile"></select>
-                </div>
-
-                <div class="form-group">
-                    <label for="invType">System Asset Class (Color/Mapping)</label>
-                    <select id="invType" onchange="app.handleInvTypeChange()">
-                        <option value="equity">Equity (MFs, Stocks)</option>
-                        <option value="debt">Debt / Bonds</option>
-                        <option value="hybrid">Hybrid / Balanced</option>
-                        <option value="liquid">Liquid / Savings Accounts (SA)</option>
-                        <option value="fd">Fixed Deposit (FD)</option>
-                        <option value="rd">Recurring Deposit (RD)</option>
-                        <option value="nps">NPS (Retirement)</option>
-                        <option value="epf">EPF (Retirement)</option>
-                        <option value="ppf">PPF</option>
-                        <option value="pomis">Post Office MIS</option>
-                        <option value="gold_silver">Gold & Silver</option>
-                        <option value="real_estate">Real Estate</option>
-                        <option value="vehicle">Vehicles</option>
-                    </select>
-                </div>
-
-                <div class="row-group">
-                    <div class="form-group">
-                        <label for="invRawClass">Asset Class</label>
-                        <input type="text" id="invRawClass" placeholder="e.g. Equity, Debt">
-                    </div>
-                    <div class="form-group">
-                        <label for="invRawType">Asset Type</label>
-                        <input type="text" id="invRawType" placeholder="e.g. STOCK, MF">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="invRawCategory">Category</label>
-                    <input type="text" id="invRawCategory" placeholder="e.g. Large Cap, Liquid">
-                </div>
-
-                <div class="form-group">
-                    <label for="invName">Instrument Name / Details</label>
-                    <input type="text" id="invName" required placeholder="e.g., SBI FD, HDFC Flexi-Cap">
-                </div>
-                
-                <div class="form-group">
-                    <label for="invValue">Current Valuation (₹)</label>
-                    <input type="number" id="invValue" required placeholder="500000" min="0" step="any">
-                </div>
-
-                <div class="row-group">
-                    <div class="form-group">
-                        <label for="invGrowth">Expected YoY Growth (%)</label>
-                        <input type="number" id="invGrowth" required placeholder="7.1" step="0.1" value="12.0">
-                    </div>
-                    <div class="form-group">
-                        <label for="invMaturity">Maturity Date (Optional)</label>
-                        <input type="date" id="invMaturity">
-                    </div>
-                </div>
-
-                <button type="submit" id="invSubmitBtn">Save Asset</button>
-            </form>
-        </div>
-    </div>
+    <footer class="app-footer">
+        <div>Anantha Wealth OS V2.22</div>
+        <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
+    </footer>
 
     <script>
         const app = {
@@ -542,9 +608,9 @@
             },
 
             migrateData() {
-                const savedV2_21 = localStorage.getItem('ananthaDataV2_21');
-                if (savedV2_21) {
-                    this.data = JSON.parse(savedV2_21);
+                const savedV2_22 = localStorage.getItem('ananthaDataV2_22');
+                if (savedV2_22) {
+                    this.data = JSON.parse(savedV2_22);
                     this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
@@ -559,15 +625,15 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_20');
+                const savedOld = localStorage.getItem('ananthaDataV2_21');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    this.activeView = 'home';
+                    this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                    this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                     this.allocationGroupBy = this.data.allocationGroupBy || 'class';
                     this.saveState();
                     return;
@@ -593,7 +659,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_21', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_22', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -911,7 +977,6 @@
                             }
                         });
 
-                        // Rebuild all filters to include new incoming data
                         this.invClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                         this.invTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                         this.invCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
@@ -941,7 +1006,6 @@
             },
 
             renderInvestments() {
-                // 1. Render Profile Toggles
                 const profContainer = document.getElementById('invProfileToggles');
                 profContainer.innerHTML = '';
                 this.data.profiles.forEach(p => {
@@ -969,7 +1033,6 @@
                     profContainer.appendChild(pill);
                 });
                 
-                // 2. Render Class Toggles
                 const classContainer = document.getElementById('invClassToggles');
                 classContainer.innerHTML = '';
                 const uniqueClasses = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
@@ -987,7 +1050,6 @@
                     classContainer.appendChild(pill);
                 });
 
-                // 3. Render Type Toggles
                 const typeContainer = document.getElementById('invTypeToggles');
                 typeContainer.innerHTML = '';
                 const uniqueTypes = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
@@ -1005,7 +1067,6 @@
                     typeContainer.appendChild(pill);
                 });
 
-                // 4. Render Category Toggles
                 const catContainer = document.getElementById('invCategoryToggles');
                 catContainer.innerHTML = '';
                 const uniqueCats = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
@@ -1047,7 +1108,6 @@
                     return;
                 }
 
-                // Compute data for sorting/display
                 const processedInv = filteredInvestments.map(inv => {
                     let fv = this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
                     let matDisplay = inv.maturityDate ? new Date(inv.maturityDate).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) : '';
