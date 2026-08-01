@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.27</title>
+    <title>Anantha | Wealth OS V2.28</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -92,28 +92,15 @@
             border-color: var(--surface-light);
         }
         
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-light); }
-        .card-title { font-weight: 600; font-size: 1.1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding-right: 1rem;}
         .badge { font-size: 0.65rem; background: var(--surface-light); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); vertical-align: middle; text-transform: uppercase;}
         .badge.profile-badge { background: var(--accent-color); color: #000; font-weight: 600; }
         
-        .card-actions { display: flex; gap: 0.75rem; z-index: 10; }
         .icon-btn { background: none; color: var(--text-secondary); width: auto; padding: 0; font-size: 1.1rem; }
         .icon-btn:hover { color: var(--accent-color); }
         .icon-btn.delete:hover { color: var(--danger-color); }
-        
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        .stat-row span:first-child { color: var(--text-secondary); }
-
-        .value-tiers { display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem; border-top: 1px dotted var(--surface-light); }
-        .value-tier { display: flex; justify-content: space-between; align-items: flex-end; }
-        .value-tier span { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
-        .tier-value { font-weight: 700; }
-        .tier-value.pv { font-size: 1.1rem; color: var(--text-primary); }
-        .tier-value.fv { font-size: 1.4rem; color: var(--accent-color); }
 
         /* Dashboard specific */
-        .dash-stat-card { text-align: center; justify-content: center; align-items: center; padding: 1.5rem 1rem; margin-top: 10px; }
+        .dash-stat-card { text-align: center; justify-content: center; align-items: center; padding: 1.5rem 1rem; margin-top: 10px; background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; position: relative; display: flex; flex-direction: column;}
         .dash-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
         .dash-value { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
         .dash-value.highlight { color: var(--accent-color); }
@@ -430,7 +417,7 @@
 
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <input type="file" id="bulkUpload" accept=".xlsx, .xls" style="display:none;" onchange="app.handleBulkUpload(event)">
-                    <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will replace existing assets for the specific profiles found in this file. Data for other profiles will remain safe. Continue?')) document.getElementById('bulkUpload').click()">
+                    <button style="width: 100%; padding: 1rem; font-size: 1.05rem;" class="btn-action" onclick="if(confirm('Warning: This will replace existing assets for the specific profiles found in this file. Data for other profiles will remain safe. Custom mapped categories will be retained. Continue?')) document.getElementById('bulkUpload').click()">
                         ⬆ Upload Portfolio Data
                     </button>
                 </div>
@@ -531,7 +518,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.27</div>
+        <div>Anantha Wealth OS V2.28</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -582,9 +569,9 @@
             },
 
             migrateData() {
-                const savedV2_27 = localStorage.getItem('ananthaDataV2_27');
-                if (savedV2_27) {
-                    this.data = JSON.parse(savedV2_27);
+                const savedV2_28 = localStorage.getItem('ananthaDataV2_28');
+                if (savedV2_28) {
+                    this.data = JSON.parse(savedV2_28);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -604,13 +591,9 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_26');
+                const savedOld = localStorage.getItem('ananthaDataV2_27');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
-                    // Migration mapping for new sector fields
-                    this.data.investments.forEach(inv => {
-                        if (!inv.rawSector) inv.rawSector = 'NA';
-                    });
                     
                     this.activeView = this.data.activeView || 'home';
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -658,7 +641,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_27', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_28', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -818,7 +801,8 @@
                     rawAssetClass: rClass || type,
                     rawAssetType: rType,
                     rawCategory: rCategory,
-                    rawSector: rSector
+                    rawSector: rSector,
+                    isManuallyEdited: true // Flag to retain on future uploads
                 };
 
                 if (this.editingInvId) {
@@ -886,7 +870,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* SMART PLATFORM-AWARE BULK UPLOAD                                           */
+            /* SMART PLATFORM-AWARE BULK UPLOAD WITH MANUAL OVERRIDE RETENTION            */
             /* -------------------------------------------------------------------------- */
             handleBulkUpload(event) {
                 const file = event.target.files[0];
@@ -899,9 +883,17 @@
                     
                     let newInvestments = [];
                     let newProfiles = new Set();
+
+                    // 1. Build a map of manually edited existing items
+                    let manualOverrides = {};
+                    this.data.investments.forEach(i => {
+                        if (i.isManuallyEdited) {
+                            let key = `${(i.profile || 'Main Portfolio').toLowerCase()}|${i.name.toLowerCase()}`;
+                            manualOverrides[key] = i;
+                        }
+                    });
                     
                     workbook.SheetNames.forEach(sheetName => {
-                        // Skip system sheets and specifically the Zerodha combined sheet to prevent duplicates
                         if (sheetName.toLowerCase().includes('report')) return;
                         if (sheetName.toLowerCase() === 'combined') return; 
 
@@ -944,6 +936,7 @@
                                 let rawClass = "Other";
                                 let rawCategory = "NA";
                                 let rawSector = "NA";
+                                let calcRate = NaN;
 
                                 if (!isZerodha) {
                                     // INDmoney Extraction
@@ -962,7 +955,6 @@
                                     let price = this.parseCurrencyStr(rowObj["Previous Closing Price"]);
                                     mVal = qty * price;
                                     
-                                    // Fallback if Previous Close is missing
                                     if (isNaN(mVal) || mVal === 0) {
                                         let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
                                         mVal = qty * avgPrice;
@@ -973,7 +965,6 @@
 
                                     rawSector = sector || "NA";
 
-                                    // Parse Zerodha's specific Instrument Type field
                                     if (sheetName.toLowerCase().includes("mutual fund") || instType.includes(" - ")) {
                                         rawType = "MF";
                                         if (instType.includes(" - ")) {
@@ -988,6 +979,17 @@
                                         rawType = "STOCK";
                                         rawClass = "Equity";
                                         rawCategory = "NA"; 
+                                    }
+
+                                    // Zerodha Growth Calculation
+                                    let pnlPctStr = rowObj["Unrealized P&L Pct."] || rowObj["Unrealize P&L Pct."];
+                                    calcRate = this.parseCurrencyStr(pnlPctStr);
+                                    if (isNaN(calcRate)) {
+                                        let pnl = this.parseCurrencyStr(rowObj["Unrealized P&L"]);
+                                        let avgPrice = this.parseCurrencyStr(rowObj["Average Price"]);
+                                        if (!isNaN(pnl) && !isNaN(avgPrice) && !isNaN(qty) && avgPrice * qty > 0) {
+                                            calcRate = (pnl / (avgPrice * qty)) * 100;
+                                        }
                                     }
                                 }
 
@@ -1016,21 +1018,41 @@
                                         else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced') || aCatStr.includes('hybrid')) invType = 'hybrid';
                                     }
                                     
-                                    let rate = this.defaultRates[invType];
+                                    let rate = !isNaN(calcRate) ? calcRate : this.defaultRates[invType];
                                     if(rate === undefined) rate = 7.0;
 
+                                    let isManuallyEdited = false;
+                                    let matchKey = `${profileName.toLowerCase()}|${invName.toLowerCase()}`;
+                                    let existingManual = manualOverrides[matchKey];
+                                    let maturityDate = "";
+                                    let objId = Date.now().toString() + Math.random().toString().slice(2,8);
+
+                                    // Apply Persistent Overrides
+                                    if (existingManual) {
+                                        invType = existingManual.type;
+                                        rate = existingManual.growthRate;
+                                        rawClass = existingManual.rawAssetClass;
+                                        rawType = existingManual.rawAssetType;
+                                        rawCategory = existingManual.rawCategory;
+                                        rawSector = existingManual.rawSector;
+                                        maturityDate = existingManual.maturityDate;
+                                        objId = existingManual.id; // Maintain internal ID
+                                        isManuallyEdited = true;
+                                    }
+
                                     newInvestments.push({
-                                        id: Date.now().toString() + Math.random().toString().slice(2,8),
+                                        id: objId,
                                         profile: profileName,
                                         name: invName,
                                         type: invType,
                                         value: mVal,
                                         growthRate: rate,
-                                        maturityDate: "",
+                                        maturityDate: maturityDate,
                                         rawAssetClass: rawClass,
                                         rawAssetType: rawType,
                                         rawCategory: rawCategory,
-                                        rawSector: rawSector
+                                        rawSector: rawSector,
+                                        isManuallyEdited: isManuallyEdited
                                     });
                                 }
                             }
@@ -1067,7 +1089,7 @@
                         this.updateProfileDropdowns();
                         this.renderInvestments();
                         this.renderDashboard();
-                        alert(`Successfully imported ${newInvestments.length} assets for profiles: ${importedProfiles.join(", ")}.\n\nData for your other profiles was not modified.`);
+                        alert(`Successfully imported ${newInvestments.length} assets for profiles: ${importedProfiles.join(", ")}.\n\nData for your other profiles was untouched, and all manual category overrides were retained.`);
                     } else {
                         alert("No valid asset data found in the template.");
                     }
@@ -1298,14 +1320,22 @@
 
                     let displayClass = (inv.rawAssetClass || inv.type).toUpperCase();
                     
+                    let warningIcon = "";
+                    let rowClass = "clickable-row";
+                    
+                    if (inv.growthRate < 7.0 && inv.type !== 'vehicle') {
+                        rowClass += " low-growth-row";
+                        warningIcon = `<span title="Losing potential to inflation (Growth < 7.0%)" style="cursor:help; margin-left:5px;">⚠️</span>`;
+                    }
+                    
                     const tr = document.createElement('tr');
-                    tr.className = "clickable-row";
+                    tr.className = rowClass;
                     tr.setAttribute('onclick', `app.editInv('${inv.id}')`);
                     
                     tr.innerHTML = `
                         <td>
                             <div class="name-cell">
-                                ${inv.name}
+                                ${inv.name} ${warningIcon}
                                 <span class="badge" style="border-left: 2px solid ${app.getTypeColor(inv.type)}">${displayClass}</span>
                                 <span class="badge profile-badge">${inv.profile || 'Main'}</span>
                             </div>
@@ -1434,11 +1464,10 @@
 
                     tr.className = rowClass;
                     
-                    // Cross-link to Portfolio
                     if (isDashboard) {
                         tr.className += " clickable-row";
                         const safeKey = typeKey.replace(/'/g, "\\'");
-                        tr.setAttribute('onclick', `app.goToPortfolioFilter('${this.allocationGroupBy}', '${safeKey}')`);
+                        tr.setAttribute('onclick', `app.goToPortfolioFilter('class', '${safeKey}')`);
                         tr.title = `View ${typeKey} in Portfolio`;
                     }
 
@@ -1881,15 +1910,45 @@
                     }
                 });
 
-                this.renderDashboardFilters();
+                const toggleContainer = document.getElementById('dashProfileToggles');
+                if (toggleContainer) {
+                    toggleContainer.innerHTML = '';
+                    this.data.profiles.forEach(p => {
+                        const isActive = this.dashProfileFilters.includes(p);
+                        
+                        const pill = document.createElement('div');
+                        pill.className = `pill-toggle ${isActive ? 'active' : ''}`;
+                        
+                        const textSpan = document.createElement('span');
+                        textSpan.innerText = p;
+                        textSpan.onclick = () => {
+                            if (isActive) {
+                                this.dashProfileFilters = this.dashProfileFilters.filter(f => f !== p);
+                            } else {
+                                this.dashProfileFilters.push(p);
+                            }
+                            this.saveState();
+                            this.renderDashboard();
+                        };
 
-                let tableInvestments = this.data.investments.filter(i => {
-                    const profileMatch = this.dashProfileFilters.includes(i.profile || 'Main Portfolio');
-                    const classMatch = this.dashClassFilters.includes(i.rawAssetClass || i.type);
-                    const typeMatch = this.dashTypeFilters.includes(i.rawAssetType || 'Other');
-                    const catMatch = this.dashCategoryFilters.includes(i.rawCategory || 'NA');
-                    return profileMatch && classMatch && typeMatch && catMatch;
-                });
+                        const delSpan = document.createElement('span');
+                        delSpan.innerHTML = '&times;';
+                        delSpan.className = 'pill-delete';
+                        delSpan.title = "Delete Profile Permanently";
+                        delSpan.onclick = (e) => {
+                            e.stopPropagation();
+                            this.deleteFullProfile(p);
+                        };
+
+                        pill.appendChild(textSpan);
+                        pill.appendChild(delSpan);
+                        toggleContainer.appendChild(pill);
+                    });
+                }
+
+                let tableInvestments = this.data.investments.filter(i => 
+                    this.dashProfileFilters.includes(i.profile || 'Main Portfolio')
+                );
 
                 this.renderAllocationTable('dashAssetSummaryBody', 'dashAllocColHeader', tableInvestments, true);
             },
