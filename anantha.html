@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.10</title>
+    <title>Anantha | Wealth OS V2.11</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -151,6 +151,11 @@
         .data-table .total-row { font-weight: 700; background-color: var(--surface-light); color: var(--text-primary); }
         .data-table .total-row td { border-top: 2px solid var(--border-color); font-size: 1.1rem; }
         .data-table .highlight-val { color: var(--accent-color); font-weight: 600; }
+        
+        /* Low Growth Highlight */
+        .data-table .low-growth-row { background-color: rgba(244, 63, 94, 0.05) !important; }
+        .data-table .low-growth-row td { border-bottom: 1px solid rgba(244, 63, 94, 0.2); }
+        .data-table .low-growth-row td:first-child { border-left: 3px solid var(--danger-color); }
 
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 100; }
@@ -222,6 +227,7 @@
                     <tr>
                         <th>Asset Class</th>
                         <th>Current Valuation</th>
+                        <th>Avg. Growth Rate</th>
                         <th>Projected Future Value</th>
                         <th>% of Portfolio</th>
                     </tr>
@@ -457,12 +463,12 @@
             },
 
             migrateData() {
-                const savedV2_10 = localStorage.getItem('ananthaDataV2_10');
-                if (savedV2_10) {
-                    this.data = JSON.parse(savedV2_10);
+                const savedV2_11 = localStorage.getItem('ananthaDataV2_11');
+                if (savedV2_11) {
+                    this.data = JSON.parse(savedV2_11);
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_9');
+                const savedOld = localStorage.getItem('ananthaDataV2_10');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.saveState();
@@ -470,7 +476,7 @@
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_10', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_11', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -1161,7 +1167,7 @@
             },
 
             /* -------------------------------------------------------------------------- */
-            /* DASHBOARD LOGIC                                                            */
+            /* DASHBOARD LOGIC (With Growth Highlights)                                   */
             /* -------------------------------------------------------------------------- */
             renderDashboard() {
                 let totalInvestments = 0;
@@ -1175,9 +1181,10 @@
                     totalInvestments += (inv.value || 0);
                     futureInvestments += fv;
 
-                    if (!typeTotals[inv.type]) typeTotals[inv.type] = { cv: 0, fv: 0 };
+                    if (!typeTotals[inv.type]) typeTotals[inv.type] = { cv: 0, fv: 0, weightedGrowth: 0 };
                     typeTotals[inv.type].cv += (inv.value || 0);
                     typeTotals[inv.type].fv += fv;
+                    typeTotals[inv.type].weightedGrowth += ((inv.value || 0) * (inv.growthRate || 0));
                 });
                 
                 let totalCExp = 0;
@@ -1193,7 +1200,6 @@
                 document.getElementById('dashTotalPV').innerText = '₹' + this.formatCurrency(totalCExp);
                 document.getElementById('dashTotalFV').innerText = '₹' + this.formatCurrency(totalFV);
 
-                // Update Dynamic Tags
                 const badgeT1 = document.getElementById('badgeDashToday1');
                 const badgeT2 = document.getElementById('badgeDashToday2');
                 const badgeF1 = document.getElementById('badgeDashFV1');
@@ -1220,13 +1226,14 @@
                 const sortedTypes = Object.keys(typeTotals).sort((a, b) => typeTotals[b].cv - typeTotals[a].cv);
                 
                 if (sortedTypes.length === 0) {
-                    assetSummaryBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No assets logged yet.</td></tr>`;
+                    assetSummaryBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No assets logged yet.</td></tr>`;
                     return;
                 }
 
                 sortedTypes.forEach(type => {
                     const tr = document.createElement('tr');
                     const pct = totalInvestments > 0 ? ((typeTotals[type].cv / totalInvestments) * 100).toFixed(1) : 0;
+                    const avgGrowth = typeTotals[type].cv > 0 ? (typeTotals[type].weightedGrowth / typeTotals[type].cv).toFixed(1) : 0;
                     
                     let displayType = type.replace('_', ' ');
                     if (type === 'fd') displayType = "Fixed Deposit (FD)";
@@ -1237,9 +1244,18 @@
                     else if (type === 'epf') displayType = "EPF";
                     else if (type === 'gold_silver') displayType = "Gold & Silver";
 
+                    let rowClass = "";
+                    let warningIcon = "";
+                    if (avgGrowth < 7.0 && type !== 'vehicle') {
+                        rowClass = "low-growth-row";
+                        warningIcon = `<span title="Losing potential to inflation (Growth < 7.0%)" style="cursor:help; margin-left:5px;">⚠️</span>`;
+                    }
+
+                    tr.className = rowClass;
                     tr.innerHTML = `
-                        <td style="text-transform: capitalize; font-weight: 500;">${displayType}</td>
+                        <td style="text-transform: capitalize; font-weight: 500;">${displayType} ${warningIcon}</td>
                         <td>₹${this.formatCurrency(typeTotals[type].cv)}</td>
+                        <td style="color: ${avgGrowth < 0 ? 'var(--danger-color)' : 'var(--text-primary)'}; font-weight: 600;">${avgGrowth}%</td>
                         <td style="color: var(--accent-color); font-weight: 600;">₹${this.formatCurrency(typeTotals[type].fv)}</td>
                         <td>${pct}%</td>
                     `;
