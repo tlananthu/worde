@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.30</title>
+    <title>Anantha | Wealth OS V2.31</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -254,7 +254,7 @@
                         <tr>
                             <th id="dashAllocColHeader">Asset Class</th>
                             <th>Current Valuation</th>
-                            <th>Avg. Growth Rate</th>
+                            <th>Avg. Expected Growth</th>
                             <th>Projected Future Value</th>
                             <th>% of Portfolio</th>
                         </tr>
@@ -384,7 +384,7 @@
                         <tr>
                             <th onclick="app.sortInvestments('name')">Asset / Instrument <span id="sort-inv-name" class="sort-icon"></span></th>
                             <th onclick="app.sortInvestments('value')">Valuation <span id="sort-inv-value" class="sort-icon"></span></th>
-                            <th onclick="app.sortInvestments('growth')">Growth <span id="sort-inv-growth" class="sort-icon"></span></th>
+                            <th onclick="app.sortInvestments('growth')">Expected Growth <span id="sort-inv-growth" class="sort-icon"></span></th>
                             <th onclick="app.sortInvestments('maturity')">Maturity <span id="sort-inv-maturity" class="sort-icon"></span></th>
                             <th onclick="app.sortInvestments('fv')">Projected FV <span id="sort-inv-fv" class="sort-icon"></span></th>
                             <th style="text-align: center;">Actions</th>
@@ -529,7 +529,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.30</div>
+        <div>Anantha Wealth OS V2.31</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -582,9 +582,9 @@
             },
 
             migrateData() {
-                const savedV2_30 = localStorage.getItem('ananthaDataV2_30');
-                if (savedV2_30) {
-                    this.data = JSON.parse(savedV2_30);
+                const savedV2_31 = localStorage.getItem('ananthaDataV2_31');
+                if (savedV2_31) {
+                    this.data = JSON.parse(savedV2_31);
                     this.data.zerodhaMappings = this.data.zerodhaMappings || [];
                     
                     this.activeView = this.data.activeView || 'home';
@@ -606,12 +606,14 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_29');
+
+                const savedOld = localStorage.getItem('ananthaDataV2_30');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.data.zerodhaMappings = this.data.zerodhaMappings || [];
                     
                     this.activeView = this.data.activeView || 'home';
+                    
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
                     this.dashClassFilters = this.data.dashClassFilters !== undefined ? this.data.dashClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.dashTypeFilters = this.data.dashTypeFilters !== undefined ? this.data.dashTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
@@ -622,7 +624,11 @@
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                     this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'NA'))];
                     
-                    this.allocationGroupBy = 'class'; 
+                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
+                    this.sortColumn = this.data.sortColumn || 'year';
+                    this.sortAsc = this.data.sortAsc !== undefined ? this.data.sortAsc : true;
+                    this.invSortColumn = this.data.invSortColumn || 'fv';
+                    this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     this.saveState();
                     return;
                 }
@@ -657,7 +663,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_30', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_31', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -1066,9 +1072,6 @@
                                         rawClass = "Equity";
                                         rawCategory = "NA"; 
                                     }
-                                    
-                                    // Note: P&L percentage is total return, NOT annualized. 
-                                    // Do NOT use it for future growth projections.
                                 }
 
                                 if (invName && !isNaN(mVal)) {
@@ -1096,6 +1099,7 @@
                                         else if (aClassStr.includes('hybrid') || aClassStr.includes('balanced') || aCatStr.includes('hybrid')) invType = 'hybrid';
                                     }
                                     
+                                    // Use default expected future growth rate base
                                     let rate = this.defaultRates[invType];
                                     if(rate === undefined) rate = 7.0;
 
@@ -1400,7 +1404,10 @@
                     let warningIcon = "";
                     let rowClass = "clickable-row";
                     
-                    if (inv.growthRate < 7.0 && inv.type !== 'vehicle') {
+                    if (inv.growthRate < 0) {
+                        rowClass += " low-growth-row";
+                        warningIcon = `<span title="Loss making asset (Negative Growth)" style="cursor:help; margin-left:5px;">❗</span>`;
+                    } else if (inv.growthRate < 7.0 && inv.type !== 'vehicle') {
                         rowClass += " low-growth-row";
                         warningIcon = `<span title="Losing potential to inflation (Growth < 7.0%)" style="cursor:help; margin-left:5px;">⚠️</span>`;
                     }
@@ -1534,7 +1541,10 @@
                     let warningIcon = "";
                     
                     const isVehicle = Array.from(data.internalTypes).every(t => t === 'vehicle');
-                    if (avgGrowth < 7.0 && !isVehicle) {
+                    if (avgGrowth < 0) {
+                        rowClass = "low-growth-row";
+                        warningIcon = `<span title="Loss making category (Negative Avg Growth)" style="cursor:help; margin-left:5px;">❗</span>`;
+                    } else if (avgGrowth < 7.0 && !isVehicle) {
                         rowClass = "low-growth-row";
                         warningIcon = `<span title="Losing potential to inflation (Growth < 7.0%)" style="cursor:help; margin-left:5px;">⚠️</span>`;
                     }
