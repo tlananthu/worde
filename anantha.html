@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.24</title>
+    <title>Anantha | Wealth OS V2.25</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -264,13 +264,6 @@
                     
                     <div style="width: 100%; margin-top: 1rem; margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 1rem; background: var(--surface-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);" id="dashboardFiltersBar">
                         <!-- Dropdowns injected via JS -->
-                    </div>
-
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem; align-items: center; flex-wrap: wrap;">
-                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Group By:</span>
-                        <button class="pill-toggle alloc-group-btn" data-group="class" onclick="app.setAllocationGroupBy('class')">Asset Class</button>
-                        <button class="pill-toggle alloc-group-btn" data-group="type" onclick="app.setAllocationGroupBy('type')">Asset Type</button>
-                        <button class="pill-toggle alloc-group-btn" data-group="category" onclick="app.setAllocationGroupBy('category')">Category</button>
                     </div>
                 </div>
                 <table class="data-table">
@@ -536,7 +529,7 @@
     </main>
 
     <footer class="app-footer">
-        <div>Anantha Wealth OS V2.24</div>
+        <div>Anantha Wealth OS V2.25</div>
         <div style="font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem;">Infinite Possibilities</div>
     </footer>
 
@@ -587,9 +580,9 @@
             },
 
             migrateData() {
-                const savedV2_24 = localStorage.getItem('ananthaDataV2_24');
-                if (savedV2_24) {
-                    this.data = JSON.parse(savedV2_24);
+                const savedV2_25 = localStorage.getItem('ananthaDataV2_25');
+                if (savedV2_25) {
+                    this.data = JSON.parse(savedV2_25);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
@@ -609,22 +602,22 @@
                     this.invSortAsc = this.data.invSortAsc !== undefined ? this.data.invSortAsc : false;
                     return;
                 }
-                const savedOld = localStorage.getItem('ananthaDataV2_23');
+                const savedOld = localStorage.getItem('ananthaDataV2_24');
                 if (savedOld) {
                     this.data = JSON.parse(savedOld);
                     this.activeView = this.data.activeView || 'home';
                     
                     this.dashProfileFilters = this.data.dashProfileFilters !== undefined ? this.data.dashProfileFilters : [...this.data.profiles];
-                    this.dashClassFilters = [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
-                    this.dashTypeFilters = [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
-                    this.dashCategoryFilters = [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
+                    this.dashClassFilters = this.data.dashClassFilters !== undefined ? this.data.dashClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
+                    this.dashTypeFilters = this.data.dashTypeFilters !== undefined ? this.data.dashTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
+                    this.dashCategoryFilters = this.data.dashCategoryFilters !== undefined ? this.data.dashCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
 
                     this.invProfileFilters = this.data.invProfileFilters !== undefined ? this.data.invProfileFilters : [...this.data.profiles];
                     this.invClassFilters = this.data.invClassFilters !== undefined ? this.data.invClassFilters : [...new Set(this.data.investments.map(i => i.rawAssetClass || i.type))];
                     this.invTypeFilters = this.data.invTypeFilters !== undefined ? this.data.invTypeFilters : [...new Set(this.data.investments.map(i => i.rawAssetType || 'Other'))];
                     this.invCategoryFilters = this.data.invCategoryFilters !== undefined ? this.data.invCategoryFilters : [...new Set(this.data.investments.map(i => i.rawCategory || 'Other'))];
                     
-                    this.allocationGroupBy = this.data.allocationGroupBy || 'class';
+                    this.allocationGroupBy = 'class'; // Defaulted back to class as we removed the toggle
                     this.saveState();
                     return;
                 }
@@ -638,6 +631,7 @@
                 this.invClassFilters = [];
                 this.invTypeFilters = [];
                 this.invCategoryFilters = [];
+                this.allocationGroupBy = 'class';
             },
 
             saveState() {
@@ -659,7 +653,7 @@
                 this.data.invSortColumn = this.invSortColumn;
                 this.data.invSortAsc = this.invSortAsc;
                 
-                localStorage.setItem('ananthaDataV2_24', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_25', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -1362,7 +1356,7 @@
                     if (isDashboard) {
                         tr.className += " clickable-row";
                         const safeKey = typeKey.replace(/'/g, "\\'");
-                        tr.setAttribute('onclick', `app.goToPortfolioFilter('${this.allocationGroupBy}', '${safeKey}')`);
+                        tr.setAttribute('onclick', `app.goToPortfolioFilter('class', '${safeKey}')`); // Fixed to use 'class' by default
                         tr.title = `View ${typeKey} in Portfolio`;
                     }
 
@@ -1806,11 +1800,6 @@
                 });
 
                 this.renderDashboardFilters();
-
-                document.querySelectorAll('.alloc-group-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.dataset.group === this.allocationGroupBy) btn.classList.add('active');
-                });
 
                 let tableInvestments = this.data.investments.filter(i => {
                     const profileMatch = this.dashProfileFilters.includes(i.profile || 'Main Portfolio');
