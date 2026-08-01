@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anantha | Wealth OS V2.2</title>
+    <title>Anantha | Wealth OS V2.3</title>
     <style>
         :root {
             --bg-color: #0f1115;
@@ -42,7 +42,6 @@
         }
 
         .brand-name { font-size: 1.5rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
-        .version { color: var(--text-secondary); font-family: monospace; }
         
         .profile-manager {
             display: flex;
@@ -181,7 +180,6 @@
 
     <header>
         <div class="brand-name">Anantha</div>
-        <div class="version">v2.2 (Asset Profiles)</div>
     </header>
 
     <div class="nav-tabs">
@@ -445,37 +443,22 @@
             },
 
             migrateData() {
-                const savedV2_2 = localStorage.getItem('ananthaDataV2_2');
-                if (savedV2_2) {
-                    this.data = JSON.parse(savedV2_2);
+                const savedV2_3 = localStorage.getItem('ananthaDataV2_3');
+                if (savedV2_3) {
+                    this.data = JSON.parse(savedV2_3);
                     return;
                 }
 
-                // Migrate from older versions (v1.9 / v2.1) which used nested profile objects
-                const savedOld = localStorage.getItem('ananthaDataV1_9');
+                // Migrate from older versions
+                const savedOld = localStorage.getItem('ananthaDataV2_2');
                 if (savedOld) {
-                    const oldData = JSON.parse(savedOld);
-                    
-                    if (oldData.profiles && !Array.isArray(oldData.profiles)) {
-                        // Flatten nested objects into global arrays
-                        this.data.profiles = Object.keys(oldData.profiles);
-                        Object.keys(oldData.profiles).forEach(pName => {
-                            const p = oldData.profiles[pName];
-                            
-                            p.goals.forEach(g => this.data.goals.push(g));
-                            
-                            p.investments.forEach(i => {
-                                i.profile = pName;
-                                this.data.investments.push(i);
-                            });
-                        });
-                    }
+                    this.data = JSON.parse(savedOld);
                     this.saveState();
                 }
             },
 
             saveState() {
-                localStorage.setItem('ananthaDataV2_2', JSON.stringify(this.data));
+                localStorage.setItem('ananthaDataV2_3', JSON.stringify(this.data));
             },
 
             formatCurrency(amount) {
@@ -490,7 +473,6 @@
                 const formSelect = document.getElementById('invProfile');
                 const filterSelect = document.getElementById('assetProfileFilter');
                 
-                // Store current selection if any
                 const currentFormVal = formSelect.value;
                 const currentFilterVal = filterSelect.value;
                 
@@ -509,7 +491,6 @@
                     filterSelect.appendChild(filterOpt);
                 });
                 
-                // Restore selections
                 if(currentFormVal && this.data.profiles.includes(currentFormVal)) formSelect.value = currentFormVal;
                 if(currentFilterVal && (this.data.profiles.includes(currentFilterVal) || currentFilterVal === "ALL")) filterSelect.value = currentFilterVal;
             },
@@ -525,7 +506,6 @@
                     this.data.profiles.push(name);
                     this.saveState();
                     this.updateProfileDropdowns();
-                    // Auto-select the newly created profile in the form
                     document.getElementById('invProfile').value = name;
                     this.closeProfileModal();
                 } else {
@@ -915,7 +895,6 @@
                 let totalInvestments = 0;
                 let futureInvestments = 0;
                 
-                // Dashboard rolls up ALL investments across all profiles
                 this.data.investments.forEach(inv => {
                     totalInvestments += (inv.value || 0);
                     futureInvestments += this.calcInvFV(inv.value, inv.growthRate, inv.maturityDate);
