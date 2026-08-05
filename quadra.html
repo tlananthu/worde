@@ -182,7 +182,8 @@
         .current-time-line::before { content: ''; position: absolute; left: -6px; top: -4px; width: 10px; height: 10px; background: #EF4444; border-radius: 50%; }
         .current-time-badge { position: absolute; left: 6px; top: -14px; background: #EF4444; color: white; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 4px; letter-spacing: 0.5px; }
 
-        .logged-block { position: absolute; left: 6px; right: 6px; background: var(--brand-primary); color: white; border-radius: 6px; padding: 4px 8px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.4); overflow: hidden; cursor: grab; transition: box-shadow 0.1s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; min-height: 24px; }
+        .logged-block { position: absolute; background: var(--brand-primary); color: white; border-radius: 6px; padding: 4px 8px; font-size: 12px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.4); overflow: hidden; cursor: grab; transition: box-shadow 0.1s, z-index 0.2s; user-select: none; display: flex; justify-content: space-between; align-items: flex-start; min-height: 24px; }
+        .logged-block:hover { z-index: 30; box-shadow: 0 6px 15px rgba(0,0,0,0.25); }
         
         .logged-block.q1 { background-color: var(--q1-bg); border-color: var(--q1-border); color: var(--q1-text); }
         .logged-block.q2 { background-color: var(--q2-bg); border-color: var(--q2-border); color: var(--q2-text); }
@@ -190,7 +191,7 @@
         .logged-block.q4 { background-color: var(--q4-bg); border-color: var(--q4-border); color: var(--q4-text); }
         .logged-block.is-meeting { background-color: var(--q2-bg); border-color: var(--q2-border); color: var(--q2-text); }
 
-        .logged-block:active { cursor: grabbing; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 12;}
+        .logged-block:active { cursor: grabbing; z-index: 35;}
         .block-info { pointer-events: none; overflow: hidden; flex-grow: 1; padding-right: 4px; }
         .block-title { font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
         .block-meta { font-size: 11px; opacity: 0.9; line-height: 1; }
@@ -280,7 +281,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.13</span></h1>
+                <h1>Quadra <span class="version-badge">v9.0</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -591,48 +592,45 @@
     <script async defer src="https://accounts.google.com/gsi/client"></script>
 
     <script>
-        // --- Core Settings & Config ---
-        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '', calSource: 'google', icsUrl: '', ignoreKeywords: 'out of office, ooo, away, vacation, holiday' };
-        if (!appConfig.ignoreKeywords) appConfig.ignoreKeywords = 'out of office, ooo, away, vacation, holiday';
-        if (!appConfig.calSource) appConfig.calSource = 'google';
-        if (!appConfig.icsUrl) appConfig.icsUrl = '';
+        // --- 1. CORE UTILITIES & GLOBALS ---
+        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
         
-        let tokenClient;
-        let isGoogleSynced = false;
-        let clockIntervalId = null;
-        let timelineZoom = parseFloat(localStorage.getItem('quadra_zoom')) || 1;
+        function parseTags(str) { 
+            let html = escapeHTML(str);
+            html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
+            html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
+            return html;
+        }
+
+        function searchTag(tag, event) { 
+            if (event) event.stopPropagation(); 
+            const searchInput = document.getElementById('searchInput'); 
+            if(searchInput) searchInput.value = tag; 
+            handleSearch(); 
+        }
         
-        const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
+        function clearSearch() { 
+            const searchInput = document.getElementById('searchInput'); 
+            if(searchInput) searchInput.value = ''; 
+            handleSearch(); 
+        }
 
-        const defaultSchedule = [
-            { title: 'Out of office hours', startHour: 14, endHour: 29 }, 
-            { title: 'Lunch', startHour: 13, endHour: 14 }
-        ];
-        let appSchedule = JSON.parse(localStorage.getItem('quadra_schedule')) || defaultSchedule;
+        function handleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            if(!searchInput) return;
+            const query = searchInput.value.toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if(clearBtn) clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+            renderNotes(query);
+        }
 
-        // --- Helper Function: Round to 15-Minute Scale ---
         function roundToQuarterHour(hoursVal) {
             return Math.round(hoursVal * 4) / 4;
         }
 
-        let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
-        notes = notes.map(note => {
-            let blocks = note.timeBlocks || [];
-            if (note.timeLogs && Object.keys(note.timeLogs).length > 0) {
-                Object.keys(note.timeLogs).forEach(date => {
-                    blocks.push({ id: Date.now().toString() + Math.random(), date: date, startHour: 9, duration: roundToQuarterHour(note.timeLogs[date]) });
-                });
-                delete note.timeLogs; 
-            }
-            blocks = blocks.map(b => ({ ...b, startHour: roundToQuarterHour(b.startHour), duration: roundToQuarterHour(b.duration) }));
-            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks, eventId: note.eventId || null, quadrant: note.quadrant || 'q2' };
-        });
-
-        const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
-        
-        // --- Toast Notification System ---
         function showToast(message) {
             const container = document.getElementById('toast-container');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerText = message;
@@ -643,145 +641,6 @@
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
-        }
-
-        // --- Layout Management ---
-        let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
-        let currentTrackerMode = 'day'; 
-        
-        function setLayout(layout) {
-            currentLayout = layout;
-            localStorage.setItem('quadra_layout', layout);
-            
-            const matrix = document.getElementById('matrix');
-            const tracker = document.getElementById('tracker-view');
-            const overdue = document.getElementById('overdue-view');
-            const settingsView = document.getElementById('settings-view');
-            const btnGrid = document.getElementById('btnGrid');
-            const btnKanban = document.getElementById('btnKanban');
-            const btnOverdue = document.getElementById('btnOverdue');
-            const btnTracker = document.getElementById('btnTracker');
-
-            if (btnGrid) btnGrid.classList.toggle('active', layout === 'grid');
-            if (btnKanban) btnKanban.classList.toggle('active', layout === 'kanban');
-            if (btnOverdue) btnOverdue.classList.toggle('active', layout === 'overdue');
-            if (btnTracker) btnTracker.classList.toggle('active', layout === 'tracker');
-            
-            settingsView.style.display = 'none';
-            matrix.style.display = 'none';
-            tracker.style.display = 'none';
-            overdue.style.display = 'none';
-
-            if (layout === 'tracker') {
-                tracker.style.display = 'block'; 
-                document.body.classList.remove('sidebar-open');
-                updateZoomDisplay();
-                renderTrackerTimeline();
-                startLiveClock();
-            } else if (layout === 'overdue') {
-                overdue.style.display = 'block';
-                document.body.classList.remove('sidebar-open');
-                renderOverdueTasksPage();
-                stopLiveClock();
-            } else {
-                matrix.style.display = ''; 
-                matrix.classList.remove('layout-grid', 'layout-kanban');
-                matrix.classList.add(`layout-${layout}`);
-                stopLiveClock();
-            }
-            document.getElementById('quick-tags-bar').style.display = 'flex';
-            document.getElementById('searchHeaderContainer').style.display = 'block';
-            document.getElementById('viewToggleGroup').style.display = 'flex';
-            document.getElementById('settingsNavBtn').style.display = 'inline-block';
-            document.getElementById('backNavBtn').style.display = 'none';
-        }
-
-        function adjustTimelineZoom(amount) {
-            timelineZoom = Math.max(0.5, Math.min(3, roundToQuarterHour(timelineZoom + amount)));
-            localStorage.setItem('quadra_zoom', timelineZoom);
-            updateZoomDisplay();
-            renderTrackerTimeline();
-        }
-
-        function updateZoomDisplay() {
-            const display = document.getElementById('zoomLevelDisplay');
-            if (display) display.innerText = `${timelineZoom}x`;
-        }
-
-        function openSettingsPage() {
-            document.getElementById('matrix').style.display = 'none';
-            document.getElementById('tracker-view').style.display = 'none';
-            document.getElementById('overdue-view').style.display = 'none';
-            document.getElementById('settings-view').style.display = 'block';
-            document.body.classList.remove('sidebar-open');
-            document.getElementById('quick-tags-bar').style.display = 'none';
-            document.getElementById('searchHeaderContainer').style.display = 'none';
-            document.getElementById('viewToggleGroup').style.display = 'none';
-            document.getElementById('settingsNavBtn').style.display = 'none';
-            document.getElementById('backNavBtn').style.display = 'inline-block';
-
-            document.getElementById('configClientId').value = appConfig.clientId || '';
-            document.getElementById('configApiKey').value = appConfig.apiKey || '';
-            document.getElementById('configIgnoreKeywords').value = appConfig.ignoreKeywords || '';
-            document.getElementById('configCalSource').value = appConfig.calSource || 'google';
-            document.getElementById('configIcsUrl').value = appConfig.icsUrl || '';
-            
-            toggleCalSourceFields(appConfig.calSource || 'google');
-            loadCalendars();
-            renderScheduleSettings();
-        }
-
-        function toggleCalSourceFields(source) {
-            if (source === 'outlook') {
-                document.getElementById('googleCalGroup').style.display = 'none';
-                document.getElementById('outlookIcsGroup').style.display = 'block';
-            } else {
-                document.getElementById('googleCalGroup').style.display = 'block';
-                document.getElementById('outlookIcsGroup').style.display = 'none';
-            }
-        }
-
-        function closeSettingsPage() {
-            setLayout(currentLayout);
-        }
-
-        function setTrackerMode(mode) {
-            currentTrackerMode = mode;
-            document.getElementById('btnTrackerDay').classList.toggle('active', mode === 'day');
-            document.getElementById('btnTrackerWeek').classList.toggle('active', mode === 'week');
-            renderTrackerTimeline();
-        }
-
-        function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
-
-        function startLiveClock() {
-            if(clockIntervalId) clearInterval(clockIntervalId);
-            clockIntervalId = setInterval(() => {
-                if (currentLayout === 'tracker' && currentTrackerMode === 'day' && document.getElementById('tracker-view').style.display === 'block') {
-                    const line = document.querySelector('.current-time-line');
-                    const badge = document.querySelector('.current-time-badge');
-                    if (line && badge) {
-                        const hourPx = 60 * timelineZoom;
-                        const now = new Date();
-                        const currentHour = now.getHours() + (now.getMinutes() / 60) + (now.getSeconds() / 3600);
-                        line.style.top = `${currentHour * hourPx}px`;
-                        badge.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    }
-                }
-            }, 30000); 
-        }
-
-        function stopLiveClock() {
-            if(clockIntervalId) { clearInterval(clockIntervalId); clockIntervalId = null; }
-        }
-
-        // --- Drag/Drop Routing ---
-        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
-        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
-        function drop(ev, quadrant) {
-            ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
-            const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
-            if (note && note.status === 'active' && note.quadrant !== quadrant) { note.quadrant = quadrant; note.dirty = true; saveNotes(); handleSearch(); }
         }
 
         function decToTime(dec) {
@@ -802,12 +661,159 @@
             return `${localY}-${localM}-${localD}`;
         }
 
-        function changeTrackerDay(offset) {
-            const dateInput = document.getElementById('trackerDate');
-            const d = new Date(dateInput.value);
-            d.setDate(d.getDate() + offset);
-            dateInput.value = d.toLocaleDateString('en-CA').split('T')[0];
-            renderTrackerTimeline();
+        function timeStrToDecimal(timeStr) {
+            if (!timeStr) return null;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h + (m / 60);
+        }
+
+        function decimalToTimeStr(dec) {
+            let norm = dec % 24;
+            let h = Math.floor(norm);
+            let m = Math.round((norm - h) * 60);
+            if (m === 60) { h++; m = 0; }
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        // --- 2. GLOBALS & LOCAL STORAGE INIT ---
+        let appConfig = JSON.parse(localStorage.getItem('quadra_config')) || { clientId: '', apiKey: '', calendarId: '', calSource: 'google', icsUrl: '', ignoreKeywords: 'out of office, ooo, away, vacation, holiday' };
+        if (!appConfig.ignoreKeywords) appConfig.ignoreKeywords = 'out of office, ooo, away, vacation, holiday';
+        if (!appConfig.calSource) appConfig.calSource = 'google';
+        if (!appConfig.icsUrl) appConfig.icsUrl = '';
+        
+        let tokenClient;
+        let isGoogleSynced = false;
+        let clockIntervalId = null;
+        let timelineZoom = parseFloat(localStorage.getItem('quadra_zoom')) || 1;
+        const SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
+
+        const defaultSchedule = [
+            { title: 'Out of office hours', startHour: 14, endHour: 29 }, 
+            { title: 'Lunch', startHour: 13, endHour: 14 }
+        ];
+        let appSchedule = JSON.parse(localStorage.getItem('quadra_schedule')) || defaultSchedule;
+
+        let notes = JSON.parse(localStorage.getItem('quadra_notes')) || [];
+        notes = notes.map(note => {
+            let blocks = note.timeBlocks || [];
+            if (note.timeLogs && Object.keys(note.timeLogs).length > 0) {
+                Object.keys(note.timeLogs).forEach(date => {
+                    blocks.push({ id: Date.now().toString() + Math.random(), date: date, startHour: 9, duration: roundToQuarterHour(note.timeLogs[date]) });
+                });
+                delete note.timeLogs; 
+            }
+            blocks = blocks.map(b => ({ ...b, startHour: roundToQuarterHour(b.startHour), duration: roundToQuarterHour(b.duration) }));
+            return { ...note, status: note.status || 'active', dirty: note.dirty || false, deleted: note.deleted || false, timeBlocks: blocks, eventId: note.eventId || null, quadrant: note.quadrant || 'q2' };
+        });
+
+        const todayStr = new Date().toLocaleDateString('en-CA').split('T')[0]; 
+        let currentLayout = localStorage.getItem('quadra_layout') || 'grid';
+        let currentTrackerMode = 'day'; 
+
+        let pendingTimelineContext = null;
+        let editingBlockState = null;
+        let dragState = null;
+        let currentEditingId = null; 
+        let currentAddingQuadrant = null;
+
+        // --- 3. UI RENDERERS & DATA MODIFIERS ---
+        function saveNotes() { localStorage.setItem('quadra_notes', JSON.stringify(notes)); }
+
+        function renderTagsList() {
+            const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
+            const tagCounts = {};
+
+            notes.forEach(note => {
+                if (!note.deleted && note.status === 'active' && !note.eventId) {
+                    const matches = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
+                    if (matches) {
+                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
+                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+                    }
+                }
+            });
+
+            tagsBar.innerHTML = '';
+            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
+                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
+                return a.localeCompare(b);
+            });
+
+            sortedTags.forEach(tag => {
+                const btn = document.createElement('button');
+                const isPerson = tag.startsWith('@');
+                btn.className = 'filter-tag' + (isPerson ? ' person-filter' : '');
+                btn.innerText = `${tag} (${tagCounts[tag]})`;
+                btn.onclick = (e) => { 
+                    const searchInput = document.getElementById('searchInput'); 
+                    if (searchInput && searchInput.value === tag) clearSearch(); else searchTag(tag, e); 
+                };
+                tagsBar.appendChild(btn);
+            });
+        }
+
+        function renderNotes(searchQuery = '') {
+            ['inbox', 'calendar', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
+            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
+            filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
+
+            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
+
+            filteredNotes.forEach(note => {
+                let targetListId = `list-${note.quadrant}`;
+                if (note.eventId) {
+                    targetListId = 'list-calendar';
+                }
+                const list = document.getElementById(targetListId);
+                if (list) {
+                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
+                        filteredCounts[note.quadrant]++;
+                    }
+                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
+                        filteredCounts['calendar']++;
+                    }
+                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
+                        filteredCounts['inbox']++;
+                    }
+
+                    const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
+                    if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
+
+                    const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
+                    contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
+                    
+                    if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
+                    
+                    contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
+
+                    const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
+                    if (!note.eventId) {
+                        if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
+                        else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
+                    } else {
+                        actionsDiv.innerHTML = `<button class="action-btn delete-btn" onclick="deleteTask('${note.id}')" title="Remove event">×</button>`;
+                    }
+                    
+                    noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
+                }
+            });
+
+            const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
+            const closedCount = document.getElementById('closed-count');
+            const inboxCount = document.getElementById('inbox-count');
+            const calCount = document.getElementById('calendar-count');
+
+            if (closedCount) closedCount.innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
+            if (inboxCount) inboxCount.innerText = filteredCounts.inbox;
+            if (calCount) calCount.innerText = filteredCounts.calendar;
+            
+            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+                const badge = document.getElementById(`badge-${q}`);
+                if (badge) badge.innerText = filteredCounts[q];
+            });
+            
+            if (currentLayout === 'tracker') renderTrackerTimeline();
+            renderTagsList();
         }
 
         function renderTrackerTimeline() {
@@ -816,17 +822,15 @@
             const canvas = document.getElementById('timelineCanvas');
             const paletteList = document.getElementById('tracker-palette-list');
             const hourPx = 60 * timelineZoom;
+            if(!canvas || !paletteList) return;
             
             paletteList.innerHTML = '';
             const filteredNotes = notes.filter(n => !n.deleted && n.text.toLowerCase().includes(query) && !n.eventId);
             
             filteredNotes.forEach(note => {
                 const el = document.createElement('div');
-                el.className = 'palette-note';
-                el.draggable = true;
+                el.className = 'palette-note'; el.draggable = true;
                 el.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id);
-                el.onclick = (e) => openTaskModal(null, note.id, e);
-                
                 let title = note.text.split('\n')[0].substring(0, 50);
                 el.innerHTML = `<strong>${note.status === 'closed' ? '✓ ' : ''}</strong> ${parseTags(title)}`;
                 if (note.status === 'closed') el.style.opacity = '0.6';
@@ -1025,15 +1029,16 @@
                 colsContainer.appendChild(col);
             });
 
-            document.getElementById('trackerDailyTotal').innerText = `Total: ${roundToQuarterHour(totalTimeRendered)}h`;
+            const dailyTotal = document.getElementById('trackerDailyTotal');
+            if (dailyTotal) dailyTotal.innerText = `Total: ${roundToQuarterHour(totalTimeRendered)}h`;
 
             const scrollArea = document.getElementById('timelineScrollArea');
-            if (scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
+            if (scrollArea && scrollArea.scrollTop === 0) scrollArea.scrollTop = 7 * hourPx; 
         }
 
-        // --- Render Overdue Tasks Page ---
         function renderOverdueTasksPage() {
             const container = document.getElementById('overdue-list-container');
+            if (!container) return;
             container.innerHTML = '';
             
             const overdueNotes = notes.filter(n => {
@@ -1043,7 +1048,8 @@
 
             overdueNotes.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
-            document.getElementById('overdue-count-badge').innerText = overdueNotes.length;
+            const badge = document.getElementById('overdue-count-badge');
+            if (badge) badge.innerText = overdueNotes.length;
 
             if (overdueNotes.length === 0) {
                 container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 40px;">🎉 No overdue tasks! All caught up.</p>`;
@@ -1070,9 +1076,7 @@
             });
         }
 
-        // --- Drag & Resize Engine ---
-        let dragState = null;
-
+        // --- 4. DRAG/DROP & MODAL HANDLERS ---
         function startBlockDrag(e, noteId, blockId, isResize) {
             e.stopPropagation();
             const note = notes.find(n => n.id === noteId);
@@ -1123,7 +1127,6 @@
             }
         }
 
-        // --- Canvas Clicking & Dropping ---
         function handleTimelineClick(ev, dateStr) {
             if (ev.target.closest('.logged-block')) return; 
             const hourPx = 60 * timelineZoom;
@@ -1133,6 +1136,14 @@
             let dropHour = roundToQuarterHour(y / hourPx);
 
             openTaskModal('inbox', null, ev, { date: dateStr, startHour: dropHour });
+        }
+
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function dragLeave(ev) { ev.currentTarget.classList.remove('drag-over'); }
+        function drop(ev, quadrant) {
+            ev.preventDefault(); ev.currentTarget.classList.remove('drag-over');
+            const noteId = ev.dataTransfer.getData("text/plain"); const note = notes.find(n => n.id === noteId);
+            if (note && note.status === 'active' && note.quadrant !== quadrant) { note.quadrant = quadrant; note.dirty = true; saveNotes(); handleSearch(); }
         }
 
         function allowTrackerDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
@@ -1155,9 +1166,6 @@
             }
         }
 
-        // --- Modals & Keyboard Escape Handler ---
-        let currentEditingId = null; let currentAddingQuadrant = null;
-        
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 const taskModal = document.getElementById('taskModal');
@@ -1170,42 +1178,6 @@
                 }
             }
         });
-
-        function timeStrToDecimal(timeStr) {
-            if (!timeStr) return null;
-            const [h, m] = timeStr.split(':').map(Number);
-            return h + (m / 60);
-        }
-
-        function decimalToTimeStr(dec) {
-            let norm = dec % 24;
-            let h = Math.floor(norm);
-            let m = Math.round((norm - h) * 60);
-            if (m === 60) { h++; m = 0; }
-            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-        }
-
-        function onTimesChanged() {
-            const startVal = document.getElementById('taskStartTime').value;
-            const endVal = document.getElementById('taskEndTime').value;
-            if (startVal && endVal) {
-                let startDec = timeStrToDecimal(startVal);
-                let endDec = timeStrToDecimal(endVal);
-                if (endDec <= startDec) endDec += 24;
-                let duration = roundToQuarterHour(endDec - startDec);
-                document.getElementById('taskHoursWorked').value = duration;
-            }
-        }
-
-        function onHoursChanged() {
-            const hoursVal = parseFloat(document.getElementById('taskHoursWorked').value);
-            const startVal = document.getElementById('taskStartTime').value;
-            if (!isNaN(hoursVal) && startVal) {
-                let startDec = timeStrToDecimal(startVal);
-                let endDec = startDec + hoursVal;
-                document.getElementById('taskEndTime').value = decimalToTimeStr(endDec);
-            }
-        }
 
         function openTaskModal(quadrant = null, noteId = null, event = null, timelineContext = null) {
             if (event) event.stopPropagation();
@@ -1221,54 +1193,53 @@
             if (noteId) {
                 currentEditingId = noteId; 
                 const note = notes.find(n => n.id === noteId); 
-                document.getElementById('taskModalTitle').innerText = 'Task Details'; 
+                if(document.getElementById('taskModalTitle')) document.getElementById('taskModalTitle').innerText = 'Task Details'; 
 
                 let lines = note.text.split('\n');
-                titleInput.value = lines[0] || '';
-                infoInput.value = lines.slice(1).join('\n') || '';
+                if(titleInput) titleInput.value = lines[0] || '';
+                if(infoInput) infoInput.value = lines.slice(1).join('\n') || '';
 
-                dueDateInput.value = note.dueDate ? note.dueDate.split('T')[0] : '';
+                if(dueDateInput) dueDateInput.value = note.dueDate ? note.dueDate.split('T')[0] : '';
                 
                 let activeBlock = (note.timeBlocks && note.timeBlocks.length > 0) ? note.timeBlocks[0] : null;
-                selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
-                hoursWorkedInput.value = activeBlock ? roundToQuarterHour(activeBlock.duration) : '';
+                if(selectedDateInput) selectedDateInput.value = activeBlock ? activeBlock.date : todayStr;
+                if(hoursWorkedInput) hoursWorkedInput.value = activeBlock ? roundToQuarterHour(activeBlock.duration) : '';
 
                 if (activeBlock && activeBlock.startHour !== undefined) {
-                    startTimeInput.value = decimalToTimeStr(activeBlock.startHour);
-                    endTimeInput.value = decimalToTimeStr(activeBlock.startHour + activeBlock.duration);
+                    if(startTimeInput) startTimeInput.value = decimalToTimeStr(activeBlock.startHour);
+                    if(endTimeInput) endTimeInput.value = decimalToTimeStr(activeBlock.startHour + activeBlock.duration);
                 } else {
-                    startTimeInput.value = '';
-                    endTimeInput.value = '';
+                    if(startTimeInput) startTimeInput.value = '';
+                    if(endTimeInput) endTimeInput.value = '';
                 }
 
             } else { 
                 currentEditingId = null; 
                 currentAddingQuadrant = quadrant || 'inbox'; 
-                document.getElementById('taskModalTitle').innerText = 'Add Task'; 
-                titleInput.value = '';
-                infoInput.value = '';
-                dueDateInput.value = timelineContext ? timelineContext.date : '';
-                selectedDateInput.value = timelineContext ? timelineContext.date : todayStr;
-                hoursWorkedInput.value = timelineContext ? '1.0' : '';
+                if(document.getElementById('taskModalTitle')) document.getElementById('taskModalTitle').innerText = 'Add Task'; 
+                if(titleInput) titleInput.value = '';
+                if(infoInput) infoInput.value = '';
+                if(dueDateInput) dueDateInput.value = timelineContext ? timelineContext.date : '';
+                if(selectedDateInput) selectedDateInput.value = timelineContext ? timelineContext.date : todayStr;
+                if(hoursWorkedInput) hoursWorkedInput.value = timelineContext ? '1.0' : '';
                 
                 if (timelineContext && timelineContext.startHour !== undefined) {
-                    startTimeInput.value = decimalToTimeStr(timelineContext.startHour);
-                    endTimeInput.value = decimalToTimeStr(timelineContext.startHour + 1.0);
+                    if(startTimeInput) startTimeInput.value = decimalToTimeStr(timelineContext.startHour);
+                    if(endTimeInput) endTimeInput.value = decimalToTimeStr(timelineContext.startHour + 1.0);
                 } else {
-                    startTimeInput.value = '';
-                    endTimeInput.value = '';
+                    if(startTimeInput) startTimeInput.value = '';
+                    if(endTimeInput) endTimeInput.value = '';
                 }
 
                 pendingTimelineContext = timelineContext || null;
             }
-            modal.style.display = 'flex'; 
-            setTimeout(() => titleInput.focus(), 100);
+            if(modal) modal.style.display = 'flex'; 
+            setTimeout(() => { if(titleInput) titleInput.focus(); }, 100);
         }
 
-        let pendingTimelineContext = null;
-
         function closeTaskModal() { 
-            document.getElementById('taskModal').style.display = 'none'; 
+            const modal = document.getElementById('taskModal');
+            if(modal) modal.style.display = 'none'; 
             pendingTimelineContext = null; 
         }
 
@@ -1349,7 +1320,6 @@
             closeTaskModal();
         }
 
-        let editingBlockState = null;
         function openEditBlockModal(noteId, blockId, event) {
             if (event) event.stopPropagation();
             const note = notes.find(n => n.id === noteId);
@@ -1360,7 +1330,9 @@
             document.getElementById('editBlockHours').value = roundToQuarterHour(block.duration);
             document.getElementById('editTimeBlockModal').style.display = 'flex';
         }
+
         function closeEditBlockModal() { document.getElementById('editTimeBlockModal').style.display = 'none'; editingBlockState = null;}
+
         function saveTimeBlock() {
             if(!editingBlockState) return;
             const newHours = roundToQuarterHour(parseFloat(document.getElementById('editBlockHours').value));
@@ -1370,6 +1342,7 @@
             if (newHours > 0) { block.duration = newHours; note.dirty = true; saveNotes(); handleSearch(); }
             closeEditBlockModal();
         }
+
         function deleteTimeBlock() {
             if(!editingBlockState) return;
             const note = notes.find(n => n.id === editingBlockState.noteId);
@@ -1377,169 +1350,42 @@
             note.dirty = true; saveNotes(); handleSearch(); closeEditBlockModal();
         }
 
-        // --- Clear Calendar Cache from Settings ---
-        function clearCalendarCache() {
-            if (confirm("Are you sure you want to clear the calendar event cache? This will allow re-importing all meetings when you click Sync Meetings.")) {
-                notes = notes.filter(n => !n.eventId);
-                saveNotes();
-                handleSearch();
-                showToast("Calendar event cache cleared!");
-            }
-        }
+        // --- 5. UI ACTIONS & TOGGLES ---
+        function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); if(panel&&btn){panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open');} }
+        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if(content&&chevron){if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }} }
+        function toggleCalendarTray() { const content = document.getElementById('calendar-tray-content'); const chevron = document.getElementById('calendar-chevron'); if(content&&chevron){if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }} }
+        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if(content&&chevron){if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; }} }
 
-        // --- Export Engine ---
-        function exportTimesheet() {
-            const baseDateStr = document.getElementById('trackerDate').value;
-            const [y, m, d] = baseDateStr.split('-');
-            const baseDate = new Date(y, m - 1, d);
-            let datesToExport = [];
-            
-            if (currentTrackerMode === 'day') {
-                datesToExport.push(baseDateStr);
+        function checkConfigState() {
+            const actions = document.getElementById('overlay-actions');
+            const authBtn = document.getElementById('authorize_button');
+            const signoutBtn = document.getElementById('signout_button');
+            const authOverlay = document.getElementById('auth-overlay');
+
+            if (!appConfig.clientId && appConfig.calSource === 'google') {
+                if(actions) actions.innerHTML = `<button class="btn" onclick="openSettingsPage()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
             } else {
-                const dayOfWeek = baseDate.getDay();
-                const startOfWeek = new Date(baseDate);
-                startOfWeek.setDate(baseDate.getDate() - dayOfWeek);
-                for(let i=0; i<7; i++) {
-                    let dateIter = new Date(startOfWeek);
-                    dateIter.setDate(startOfWeek.getDate() + i);
-                    
-                    const localY = dateIter.getFullYear();
-                    const localM = String(dateIter.getMonth() + 1).padStart(2, '0');
-                    const localD = String(dateIter.getDate()).padStart(2, '0');
-                    
-                    datesToExport.push(`${localY}-${localM}-${localD}`);
-                }
-            }
-
-            let plainTextLog = `Timesheet Report\n`;
-            let overallTotal = 0;
-
-            datesToExport.forEach(dateStr => {
-                let dailyHrs = 0;
-                let dailyLog = "";
-                notes.forEach(note => {
-                    if (note.deleted || !note.timeBlocks) return;
-                    note.timeBlocks.forEach(tb => { 
-                        if(tb.date === dateStr) {
-                            let dur = roundToQuarterHour(tb.duration);
-                            dailyHrs += dur;
-                            const tags = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
-                            let identifier = tags ? tags.join(' ') : note.text.substring(0, 40).replace(/\n/g, ' ') + '...';
-                            dailyLog += `- [${identifier}] ${dur}h\n`;
-                        }
-                    });
-                });
+                if(actions) actions.innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
                 
-                if (dailyHrs > 0 || currentTrackerMode === 'day') {
-                     plainTextLog += `\nDate: ${dateStr}\n------------------------\n`;
-                     if(dailyHrs > 0) plainTextLog += dailyLog;
-                     else plainTextLog += "No time logged.\n";
-                     plainTextLog += `Total: ${roundToQuarterHour(dailyHrs)}h\n`;
-                }
-                overallTotal += dailyHrs;
-            });
-            
-            if (currentTrackerMode === 'week') {
-                 plainTextLog += `\n========================\nWeekly Total: ${roundToQuarterHour(overallTotal)}h\n`;
-            }
-
-            navigator.clipboard.writeText(plainTextLog).then(() => showToast("Timesheet copied to clipboard!")).catch(err => showToast("Copy failed"));
-        }
-
-        // --- Config Settings & UI ---
-        async function loadCalendars() {
-            if (typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return;
-            const token = gapi.client.getToken();
-            if (!token || !token.access_token) return;
-            try {
-                const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-                    headers: { 'Authorization': `Bearer ${token.access_token}` }
-                });
-                const data = await res.json();
-                if (data.error) return;
-
-                const calendars = data.items || [];
-                const select = document.getElementById('configCalendar');
-                if(!select) return;
-                const currentVal = appConfig.calendarId;
-                select.innerHTML = '<option value="">-- Select a Calendar --</option>';
-                calendars.forEach(cal => {
-                    const opt = document.createElement('option');
-                    opt.value = cal.id; opt.innerText = cal.summary;
-                    if(cal.id === currentVal) opt.selected = true;
-                    select.appendChild(opt);
-                });
-            } catch (e) {
-                console.error("Auto Calendar Load Error:", e);
+                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
+                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
+                    if(authOverlay) authOverlay.style.display = 'none';
+                    if(authBtn) authBtn.style.display = 'none';
+                    if(signoutBtn) signoutBtn.style.display = 'inline-block';
+                    isGoogleSynced = true;
+                    if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: savedTokenData.token });
+                    loadCalendars(); 
+                } else { if(appConfig.calSource === 'google') { if(authBtn) authBtn.style.display = 'inline-block'; } else { if(authOverlay) authOverlay.style.display = 'none'; } }
             }
         }
 
-        function renderScheduleSettings() {
-            const container = document.getElementById('scheduleConfigList');
-            container.innerHTML = '';
-            appSchedule.forEach(block => addScheduleRow(block));
+        function dismissOverlay() { 
+            const authOverlay = document.getElementById('auth-overlay');
+            if(authOverlay) authOverlay.style.display = 'none'; 
+            renderNotes(); 
         }
 
-        function formatTimeForInput(decimalHour) {
-            let normalized = decimalHour % 24;
-            const hrs = Math.floor(normalized).toString().padStart(2, '0');
-            const mins = Math.round((normalized % 1) * 60).toString().padStart(2, '0');
-            return `${hrs}:${mins}`;
-        }
-
-        function addScheduleRow(block = {title: '', startHour: 14, endHour: 29}) {
-            const div = document.createElement('div');
-            div.className = 'schedule-row';
-            div.style.display = 'flex'; div.style.gap = '8px'; div.style.marginBottom = '8px';
-            div.innerHTML = `
-                <input type="text" class="sched-title" value="${block.title}" placeholder="Label" style="flex:2; padding:8px;">
-                <input type="time" class="sched-start" value="${formatTimeForInput(block.startHour)}" style="padding:8px;">
-                <input type="time" class="sched-end" value="${formatTimeForInput(block.endHour)}" style="padding:8px;">
-                <button class="btn btn-outline" style="color:red; padding:8px 12px;" onclick="this.parentElement.remove()">×</button>
-            `;
-            document.getElementById('scheduleConfigList').appendChild(div);
-        }
-
-        function saveSettings() {
-            appConfig.clientId = document.getElementById('configClientId').value.trim();
-            appConfig.apiKey = document.getElementById('configApiKey').value.trim();
-            appConfig.ignoreKeywords = document.getElementById('configIgnoreKeywords').value.trim();
-            appConfig.calSource = document.getElementById('configCalSource').value;
-            appConfig.icsUrl = document.getElementById('configIcsUrl').value.trim();
-            
-            const calendarSelect = document.getElementById('configCalendar');
-            if (calendarSelect && calendarSelect.value) {
-                appConfig.calendarId = calendarSelect.value;
-            }
-            
-            localStorage.setItem('quadra_config', JSON.stringify(appConfig));
-            
-            const rows = document.querySelectorAll('.schedule-row');
-            appSchedule = Array.from(rows).map(row => {
-                const startStr = row.querySelector('.sched-start').value.split(':');
-                const endStr = row.querySelector('.sched-end').value.split(':');
-                
-                let startH = parseInt(startStr[0] || 0) + (parseInt(startStr[1] || 0) / 60);
-                let endH = parseInt(endStr[0] || 0) + (parseInt(endStr[1] || 0) / 60);
-                
-                if (endH <= startH) {
-                    endH += 24;
-                }
-
-                return {
-                    title: row.querySelector('.sched-title').value,
-                    startHour: roundToQuarterHour(startH),
-                    endHour: roundToQuarterHour(endH)
-                };
-            });
-            localStorage.setItem('quadra_schedule', JSON.stringify(appSchedule));
-            
-            closeSettingsPage(); 
-            showToast("Configuration saved!");
-        }
-
-        // --- Core Timezone ICS Parser ---
+        // --- 6. PARSE ICS (v8.12 Fixes) ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
             let vTimezones = {};
@@ -1723,11 +1569,11 @@
             let ignoredCount = 0;
 
             try {
-                document.getElementById('sync-banner').style.display = 'block';
+                const syncBanner = document.getElementById('sync-banner');
+                if (syncBanner) syncBanner.style.display = 'block';
 
                 if (appConfig.calSource === 'outlook' && appConfig.icsUrl) {
                     let fetchUrl = appConfig.icsUrl;
-                    
                     const res = await fetch(fetchUrl);
                     if (!res.ok) throw new Error("Failed to fetch ICS feed via Apps Script bridge");
                     
@@ -1757,11 +1603,11 @@
                 } else {
                     const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
                     if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) {
-                        document.getElementById('sync-banner').style.display = 'none';
+                        if (syncBanner) syncBanner.style.display = 'none';
                         return showToast("Please sign in to Google first.");
                     }
                     if (!appConfig.calendarId) {
-                        document.getElementById('sync-banner').style.display = 'none';
+                        if (syncBanner) syncBanner.style.display = 'none';
                         return showToast("Please select a Google calendar in Settings first.");
                     }
                     
@@ -1821,7 +1667,7 @@
                     });
                 }
                 
-                document.getElementById('sync-banner').style.display = 'none';
+                if (syncBanner) syncBanner.style.display = 'none';
                 if (importedCount > 0 || ignoredCount > 0) {
                     saveNotes();
                     renderTrackerTimeline(); 
@@ -1832,7 +1678,8 @@
                 
             } catch(e) {
                 console.error("Calendar Sync Error:", e);
-                document.getElementById('sync-banner').style.display = 'none';
+                const syncBanner = document.getElementById('sync-banner');
+                if (syncBanner) syncBanner.style.display = 'none';
                 showToast("Failed to fetch calendar events. Check your network or Apps Script Web App URL.");
             }
         }
@@ -1841,7 +1688,8 @@
             const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
             if (!savedToken || !savedToken.token) return showToast("Please sign in first to sync with Google Tasks.");
             try {
-                document.getElementById('sync-banner').style.display = 'block';
+                const syncBanner = document.getElementById('sync-banner');
+                if (syncBanner) syncBanner.style.display = 'block';
                 if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
                     gapi.client.setToken({ access_token: savedToken.token });
                 }
@@ -1866,16 +1714,24 @@
                 let newNotesArray = []; let syncedIds = new Set();
                 syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
                 notes = newNotesArray; saveNotes(); handleSearch(); 
-                document.getElementById('sync-banner').style.display = 'none';
+                if (syncBanner) syncBanner.style.display = 'none';
                 showToast("Successfully synced with Google Tasks!");
             } catch (e) {
-                document.getElementById('sync-banner').style.display = 'none';
+                const syncBanner = document.getElementById('sync-banner');
+                if (syncBanner) syncBanner.style.display = 'none';
                 console.error(e);
                 showToast("Tasks sync failed. Check your API configuration.");
             }
         }
 
-        // --- Initialization ---
+        // --- Event Listeners & Execution ---
+        window.addEventListener('click', () => {
+            const dropdown = document.getElementById('overflowDropdown');
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof gapi !== 'undefined' && appConfig.apiKey) {
                 gapi.load('client', () => {
@@ -1889,9 +1745,15 @@
                     callback: async (resp) => { 
                         if (resp.error !== undefined) { throw (resp); } 
                         localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
-                        document.getElementById('auth-overlay').style.display = 'none'; 
-                        document.getElementById('authorize_button').style.display = 'none'; 
-                        document.getElementById('signout_button').style.display = 'inline-block'; 
+                        
+                        const authOverlay = document.getElementById('auth-overlay');
+                        const authBtn = document.getElementById('authorize_button');
+                        const signoutBtn = document.getElementById('signout_button');
+
+                        if (authOverlay) authOverlay.style.display = 'none'; 
+                        if (authBtn) authBtn.style.display = 'none'; 
+                        if (signoutBtn) signoutBtn.style.display = 'inline-block'; 
+
                         isGoogleSynced = true;
                         if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
                         loadCalendars(); 
@@ -1899,9 +1761,9 @@
                     }, 
                 });
             }
-            checkConfigState();
             setLayout(currentLayout); 
             renderNotes();
+            checkConfigState();
         });
 
     </script>
