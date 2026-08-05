@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crazy Communication</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background-color: #f0f2f5; }
+
+    #app-container {
+      display: flex; flex-direction: column; width: 100vw; height: 100vh; position: relative;
+      background-color: #0052cc; transition: background-color 0.2s ease;
+    }
+
+    .app-bar {
+      height: 56px; background-color: rgba(0, 0, 0, 0.2); color: white;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10;
+    }
+    .app-bar h1 { font-size: 1.1rem; font-weight: 600; }
+    .app-bar .icon-btn { background: none; border: none; color: white; font-size: 1.3rem; cursor: pointer; }
+
+    .main-viewport { flex: 1; position: relative; overflow-y: auto; background-color: #ffffff; }
+    .view-screen { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; flex-direction: column; }
+    .view-screen.active { display: flex; }
+
+    .bottom-bar {
+      height: 60px; background-color: #0052cc; display: flex;
+      justify-content: space-around; align-items: center;
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1); z-index: 10;
+    }
+    .nav-btn {
+      background: none; border: none; color: #b3d4ff; display: flex;
+      flex-direction: column; align-items: center; font-size: 0.75rem;
+      cursor: pointer; width: 22%;
+    }
+    .nav-btn.active { color: #ffffff; font-weight: bold; }
+    .nav-btn span { font-size: 1.2rem; margin-bottom: 2px; }
+
+    .chat-list { list-style: none; width: 100%; }
+    .chat-item {
+      display: flex; align-items: center; padding: 12px 16px;
+      border-bottom: 1px solid #e0e0e0; cursor: pointer;
+    }
+    .chat-item:hover { background-color: #f8f9fa; }
+    .chat-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; margin-right: 12px; }
+    .chat-info { flex: 1; }
+    .chat-title { font-weight: 600; color: #333; }
+    .chat-actions { display: flex; gap: 6px; }
+
+    .action-btn {
+      background: #f0f0f0; border: none; padding: 6px 10px;
+      border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+    }
+    .action-btn.active-style { background: #0052cc; color: white; }
+
+    .chat-header {
+      background-color: #003b99; color: white; padding: 10px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .chat-messages { flex: 1; padding: 14px; overflow-y: auto; background-color: #e5ddd5; }
+    
+    .message-bubble {
+      background: white; padding: 8px 12px; border-radius: 8px;
+      margin-bottom: 10px; max-width: 85%; position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; gap: 8px; align-items: flex-start;
+      cursor: pointer; border: 2px solid transparent;
+    }
+    .message-bubble.selected { border-color: #0052cc; background-color: #e6f0ff; }
+    
+    .select-circle {
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #888;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: bold; color: white; flex-shrink: 0; margin-top: 2px;
+    }
+    .message-bubble.selected .select-circle { background-color: #0052cc; border-color: #0052cc; }
+    .message-bubble.selected .select-circle::after { content: '✓'; }
+
+    .msg-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .message-media { max-width: 100%; border-radius: 6px; max-height: 200px; object-fit: cover; }
+    .message-time { font-size: 0.65rem; color: #888; text-align: right; }
+
+    .chat-input-panel { background: #f0f0f0; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .input-row-1, .input-row-2 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .input-row-1 textarea { flex: 1; height: 38px; padding: 8px; border-radius: 18px; border: 1px solid #ccc; resize: none; }
+
+    .poll-box, .checklist-box {
+      background: #f8f9fa; padding: 10px; border-radius: 6px;
+      border: 1px solid #0052cc; width: 100%; margin-bottom: 4px;
+    }
+    .poll-option-btn {
+      width: 100%; padding: 6px; margin-top: 6px; background: white;
+      border: 1px solid #ccc; border-radius: 4px; text-align: left; cursor: pointer;
+    }
+    .checklist-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; cursor: pointer; }
+    .checklist-row.checked span { text-decoration: line-through; color: #777; }
+
+    .grid-container {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 10px; padding: 14px; width: 100%;
+    }
+    .grid-card {
+      background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 12px; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; cursor: pointer;
+    }
+    .grid-card:hover { background: #e2e8f0; }
+    .grid-card .icon { font-size: 1.6rem; margin-bottom: 4px; }
+    .grid-card .title { font-size: 0.75rem; font-weight: 600; color: #333; }
+
+    .tool-view { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; background: white; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 280px; margin: 0 auto; width:100%; }
+    .calc-btn { padding: 14px; font-size: 1.2rem; border-radius: 8px; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; font-weight:600; }
+    
+    canvas.paint-board { border: 2px solid #333; border-radius: 6px; background: white; touch-action: none; cursor: crosshair; image-rendering: pixelated; }
+
+    .modal-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: none; align-items: center;
+      justify-content: center; z-index: 100;
+    }
+    .modal-card {
+      background: white; padding: 18px; border-radius: 8px;
+      width: 85%; max-width: 400px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .modal-card input[type="text"] {
+      width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app-container">
+  <div class="app-bar" id="global-top-bar">
+    <h1 id="top-bar-title">Crazy communication</h1>
+    <button class="icon-btn" id="top-bar-action" onclick="handleTopBarAction()">+</button>
+  </div>
+
+  <div class="main-viewport">
+    <div class="view-screen active" id="view-home">
+      <ul class="chat-list" id="home-chat-list"></ul>
+    </div>
+
+    <div class="view-screen" id="view-chat-detail">
+      <div class="chat-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="icon-btn" onclick="exitChatDetail()">✕</button>
+          <h2 id="active-chat-name" style="font-size:1.05rem;">Chat</h2>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="icon-btn" id="btn-edit-msg" style="display:none;" onclick="editSelectedMessage()">✏️</button>
+          <button class="icon-btn" id="btn-delete-msg" style="display:none;" onclick="deleteSelectedMessages()">🗑️</button>
+        </div>
+      </div>
+      
+      <div class="chat-messages" id="chat-messages-container"></div>
+      
+      <div class="chat-input-panel" id="chat-input-panel">
+        <div class="input-row-1">
+          <button class="action-btn" onclick="openGalleryPicker()">🌸</button>
+          <input type="file" id="chat-gallery-input" style="display:none;" accept="image/*" capture="environment" onchange="handleGalleryImage(event)">
+          <textarea id="chat-msg-input" placeholder="Type a message..."></textarea>
+          <button class="action-btn" style="background:#0052cc; color:white;" onclick="sendChatMessage()">Send</button>
+        </div>
+        <div class="input-row-2">
+          <button class="action-btn" onclick="createInteractivePoll()">📊 Poll</button>
+          <button class="action-btn" onclick="createInteractiveChecklist()">☑️ Checklist</button>
+          <button class="action-btn" id="btn-bold" onclick="toggleStyle('bold')"><b>B</b></button>
+          <button class="action-btn" id="btn-italic" onclick="toggleStyle('italic')"><i>I</i></button>
+          <button class="action-btn" id="btn-underline" onclick="toggleStyle('underline')"><u>U</u></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-screen" id="view-archive">
+      <ul class="chat-list" id="archive-chat-list"></ul>
+    </div>
+
+    <div class="view-screen" id="view-games">
+      <div class="grid-container" id="games-grid"></div>
+    </div>
+
+    <div class="view-screen" id="view-settings">
+      <div style="padding:16px; display:flex; flex-direction:column; gap:16px;">
+        <div>
+          <label style="font-weight:600;">Clock Configuration</label>
+          <input type="time" style="padding:6px; margin-top:4px; width:100%;">
+        </div>
+        <div>
+          <label style="font-weight:600;">Language</label>
+          <select style="width:100%; padding:8px; margin-top:4px;">
+            <option>English</option><option>Spanish</option><option>Hindi</option><option>French</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-screen" id="view-important">
+      <div class="grid-container" id="tools-grid"></div>
+      <div id="tool-subview" style="display:none;" class="tool-view"></div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="nav-btn active" onclick="navigateTo('home')"><span>💬</span>Home</button>
+    <button class="nav-btn" onclick="navigateTo('archive')"><span>📦</span>Archive</button>
+    <button class="nav-btn" onclick="navigateTo('games')"><span>🎮</span>Games</button>
+    <button class="nav-btn" onclick="navigateTo('important')"><span>⭐</span>Tools</button>
+    <button class="nav-btn" onclick="navigateTo('settings')"><span>⚙️</span>Settings</button>
+  </div>
+
+  <div class="modal-overlay" id="create-chat-modal">
+    <div class="modal-card">
+      <h3 id="modal-title">Create Chat</h3>
+      <input type="text" id="chat-name-input" placeholder="Enter Chat Title...">
+      <input type="file" id="chat-image-input" accept="image/*" capture="environment">
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+        <button class="action-btn" onclick="closeModal()">Cancel</button>
+        <button class="action-btn" style="background:#0052cc; color:white;" onclick="saveChat()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let state = {
+    chats: JSON.parse(localStorage.getItem('cc_chats')) || [],
+    archivedChats: JSON.parse(localStorage.getItem('cc_archive')) || [],
+    appBgColor: localStorage.getItem('cc_app_bg_color') || '#0052cc',
+    activeChatId: null,
+    editingChatId: null,
+    selectedImage: null,
+    selectedMsgIds: [],
+    formatting: { bold: false, italic: false, underline: false }
+  };
+
+  const GAMES_CONFIG = [
+    { name: "Hill climb racing", url: "https://poki.com/en/g/hill-climb-racing-lite" },
+    { name: "Minecraft Planning", url: "MP.html" },
+    { name: "Carnado zoom car", url: "Car.html" },
+    { name: "Drive mad", url: "https://poki.com/en/g/drive-mad" },
+    { name: "Minecraft", url: "https://classic.minecraft.net" },
+    { name: "Parkour", url: "https://www.crazygames.com/game/crazy-motorcycle" },
+    { name: "Car parking", url: "https://poki.com/en/parking" },
+    { name: "Stickman hook", url: "https://poki.com/en/g/stickman-hook" },
+    { name: "Stickman fighter", url: "https://www.crazygames.com/game/stick-epic-fighter" },
+    { name: "Dino", url: "https://rekindle.ink/dino" },
+    { name: "Maze", url: "https://rekindle.ink/maze" },
+    { name: "Wordle", url: "https://rekindle.ink/wordle" },
+    { name: "Sudoku", url: "https://kindleplay.com/sudoku/" },
+    { name: "Hangman", url: "https://rekindle.ink/hangman" },
+    { name: "Minesweeper", url: "https://rekindle.ink/minesweeper" },
+    { name: "2048", url: "https://rekindle.ink/2048" },
+    { name: "Ore miner", url: "https://www.crazygames.com/game/noob-miner-escape-from-prison" },
+    { name: "Carrom", url: "https://www.crazygames.com/game/disk-strike-carrom-challenge" },
+    { name: "Soccer", url: "https://poki.com/en/g/soccer-real#fullscreen" },
+    { name: "Cricket", url: "https://www.crazygames.com/game/cricket-world-cup" },
+    { name: "Tic-Tac-Toe", url: "https://rekindle.ink/tictactoe" }
+  ];
+
+  function persist() {
+    localStorage.setItem('cc_chats', JSON.stringify(state.chats));
+    localStorage.setItem('cc_archive', JSON.stringify(state.archivedChats));
+    localStorage.setItem('cc_app_bg_color', state.appBgColor);
+  }
+
+  function applySavedBgColor() {
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) appContainer.style.backgroundColor = state.appBgColor;
+  }
+
+  function navigateTo(screenId) {
+    document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById(`view-${screenId}`).classList.add('active');
+    const topBar = document.getElementById('global-top-bar');
+
+    if (screenId === 'home') {
+      topBar.style.display = 'flex';
+      document.getElementById('top-bar-title').innerText = 'Crazy communication';
+      document.getElementById('top-bar-action').style.display = 'block';
+      renderChatList();
+    } else if (screenId === 'archive') {
+      topBar.style.display = 'flex';
+      document.getElementById('top-bar-title').innerText = 'Archive';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderArchiveList();
+    } else if (screenId === 'chat-detail') {
+      topBar.style.display = 'none';
+    } else if (screenId === 'important') {
+      topBar.style.display = 'flex';
+      document.getElementById('top-bar-title').innerText = 'Important Tools';
+      document.getElementById('top-bar-action').style.display = 'none';
+      closeToolSubview();
+    } else {
+      topBar.style.display = 'flex';
+      document.getElementById('top-bar-title').innerText = screenId.charAt(0).toUpperCase() + screenId.slice(1);
+      document.getElementById('top-bar-action').style.display = 'none';
+    }
+  }
+
+  function handleTopBarAction() {
+    state.editingChatId = null;
+    document.getElementById('modal-title').innerText = "Create Chat";
+    document.getElementById('chat-name-input').value = "";
+    document.getElementById('create-chat-modal').style.display = "flex";
+  }
+
+  function closeModal() { document.getElementById('create-chat-modal').style.display = "none"; }
+
+  function saveChat() {
+    const title = document.getElementById('chat-name-input').value || "New Chat";
+    const imgInput = document.getElementById('chat-image-input');
+
+    const doSave = (imgUrl) => {
+      if (state.editingChatId) {
+        const chat = state.chats.find(c => c.id === state.editingChatId);
+        if (chat) {
+          chat.title = title;
+          if (imgUrl) chat.image = imgUrl;
+        }
+      } else {
+        state.chats.push({
+          id: Date.now(),
+          title: title,
+          image: imgUrl || "https://via.placeholder.com/44/0052cc/ffffff?text=Chat",
+          messages: []
+        });
+      }
+      persist();
+      closeModal();
+      renderChatList();
+    };
+
+    if (imgInput.files && imgInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => doSave(e.target.result);
+      reader.readAsDataURL(imgInput.files[0]);
+    } else {
+      doSave(null);
+    }
+  }
+
+  function renderChatList() {
+    const list = document.getElementById('home-chat-list');
+    list.innerHTML = "";
+
+    state.chats.forEach(chat => {
+      const li = document.createElement('li');
+      li.className = 'chat-item';
+      li.innerHTML = `
+        <img src="${chat.image}" class="chat-avatar">
+        <div class="chat-info" onclick="openChatDetail('${chat.id}')">
+          <div class="chat-title">${chat.title}</div>
+        </div>
+        <div class="chat-actions">
+          <button class="action-btn" onclick="editChat(${chat.id})">Edit</button>
+          <button class="action-btn" onclick="archiveChat(${chat.id})">Archive</button>
+          <button class="action-btn" style="color:red;" onclick="deleteChat(${chat.id})">🗑️</button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  function editChat(id) {
+    state.editingChatId = id;
+    const chat = state.chats.find(c => c.id === id);
+    document.getElementById('modal-title').innerText = "Edit Chat";
+    document.getElementById('chat-name-input').value = chat.title;
+    document.getElementById('create-chat-modal').style.display = "flex";
+  }
+
+  function deleteChat(id) {
+    state.chats = state.chats.filter(c => c.id !== id);
+    persist();
+    renderChatList();
+  }
+
+  function archiveChat(id) {
+    const idx = state.chats.findIndex(c => c.id === id);
+    if (idx > -1) {
+      const [chat] = state.chats.splice(idx, 1);
+      state.archivedChats.push(chat);
+      persist();
+      renderChatList();
+    }
+  }
+
+  function renderArchiveList() {
+    const list = document.getElementById('archive-chat-list');
+    list.innerHTML = "";
+    state.archivedChats.forEach(chat => {
+      const li = document.createElement('li');
+      li.className = 'chat-item';
+      li.innerHTML = `
+        <img src="${chat.image}" class="chat-avatar">
+        <div class="chat-info"><div class="chat-title">${chat.title}</div></div>
+        <button class="action-btn" onclick="restoreChat(${chat.id})">Restore</button>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  function restoreChat(id) {
+    const idx = state.archivedChats.findIndex(c => c.id === id);
+    if (idx > -1) {
+      const [chat] = state.archivedChats.splice(idx, 1);
+      state.chats.push(chat);
+      persist();
+      renderArchiveList();
+    }
+  }
+
+  function openGalleryPicker() { document.getElementById('chat-gallery-input').click(); }
+
+  function handleGalleryImage(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        state.selectedImage = evt.target.result;
+        alert("Photo selected from gallery!");
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function openChatDetail(id) {
+    state.activeChatId = id;
+    state.selectedMsgIds = [];
+    renderMessages();
+    navigateTo('chat-detail');
+  }
+
+  function exitChatDetail() { state.selectedMsgIds = []; navigateTo('home'); }
+
+  function toggleStyle(key) {
+    state.formatting[key] = !state.formatting[key];
+    document.getElementById(`btn-${key}`).classList.toggle('active-style', state.formatting[key]);
+  }
+
+  async function sendChatMessage() {
+    const input = document.getElementById('chat-msg-input');
+    const text = input.value;
+    if (!text && !state.selectedImage) return;
+
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    if (chat) {
+      chat.messages.push({
+        id: Date.now(),
+        text: text,
+        image: state.selectedImage,
+        style: { ...state.formatting },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      input.value = "";
+      state.selectedImage = null;
+      renderMessages();
+      persist();
+    }
+  }
+
+  function toggleSelectMessage(msgId) {
+    const idx = state.selectedMsgIds.indexOf(msgId);
+    if (idx > -1) state.selectedMsgIds.splice(idx, 1);
+    else state.selectedMsgIds.push(msgId);
+    renderMessages();
+  }
+
+  function deleteSelectedMessages() {
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    if (chat) {
+      chat.messages = chat.messages.filter(m => !state.selectedMsgIds.includes(m.id));
+      persist();
+      state.selectedMsgIds = [];
+      renderMessages();
+    }
+  }
+
+  function editSelectedMessage() {
+    if (state.selectedMsgIds.length !== 1) return;
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    const msg = chat.messages.find(m => m.id === state.selectedMsgIds[0]);
+    if (msg) {
+      const txt = prompt("Edit your message:", msg.text || "");
+      if (txt !== null) {
+        msg.text = txt;
+        persist();
+        state.selectedMsgIds = [];
+        renderMessages();
+      }
+    }
+  }
+
+  function renderMessages() {
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    const container = document.getElementById('chat-messages-container');
+    const titleElem = document.getElementById('active-chat-name');
+    const editBtn = document.getElementById('btn-edit-msg');
+    const deleteBtn = document.getElementById('btn-delete-msg');
+
+    container.innerHTML = "";
+    if (!chat) return;
+
+    const selCount = state.selectedMsgIds.length;
+    if (selCount > 0) {
+      titleElem.innerText = `${selCount} Selected`;
+      deleteBtn.style.display = 'block';
+      editBtn.style.display = selCount === 1 ? 'block' : 'none';
+    } else {
+      titleElem.innerText = chat.title;
+      deleteBtn.style.display = 'none';
+      editBtn.style.display = 'none';
+    }
+
+    chat.messages.forEach(msg => {
+      const isSel = state.selectedMsgIds.includes(msg.id);
+      const bubble = document.createElement('div');
+      bubble.className = `message-bubble ${isSel ? 'selected' : ''}`;
+      bubble.onclick = () => toggleSelectMessage(msg.id);
+
+      let inner = '<div class="msg-content">';
+      
+      if (msg.poll) {
+        inner += `<div class="poll-box"><strong>📊 ${msg.poll.question}</strong>`;
+        msg.poll.options.forEach((opt, idx) => {
+          inner += `<button class="poll-option-btn" onclick="event.stopPropagation(); votePoll(${msg.id}, ${idx})">${opt.text} (${opt.votes} votes)</button>`;
+        });
+        inner += `</div>`;
+      }
+
+      if (msg.checklist) {
+        inner += `<div class="checklist-box"><strong>☑️ ${msg.checklist.title}</strong>`;
+        msg.checklist.items.forEach((item, idx) => {
+          inner += `<div class="checklist-row ${item.checked ? 'checked' : ''}" onclick="event.stopPropagation(); toggleChecklistItem(${msg.id}, ${idx})">
+            <input type="checkbox" ${item.checked ? 'checked' : ''}> <span>${item.text}</span>
+          </div>`;
+        });
+        inner += `</div>`;
+      }
+
+      if (msg.image) inner += `<img src="${msg.image}" class="message-media">`;
+
+      if (msg.text) {
+        let t = msg.text;
+        if (msg.style?.bold) t = `<b>${t}</b>`;
+        if (msg.style?.italic) t = `<i>${t}</i>`;
+        if (msg.style?.underline) t = `<u>${t}</u>`;
+        inner += `<div>${t}</div>`;
+      }
+      inner += `<div class="message-time">${msg.time}</div></div>`;
+
+      bubble.innerHTML = `<div class="select-circle"></div>` + inner;
+      container.appendChild(bubble);
+    });
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function createInteractivePoll() {
+    const question = prompt("Enter Poll Question:");
+    if (!question) return;
+
+    const countStr = prompt("How many options do you want to add?", "2");
+    const count = parseInt(countStr);
+    if (isNaN(count) || count < 1) { alert("Please enter a valid number of options."); return; }
+
+    const options = [];
+    for (let i = 1; i <= count; i++) {
+      const optText = prompt(`Enter text for Option ${i}:`);
+      options.push({ text: optText || `Option ${i}`, votes: 0 });
+    }
+
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    if (chat) {
+      chat.messages.push({
+        id: Date.now(),
+        poll: { question: question, options: options },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      persist();
+      renderMessages();
+    }
+  }
+
+  function createInteractiveChecklist() {
+    const title = prompt("Enter Checklist Title:");
+    if (!title) return;
+
+    const countStr = prompt("How many items do you want to add to this checklist?", "3");
+    const count = parseInt(countStr);
+    if (isNaN(count) || count < 1) { alert("Please enter a valid number of items."); return; }
+
+    const items = [];
+    for (let i = 1; i <= count; i++) {
+      const itemText = prompt(`Enter text for Item ${i}:`);
+      items.push({ text: itemText || `Item ${i}`, checked: false });
+    }
+
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    if (chat) {
+      chat.messages.push({
+        id: Date.now(),
+        checklist: { title: title, items: items },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      persist();
+      renderMessages();
+    }
+  }
+
+  function votePoll(msgId, optIdx) {
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    const msg = chat.messages.find(m => m.id === msgId);
+    if (msg && msg.poll) {
+      msg.poll.options[optIdx].votes++;
+      persist();
+      renderMessages();
+    }
+  }
+
+  function toggleChecklistItem(msgId, itemIdx) {
+    const chat = state.chats.find(c => c.id == state.activeChatId);
+    const msg = chat.messages.find(m => m.id === msgId);
+    if (msg && msg.checklist) {
+      msg.checklist.items[itemIdx].checked = !msg.checklist.items[itemIdx].checked;
+      persist();
+      renderMessages();
+    }
+  }
+
+  const TOOLS = [
+    { name: "Notes", icon: "📝", act: openNotesDoc },
+    { name: "Pixel", icon: "🎨", act: openPixelStudio },
+    { name: "Sketch drawing", icon: "✏️", act: openSketchPad },
+    { name: "Background", icon: "🖼️", act: openBackgroundCanvas },
+    { name: "Calculator", icon: "🔢", act: openCalculator },
+    { name: "Countdown", icon: "⏱️", act: openCountdownTimer },
+    { name: "Dictionary", icon: "📖", act: openDictionary },
+    { name: "Translate", icon: "🌐", act: openTranslate },
+    { name: "Calendar", icon: "📅", act: openCalendarNav }
+  ];
+
+  function openToolView(title) {
+    document.getElementById('tools-grid').style.display = 'none';
+    const sub = document.getElementById('tool-subview');
+    sub.style.display = 'flex';
+    sub.innerHTML = `<div style="display:flex; align-items:center; gap:10px;"><button class="action-btn" onclick="closeToolSubview()">← Back</button><h3>${title}</h3></div>`;
+    return sub;
+  }
+
+  function closeToolSubview() {
+    document.getElementById('tools-grid').style.display = 'grid';
+    document.getElementById('tool-subview').style.display = 'none';
+  }
+
+  function openNotesDoc() {
+    const sub = openToolView("Notes Document");
+    const savedNote = localStorage.getItem('cc_note_doc') || "";
+    sub.innerHTML += `
+      <textarea id="noteContent" style="width:100%; height:250px; padding:10px; border-radius:6px; border:1px solid #ccc;">${savedNote}</textarea>
+      <button class="action-btn" style="background:#0052cc; color:white; padding:10px;" onclick="saveNoteDoc()">Save Document</button>
+    `;
+  }
+  function saveNoteDoc() {
+    localStorage.setItem('cc_note_doc', document.getElementById('noteContent').value);
+    alert("Document saved successfully!");
+  }
+
+  let pixelCanvas, pixelCtx, isPixelDrawing = false;
+  function openPixelStudio() {
+    const sub = openToolView("Pixel Studio");
+    sub.innerHTML += `
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <label>Color: <input type="color" id="pixelColor" value="#0052cc"></label>
+        <label>Pixel Size:
+          <select id="pixelSize">
+            <option value="4">4px</option>
+            <option value="10" selected>10px</option>
+            <option value="20">20px</option>
+            <option value="30">30px</option>
+          </select>
+        </label>
+        <button class="action-btn" onclick="clearPixelCanvas()">Clear</button>
+      </div>
+      <canvas id="pixelCanvas" width="280" height="280" class="paint-board"></canvas>
+      <button class="action-btn" style="background:#0052cc; color:white; padding:10px;" onclick="savePixelArt()">💾 Save Pixel Art to Device</button>
+    `;
+    setTimeout(initPixelCanvasEngine, 100);
+  }
+
+  function initPixelCanvasEngine() {
+    pixelCanvas = document.getElementById('pixelCanvas');
+    if (!pixelCanvas) return;
+    pixelCtx = pixelCanvas.getContext('2d');
+
+    const saved = localStorage.getItem('cc_pixel_art');
+    if (saved) {
+      const img = new Image();
+      img.onload = () => pixelCtx.drawImage(img, 0, 0);
+      img.src = saved;
+    }
+
+    const drawPixel = (e) => {
+      if (!isPixelDrawing) return;
+      e.preventDefault();
+      const rect = pixelCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      const size = parseInt(document.getElementById('pixelSize').value);
+      const color = document.getElementById('pixelColor').value;
+
+      const snapX = Math.floor(x / size) * size;
+      const snapY = Math.floor(y / size) * size;
+
+      pixelCtx.fillStyle = color;
+      pixelCtx.fillRect(snapX, snapY, size, size);
+    };
+
+    const start = (e) => { isPixelDrawing = true; drawPixel(e); };
+    const stop = () => { isPixelDrawing = false; pixelCtx.beginPath(); localStorage.setItem('cc_pixel_art', pixelCanvas.toDataURL()); };
+
+    pixelCanvas.onmousedown = start; pixelCanvas.onmouseup = stop; pixelCanvas.onmousemove = drawPixel;
+    pixelCanvas.ontouchstart = start; pixelCanvas.ontouchend = stop; pixelCanvas.ontouchmove = drawPixel;
+  }
+
+  function clearPixelCanvas() {
+    if (pixelCtx && pixelCanvas) {
+      pixelCtx.clearRect(0,0,pixelCanvas.width,pixelCanvas.height);
+      localStorage.removeItem('cc_pixel_art');
+    }
+  }
+
+  function savePixelArt() {
+    if (!pixelCanvas) return;
+    const dataURL = pixelCanvas.toDataURL('image/png');
+    localStorage.setItem('cc_pixel_art', dataURL);
+    const link = document.createElement('a');
+    link.download = `pixel-art-${Date.now()}.png`;
+    link.href = dataURL;
+    link.click();
+    alert("Pixel Art saved and downloaded to device!");
+  }
+
+  function openSketchPad() {
+    const sub = openToolView("Sketch Drawing Pad");
+    sub.innerHTML += `
+      <div style="display:flex; gap:10px; align-items:center;">
+        <input type="color" id="sketchColor" value="#000000">
+        <input type="range" id="sketchWidth" min="1" max="20" value="3">
+        <button class="action-btn" onclick="clearSketchCanvas()">Clear</button>
+      </div>
+      <canvas id="sketchCv" width="280" height="280" class="paint-board"></canvas>
+    `;
+    setTimeout(initSketchCanvas, 100);
+  }
+
+  let sketchCv, sketchCtx, isSketching = false;
+  function initSketchCanvas() {
+    sketchCv = document.getElementById('sketchCv');
+    if (!sketchCv) return;
+    sketchCtx = sketchCv.getContext('2d');
+
+    const getPos = (e) => {
+      const rect = sketchCv.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const start = (e) => { isSketching = true; draw(e); };
+    const stop = () => { isSketching = false; sketchCtx.beginPath(); };
+    const draw = (e) => {
+      if (!isSketching) return;
+      const pos = getPos(e);
+      sketchCtx.lineWidth = document.getElementById('sketchWidth').value;
+      sketchCtx.lineCap = 'round';
+      sketchCtx.strokeStyle = document.getElementById('sketchColor').value;
+
+      sketchCtx.lineTo(pos.x, pos.y);
+      sketchCtx.stroke();
+      sketchCtx.beginPath();
+      sketchCtx.moveTo(pos.x, pos.y);
+    };
+
+    sketchCv.onmousedown = start; sketchCv.onmouseup = stop; sketchCv.onmousemove = draw;
+    sketchCv.ontouchstart = start; sketchCv.ontouchend = stop; sketchCv.ontouchmove = draw;
+  }
+
+  function clearSketchCanvas() {
+    if (sketchCtx && sketchCv) sketchCtx.clearRect(0,0,sketchCv.width,sketchCv.height);
+  }
+
+  function openBackgroundCanvas() {
+    const sub = openToolView("Background Customizer");
+    sub.innerHTML += `
+      <p style="font-weight:600;">Choose background style or custom 16M color:</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="action-btn" onclick="changeBg('#0052cc')">Classic Blue</button>
+        <button class="action-btn" onclick="changeBg('#28a745')">Emerald Green</button>
+        <button class="action-btn" onclick="changeBg('#dc3545')">Red</button>
+        <button class="action-btn" onclick="changeBg('#6f42c1')">Purple</button>
+        <button class="action-btn" onclick="changeBg('#f0f2f5')">Light Gray</button>
+      </div>
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px;">
+        <label><b>16M Custom Color:</b></label>
+        <input type="color" id="bg16mPicker" value="${state.appBgColor}" onchange="changeBg(this.value)">
+      </div>
+    `;
+  }
+
+  function changeBg(color) {
+    state.appBgColor = color;
+    applySavedBgColor();
+    persist();
+  }
+
+  function openCalculator() {
+    const sub = openToolView("Calculator");
+    sub.innerHTML += `
+      <input type="text" id="calcDisplay" style="width:100%; padding:12px; font-size:1.4rem; text-align:right;" readonly>
+      <div class="calc-grid">
+        <button class="calc-btn" onclick="calcVal('C')" style="color:red;">C</button>
+        <button class="calc-btn" onclick="calcBack()">⌫</button>
+        <button class="calc-btn" onclick="calcVal('%')">%</button>
+        <button class="calc-btn" onclick="calcVal('/')">/</button>
+        <button class="calc-btn" onclick="calcVal('7')">7</button>
+        <button class="calc-btn" onclick="calcVal('8')">8</button>
+        <button class="calc-btn" onclick="calcVal('9')">9</button>
+        <button class="calc-btn" onclick="calcVal('*')">*</button>
+        <button class="calc-btn" onclick="calcVal('4')">4</button>
+        <button class="calc-btn" onclick="calcVal('5')">5</button>
+        <button class="calc-btn" onclick="calcVal('6')">6</button>
+        <button class="calc-btn" onclick="calcVal('-')">-</button>
+        <button class="calc-btn" onclick="calcVal('1')">1</button>
+        <button class="calc-btn" onclick="calcVal('2')">2</button>
+        <button class="calc-btn" onclick="calcVal('3')">3</button>
+        <button class="calc-btn" onclick="calcVal('+')">+</button>
+        <button class="calc-btn" onclick="calcVal('0')">0</button>
+        <button class="calc-btn" onclick="calcVal('.')">.</button>
+        <button class="calc-btn" onclick="calcVal('(')">(</button>
+        <button class="calc-btn" onclick="calcEval()" style="background:#0052cc; color:white;">=</button>
+      </div>
+    `;
+  }
+  function calcVal(v) {
+    const disp = document.getElementById('calcDisplay');
+    if (v === 'C') disp.value = '';
+    else disp.value += v;
+  }
+  function calcBack() {
+    const disp = document.getElementById('calcDisplay');
+    disp.value = disp.value.slice(0, -1);
+  }
+  function calcEval() {
+    try { document.getElementById('calcDisplay').value = eval(document.getElementById('calcDisplay').value); }
+    catch(e) { document.getElementById('calcDisplay').value = 'Error'; }
+  }
+
+  let timerInterval = null, startTime = 0, elapsedTime = 0;
+  function openCountdownTimer() {
+    const sub = openToolView("Countdown & Stopwatch");
+    sub.innerHTML += `
+      <div style="text-align:center; margin-top:20px;">
+        <h1 id="timeDisp" style="font-size:2.4rem; font-family:monospace;">00:00:00</h1>
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:16px;">
+          <button class="action-btn" style="background:#28a745; color:white; padding:10px 20px;" onclick="startPrecisionTimer()">Start</button>
+          <button class="action-btn" style="background:#dc3545; color:white; padding:10px 20px;" onclick="stopPrecisionTimer()">Stop</button>
+          <button class="action-btn" style="padding:10px 20px;" onclick="resetPrecisionTimer()">Reset</button>
+        </div>
+      </div>
+    `;
+  }
+  function startPrecisionTimer() {
+    if (timerInterval) return;
+    startTime = Date.now() - elapsedTime;
+    timerInterval = setInterval(() => {
+      elapsedTime = Date.now() - startTime;
+      let ms = Math.floor((elapsedTime % 1000) / 10);
+      let sec = Math.floor((elapsedTime / 1000) % 60);
+      let min = Math.floor((elapsedTime / (1000 * 60)) % 60);
+      document.getElementById('timeDisp').innerText = 
+        `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}:${String(ms).padStart(2,'0')}`;
+    }, 10);
+  }
+  function stopPrecisionTimer() { clearInterval(timerInterval); timerInterval = null; }
+  function resetPrecisionTimer() { stopPrecisionTimer(); elapsedTime = 0; document.getElementById('timeDisp').innerText = "00:00:00"; }
+
+  function openDictionary() {
+    const sub = openToolView("Oxford Dictionary");
+    sub.innerHTML += `
+      <input type="text" id="dictInput" placeholder="Enter word (e.g. communication)..." style="padding:8px; width:100%;">
+      <button class="action-btn" style="background:#0052cc; color:white; padding:8px;" onclick="fetchWordMeaning()">Lookup Meaning</button>
+      <div id="dictOutput" style="margin-top:12px; font-size:0.9rem;"></div>
+    `;
+  }
+  async function fetchWordMeaning() {
+    const word = document.getElementById('dictInput').value.trim();
+    const out = document.getElementById('dictOutput');
+    if (!word) return;
+    out.innerText = "Searching dictionary...";
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      const data = await res.json();
+      if (data[0] && data[0].meanings) {
+        let html = `<h4>${data[0].word}</h4>`;
+        data[0].meanings.forEach(m => {
+          html += `<p><b>[${m.partOfSpeech}]</b> ${m.definitions[0].definition}</p>`;
+        });
+        out.innerHTML = html;
+      } else {
+        out.innerText = "Word definition not found.";
+      }
+    } catch(e) {
+      out.innerText = "Error fetching dictionary definition.";
+    }
+  }
+
+  function openTranslate() {
+    const sub = openToolView("Language Translator");
+    sub.innerHTML += `
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="fromLang" style="flex:1; padding:8px;">
+          <option value="autodetect">Auto-Detect</option>
+          <option value="en" selected>English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="hi">Hindi</option>
+          <option value="de">German</option>
+        </select>
+        ➔
+        <select id="toLang" style="flex:1; padding:8px;">
+          <option value="es" selected>Spanish</option>
+          <option value="en">English</option>
+          <option value="fr">French</option>
+          <option value="hi">Hindi</option>
+          <option value="de">German</option>
+        </select>
+      </div>
+      <textarea id="transText" placeholder="Type text to translate..." style="width:100%; height:80px; padding:8px; margin-top:8px;"></textarea>
+      <button class="action-btn" style="background:#0052cc; color:white; padding:8px;" onclick="performTranslation()">Translate</button>
+      <div id="transResult" style="margin-top:12px; padding:10px; background:#f8f9fa; border-radius:6px; min-height:60px;"></div>
+    `;
+  }
+
+  async function performTranslation() {
+    const txt = document.getElementById('transText').value;
+    const from = document.getElementById('fromLang').value;
+    const to = document.getElementById('toLang').value;
+    const resElem = document.getElementById('transResult');
+    if (!txt) return;
+
+    resElem.innerText = "Translating...";
+    const langPair = (from === 'autodetect') ? `Autodetect|${to}` : `${from}|${to}`;
+
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=${langPair}`);
+      const data = await res.json();
+      if (data && data.responseData && data.responseData.translatedText) {
+        resElem.innerHTML = `<strong>Result (${to.toUpperCase()}):</strong><br>${data.responseData.translatedText}`;
+      } else {
+        resElem.innerText = "Translation unavailable.";
+      }
+    } catch(e) {
+      resElem.innerText = "Translation service error.";
+    }
+  }
+
+  let calDate = new Date();
+  function openCalendarNav() {
+    const sub = openToolView("Universal Calendar");
+    sub.innerHTML += `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button class="action-btn" onclick="changeCalMonth(-1)">◄ Prev</button>
+        <h4 id="calMonthYearTitle"></h4>
+        <button class="action-btn" onclick="changeCalMonth(1)">Next ►</button>
+      </div>
+      <div id="calGrid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; text-align:center; margin-top:12px;"></div>
+    `;
+    renderCalendarGrid();
+  }
+  function changeCalMonth(delta) {
+    calDate.setMonth(calDate.getMonth() + delta);
+    renderCalendarGrid();
+  }
+  function renderCalendarGrid() {
+    const title = document.getElementById('calMonthYearTitle');
+    const grid = document.getElementById('calGrid');
+    if (!title || !grid) return;
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    title.innerText = `${monthNames[calDate.getMonth()]} ${calDate.getFullYear()}`;
+
+    const firstDay = new Date(calDate.getFullYear(), calDate.getMonth(), 1).getDay();
+    const daysInMonth = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate();
+
+    grid.innerHTML = "<b>Su</b><b>Mo</b><b>Tu</b><b>We</b><b>Th</b><b>Fr</b><b>Sa</b>";
+    for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
+    for (let d = 1; d <= daysInMonth; d++) grid.innerHTML += `<div style="padding:4px; border:1px solid #eee;">${d}</div>`;
+  }
+
+  const toolsGrid = document.getElementById('tools-grid');
+  TOOLS.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'grid-card';
+    card.innerHTML = `<div class="icon">${t.icon}</div><div class="title">${t.name}</div>`;
+    card.onclick = t.act;
+    toolsGrid.appendChild(card);
+  });
+
+  const gamesGrid = document.getElementById('games-grid');
+  GAMES_CONFIG.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'grid-card';
+    card.innerHTML = `<div class="icon">🎮</div><div class="title">${g.name}</div>`;
+    card.onclick = () => {
+      if (g.url) {
+        window.open(g.url, '_blank');
+      } else {
+        alert(`Launching ${g.name}...`);
+      }
+    };
+    gamesGrid.appendChild(card);
+  });
+
+  applySavedBgColor();
+
+  if (state.chats.length === 0) {
+    state.chats.push({ id: Date.now(), title: "General Chat", image: "https://via.placeholder.com/44/0052cc/ffffff?text=Chat", messages: [] });
+    persist();
+  }
+  renderChatList();
+</script>
+</body>
+</html>
