@@ -259,7 +259,7 @@
         }
 
         /* Toast Notification System */
-        #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        #toast-container { fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
         .toast { background: var(--text-main); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(10px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: auto; }
         .toast.show { opacity: 1; transform: translateY(0); }
 
@@ -280,7 +280,7 @@
                     <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
                 </svg>
-                <h1>Quadra <span class="version-badge">v8.11</span></h1>
+                <h1>Quadra <span class="version-badge">v8.12</span></h1>
             </div>
             
             <div class="search-container" id="searchHeaderContainer">
@@ -599,6 +599,7 @@
         // --- Toast Notification System ---
         function showToast(message) {
             const container = document.getElementById('toast-container');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerText = message;
@@ -1539,154 +1540,7 @@
             showToast("Configuration saved!");
         }
 
-        // --- Core UI Tasks & Notes Matrix ---
-        function renderTagsList() {
-            const tagsBar = document.getElementById('quick-tags-bar'); if (!tagsBar) return;
-            const tagCounts = {};
-
-            notes.forEach(note => {
-                if (!note.deleted && note.status === 'active' && !note.eventId) {
-                    const matches = note.text.match(/(#[a-zA-Z0-9_]+|@[a-zA-Z0-9_]+)/g);
-                    if (matches) {
-                        const uniqueTags = new Set(matches.map(t => t.toLowerCase()));
-                        uniqueTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
-                    }
-                }
-            });
-
-            tagsBar.innerHTML = '';
-
-            const sortedTags = Object.keys(tagCounts).sort((a, b) => {
-                if (tagCounts[b] !== tagCounts[a]) return tagCounts[b] - tagCounts[a];
-                return a.localeCompare(b);
-            });
-
-            sortedTags.forEach(tag => {
-                const btn = document.createElement('button');
-                const isPerson = tag.startsWith('@');
-                btn.className = 'filter-tag' + (isPerson ? ' person-filter' : '');
-                btn.innerText = `${tag} (${tagCounts[tag]})`;
-                btn.onclick = (e) => { 
-                    const searchInput = document.getElementById('searchInput'); 
-                    if (searchInput.value === tag) clearSearch(); else searchTag(tag, e); 
-                };
-                tagsBar.appendChild(btn);
-            });
-        }
-
-        function escapeHTML(str) { return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)); }
-        
-        function parseTags(str) { 
-            let html = escapeHTML(str);
-            html = html.replace(/(#[a-zA-Z0-9_]+)/g, '<span class="hashtag" onclick="searchTag(\'$1\', event)">$1</span>');
-            html = html.replace(/(@[a-zA-Z0-9_]+)/g, '<span class="person-tag" onclick="searchTag(\'$1\', event)">$1</span>');
-            return html;
-        }
-
-        function searchTag(tag, event) { event.stopPropagation(); document.getElementById('searchInput').value = tag; handleSearch(); }
-        function clearSearch() { document.getElementById('searchInput').value = ''; handleSearch(); }
-
-        function handleSearch() {
-            const searchInput = document.getElementById('searchInput');
-            if(!searchInput) return;
-            const query = searchInput.value.toLowerCase();
-            document.getElementById('clearSearchBtn').style.display = query.length > 0 ? 'block' : 'none';
-            renderNotes(query);
-        }
-
-        function renderNotes(searchQuery = '') {
-            ['inbox', 'calendar', 'q1', 'q2', 'q3', 'q4', 'closed'].forEach(q => { const el = document.getElementById(`list-${q}`); if (el) el.innerHTML = ''; });
-            let filteredNotes = notes.filter(note => !note.deleted && note.text.toLowerCase().includes(searchQuery));
-            filteredNotes.sort((a, b) => { if (!a.dueDate && !b.dueDate) return 0; if (!a.dueDate) return -1; if (!b.dueDate) return 1; return a.dueDate.localeCompare(b.dueDate); });
-
-            let filteredCounts = { q1: 0, q2: 0, q3: 0, q4: 0, inbox: 0, calendar: 0, closed: 0 };
-
-            filteredNotes.forEach(note => {
-                let targetListId = `list-${note.quadrant}`;
-                if (note.eventId) {
-                    targetListId = 'list-calendar';
-                }
-                const list = document.getElementById(targetListId);
-                if (list) {
-                    if (note.status === 'active' && !note.eventId && filteredCounts[note.quadrant] !== undefined) {
-                        filteredCounts[note.quadrant]++;
-                    }
-                    if (note.eventId && filteredCounts['calendar'] !== undefined) {
-                        filteredCounts['calendar']++;
-                    }
-                    if (note.quadrant === 'inbox' && filteredCounts['inbox'] !== undefined) {
-                        filteredCounts['inbox']++;
-                    }
-
-                    const noteEl = document.createElement('div'); noteEl.className = 'note' + (note.status === 'closed' ? ' closed-note' : '');
-                    if (note.status === 'active' && !note.eventId) { noteEl.draggable = true; noteEl.ondragstart = (e) => e.dataTransfer.setData('text/plain', note.id); }
-
-                    const contentWrapper = document.createElement('div'); contentWrapper.className = 'note-content-wrapper';
-                    contentWrapper.innerHTML = `<div class="note-text">${parseTags(note.text)}</div>`;
-                    
-                    if (note.dueDate) contentWrapper.innerHTML += `<div style="font-size:12px; color:var(--brand-primary); margin-top:6px; font-weight:500;">🗓️ ${note.dueDate.split('T')[0]}</div>`;
-                    
-                    contentWrapper.onclick = (e) => openTaskModal(null, note.id, e);
-
-                    const actionsDiv = document.createElement('div'); actionsDiv.className = 'note-actions';
-                    if (!note.eventId) {
-                        if (note.status === 'active') actionsDiv.innerHTML = `<button class="action-btn complete-btn" onclick="completeTask('${note.id}')">✓</button>`;
-                        else actionsDiv.innerHTML = `<button class="action-btn restore-btn" onclick="restoreTask('${note.id}')">↺</button><button class="action-btn delete-btn" onclick="deleteTask('${note.id}')">×</button>`;
-                    } else {
-                        actionsDiv.innerHTML = `<button class="action-btn delete-btn" onclick="deleteTask('${note.id}')" title="Remove event">×</button>`;
-                    }
-                    
-                    noteEl.append(contentWrapper, actionsDiv); list.appendChild(noteEl);
-                }
-            });
-
-            const activeNotes = notes.filter(n => !n.deleted && n.status === 'active' && !n.eventId);
-            document.getElementById('closed-count').innerText = notes.filter(n => !n.deleted && n.status === 'closed' && !n.eventId).length;
-            document.getElementById('inbox-count').innerText = filteredCounts.inbox;
-            document.getElementById('calendar-count').innerText = filteredCounts.calendar;
-            
-            ['q1', 'q2', 'q3', 'q4'].forEach(q => {
-                const badge = document.getElementById(`badge-${q}`);
-                if (badge) badge.innerText = filteredCounts[q];
-            });
-            
-            if (currentLayout === 'tracker') renderTrackerTimeline();
-            renderTagsList();
-        }
-
-        function completeTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'closed'; note.quadrant = 'closed'; note.dirty = true; saveNotes(); handleSearch(); } }
-        function restoreTask(id) { const note = notes.find(n => n.id === id); if (note) { note.status = 'active'; note.quadrant = 'inbox'; note.dirty = true; saveNotes(); handleSearch(); } }
-        function deleteTask(id) { const note = notes.find(n => n.id === id); if (note) { note.deleted = true; note.dirty = true; saveNotes(); handleSearch(); } }
-
-        function toggleSidebar() { const panel = document.getElementById('sidePanel'); const btn = document.getElementById('sidebarToggleBtn'); panel.classList.toggle('open'); btn.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); }
-        function toggleClosedTray() { const content = document.getElementById('closed-tray-content'); const chevron = document.getElementById('closed-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
-        function toggleCalendarTray() { const content = document.getElementById('calendar-tray-content'); const chevron = document.getElementById('calendar-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
-        function toggleInboxTray() { const content = document.getElementById('inbox-tray-content'); const chevron = document.getElementById('inbox-chevron'); if (content.classList.contains('open')) { content.classList.remove('open'); chevron.innerText = '▼'; } else { content.classList.add('open'); chevron.innerText = '▲'; } }
-
-        function checkConfigState() {
-            if (!appConfig.clientId && appConfig.calSource === 'google') {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="openSettingsPage()">Configure Keys</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline (Local Storage)</button>`;
-            } else {
-                document.getElementById('overlay-actions').innerHTML = `<button class="btn" onclick="handleAuthClick()">Sign In with Google</button><button class="btn btn-outline" onclick="dismissOverlay()">Use Offline</button>`;
-                
-                const savedTokenData = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-                if (savedTokenData && savedTokenData.expires_at > Date.now()) {
-                    document.getElementById('auth-overlay').style.display = 'none';
-                    document.getElementById('authorize_button').style.display = 'none';
-                    document.getElementById('signout_button').style.display = 'inline-block';
-                    isGoogleSynced = true;
-                    if (typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: savedTokenData.token });
-                    loadCalendars(); 
-                } else { if(appConfig.calSource === 'google') document.getElementById('authorize_button').style.display = 'inline-block'; else document.getElementById('auth-overlay').style.display = 'none'; }
-            }
-        }
-        function dismissOverlay() { document.getElementById('auth-overlay').style.display = 'none'; renderNotes(); }
-
-        function exportData() { const dataStr = JSON.stringify(notes, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `quadra_backup_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url); }
-        function triggerImport() { document.getElementById('importFile').click(); }
-        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const importedNotes = JSON.parse(e.target.result); if (Array.isArray(importedNotes)) { const noteMap = new Map(notes.map(n => [n.id, n])); importedNotes.forEach(inNote => { inNote.dirty = true; noteMap.set(inNote.id, inNote); }); notes = Array.from(noteMap.values()); saveNotes(); handleSearch(); showToast("Tasks merged!"); closeSettingsPage(); } else showToast("Invalid format."); } catch (err) { showToast("Error reading file."); } event.target.value = ''; }; reader.readAsText(file); }
-
-        // --- Robust Universal Timezone ICS Parser ---
+        // --- Universal Timezone ICS Parser (Overhauled for v8.12) ---
         function parseICS(icsText, targetDateStr, ignoreKeywords) {
             let events = [];
             let vTimezones = {};
@@ -1707,10 +1561,16 @@
                 } else if (line.startsWith('TZOFFSETFROM:') || line.startsWith('TZOFFSETTO:')) {
                     if (currentTzId && currentTzProp) {
                         let offsetStr = line.substring(13).trim();
-                        let sign = offsetStr.startsWith('-') ? -1 : 1;
-                        let hrs = parseInt(offsetStr.substring(1, 3)) || 0;
-                        let mins = parseInt(offsetStr.substring(3, 5)) || 0;
-                        let totalHours = sign * (hrs + (mins / 60));
+                        let isNegative = offsetStr.includes('-');
+                        let digits = offsetStr.replace(/[^0-9]/g, '');
+                        let totalHours = 0;
+                        if (digits.length >= 3) {
+                            let hrs = parseInt(digits.substring(0, digits.length - 2), 10) || 0;
+                            let mins = parseInt(digits.substring(digits.length - 2), 10) || 0;
+                            totalHours = (isNegative ? -1 : 1) * (hrs + (mins / 60));
+                        } else if (digits.length > 0) {
+                            totalHours = (isNegative ? -1 : 1) * (parseInt(digits, 10) || 0);
+                        }
                         
                         if (!vTimezones[currentTzId][currentTzProp]) {
                             vTimezones[currentTzId][currentTzProp] = {};
@@ -1775,22 +1635,28 @@
                     let match = clean.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2}))?Z?$/);
                     if (!match) return null;
 
-                    let y = parseInt(match[1]);
-                    let m = parseInt(match[2]) - 1;
-                    let d = parseInt(match[3]);
-                    let h = match[4] ? parseInt(match[4]) : 0;
-                    let min = match[5] ? parseInt(match[5]) : 0;
-                    let s = match[6] ? parseInt(match[6]) : 0;
+                    let y = parseInt(match[1], 10);
+                    let m = parseInt(match[2], 10) - 1;
+                    let d = parseInt(match[3], 10);
+                    
+                    let isDateOnly = match[4] === undefined || keyName.includes('VALUE=DATE');
+
+                    let h = match[4] ? parseInt(match[4], 10) : 0;
+                    let min = match[5] ? parseInt(match[5], 10) : 0;
+                    let s = match[6] ? parseInt(match[6], 10) : 0;
 
                     let dateObj;
-                    if (clean.endsWith('Z')) {
+
+                    if (isDateOnly) {
+                        dateObj = new Date(y, m, d, 0, 0, 0);
+                    } else if (clean.endsWith('Z')) {
                         dateObj = new Date(Date.UTC(y, m, d, h, min, s));
                     } else {
                         let tzidMatch = keyName.match(/TZID=([^;:]+)/i);
                         let sourceOffset = undefined;
 
                         if (tzidMatch) {
-                            let tzidKey = tzidMatch[1].trim();
+                            let tzidKey = tzidMatch[1].trim().replace(/^"|"$/g, '');
                             if (vTimezones[tzidKey]) {
                                 let tzData = vTimezones[tzidKey]['DAYLIGHT'] || vTimezones[tzidKey]['STANDARD'];
                                 if (tzData && tzData.offsetTo !== undefined) {
@@ -1811,8 +1677,12 @@
                         }
                     }
 
+                    const localY = dateObj.getFullYear();
+                    const localM = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const localD = String(dateObj.getDate()).padStart(2, '0');
+
                     return {
-                        dateStr: dateObj.toLocaleDateString('en-CA').split('T')[0],
+                        dateStr: `${localY}-${localM}-${localD}`,
                         hour: dateObj.getHours() + (dateObj.getMinutes() / 60)
                     };
                 };
@@ -1838,236 +1708,6 @@
             });
 
             return parsedEvents;
-        }
-
-        // --- Google API Initialization ---
-        window.addEventListener('load', () => {
-            if (typeof gapi !== 'undefined' && appConfig.apiKey) {
-                gapi.load('client', () => {
-                    gapi.client.init({ apiKey: appConfig.apiKey, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'] }).catch(() => {});
-                });
-            }
-            if (typeof google !== 'undefined' && google.accounts && appConfig.clientId) {
-                tokenClient = google.accounts.oauth2.initTokenClient({ 
-                    client_id: appConfig.clientId, 
-                    scope: SCOPES, 
-                    callback: async (resp) => { 
-                        if (resp.error !== undefined) { throw (resp); } 
-                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
-                        document.getElementById('auth-overlay').style.display = 'none'; 
-                        document.getElementById('authorize_button').style.display = 'none'; 
-                        document.getElementById('signout_button').style.display = 'inline-block'; 
-                        isGoogleSynced = true;
-                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
-                        loadCalendars(); 
-                        performBackgroundSync(); 
-                    }, 
-                });
-            }
-            checkConfigState();
-        });
-        
-        function handleAuthClick() { 
-            if (!appConfig.clientId) return openSettingsPage(); 
-            if (!tokenClient && typeof google !== 'undefined' && google.accounts) { 
-                tokenClient = google.accounts.oauth2.initTokenClient({ 
-                    client_id: appConfig.clientId, 
-                    scope: SCOPES, 
-                    callback: async (resp) => { 
-                        if (resp.error !== undefined) { throw (resp); } 
-                        localStorage.setItem('quadra_gapi_token_v2', JSON.stringify({ token: resp.access_token, expires_at: Date.now() + (resp.expires_in * 1000) })); 
-                        document.getElementById('auth-overlay').style.display = 'none'; 
-                        document.getElementById('authorize_button').style.display = 'none'; 
-                        document.getElementById('signout_button').style.display = 'inline-block'; 
-                        isGoogleSynced = true;
-                        if(typeof gapi !== 'undefined' && gapi.client) gapi.client.setToken({ access_token: resp.access_token });
-                        loadCalendars(); 
-                        performBackgroundSync(); 
-                    }, 
-                }); 
-            }
-            if (!tokenClient) { showToast("Google services are still loading. Please wait a moment and try again."); return; }
-            tokenClient.requestAccessToken({prompt: 'consent'}); 
-        }
-        
-        function handleSignoutClick() { 
-            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (savedToken && savedToken.token && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) { 
-                google.accounts.oauth2.revoke(savedToken.token, () => {}); 
-            } 
-            localStorage.removeItem('quadra_gapi_token_v2'); 
-            isGoogleSynced = false; 
-            document.getElementById('auth-overlay').style.display = 'flex'; 
-            document.getElementById('authorize_button').style.display = 'inline-block'; 
-            document.getElementById('signout_button').style.display = 'none'; 
-            document.getElementById('sidePanel').classList.remove('open'); 
-            document.getElementById('sidebarToggleBtn').classList.remove('open'); 
-            document.body.classList.remove('sidebar-open'); 
-            showToast("Signed out successfully.");
-        }
-
-        async function importCalendarEvents() {
-            const dateStr = document.getElementById('trackerDate').value;
-            const ignoreKeywords = (appConfig.ignoreKeywords || 'out of office, ooo, away, vacation, holiday')
-                .toLowerCase()
-                .split(',')
-                .map(k => k.trim())
-                .filter(k => k.length > 0);
-
-            let importedCount = 0;
-            let ignoredCount = 0;
-
-            try {
-                document.getElementById('sync-banner').style.display = 'block';
-
-                if (appConfig.calSource === 'outlook' && appConfig.icsUrl) {
-                    let fetchUrl = appConfig.icsUrl;
-                    
-                    const res = await fetch(fetchUrl);
-                    if (!res.ok) throw new Error("Failed to fetch ICS feed via Apps Script bridge");
-                    
-                    const icsText = await res.text();
-                    const icsEvents = parseICS(icsText, dateStr, ignoreKeywords);
-
-                    icsEvents.forEach(ev => {
-                        if (notes.find(n => n.eventId === ev.id)) return;
-                        notes.push({
-                            id: Date.now().toString() + Math.random(),
-                            eventId: ev.id,
-                            text: `${ev.summary} #meeting`,
-                            quadrant: 'q2',
-                            status: 'active',
-                            dirty: false,
-                            deleted: false,
-                            timeBlocks: [{
-                                id: Date.now().toString() + Math.random(),
-                                date: dateStr,
-                                startHour: ev.startHour,
-                                duration: ev.duration
-                            }]
-                        });
-                        importedCount++;
-                    });
-
-                } else {
-                    const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-                    if (!savedToken || !savedToken.token || savedToken.expires_at < Date.now()) {
-                        document.getElementById('sync-banner').style.display = 'none';
-                        return showToast("Please sign in to Google first.");
-                    }
-                    if (!appConfig.calendarId) {
-                        document.getElementById('sync-banner').style.display = 'none';
-                        return showToast("Please select a Google calendar in Settings first.");
-                    }
-                    
-                    const [y, m, day] = dateStr.split('-');
-                    const timeMin = new Date(y, m-1, day, 0, 0, 0).toISOString();
-                    const timeMax = new Date(y, m-1, day, 23, 59, 59).toISOString();
-
-                    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(appConfig.calendarId)}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, {
-                        headers: { 'Authorization': `Bearer ${savedToken.token}` }
-                    });
-                    const data = await res.json();
-                    if(data.error) throw new Error(data.error.message);
-
-                    const events = data.items || [];
-                    events.forEach(event => {
-                        if (!event.start.dateTime) return; // Skip all-day events
-
-                        const title = (event.summary || '').toLowerCase();
-                        const shouldIgnore = ignoreKeywords.some(keyword => title.includes(keyword));
-
-                        if (shouldIgnore) {
-                            ignoredCount++;
-                            return;
-                        }
-                        
-                        const start = new Date(event.start.dateTime);
-                        const end = new Date(event.end.dateTime);
-                        
-                        const rawStartHour = start.getHours() + (start.getMinutes() / 60);
-                        let rawEndHour = end.getHours() + (end.getMinutes() / 60);
-                        if (rawEndHour <= rawStartHour) rawEndHour += 24;
-                        const rawDuration = rawEndHour - rawStartHour;
-
-                        const startHour = roundToQuarterHour(rawStartHour);
-                        const duration = Math.max(0.25, roundToQuarterHour(rawDuration));
-                        
-                        if (notes.find(n => n.eventId === event.id)) return; 
-                        
-                        const newNote = {
-                            id: Date.now().toString() + Math.random(),
-                            eventId: event.id, 
-                            text: `${event.summary || 'Meeting'} #meeting`,
-                            quadrant: 'q2', 
-                            status: 'active',
-                            dirty: false, 
-                            deleted: false,
-                            timeBlocks: [{
-                                id: Date.now().toString() + Math.random(),
-                                date: dateStr,
-                                startHour: startHour,
-                                duration: duration
-                            }]
-                        };
-                        
-                        notes.push(newNote);
-                        importedCount++;
-                    });
-                }
-                
-                document.getElementById('sync-banner').style.display = 'none';
-                if (importedCount > 0 || ignoredCount > 0) {
-                    saveNotes();
-                    renderTrackerTimeline(); 
-                    showToast(`${importedCount} imported, ${ignoredCount} ignored.`);
-                } else {
-                    showToast("No new meetings found for this date.");
-                }
-                
-            } catch(e) {
-                console.error("Calendar Sync Error:", e);
-                document.getElementById('sync-banner').style.display = 'none';
-                showToast("Failed to fetch calendar events. Check your network or Apps Script Web App URL.");
-            }
-        }
-
-        async function performBackgroundSync() {
-            const savedToken = JSON.parse(localStorage.getItem('quadra_gapi_token_v2'));
-            if (!savedToken || !savedToken.token) return showToast("Please sign in first to sync with Google Tasks.");
-            try {
-                document.getElementById('sync-banner').style.display = 'block';
-                if(typeof gapi !== 'undefined' && gapi.client && !gapi.client.getToken()) {
-                    gapi.client.setToken({ access_token: savedToken.token });
-                }
-                const response = await gapi.client.tasks.tasklists.list();
-                const remoteLists = response.result.items || [];
-                const GAPI_LIST_NAMES = { 'inbox': 'Quadra: Inbox', 'q1': 'Quadra: Do First', 'q2': 'Quadra: Schedule', 'q3': 'Quadra: Delegate', 'q4': 'Quadra: Later', 'closed': 'Quadra: Completed' };
-                let gapiListIds = { inbox: null, q1: null, q2: null, q3: null, q4: null, closed: null };
-                for (const quadKey of Object.keys(GAPI_LIST_NAMES)) { const existingList = remoteLists.find(l => l.title === GAPI_LIST_NAMES[quadKey]); if (existingList) { gapiListIds[quadKey] = existingList.id; } else { const newListReq = await gapi.client.tasks.tasklists.insert({ title: GAPI_LIST_NAMES[quadKey] }); gapiListIds[quadKey] = newListReq.result.id; } }
-                let remoteTaskMap = {};
-                for (const quadKey of Object.keys(gapiListIds)) { const listId = gapiListIds[quadKey]; const tasksReq = await gapi.client.tasks.tasks.list({ tasklist: listId, showHidden: true, maxResults: 100 }); const rTasks = tasksReq.result.items || []; rTasks.forEach(t => { remoteTaskMap[t.id] = { task: t, listId: listId, quadKey: quadKey }; }); }
-                const syncSnapshot = JSON.parse(JSON.stringify(notes));
-                for (let sn of syncSnapshot) {
-                    if (sn.eventId) continue; 
-                    if (sn.deleted && sn.dirty) { if (remoteTaskMap[sn.id]) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteTaskMap[sn.id].listId, task: sn.id }); } catch(e){} } sn.dirty = false; continue; }
-                    if (sn.dirty && !sn.deleted) {
-                        const targetListId = gapiListIds[sn.quadrant]; const remoteObj = remoteTaskMap[sn.id]; const gStatus = sn.status === 'closed' ? 'completed' : 'needsAction'; const payload = { tasklist: targetListId, title: sn.text, status: gStatus }; if (sn.dueDate) payload.due = sn.dueDate; else payload.due = null;
-                        if (remoteObj) { if (remoteObj.listId !== targetListId) { try { await gapi.client.tasks.tasks.delete({ tasklist: remoteObj.listId, task: sn.id }); const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} } else { try { payload.task = sn.id; await gapi.client.tasks.tasks.patch(payload); } catch(e){} } delete remoteTaskMap[sn.id]; delete remoteTaskMap[sn.tempId]; } else { try { const res = await gapi.client.tasks.tasks.insert(payload); sn.tempId = sn.id; sn.id = res.result.id; } catch(e){} }
-                        sn.dirty = false;
-                    } else if (!sn.dirty && !sn.deleted) { const remoteObj = remoteTaskMap[sn.id]; if (remoteObj) { sn.text = remoteObj.task.title || ''; sn.status = remoteObj.task.status === 'completed' ? 'closed' : 'active'; sn.quadrant = remoteObj.quadKey; sn.dueDate = remoteObj.task.due || null; delete remoteTaskMap[sn.id]; } }
-                }
-                Object.values(remoteTaskMap).forEach(remoteObj => { syncSnapshot.push({ id: remoteObj.task.id, text: remoteObj.task.title || '', quadrant: remoteObj.quadKey, status: remoteObj.task.status === 'completed' ? 'closed' : 'active', dueDate: remoteObj.task.due || null, timeBlocks: [], eventId: null, dirty: false, deleted: false }); });
-                let newNotesArray = []; let syncedIds = new Set();
-                syncSnapshot.forEach(sn => { if (sn.deleted && !sn.dirty) return; const liveNote = notes.find(n => n.id === sn.id || (sn.tempId && n.id === sn.tempId)); if (liveNote) { sn.timeBlocks = liveNote.timeBlocks || []; sn.eventId = liveNote.eventId || null; if (liveNote.dirty) { if (sn.tempId) liveNote.id = sn.id; newNotesArray.push(liveNote); } else { newNotesArray.push(sn); } syncedIds.add(liveNote.id); if (sn.tempId) syncedIds.add(sn.tempId); } else { newNotesArray.push(sn); } });
-                notes = newNotesArray; saveNotes(); handleSearch(); 
-                document.getElementById('sync-banner').style.display = 'none';
-                showToast("Successfully synced with Google Tasks!");
-            } catch (e) {
-                document.getElementById('sync-banner').style.display = 'none';
-                console.error(e);
-                showToast("Tasks sync failed. Check your API configuration.");
-            }
         }
 
         setLayout(currentLayout); renderNotes();
