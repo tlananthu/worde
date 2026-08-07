@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Wealth & Goal Fulfillment Engine</title>
+    <style>
+        :root {
+            --primary: #2980b9;
+            --secondary: #34495e;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --border: #ddd;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { margin: 0; padding: 15px; background-color: var(--bg); color: #333; }
+        .container { max-width: 1200px; margin: auto; }
+        
+        h1 { color: var(--secondary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
+        h2 { font-size: 1.2rem; color: var(--secondary); margin-top: 0; }
+        
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 20px; }
+        @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 1200px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+        .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        
+        /* Form Elements */
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem; }
+        
+        .btn { width: 100%; padding: 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; font-size: 0.95rem; background: var(--primary); color: white; margin-top: 10px; transition: 0.2s; }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background: var(--danger); width: auto; padding: 5px 10px; font-size: 0.8rem; }
+        .btn-secondary { background: var(--secondary); width: auto; padding: 8px 15px; }
+        .btn-success { background: var(--success); width: auto; padding: 8px 15px; }
+        
+        /* Dashboard Cards */
+        .dashboard-container { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .goal-widget { background: var(--secondary); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
+        .goal-widget h3 { margin: 0 0 15px 0; font-size: 1.3rem; border-bottom: 1px solid #4a6278; padding-bottom: 10px; display: flex; justify-content: space-between;}
+        
+        .stat-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: #ecf0f1; }
+        .stat-val { font-weight: bold; font-size: 1rem; color: white; }
+        .target-val { color: #f1c40f; font-size: 1.1rem; }
+        
+        .progress-box { margin-top: 15px; }
+        .progress-bar-bg { width: 100%; background: #1a252f; border-radius: 4px; height: 12px; overflow: hidden; border: 1px solid #4a6278; }
+        .progress-bar-fill { height: 100%; width: 0%; transition: width 0.5s ease-in-out; }
+        .fulfilled-text { text-align: center; margin-top: 8px; font-weight: bold; font-size: 1.1rem; }
+
+        .gap-analysis { margin-top: 15px; padding: 12px; background: rgba(231, 76, 60, 0.15); border-left: 4px solid var(--danger); border-radius: 4px; }
+        .gap-analysis-success { background: rgba(39, 174, 96, 0.15); border-left: 4px solid var(--success); margin-top: 15px; padding: 12px; border-radius: 4px; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        th, td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; }
+        th { color: #555; }
+        
+        .empty-state { color: #7f8c8d; font-style: italic; font-size: 0.9rem; margin-top: 10px; }
+        
+        .data-management { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Dynamic Wealth & Goal Engine</h1>
+    <p style="color: #7f8c8d; margin-top: -10px;">All data is saved locally. Calculates gap shortfalls and dynamically recommends required SIPs.</p>
+
+    <!-- PROJECTION DASHBOARD -->
+    <div style="margin-top: 30px;">
+        <h2 style="border-bottom: 2px solid var(--success); display: inline-block; padding-bottom: 5px;">Fulfillment Projections</h2>
+        <div id="dashboard-grid" class="dashboard-container">
+            <!-- Widgets injected via JS -->
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- 1. GOAL MANAGEMENT -->
+        <div class="card">
+            <h2>1. Define Milestones</h2>
+            <div class="form-group">
+                <label>Goal Name</label>
+                <input type="text" id="goal-name" placeholder="e.g., Home Purchase">
+            </div>
+            <div class="form-group">
+                <label>Current Cost Today (₹)</label>
+                <input type="number" id="goal-current" placeholder="e.g., 8000000">
+            </div>
+            <div class="form-group">
+                <label>Expected Inflation (%)</label>
+                <input type="number" id="goal-inflation" placeholder="e.g., 6">
+            </div>
+            <div class="form-group">
+                <label>Target Year</label>
+                <input type="number" id="goal-year" placeholder="e.g., 2031">
+            </div>
+            <button class="btn" onclick="addGoal()">+ Add Goal</button>
+            
+            <div id="goal-list" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- 2. ASSET MANAGEMENT -->
+        <div class="card">
+            <h2>2. Allocate Existing Assets</h2>
+            <div class="form-group">
+                <label>Asset Description</label>
+                <input type="text" id="asset-name" placeholder="e.g., Liquid MF Pool">
+            </div>
+            <div class="form-group">
+                <label>Current Value (₹)</label>
+                <input type="number" id="asset-value" placeholder="e.g., 2500000">
+            </div>
+            <div class="form-group">
+                <label>Expected Annual Return (%)</label>
+                <input type="number" id="asset-return" placeholder="e.g., 7">
+            </div>
+            <div class="form-group">
+                <label>Assign to Goal</label>
+                <select id="asset-goal-select"></select>
+            </div>
+            <button class="btn" onclick="addAsset()">+ Allocate Asset</button>
+
+            <div id="asset-list" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- 3. SIP MANAGEMENT -->
+        <div class="card">
+            <h2>3. Configure Monthly SIPs</h2>
+            <div class="form-group">
+                <label>SIP Name / Fund</label>
+                <input type="text" id="sip-name" placeholder="e.g., Balanced Advantage">
+            </div>
+            <div class="form-group">
+                <label>Monthly Amount (₹)</label>
+                <input type="number" id="sip-amount" placeholder="e.g., 50000">
+            </div>
+            <div class="form-group">
+                <label>Expected Annual Return (%)</label>
+                <input type="number" id="sip-return" placeholder="e.g., 10">
+            </div>
+            <div class="form-group">
+                <label>Assign to Goal</label>
+                <select id="sip-goal-select"></select>
+            </div>
+            <button class="btn" onclick="addSIP()">+ Add SIP</button>
+
+            <div id="sip-list" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+    
+    <!-- DATA MANAGEMENT -->
+    <div class="data-management">
+        <div>
+            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📥 Import JSON Backup</button>
+            <button class="btn btn-success" onclick="exportData()">📤 Export Data to JSON</button>
+        </div>
+        <button class="btn btn-danger" onclick="clearAllData()">⚠ Wipe All Local Data</button>
+    </div>
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    let db = { goals: [], assets: [], sips: [] };
+    const currentYear = new Date().getFullYear();
+
+    // --- INITIALIZATION ---
+    function init() {
+        const localData = localStorage.getItem('wealthEngineDB_v3');
+        if (localData) {
+            db = JSON.parse(localData);
+        }
+        renderUI();
+    }
+
+    function saveData() {
+        localStorage.setItem('wealthEngineDB_v3', JSON.stringify(db));
+        renderUI();
+    }
+
+    // --- DATA IMPORT/EXPORT ---
+    function exportData() {
+        try {
+            // Check if db exists and has data
+            if (!db || (!db.goals.length && !db.assets.length && !db.sips.length)) {
+                alert("No data to export! Please add a goal, asset, or SIP first.");
+                return;
+            }
+            
+            const dataStr = JSON.stringify(db, null, 2);
+            // Use Data URI method which is more reliable for local HTML files
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `wealth_engine_backup_${new Date().toISOString().split('T')[0]}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            
+            // Append, click, and remove (required for Firefox compatibility)
+            document.body.appendChild(linkElement);
+            linkElement.click();
+            document.body.removeChild(linkElement);
+            
+        } catch (error) {
+            console.error("Export failed:", error);
+            alert("Export failed. Please check the browser console. Error: " + error.message);
+        }
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData && Array.isArray(importedData.goals) && Array.isArray(importedData.assets) && Array.isArray(importedData.sips)) {
+                    db = importedData;
+                    saveData();
+                    alert("Data imported successfully!");
+                } else {
+                    alert("Invalid file format. Please select a valid backup JSON file generated by this tool.");
+                }
+            } catch (error) {
+                alert("Error reading file. Ensure it is a valid JSON document.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // --- MATH & FINANCIAL CALCULATIONS ---
+    function formatINR(num) {
+        return "₹" + Math.round(num).toLocaleString('en-IN');
+    }
+
+    // Standard Future Value formula: PV * (1 + r)^n
+    function calcFV(pv, annualRate, years) {
+        if (years <= 0) return pv;
+        let r = annualRate / 100;
+        return pv * Math.pow(1 + r, years);
+    }
+
+    // FV of Annuity (SIP): P * [((1 + r)^n - 1) / r] * (1 + r)
+    function calcSIPFV(monthlyAmount, annualRate, years) {
+        if (years <= 0) return 0;
+        let r = (annualRate / 100) / 12;
+        let n = years * 12;
+        if (r === 0) return monthlyAmount * n;
+        return monthlyAmount * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+    }
+
+    // PMT Calculation (Reverse FV Annuity) to find required SIP
+    // PMT = FV * r / ( ((1+r)^n - 1) * (1+r) )
+    function calcRequiredSIP(shortfallFV, expectedAnnualRate, years) {
+        if (years <= 0 || shortfallFV <= 0) return 0;
+        let r = (expectedAnnualRate / 100) / 12;
+        let n = years * 12;
+        if (r === 0) return shortfallFV / n;
+        return (shortfallFV * r) / ((Math.pow(1 + r, n) - 1) * (1 + r));
+    }
+
+    // Determine expected return based on investment horizon
+    function getHorizonReturnAssumption(years) {
+        if (years <= 3) return { rate: 7, category: "Debt/Liquid" };
+        if (years <= 7) return { rate: 9, category: "Balanced/Hybrid" };
+        return { rate: 12, category: "Equity/Growth" };
+    }
+
+    // --- CRUD OPERATIONS ---
+    function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+    function addGoal() {
+        const name = document.getElementById('goal-name').value;
+        const currentCost = parseFloat(document.getElementById('goal-current').value);
+        const inflation = parseFloat(document.getElementById('goal-inflation').value);
+        const year = parseInt(document.getElementById('goal-year').value);
+        
+        if (!name || isNaN(currentCost) || isNaN(inflation) || !year || year < currentYear) {
+            return alert('Please fill in all goal fields correctly. Target year must be current or future.');
+        }
+        
+        db.goals.push({ id: generateId(), name, currentCost, inflation, year });
+        document.getElementById('goal-name').value = '';
+        document.getElementById('goal-current').value = '';
+        document.getElementById('goal-inflation').value = '';
+        document.getElementById('goal-year').value = '';
+        saveData();
+    }
+
+    function addAsset() {
+        const name = document.getElementById('asset-name').value;
+        const value = parseFloat(document.getElementById('asset-value').value);
+        const rate = parseFloat(document.getElementById('asset-return').value);
+        const goalId = document.getElementById('asset-goal-select').value;
+        if (!name || isNaN(value) || isNaN(rate) || !goalId) return alert('Invalid Asset Inputs');
+        
+        db.assets.push({ id: generateId(), name, value, rate, goalId });
+        document.getElementById('asset-name').value = '';
+        document.getElementById('asset-value').value = '';
+        document.getElementById('asset-return').value = '';
+        saveData();
+    }
+
+    function addSIP() {
+        const name = document.getElementById('sip-name').value;
+        const amount = parseFloat(document.getElementById('sip-amount').value);
+        const rate = parseFloat(document.getElementById('sip-return').value);
+        const goalId = document.getElementById('sip-goal-select').value;
+        if (!name || isNaN(amount) || isNaN(rate) || !goalId) return alert('Invalid SIP Inputs');
+        
+        db.sips.push({ id: generateId(), name, amount, rate, goalId });
+        document.getElementById('sip-name').value = '';
+        document.getElementById('sip-amount').value = '';
+        document.getElementById('sip-return').value = '';
+        saveData();
+    }
+
+    function deleteItem(type, id) {
+        if(type === 'goal') {
+            db.goals = db.goals.filter(g => g.id !== id);
+            db.assets = db.assets.filter(a => a.goalId !== id); 
+            db.sips = db.sips.filter(s => s.goalId !== id);
+        }
+        if(type === 'asset') db.assets = db.assets.filter(a => a.id !== id);
+        if(type === 'sip') db.sips = db.sips.filter(s => s.id !== id);
+        saveData();
+    }
+
+    function clearAllData() {
+        if(confirm("Are you sure you want to delete all goals, assets, and SIPs? This cannot be undone.")) {
+            db = { goals: [], assets: [], sips: [] };
+            saveData();
+        }
+    }
+
+    // --- UI RENDERING ---
+    function renderUI() {
+        renderDropdowns();
+        renderTables();
+        renderDashboard();
+    }
+
+    function renderDropdowns() {
+        let options = '<option value="">-- Select Goal --</option>';
+        db.goals.forEach(g => { options += `<option value="${g.id}">${g.name} (${g.year})</option>`; });
+        document.getElementById('asset-goal-select').innerHTML = options;
+        document.getElementById('sip-goal-select').innerHTML = options;
+    }
+
+    function renderTables() {
+        let gHtml = db.goals.length === 0 ? '<div class="empty-state">No goals defined yet.</div>' : '<table><tr><th>Name</th><th>Current Cost</th><th>Inflation</th><th>Target Year</th><th></th></tr>';
+        db.goals.forEach(g => {
+            gHtml += `<tr><td>${g.name}</td><td>${formatINR(g.currentCost)}</td><td>${g.inflation}%</td><td>${g.year}</td><td><button class="btn-danger" onclick="deleteItem('goal', '${g.id}')">X</button></td></tr>`;
+        });
+        document.getElementById('goal-list').innerHTML = gHtml === '<div class="empty-state">No goals defined yet.</div>' ? gHtml : gHtml + '</table>';
+
+        let aHtml = db.assets.length === 0 ? '<div class="empty-state">No assets allocated yet.</div>' : '<table><tr><th>Asset</th><th>Value</th><th>Rate</th><th></th></tr>';
+        db.assets.forEach(a => {
+            aHtml += `<tr><td>${a.name}</td><td>${formatINR(a.value)}</td><td>${a.rate}%</td><td><button class="btn-danger" onclick="deleteItem('asset', '${a.id}')">X</button></td></tr>`;
+        });
+        document.getElementById('asset-list').innerHTML = aHtml === '<div class="empty-state">No assets allocated yet.</div>' ? aHtml : aHtml + '</table>';
+
+        let sHtml = db.sips.length === 0 ? '<div class="empty-state">No SIPs active yet.</div>' : '<table><tr><th>SIP</th><th>Monthly</th><th>Rate</th><th></th></tr>';
+        db.sips.forEach(s => {
+            sHtml += `<tr><td>${s.name}</td><td>${formatINR(s.amount)}/m</td><td>${s.rate}%</td><td><button class="btn-danger" onclick="deleteItem('sip', '${s.id}')">X</button></td></tr>`;
+        });
+        document.getElementById('sip-list').innerHTML = sHtml === '<div class="empty-state">No SIPs active yet.</div>' ? sHtml : sHtml + '</table>';
+    }
+
+    function renderDashboard() {
+        const dashGrid = document.getElementById('dashboard-grid');
+        if (db.goals.length === 0) {
+            dashGrid.innerHTML = '<div style="color: #7f8c8d; grid-column: 1/-1;">Please define a milestone to see fulfillment projections.</div>';
+            return;
+        }
+
+        let dashHTML = '';
+        db.goals.forEach(goal => {
+            const yearsToGoal = goal.year - currentYear;
+            const targetAmount = calcFV(goal.currentCost, goal.inflation, yearsToGoal);
+
+            let projectedAssetValue = 0;
+            let projectedSipValue = 0;
+
+            db.assets.filter(a => a.goalId === goal.id).forEach(a => {
+                projectedAssetValue += calcFV(a.value, a.rate, yearsToGoal);
+            });
+
+            db.sips.filter(s => s.goalId === goal.id).forEach(s => {
+                projectedSipValue += calcSIPFV(s.amount, s.rate, yearsToGoal);
+            });
+
+            const totalProjected = projectedAssetValue + projectedSipValue;
+            let percentFulfilled = targetAmount > 0 ? (totalProjected / targetAmount) * 100 : 0;
+            const shortfall = targetAmount - totalProjected;
+            
+            let barColor = 'var(--success)'; 
+            if (percentFulfilled < 70) barColor = 'var(--danger)'; 
+            else if (percentFulfilled < 100) barColor = 'var(--warning)'; 
+            
+            const displayPercent = Math.min(percentFulfilled, 100).toFixed(1);
+
+            // Calculate Gap Analysis (Required SIP)
+            let gapHtml = '';
+            if (shortfall > 0 && yearsToGoal > 0) {
+                const assumption = getHorizonReturnAssumption(yearsToGoal);
+                const requiredSip = calcRequiredSIP(shortfall, assumption.rate, yearsToGoal);
+                
+                gapHtml = `
+                    <div class="gap-analysis">
+                        <div style="font-size: 0.9rem; color: #e74c3c; font-weight: bold; margin-bottom: 5px;">⚠ Shortfall: ${formatINR(shortfall)}</div>
+                        <div style="font-size: 0.85rem; color: #ecf0f1; line-height: 1.4;">
+                            To close this gap, start an additional SIP of <strong style="color: #f1c40f; font-size: 1rem;">${formatINR(requiredSip)}/mo</strong>.
+                            <br><span style="font-size: 0.75rem; color: #bdc3c7;">(Assumes ${assumption.rate}% return via ${assumption.category})</span>
+                        </div>
+                    </div>
+                `;
+            } else if (shortfall > 0 && yearsToGoal <= 0) {
+                gapHtml = `
+                    <div class="gap-analysis">
+                        <div style="font-size: 0.9rem; color: #e74c3c; font-weight: bold; margin-bottom: 5px;">⚠ Shortfall: ${formatINR(shortfall)}</div>
+                        <div style="font-size: 0.85rem; color: #ecf0f1; line-height: 1.4;">
+                            Goal is due this year. Requires immediate lump-sum allocation.
+                        </div>
+                    </div>
+                `;
+            } else if (shortfall <= 0) {
+                gapHtml = `
+                    <div class="gap-analysis-success">
+                        <div style="font-size: 0.9rem; color: #2ecc71; font-weight: bold;">✓ Fully Funded</div>
+                        <div style="font-size: 0.85rem; color: #ecf0f1;">You are projected to meet or exceed this goal.</div>
+                    </div>
+                `;
+            }
+            
+            dashHTML += `
+                <div class="goal-widget">
+                    <div>
+                        <h3>${goal.name} <span>${yearsToGoal > 0 ? yearsToGoal + ' yrs away' : 'This Year'}</span></h3>
+                        
+                        <div class="stat-row"><span>Inflated Target Cost:</span> <span class="stat-val target-val">${formatINR(targetAmount)}</span></div>
+                        <div class="stat-row"><span>Asset Projection:</span> <span class="stat-val" style="color: #bdc3c7">+ ${formatINR(projectedAssetValue)}</span></div>
+                        <div class="stat-row" style="border-bottom: 1px dashed #4a6278; padding-bottom: 5px;"><span>SIP Projection:</span> <span class="stat-val" style="color: #bdc3c7">+ ${formatINR(projectedSipValue)}</span></div>
+                        <div class="stat-row" style="margin-top: 5px;"><span>Total Projected:</span> <span class="stat-val">${formatINR(totalProjected)}</span></div>
+                        
+                        <div class="progress-box">
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${displayPercent}%; background: ${barColor};"></div>
+                            </div>
+                            <div class="fulfilled-text" style="color: ${barColor};">${percentFulfilled.toFixed(1)}% Fulfilled</div>
+                        </div>
+                    </div>
+                    ${gapHtml}
+                </div>
+            `;
+        });
+        dashGrid.innerHTML = dashHTML;
+    }
+
+    // Boot App
+    window.onload = init;
+</script>
+
+</body>
+</html>
