@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Launcher</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      margin-bottom: 32px;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .game-card {
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+      border-color: #cbd5e1;
+    }
+
+    .image-container {
+      width: 100%;
+      height: 180px;
+      background-color: #e2e8f0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover .image-container img {
+      transform: scale(1.05);
+    }
+
+    .card-content {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .card-file {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Game Hub</h1>
+
+  <div class="game-grid">
+    <!-- Box 1: Bubble Popper -->
+    <a href="Bubble popper.html" class="game-card">
+      <div class="image-container">
+        <img src="data:image/jpeg;base64,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" alt="Bubble Popper">
+      </div>
+      <div class="card-content">
+        <span class="card-title">Bubble Popper</span>
+        <span class="card-file">bubble popper.html</span>
+      </div>
+    </a>
+
+    <!-- Box 2: Flappy Bird -->
+    <a href="flappy bird.html" class="game-card">
+      <div class="image-container">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGSyKbivJwDVTN2X946yz7dEm3WhrVnOwemVhPot9eqg&amp;s" alt="Flappy Bird">
+      </div>
+      <div class="card-content">
+        <span class="card-title">Flappy Bird</span>
+        <span class="card-file">flappy bird.html</span>
+      </div>
+    </a>
+
+    <!-- Box 3: Practice Archery -->
+    <a href="Practice archery.html" class="game-card">
+      <div class="image-container">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPglRzV5Ft8llrWnHoR4kyPsl6yg2cV-r1O9OgKLVsPQ&amp;s=10" alt="Practice Archery">
+      </div>
+      <div class="card-content">
+        <span class="card-title">Practice Archery</span>
+        <span class="card-file">practice archery.html</span>
+      </div>
+    </a>
+
+    <!-- Box 4: Jumper -->
+    <a href="Jumper.html" class="game-card">
+      <div class="image-container">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-LuFEiTDij0jMF3Hco7YQ_TzGh3cEUFPjEyWROQXGKg&amp;s=10" alt="Jumper">
+      </div>
+      <div class="card-content">
+        <span class="card-title">Jumper</span>
+        <span class="card-file">Jumper.html</span>
+      </div>
+    </a>
+
+    <!-- Box 5: Cyber -->
+    <a href="Cyber.html" class="game-card">
+      <div class="image-container">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKeO61y1pC6j_QLopUmweOSvS046fg99xWqsWiVzex7w&amp;s=10" alt="Cyber">
+      </div>
+      <div class="card-content">
+        <span class="card-title">Cyber</span>
+        <span class="card-file">cyber.html</span>
+      </div>
+    </a>
+  </div>
+
+</body>
+</html>
