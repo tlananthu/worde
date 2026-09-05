@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speed Bubble Popper</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background: #ffffff;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      touch-action: manipulation;
+      cursor: crosshair;
+    }
+    #game-canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      background: #ffffff;
+    }
+    #ui-layer {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #0f172a;
+      font-weight: 700;
+      pointer-events: none;
+    }
+    .score-box {
+      font-size: 28px;
+    }
+    .miss-box {
+      font-size: 16px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="ui-layer">
+    <div class="score-box">Score: <span id="score">0</span></div>
+    <div class="miss-box">Missed: <span id="missed">0</span></div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const missedDisplay = document.getElementById('missed');
+
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Game Variables
+    let score = 0;
+    let missed = 0;
+    const bubbles = [];
+    const particles = [];
+    const floatTexts = [];
+    let spawnTimer = 0;
+    const SPAWN_INTERVAL = 45;
+
+    // Track pointer position for target crosshair
+    const pointer = { x: -100, y: -100, visible: false };
+    window.addEventListener('pointermove', (e) => {
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      pointer.visible = true;
+    });
+    window.addEventListener('pointerleave', () => {
+      pointer.visible = false;
+    });
+
+    // Web Audio Sound Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playPopSound(freq = 600) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.8, audioCtx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    const COLORS = {
+      1: { r: 2, g: 132, b: 199 },   // Deep Sky Blue
+      2: { r: 16, g: 185, b: 129 },  // Emerald Green
+      3: { r: 217, g: 119, b: 6 },   // Dark Amber
+      4: { r: 234, g: 88, b: 12 },   // Vibrant Orange
+      5: { r: 225, g: 29, b: 72 }    // Crimson Red
+    };
+
+    class Bubble {
+      constructor() {
+        this.radius = Math.floor(Math.random() * 16) + 38;
+        this.x = Math.random() * (width - this.radius * 2) + this.radius;
+        this.y = height + this.radius + 10;
+
+        const rand = Math.random();
+        if (rand < 0.35) this.value = 1;
+        else if (rand < 0.60) this.value = 2;
+        else if (rand < 0.80) this.value = 3;
+        else if (rand < 0.93) this.value = 4;
+        else this.value = 5;
+
+        // Tuned down speeds: base speed 1.1px + 0.65px per value point
+        // Level 1 = ~1.75px/frame, Level 5 = ~4.35px/frame (fast, but catchable)
+        const baseSpeed = 1.1;
+        this.speed = baseSpeed + (this.value * 0.65) + (Math.random() * 0.2);
+
+        this.color = COLORS[this.value];
+        this.wobbleSpeed = 0.03 + Math.random() * 0.02;
+        this.wobbleOffset = Math.random() * 100;
+        this.wobbleAmp = 1.0;
+      }
+
+      update() {
+        this.y -= this.speed;
+        this.x += Math.sin(this.y * this.wobbleSpeed + this.wobbleOffset) * this.wobbleAmp;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+        const grad = ctx.createRadialGradient(
+          this.x - this.radius * 0.3,
+          this.y - this.radius * 0.3,
+          this.radius * 0.1,
+          this.x,
+          this.y,
+          this.radius
+        );
+        const { r, g, b } = this.color;
+        grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
+        grad.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.7)`);
+        grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 1)`);
+
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = `rgba(15, 23, 42, 0.25)`;
+        ctx.stroke();
+
+        // Bubble highlight reflection
+        ctx.beginPath();
+        ctx.ellipse(
+          this.x - this.radius * 0.35,
+          this.y - this.radius * 0.35,
+          this.radius * 0.25,
+          this.radius * 0.12,
+          -Math.PI / 4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fill();
+
+        // Label
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `900 ${Math.floor(this.radius * 0.8)}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+        ctx.shadowBlur = 6;
+        ctx.fillText(this.value, this.x, this.y);
+
+        ctx.restore();
+      }
+    }
+
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.radius = Math.random() * 4 + 2;
+        this.life = 1.0;
+        this.decay = Math.random() * 0.04 + 0.03;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life -= this.decay;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class FloatText {
+      constructor(x, y, text, color) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.color = color;
+        this.life = 1.0;
+      }
+
+      update() {
+        this.y -= 1.6;
+        this.life -= 0.03;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = `rgb(${this.color.r}, ${this.color.g}, ${this.color.b})`;
+        ctx.font = '900 26px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+      }
+    }
+
+    function drawTargetIndicator(x, y) {
+      ctx.save();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x - 18, y);
+      ctx.lineTo(x - 12, y);
+      ctx.moveTo(x + 12, y);
+      ctx.lineTo(x + 18, y);
+      ctx.moveTo(x, y - 18);
+      ctx.lineTo(x, y - 12);
+      ctx.moveTo(x, y + 12);
+      ctx.lineTo(x, y + 18);
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function popBubble(index) {
+      const b = bubbles[index];
+      score += b.value;
+      scoreDisplay.textContent = score;
+
+      playPopSound(360 + b.value * 90);
+
+      for (let i = 0; i < 14; i++) {
+        particles.push(new Particle(b.x, b.y, b.color));
+      }
+
+      floatTexts.push(new FloatText(b.x, b.y, `+${b.value}`, b.color));
+      bubbles.splice(index, 1);
+    }
+
+    function checkInteraction(x, y) {
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        const dist = Math.hypot(x - b.x, y - b.y);
+        if (dist <= b.radius + 12) { // Extra hit tolerance for easier tapping
+          popBubble(i);
+          break;
+        }
+      }
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      checkInteraction(e.clientX, e.clientY);
+    });
+
+    function animate() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      spawnTimer++;
+      if (spawnTimer >= SPAWN_INTERVAL) {
+        bubbles.push(new Bubble());
+        spawnTimer = 0;
+      }
+
+      for (let i = bubbles.length - 1; i >= 0; i--) {
+        const b = bubbles[i];
+        b.update();
+        b.draw();
+
+        if (b.y + b.radius < 0) {
+          missed++;
+          missedDisplay.textContent = missed;
+          bubbles.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.update();
+        p.draw();
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      for (let i = floatTexts.length - 1; i >= 0; i--) {
+        const t = floatTexts[i];
+        t.update();
+        t.draw();
+        if (t.life <= 0) floatTexts.splice(i, 1);
+      }
+
+      if (pointer.visible) {
+        drawTargetIndicator(pointer.x, pointer.y);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

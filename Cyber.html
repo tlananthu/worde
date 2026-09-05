@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CYBER-DRIFT 2088</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #05030a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Impact', 'Arial Black', sans-serif;
+      color: #fff;
+      overflow: hidden;
+    }
+    #cabinet {
+      position: relative;
+      border: 4px solid #00f0ff;
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.35), inset 0 0 30px rgba(255, 0, 128, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    canvas { display: block; background: #000; }
+
+    /* Telemetry HUD */
+    #hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-box {
+      background: rgba(10, 5, 20, 0.75);
+      border: 2px solid #ff007f;
+      padding: 8px 16px;
+      border-radius: 4px;
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+    }
+    .hud-label { font-size: 11px; color: #00f0ff; letter-spacing: 2px; }
+    .hud-val { font-size: 28px; font-weight: 900; color: #fff; text-shadow: 2px 2px 0 #ff007f; }
+
+    /* Nitro Gauge */
+    #boost-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 280px;
+      height: 14px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #00f0ff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+    #boost-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #ff007f, #00f0ff);
+      transition: width 0.05s linear;
+    }
+
+    #drift-alert {
+      position: absolute;
+      top: 42%;
+      width: 100%;
+      text-align: center;
+      font-size: 42px;
+      font-style: italic;
+      color: #ffea00;
+      text-shadow: 0 0 20px #ff007f, 3px 3px 0 #000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+
+    .hint {
+      margin-top: 14px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #777;
+      letter-spacing: 1px;
+    }
+    .key { color: #00f0ff; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div id="cabinet">
+    <div id="hud">
+      <div class="hud-box">
+        <div class="hud-label">VELOCITY</div>
+        <div class="hud-val"><span id="val-speed">0</span> <small style="font-size: 14px;">KPH</small></div>
+      </div>
+      <div class="hud-box" style="text-align: center;">
+        <div class="hud-label">DRIFT SCORE</div>
+        <div class="hud-val" id="val-score" style="color: #ffea00;">0</div>
+      </div>
+      <div class="hud-box" style="text-align: right;">
+        <div class="hud-label">TIME LAPSE</div>
+        <div class="hud-val" id="val-time">60.0</div>
+      </div>
+    </div>
+
+    <div id="drift-alert">DRIFT COMBO x<span id="drift-mult">1</span></div>
+    <div id="boost-container"><div id="boost-bar"></div></div>
+
+    <canvas id="canvas" width="800" height="500"></canvas>
+  </div>
+
+  <div class="hint">
+    <span class="key">&uarr;</span> / <span class="key">W</span> Accelerate | 
+    <span class="key">&larr;&rarr;</span> / <span class="key">A D</span> Counter-Steer | 
+    <span class="key">SPACE</span> E-Brake / Initiator Drift | 
+    <span class="key">SHIFT</span> Nitro Thruster
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Synthesized Web Audio Sound Engine
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function createSoundEngine() {
+      let osc = null;
+      let gain = null;
+      try {
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(40, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+      } catch (e) {}
+
+      return {
+        update(speedRatio, boosting) {
+          if (!osc) return;
+          const targetFreq = 40 + speedRatio * 180 + (boosting ? 80 : 0);
+          osc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.05);
+          gain.gain.setTargetAtTime(0.02 + speedRatio * 0.04, audioCtx.currentTime, 0.05);
+        }
+      };
+    }
+    let engineSound = null;
+
+    // Track Waypoints (Curved Circuit with Apex Curbs)
+    const trackOuter = [
+      {x: 100, y: 100}, {x: 400, y: 60}, {x: 700, y: 120},
+      {x: 720, y: 380}, {x: 520, y: 440}, {x: 380, y: 320},
+      {x: 220, y: 440}, {x: 80, y: 340}
+    ];
+
+    const trackInner = [
+      {x: 200, y: 180}, {x: 400, y: 150}, {x: 600, y: 190},
+      {x: 610, y: 310}, {x: 480, y: 340}, {x: 390, y: 240},
+      {x: 260, y: 330}, {x: 180, y: 260}
+    ];
+
+    // Particle FX Containers
+    const tireTracks = [];
+    const sparks = [];
+
+    // Kinetic Vehicle Entity
+    const car = {
+      x: 220,
+      y: 140,
+      angle: 0.1,
+      speed: 0,
+      angularVelocity: 0,
+      
+      // Vehicle Physics Constants
+      maxSpeed: 8.5,
+      accel: 0.16,
+      reverseAccel: 0.08,
+      friction: 0.982,
+      lateralGrip: 0.88,
+      driftGrip: 0.965,
+      
+      // Vector Trajectory
+      vx: 0,
+      vy: 0,
+      
+      // Nitro Boost
+      nitro: 100,
+      boosting: false
+    };
+
+    let driftScore = 0;
+    let currentDrift = 0;
+    let timeLeft = 60.0;
+    let gameOver = false;
+
+    // Input States
+    const keys = {};
+    window.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (!engineSound) engineSound = createSoundEngine();
+    });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    // Math Utils
+    function distToSegmentSquared(p, v, w) {
+      const l2 = (w.x - v.x) ** 2 + (w.y - v.y) ** 2;
+      if (l2 === 0) return (p.x - v.x) ** 2 + (p.y - v.y) ** 2;
+      let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return (p.x - (v.x + t * (w.x - v.x))) ** 2 + (p.y - (v.y + t * (w.y - v.y))) ** 2;
+    }
+
+    function checkTrackBoundary(x, y) {
+      // Check proximity to outer & inner loop vectors
+      let minOuter = Infinity;
+      let minInner = Infinity;
+
+      for (let i = 0; i < trackOuter.length; i++) {
+        const p1 = trackOuter[i];
+        const p2 = trackOuter[(i + 1) % trackOuter.length];
+        minOuter = Math.min(minOuter, distToSegmentSquared({x, y}, p1, p2));
+      }
+
+      for (let i = 0; i < trackInner.length; i++) {
+        const p1 = trackInner[i];
+        const p2 = trackInner[(i + 1) % trackInner.length];
+        minInner = Math.min(minInner, distToSegmentSquared({x, y}, p1, p2));
+      }
+
+      return (minOuter < 300 || minInner < 300); // Grazing boundaries
+    }
+
+    // Kinematic Integration
+    function update(dt) {
+      if (gameOver) return;
+
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        gameOver = true;
+      }
+
+      const isBraking = keys['Space'];
+      const isAccelerating = keys['ArrowUp'] || keys['KeyW'];
+      const isReversing = keys['ArrowDown'] || keys['KeyS'];
+      car.boosting = keys['ShiftLeft'] && car.nitro > 0 && isAccelerating;
+
+      // Longitudinal Force
+      let effectiveAccel = car.accel;
+      if (car.boosting) {
+        effectiveAccel *= 1.8;
+        car.nitro = Math.max(0, car.nitro - 35 * dt);
+      } else if (car.nitro < 100) {
+        car.nitro = Math.min(100, car.nitro + 8 * dt);
+      }
+
+      if (isAccelerating) car.speed += effectiveAccel;
+      else if (isReversing) car.speed -= car.reverseAccel;
+      else car.speed *= car.friction;
+
+      car.speed = Math.max(-2.5, Math.min(car.boosting ? 12 : car.maxSpeed, car.speed));
+
+      // Steering
+      const steerDirection = (keys['ArrowLeft'] || keys['KeyA'] ? -1 : 0) + (keys['ArrowRight'] || keys['KeyD'] ? 1 : 0);
+      const steerSensitivity = isBraking ? 0.065 : 0.042;
+      if (Math.abs(car.speed) > 0.2) {
+        car.angle += steerDirection * steerSensitivity * (car.speed > 0 ? 1 : -1);
+      }
+
+      // Decompose Absolute Velocities vs Heading Direction (Drift Math)
+      const fwdX = Math.cos(car.angle);
+      const fwdY = Math.sin(car.angle);
+      const rightX = -Math.sin(car.angle);
+      const rightY = Math.cos(car.angle);
+
+      // Trajectory vectors
+      car.vx += fwdX * car.speed * 0.15;
+      car.vy += fwdY * car.speed * 0.15;
+
+      const lateralSpeed = car.vx * rightX + car.vy * rightY;
+      const grip = isBraking ? car.driftGrip : car.lateralGrip;
+
+      // Dampen side-slip velocity based on tire friction coefficient
+      car.vx -= rightX * lateralSpeed * grip;
+      car.vy -= rightY * lateralSpeed * grip;
+
+      car.vx *= 0.92;
+      car.vy *= 0.92;
+
+      car.x += car.vx;
+      car.y += car.vy;
+
+      // Track Boundary Elastic Impact
+      if (checkTrackBoundary(car.x, car.y)) {
+        car.speed *= 0.85;
+        car.vx *= -0.4;
+        car.vy *= -0.4;
+        for (let i = 0; i < 6; i++) {
+          sparks.push({
+            x: car.x, y: car.y,
+            vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+            color: '#00f0ff', life: 12
+          });
+        }
+      }
+
+      // Drift Telemetry & Slip Calculation
+      const slipAngle = Math.abs(lateralSpeed);
+      const isDrifting = slipAngle > 1.8 && Math.abs(car.speed) > 3.0;
+
+      const alertEl = document.getElementById('drift-alert');
+      if (isDrifting) {
+        currentDrift += Math.floor(slipAngle * 12);
+        driftScore += Math.floor(slipAngle * 4);
+        alertEl.style.opacity = '1';
+        document.getElementById('drift-mult').textContent = (1 + slipAngle * 0.2).toFixed(1);
+
+        // Lay Rubber Tire Skidmarks
+        tireTracks.push({
+          x: car.x - fwdX * 12 + rightX * 8,
+          y: car.y - fwdY * 12 + rightY * 8,
+          alpha: 0.6
+        });
+        tireTracks.push({
+          x: car.x - fwdX * 12 - rightX * 8,
+          y: car.y - fwdY * 12 - rightY * 8,
+          alpha: 0.6
+        });
+
+        // Sparks & Smoke
+        if (Math.random() < 0.6) {
+          sparks.push({
+            x: car.x - fwdX * 16,
+            y: car.y - fwdY * 16,
+            vx: (Math.random() - 0.5) * 3 - car.vx * 0.2,
+            vy: (Math.random() - 0.5) * 3 - car.vy * 0.2,
+            color: isBraking ? '#ff007f' : '#00f0ff',
+            life: 18
+          });
+        }
+      } else {
+        alertEl.style.opacity = '0';
+        currentDrift = 0;
+      }
+
+      // Tire Mark Fade
+      for (let i = tireTracks.length - 1; i >= 0; i--) {
+        tireTracks[i].alpha -= 0.004;
+        if (tireTracks[i].alpha <= 0) tireTracks.splice(i, 1);
+      }
+
+      // Spark Fade
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        sparks[i].x += sparks[i].vx;
+        sparks[i].y += sparks[i].vy;
+        sparks[i].life--;
+        if (sparks[i].life <= 0) sparks.splice(i, 1);
+      }
+
+      // HUD Sync
+      document.getElementById('val-speed').textContent = Math.floor(Math.hypot(car.vx, car.vy) * 26);
+      document.getElementById('val-score').textContent = driftScore;
+      document.getElementById('val-time').textContent = timeLeft.toFixed(1);
+      document.getElementById('boost-bar').style.width = `${car.nitro}%`;
+
+      if (engineSound) {
+        engineSound.update(Math.abs(car.speed) / car.maxSpeed, car.boosting);
+      }
+    }
+
+    // Canvas Cyber-Vector Pipeline
+    function draw() {
+      ctx.fillStyle = '#06030c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Background Perspective Grid
+      ctx.strokeStyle = 'rgba(255, 0, 127, 0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      // Render Circuit Road
+      ctx.save();
+      ctx.beginPath();
+      // Outer Perimeter
+      ctx.moveTo(trackOuter[0].x, trackOuter[0].y);
+      for (let i = 1; i < trackOuter.length; i++) ctx.lineTo(trackOuter[i].x, trackOuter[i].y);
+      ctx.closePath();
+      // Cut Inner Perimeter
+      ctx.moveTo(trackInner[0].x, trackInner[0].y);
+      for (let i = trackInner.length - 1; i >= 0; i--) ctx.lineTo(trackInner[i].x, trackInner[i].y);
+      ctx.closePath();
+
+      ctx.fillStyle = '#100c1e';
+      ctx.fill();
+
+      // Neon Track Borders
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Draw Skidmarks
+      for (const t of tireTracks) {
+        ctx.fillStyle = `rgba(255, 0, 128, ${t.alpha})`;
+        ctx.fillRect(t.x, t.y, 3, 3);
+      }
+
+      // Render Sparks & Nitro Plumes
+      for (const s of sparks) {
+        ctx.fillStyle = s.color;
+        ctx.fillRect(s.x, s.y, 2.5, 2.5);
+      }
+
+      // Render Vehicle Chassis
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(car.angle);
+
+      // Nitro Flame Emitter
+      if (car.boosting) {
+        ctx.fillStyle = '#00f0ff';
+        ctx.beginPath();
+        ctx.moveTo(-18, -4);
+        ctx.lineTo(-28 - Math.random() * 10, 0);
+        ctx.lineTo(-18, 4);
+        ctx.fill();
+      }
+
+      // Car Body
+      ctx.fillStyle = '#ff007f';
+      ctx.shadowColor = car.boosting ? '#00f0ff' : '#ff007f';
+      ctx.shadowBlur = 12;
+      ctx.fillRect(-15, -9, 30, 18);
+
+      // Cabin / Windshield
+      ctx.fillStyle = '#05030a';
+      ctx.fillRect(-4, -6, 12, 12);
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(2, -5, 4, 10);
+
+      // Headlights
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(13, -8, 2, 4);
+      ctx.fillRect(13, 4, 2, 4);
+
+      // Taillights
+      ctx.fillStyle = '#ff0033';
+      ctx.fillRect(-15, -8, 2, 3);
+      ctx.fillRect(-15, 5, 2, 3);
+
+      ctx.restore();
+
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = 'bold 44px Impact';
+        ctx.textAlign = 'center';
+        ctx.fillText('DRIFT COMPLETE', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px monospace';
+        ctx.fillText(`FINAL SCORE: ${driftScore}`, canvas.width / 2, canvas.height / 2 + 25);
+      }
+    }
+
+    // Engine Loop
+    let lastTime = performance.now();
+    function loop() {
+      const now = performance.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      update(dt);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>

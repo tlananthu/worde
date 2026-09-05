@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GRAVITY-CORE: CELESTE REFORGED</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: radial-gradient(circle at center, #1b0e29 0%, #08030f 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Courier New', monospace;
+      color: #fff;
+      overflow: hidden;
+    }
+    #stage-frame {
+      position: relative;
+      border: 4px solid #ff0077;
+      box-shadow: 0 0 50px rgba(255, 0, 119, 0.4), inset 0 0 30px rgba(0, 240, 255, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas { display: block; image-rendering: pixelated; }
+
+    #hud {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      pointer-events: none;
+      z-index: 10;
+      text-shadow: 2px 2px 0 #000;
+    }
+    .hud-accent { color: #00f0ff; }
+    .hud-pink { color: #ff0077; }
+
+    #message-banner {
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #ffea00;
+      text-shadow: 0 0 20px #ff0077, 3px 3px 0 #000;
+      display: none;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .hint {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 1px;
+    }
+    .key { color: #00f0ff; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div id="stage-frame">
+    <div id="hud">
+      <div>ROOM: <span id="val-room" class="hud-accent">01/03</span></div>
+      <div>DEATHS: <span id="val-deaths" class="hud-pink">0</span></div>
+      <div>BERRIES: <span id="val-berries" style="color: #ffea00;">0/3</span></div>
+    </div>
+    <div id="message-banner">SUMMIT REACHED!</div>
+    <canvas id="canvas" width="640" height="360"></canvas>
+  </div>
+
+  <div class="hint">
+    <span class="key">&larr;&rarr;</span> or <span class="key">A D</span> Move &nbsp;|&nbsp;
+    <span class="key">SPACE</span> / <span class="key">W</span> Jump &nbsp;|&nbsp;
+    <span class="key">J</span> / <span class="key">K</span> 8-Way Dash &nbsp;|&nbsp;
+    <span class="key">SHIFT</span> Wall Climb
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Synthesized Web Audio API Sound Generator
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq, type = 'sine', duration = 0.08, vol = 0.08) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    const TILE = 20;
+    const COLS = 32;
+    const ROWS = 18;
+
+    // Room Layouts: 1: Solid block, 2: Hazard spikes, 3: Dash refill crystal, 4: Golden berry, 5: Exit warp
+    const ROOMS = [
+      // Room 01: The Chasm
+      {
+        spawn: { x: 3 * TILE, y: 14 * TILE },
+        map: [
+          "11111111111111111111111111111111",
+          "10000000000000000000000000000001",
+          "10000000000000000000000000000001",
+          "10000000000000000000000400000001",
+          "10000000000000000000011110000001",
+          "10000000000000000000000000000051",
+          "10000000000000000111000000000111",
+          "10000000000003000000000000001111",
+          "10000000000011100000000000011111",
+          "10000000000000000000000000000001",
+          "10000000111000000000000000000001",
+          "10000000000000000000000000000001",
+          "10001100000000000000000000000001",
+          "10000000000000000000000000000001",
+          "10000000000000000000000000000001",
+          "11111111000000000000000000011111",
+          "11111111222222222222222222211111",
+          "11111111111111111111111111111111"
+        ]
+      },
+      // Room 02: Wall Traverse
+      {
+        spawn: { x: 2 * TILE, y: 15 * TILE },
+        map: [
+          "11111111111111111111111111111111",
+          "10000000000000000000000000000001",
+          "10000000000000000000000000000051",
+          "10000000000000000000000000000111",
+          "10000000000000000000000300001111",
+          "10000000000000000000001100011111",
+          "10000000000000000000000000111111",
+          "10000000000000000000000000000001",
+          "10000000000000000000000000000001",
+          "10000000011111111111000000000001",
+          "10000000011111111111222222220001",
+          "10000400011111111111111111110001",
+          "10001100000000000000000000000001",
+          "10000000000000000000000000000001",
+          "10000000000000000000000000000001",
+          "11111100000000000000000000001111",
+          "11111122222222222222222222221111",
+          "11111111111111111111111111111111"
+        ]
+      },
+      // Room 03: The Ascent
+      {
+        spawn: { x: 3 * TILE, y: 15 * TILE },
+        map: [
+          "11111111111111111111111111111111",
+          "10000000000000000000000000000051",
+          "10000000000000000000000000000111",
+          "10000000000000000000000000001111",
+          "10000000000000000000000000011111",
+          "10000000000000000000000000111111",
+          "10000000000000000000000001111111",
+          "10000000000000000000000011111111",
+          "10000000000000000000000111111111",
+          "10000000000000000000001111111111",
+          "10000000000000000000011111111111",
+          "10000000000000000000111111111111",
+          "10000400030000000001111111111111",
+          "10001100110000000011111111111111",
+          "10000000000000000111111111111111",
+          "11111000000000001111111111111111",
+          "11111222222222221111111111111111",
+          "11111111111111111111111111111111"
+        ]
+      }
+    ];
+
+    let currentRoomIndex = 0;
+    let deaths = 0;
+    let berriesCollected = 0;
+    let roomItems = []; // Crystals and Berries
+
+    // Player State Machine & Kinematics
+    const player = {
+      x: 0,
+      y: 0,
+      w: 12,
+      h: 16,
+      vx: 0,
+      vy: 0,
+      onGround: false,
+      onWall: 0, // -1: Left wall, 1: Right wall, 0: None
+
+      // Mechanics
+      canDash: true,
+      isDashing: false,
+      dashTimer: 0,
+      dashDir: { x: 0, y: 0 },
+      coyoteTimer: 0,
+      jumpBuffer: 0,
+      stamina: 100,
+
+      hairColor: '#ff0077' // Turns Cyan when dash available, Pink when consumed
+    };
+
+    const particles = [];
+    const ghosts = []; // Dash trail shadows
+    let screenShake = 0;
+
+    function addScreenshake(amt) {
+      screenShake = Math.max(screenShake, amt);
+    }
+
+    function emitParticles(x, y, count, color) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = 1 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd,
+          color,
+          life: 16 + Math.random() * 8
+        });
+      }
+    }
+
+    function parseRoom(idx) {
+      const room = ROOMS[idx];
+      roomItems = [];
+      player.x = room.spawn.x;
+      player.y = room.spawn.y;
+      player.vx = 0;
+      player.vy = 0;
+      player.canDash = true;
+      player.stamina = 100;
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const char = room.map[r][c];
+          if (char === '3') {
+            roomItems.push({ type: 'crystal', x: c * TILE + 4, y: r * TILE + 4, active: true, respawnTimer: 0 });
+          } else if (char === '4') {
+            roomItems.push({ type: 'berry', x: c * TILE + 3, y: r * TILE + 3, collected: false });
+          }
+        }
+      }
+
+      document.getElementById('val-room').textContent = `0${idx + 1}/03`;
+    }
+
+    function killPlayer() {
+      deaths++;
+      document.getElementById('val-deaths').textContent = deaths;
+      addScreenshake(8);
+      emitParticles(player.x + player.w / 2, player.y + player.h / 2, 24, '#ff0077');
+      playBeep(120, 'sawtooth', 0.25, 0.15);
+
+      const spawn = ROOMS[currentRoomIndex].spawn;
+      player.x = spawn.x;
+      player.y = spawn.y;
+      player.vx = 0;
+      player.vy = 0;
+      player.isDashing = false;
+      player.canDash = true;
+      player.stamina = 100;
+    }
+
+    // Input States
+    const keys = {};
+    window.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (['Space', 'KeyW', 'ArrowUp'].includes(e.code)) {
+        player.jumpBuffer = 6; // Buffered jump
+      }
+      if (['KeyJ', 'KeyK'].includes(e.code)) {
+        triggerDash();
+      }
+    });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    // 8-Directional Vector Dash Logic
+    function triggerDash() {
+      if (!player.canDash || player.isDashing) return;
+
+      let dx = 0;
+      let dy = 0;
+      if (keys['KeyA'] || keys['ArrowLeft']) dx -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) dx += 1;
+      if (keys['KeyW'] || keys['ArrowUp']) dy -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) dy += 1;
+
+      // Default to facing forward if no directional keys pressed
+      if (dx === 0 && dy === 0) dx = player.onWall !== 0 ? -player.onWall : 1;
+
+      const len = Math.hypot(dx, dy);
+      player.dashDir = { x: dx / len, y: dy / len };
+      player.isDashing = true;
+      player.dashTimer = 10;
+      player.canDash = false;
+
+      addScreenshake(5);
+      emitParticles(player.x + player.w / 2, player.y + player.h / 2, 14, '#00f0ff');
+      playBeep(520, 'triangle', 0.12, 0.12);
+    }
+
+    // Tile Collisions
+    function isTileSolid(tileX, tileY) {
+      if (tileX < 0 || tileX >= COLS || tileY < 0 || tileY >= ROWS) return true;
+      const char = ROOMS[currentRoomIndex].map[tileY][tileX];
+      return char === '1';
+    }
+
+    function isTileHazard(tileX, tileY) {
+      if (tileX < 0 || tileX >= COLS || tileY < 0 || tileY >= ROWS) return false;
+      return ROOMS[currentRoomIndex].map[tileY][tileX] === '2';
+    }
+
+    function checkCollision(x, y) {
+      const left = Math.floor(x / TILE);
+      const right = Math.floor((x + player.w - 0.1) / TILE);
+      const top = Math.floor(y / TILE);
+      const bottom = Math.floor((y + player.h - 0.1) / TILE);
+
+      for (let r = top; r <= bottom; r++) {
+        for (let c = left; c <= right; c++) {
+          if (isTileHazard(c, r)) return 'hazard';
+          if (isTileSolid(c, r)) return 'solid';
+          if (ROOMS[currentRoomIndex].map[r][c] === '5') return 'exit';
+        }
+      }
+      return 'none';
+    }
+
+    // Physics Engine Update
+    function update() {
+      // Dash Execution Phase
+      if (player.isDashing) {
+        player.vx = player.dashDir.x * 9.5;
+        player.vy = player.dashDir.y * 9.5;
+        player.dashTimer--;
+
+        // Leave shadow trail
+        ghosts.push({
+          x: player.x,
+          y: player.y,
+          color: '#00f0ff',
+          life: 8
+        });
+
+        if (player.dashTimer <= 0) {
+          player.isDashing = false;
+          player.vx *= 0.5;
+          player.vy *= 0.5;
+        }
+      } else {
+        // Standard Ground/Air Trajectory
+        const moveInput = (keys['KeyD'] || keys['ArrowRight'] ? 1 : 0) - (keys['KeyA'] || keys['ArrowLeft'] ? 1 : 0);
+        const targetSpeed = moveInput * 3.5;
+        const accel = player.onGround ? 0.35 : 0.22;
+        player.vx += (targetSpeed - player.vx) * accel;
+
+        // Wall Sliding & Climbing
+        const isClimbing = (keys['ShiftLeft'] || keys['ShiftRight']) && player.onWall !== 0 && player.stamina > 0;
+        if (isClimbing) {
+          player.vy = 0;
+          if (keys['KeyW'] || keys['ArrowUp']) player.vy = -1.8;
+          if (keys['KeyS'] || keys['ArrowDown']) player.vy = 1.8;
+          player.stamina -= 0.4;
+        } else if (player.onWall !== 0 && player.vy > 0) {
+          player.vy = Math.min(player.vy, 1.4); // Wall slide friction
+        } else {
+          // Gravity
+          player.vy = Math.min(8.5, player.vy + 0.42);
+        }
+
+        // Jump & Wall-Jump Calculations (Coyote time + Buffer)
+        if (player.onGround) {
+          player.coyoteTimer = 6;
+          player.canDash = true;
+          player.stamina = 100;
+        } else if (player.coyoteTimer > 0) {
+          player.coyoteTimer--;
+        }
+
+        if (player.jumpBuffer > 0) {
+          if (player.coyoteTimer > 0) {
+            player.vy = -7.4;
+            player.coyoteTimer = 0;
+            player.jumpBuffer = 0;
+            playBeep(320, 'square', 0.08, 0.08);
+          } else if (player.onWall !== 0) {
+            // Wall Launch Jump
+            player.vy = -7.2;
+            player.vx = -player.onWall * 4.8;
+            player.onWall = 0;
+            player.jumpBuffer = 0;
+            playBeep(360, 'square', 0.08, 0.08);
+          }
+        }
+      }
+
+      if (player.jumpBuffer > 0) player.jumpBuffer--;
+
+      // Horizontal Collision & Movement
+      player.x += player.vx;
+      let colX = checkCollision(player.x, player.y);
+      if (colX === 'hazard') { killPlayer(); return; }
+      if (colX === 'solid') {
+        player.x = player.vx > 0 ? Math.floor((player.x + player.w) / TILE) * TILE - player.w : Math.floor(player.x / TILE + 1) * TILE;
+        player.vx = 0;
+      }
+
+      // Vertical Collision & Movement
+      player.y += player.vy;
+      let colY = checkCollision(player.x, player.y);
+      if (colY === 'hazard') { killPlayer(); return; }
+      if (colY === 'solid') {
+        if (player.vy > 0) {
+          player.y = Math.floor((player.y + player.h) / TILE) * TILE - player.h;
+          player.onGround = true;
+        } else {
+          player.y = Math.floor(player.y / TILE + 1) * TILE;
+        }
+        player.vy = 0;
+      } else {
+        player.onGround = false;
+      }
+
+      // Check Room Exit Warp
+      if (colX === 'exit' || colY === 'exit') {
+        if (currentRoomIndex < ROOMS.length - 1) {
+          currentRoomIndex++;
+          parseRoom(currentRoomIndex);
+          playBeep(700, 'sine', 0.2, 0.15);
+        } else {
+          document.getElementById('message-banner').style.display = 'block';
+        }
+        return;
+      }
+
+      // Wall Detection
+      player.onWall = 0;
+      if (!player.onGround) {
+        if (isTileSolid(Math.floor((player.x - 2) / TILE), Math.floor((player.y + 2) / TILE))) player.onWall = -1;
+        if (isTileSolid(Math.floor((player.x + player.w + 2) / TILE), Math.floor((player.y + 2) / TILE))) player.onWall = 1;
+      }
+
+      // Interactive Items (Crystals, Berries)
+      roomItems.forEach(item => {
+        if (item.type === 'crystal') {
+          if (!item.active) {
+            item.respawnTimer--;
+            if (item.respawnTimer <= 0) item.active = true;
+          } else if (Math.hypot((player.x + player.w / 2) - (item.x + 6), (player.y + player.h / 2) - (item.y + 6)) < 16) {
+            item.active = false;
+            item.respawnTimer = 180;
+            player.canDash = true;
+            emitParticles(item.x + 6, item.y + 6, 12, '#00f0ff');
+            playBeep(880, 'triangle', 0.1, 0.1);
+          }
+        } else if (item.type === 'berry' && !item.collected) {
+          if (Math.hypot((player.x + player.w / 2) - (item.x + 6), (player.y + player.h / 2) - (item.y + 6)) < 16) {
+            item.collected = true;
+            berriesCollected++;
+            document.getElementById('val-berries').textContent = `${berriesCollected}/3`;
+            emitParticles(item.x + 6, item.y + 6, 20, '#ffea00');
+            playBeep(1100, 'sine', 0.3, 0.12);
+          }
+        }
+      });
+
+      // Update Hair Color (Dash Visualizer)
+      player.hairColor = player.canDash ? '#00f0ff' : '#ff0077';
+
+      // Ghost Shadows
+      for (let i = ghosts.length - 1; i >= 0; i--) {
+        ghosts[i].life--;
+        if (ghosts[i].life <= 0) ghosts.splice(i, 1);
+      }
+
+      // Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life--;
+        if (pt.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    // Render Canvas
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      // Screenshake Transformation
+      if (screenShake > 0) {
+        ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+        screenShake *= 0.86;
+        if (screenShake < 0.2) screenShake = 0;
+      }
+
+      // Render Level Tiles
+      const map = ROOMS[currentRoomIndex].map;
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const char = map[r][c];
+          const px = c * TILE;
+          const py = r * TILE;
+
+          if (char === '1') {
+            ctx.fillStyle = '#1e162a';
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.strokeStyle = '#392652';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px, py, TILE, TILE);
+          } else if (char === '2') {
+            // Neon Spikes
+            ctx.fillStyle = '#ff0055';
+            ctx.beginPath();
+            ctx.moveTo(px, py + TILE);
+            ctx.lineTo(px + TILE / 2, py + 4);
+            ctx.lineTo(px + TILE, py + TILE);
+            ctx.fill();
+          } else if (char === '5') {
+            // Exit Gate
+            ctx.fillStyle = '#00f0ff';
+            ctx.fillRect(px + 4, py + 2, TILE - 8, TILE - 4);
+          }
+        }
+      }
+
+      // Draw Items
+      roomItems.forEach(item => {
+        if (item.type === 'crystal' && item.active) {
+          ctx.fillStyle = '#00f0ff';
+          ctx.beginPath();
+          ctx.arc(item.x + 6, item.y + 6, 6, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (item.type === 'berry' && !item.collected) {
+          ctx.fillStyle = '#ffea00';
+          ctx.fillRect(item.x + 2, item.y + 2, 8, 8);
+        }
+      });
+
+      // Dash Ghost Trails
+      ghosts.forEach(g => {
+        ctx.fillStyle = g.color;
+        ctx.globalAlpha = g.life / 8;
+        ctx.fillRect(g.x, g.y, player.w, player.h);
+      });
+      ctx.globalAlpha = 1.0;
+
+      // Draw Player Silhouette & Flowing Hair
+      ctx.fillStyle = player.hairColor;
+      // Trailing hair offset by velocity
+      const hairOffsetX = -player.vx * 1.5;
+      const hairOffsetY = -player.vy * 1.2;
+      ctx.fillRect(player.x + 2 + hairOffsetX, player.y - 4 + hairOffsetY, 8, 8);
+
+      // Body
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      // Particles
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 2, 2);
+      });
+
+      ctx.restore();
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    parseRoom(0);
+    loop();
+  </script>
+</body>
+</html>
