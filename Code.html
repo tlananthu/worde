@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Live Runner</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #1e1e1e;
+      color: #fff;
+    }
+    header {
+      padding: 10px 16px;
+      background: #2d2d2d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #404040;
+    }
+    button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #005999;
+    }
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-label {
+      padding: 6px 12px;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: #252526;
+      color: #858585;
+      border-bottom: 1px solid #333;
+    }
+    textarea {
+      flex: 1;
+      width: 100%;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 14px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      tab-size: 2;
+    }
+    iframe {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+    }
+    .divider {
+      width: 2px;
+      background: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span><strong>HTML Playground</strong></span>
+    <div>
+      <label style="font-size: 13px; margin-right: 12px;">
+        <input type="checkbox" id="auto-run" checked> Auto-run
+      </label>
+      <button id="run-btn">Run Code</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">Input HTML</div>
+      <textarea id="editor" spellcheck="false" placeholder="Write full HTML here..."><!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 2rem; }
+    h1 { color: #007acc; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Hello World!</h1>
+  <p>All HTML tags, CSS, and JS work here.</p>
+  <button onclick="alert('JavaScript works!')">Click Me</button>
+</body>
+</html></textarea>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="panel">
+      <div class="panel-label">Output</div>
+      <iframe id="output-frame" sandbox="allow-scripts allow-modals allow-forms allow-same-origin"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const iframe = document.getElementById('output-frame');
+    const runBtn = document.getElementById('run-btn');
+    const autoRunCheckbox = document.getElementById('auto-run');
+
+    function executeCode() {
+      const code = editor.value;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(code);
+      iframeDoc.close();
+    }
+
+    // Manual execution
+    runBtn.addEventListener('click', executeCode);
+
+    // Auto execution with a slight debounce
+    let debounceTimer;
+    editor.addEventListener('input', () => {
+      if (autoRunCheckbox.checked) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(executeCode, 400);
+      }
+    });
+
+    // Support Tab key inside textarea
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 2;
+      }
+    });
+
+    // Initial run
+    executeCode();
+  </script>
+</body>
+</html>
