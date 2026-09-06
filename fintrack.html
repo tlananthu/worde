@@ -77,6 +77,8 @@
 
         /* Responsive Mobile List Cards */
         .list-item { background: #fdfdfd; border: 1px solid var(--border); border-radius: 6px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .clickable-card { cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+        .clickable-card:hover { border-color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .list-details { flex: 1; min-width: 200px; font-size: 0.95rem; line-height: 1.4; color: #333; }
         .list-actions { display: flex; gap: 5px; }
         
@@ -233,7 +235,10 @@
             <label>Target Year</label>
             <input type="number" id="goal-year" placeholder="e.g., 2031">
         </div>
-        <button class="btn" id="btn-save-goal" onclick="saveGoal()">+ Save Goal</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn" id="btn-save-goal" style="margin-top: 0; flex: 2;" onclick="saveGoal()">+ Save Goal</button>
+            <button class="btn btn-danger" id="btn-delete-goal" style="margin-top: 0; flex: 1; display: none;" onclick="deleteGoalFromModal()">🗑 Delete</button>
+        </div>
     </div>
 </div>
 
@@ -349,6 +354,7 @@
         const modal = document.getElementById('goal-modal');
         const title = document.getElementById('goal-modal-title');
         const btn = document.getElementById('btn-save-goal');
+        const deleteBtn = document.getElementById('btn-delete-goal');
 
         if (editId) {
             const item = db.goals.find(g => g.id === editId);
@@ -361,6 +367,7 @@
             btn.innerText = "Update Goal";
             btn.classList.add('btn-update');
             btn.setAttribute('data-edit-id', editId);
+            deleteBtn.style.display = 'block';
         } else {
             document.getElementById('goal-name').value = '';
             document.getElementById('goal-current').value = '';
@@ -368,9 +375,10 @@
             document.getElementById('goal-year').value = '';
             
             title.innerText = "Define Milestone";
-            btn.innerText = "+ Add Goal";
+            btn.innerText = "+ Save Goal";
             btn.classList.remove('btn-update');
             btn.removeAttribute('data-edit-id');
+            deleteBtn.style.display = 'none';
         }
         
         modal.style.display = 'flex';
@@ -403,6 +411,16 @@
         
         closeGoalModal();
         saveData();
+    }
+
+    function deleteGoalFromModal() {
+        const editId = document.getElementById('btn-save-goal').getAttribute('data-edit-id');
+        if (editId) {
+            if(confirm("Are you sure you want to delete this milestone?")) {
+                deleteItem('goal', editId);
+                closeGoalModal();
+            }
+        }
     }
 
     // --- WIDGET QUICK ACTIONS ---
@@ -569,19 +587,17 @@
     }
 
     function renderTables() {
-        // Goals rendered as Flex Cards
+        // Goals rendered as clickable Flex Cards without blocky buttons
         let gHtml = db.goals.length === 0 ? '<div class="empty-state">No goals defined yet.</div>' : '';
         db.goals.forEach(g => {
             gHtml += `
-            <div class="list-item">
+            <div class="list-item clickable-card" onclick="editItem('goal', '${g.id}')">
                 <div class="list-details">
-                    <strong>${g.name}</strong><br>
-                    <span style="color:#7f8c8d; font-size:0.85rem;">Cost: ${formatINR(g.currentCost)} | Infl: ${g.inflation}% | Year: ${g.year}</span>
+                    <strong style="font-size: 1.1rem; color: var(--secondary);">${g.name}</strong><br>
+                    <strong style="color: var(--success); font-size: 1.05rem;">Current Cost: ${formatINR(g.currentCost)}</strong><br>
+                    <span style="color:#7f8c8d; font-size:0.85rem;">Infl: ${g.inflation}% | Year: ${g.year}</span>
                 </div>
-                <div class="list-actions">
-                    <button class="btn-edit" onclick="editItem('goal', '${g.id}')">✎ Edit</button>
-                    <button class="btn-danger" onclick="deleteItem('goal', '${g.id}')">X</button>
-                </div>
+                <div style="color: #bdc3c7; font-size: 1.2rem;">✎</div>
             </div>`;
         });
         document.getElementById('goal-list').innerHTML = gHtml;
