@@ -41,7 +41,7 @@
         .btn-success { background: var(--success); width: auto; padding: 8px 15px; }
         
         /* Dashboard Cards */
-        .dashboard-container { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .dashboard-container { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
         .goal-widget { background: var(--secondary); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
         .goal-widget h3 { margin: 0 0 15px 0; font-size: 1.3rem; border-bottom: 1px solid #4a6278; padding-bottom: 10px; display: flex; justify-content: space-between;}
         
@@ -56,6 +56,16 @@
 
         .gap-analysis { margin-top: 15px; padding: 12px; background: rgba(231, 76, 60, 0.15); border-left: 4px solid var(--danger); border-radius: 4px; }
         .gap-analysis-success { background: rgba(39, 174, 96, 0.15); border-left: 4px solid var(--success); margin-top: 15px; padding: 12px; border-radius: 4px; }
+
+        /* Summary Dashboard */
+        .summary-widget { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 25px; border-radius: 8px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); margin-bottom: 10px; display: none; }
+        .summary-widget h3 { margin: 0 0 20px 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .summary-stat { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .summary-stat-label { font-size: 0.85rem; color: #bdc3c7; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .summary-stat-value { font-size: 1.4rem; font-weight: bold; color: white; }
+        .summary-stat-value.highlight-red { color: #ff7675; }
+        .summary-stat-value.highlight-green { color: #55efc4; }
 
         /* Tables */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
@@ -73,16 +83,42 @@
     <h1>Dynamic Wealth & Goal Engine</h1>
     <p style="color: #7f8c8d; margin-top: -10px;">All data is saved locally. Calculates gap shortfalls and dynamically recommends required SIPs.</p>
 
-    <!-- PROJECTION DASHBOARD -->
     <div style="margin-top: 30px;">
         <h2 style="border-bottom: 2px solid var(--success); display: inline-block; padding-bottom: 5px;">Fulfillment Projections</h2>
-        <div id="dashboard-grid" class="dashboard-container">
-            <!-- Widgets injected via JS -->
+        
+        <div id="summary-dashboard" class="summary-widget">
+            <h3>Master Portfolio Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Total Target Required</div>
+                    <div class="summary-stat-value" id="sum-target">₹0</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Total Wealth Projected</div>
+                    <div class="summary-stat-value" id="sum-projected">₹0</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Total Combined Gap</div>
+                    <div class="summary-stat-value" id="sum-gap">₹0</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Total Actionable SIP Needed</div>
+                    <div class="summary-stat-value" id="sum-sip">₹0 / mo</div>
+                </div>
+            </div>
+            <div class="progress-box" style="margin-top: 25px;">
+                <div class="progress-bar-bg" style="background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.2);">
+                    <div id="sum-progress" class="progress-bar-fill" style="width: 0%; background: #55efc4;"></div>
+                </div>
+                <div id="sum-progress-text" class="fulfilled-text" style="color: #55efc4; font-size: 1.2rem;">0% Fulfilled Overall</div>
+            </div>
         </div>
+
+        <div id="dashboard-grid" class="dashboard-container">
+            </div>
     </div>
 
     <div class="grid">
-        <!-- 1. GOAL MANAGEMENT -->
         <div class="card">
             <h2>1. Define Milestones</h2>
             <div class="form-group">
@@ -106,7 +142,6 @@
             <div id="goal-list" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- 2. ASSET MANAGEMENT -->
         <div class="card">
             <h2>2. Allocate Existing Assets</h2>
             <div class="form-group">
@@ -130,7 +165,6 @@
             <div id="asset-list" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- 3. SIP MANAGEMENT -->
         <div class="card">
             <h2>3. Configure Monthly SIPs</h2>
             <div class="form-group">
@@ -155,7 +189,6 @@
         </div>
     </div>
     
-    <!-- DATA MANAGEMENT -->
     <div class="data-management">
         <div>
             <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
@@ -188,27 +221,20 @@
     // --- DATA IMPORT/EXPORT ---
     function exportData() {
         try {
-            // Check if db exists and has data
             if (!db || (!db.goals.length && !db.assets.length && !db.sips.length)) {
                 alert("No data to export! Please add a goal, asset, or SIP first.");
                 return;
             }
-            
             const dataStr = JSON.stringify(db, null, 2);
-            // Use Data URI method which is more reliable for local HTML files
             const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-            
             const exportFileDefaultName = `wealth_engine_backup_${new Date().toISOString().split('T')[0]}.json`;
 
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
             linkElement.setAttribute('download', exportFileDefaultName);
-            
-            // Append, click, and remove (required for Firefox compatibility)
             document.body.appendChild(linkElement);
             linkElement.click();
             document.body.removeChild(linkElement);
-            
         } catch (error) {
             console.error("Export failed:", error);
             alert("Export failed. Please check the browser console. Error: " + error.message);
@@ -243,14 +269,12 @@
         return "₹" + Math.round(num).toLocaleString('en-IN');
     }
 
-    // Standard Future Value formula: PV * (1 + r)^n
     function calcFV(pv, annualRate, years) {
         if (years <= 0) return pv;
         let r = annualRate / 100;
         return pv * Math.pow(1 + r, years);
     }
 
-    // FV of Annuity (SIP): P * [((1 + r)^n - 1) / r] * (1 + r)
     function calcSIPFV(monthlyAmount, annualRate, years) {
         if (years <= 0) return 0;
         let r = (annualRate / 100) / 12;
@@ -259,8 +283,6 @@
         return monthlyAmount * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
     }
 
-    // PMT Calculation (Reverse FV Annuity) to find required SIP
-    // PMT = FV * r / ( ((1+r)^n - 1) * (1+r) )
     function calcRequiredSIP(shortfallFV, expectedAnnualRate, years) {
         if (years <= 0 || shortfallFV <= 0) return 0;
         let r = (expectedAnnualRate / 100) / 12;
@@ -269,7 +291,6 @@
         return (shortfallFV * r) / ((Math.pow(1 + r, n) - 1) * (1 + r));
     }
 
-    // Determine expected return based on investment horizon
     function getHorizonReturnAssumption(years) {
         if (years <= 3) return { rate: 7, category: "Debt/Liquid" };
         if (years <= 7) return { rate: 9, category: "Balanced/Hybrid" };
@@ -379,12 +400,22 @@
 
     function renderDashboard() {
         const dashGrid = document.getElementById('dashboard-grid');
+        const summaryDash = document.getElementById('summary-dashboard');
+        
         if (db.goals.length === 0) {
+            summaryDash.style.display = 'none';
             dashGrid.innerHTML = '<div style="color: #7f8c8d; grid-column: 1/-1;">Please define a milestone to see fulfillment projections.</div>';
             return;
         }
 
         let dashHTML = '';
+        
+        // Macro Accumulators
+        let macroTarget = 0;
+        let macroProjected = 0;
+        let macroShortfall = 0;
+        let macroRequiredSip = 0;
+
         db.goals.forEach(goal => {
             const yearsToGoal = goal.year - currentYear;
             const targetAmount = calcFV(goal.currentCost, goal.inflation, yearsToGoal);
@@ -404,6 +435,10 @@
             let percentFulfilled = targetAmount > 0 ? (totalProjected / targetAmount) * 100 : 0;
             const shortfall = targetAmount - totalProjected;
             
+            // Add to Macro Summary
+            macroTarget += targetAmount;
+            macroProjected += totalProjected;
+
             let barColor = 'var(--success)'; 
             if (percentFulfilled < 70) barColor = 'var(--danger)'; 
             else if (percentFulfilled < 100) barColor = 'var(--warning)'; 
@@ -413,8 +448,12 @@
             // Calculate Gap Analysis (Required SIP)
             let gapHtml = '';
             if (shortfall > 0 && yearsToGoal > 0) {
+                macroShortfall += shortfall;
+                
                 const assumption = getHorizonReturnAssumption(yearsToGoal);
                 const requiredSip = calcRequiredSIP(shortfall, assumption.rate, yearsToGoal);
+                
+                macroRequiredSip += requiredSip;
                 
                 gapHtml = `
                     <div class="gap-analysis">
@@ -426,6 +465,7 @@
                     </div>
                 `;
             } else if (shortfall > 0 && yearsToGoal <= 0) {
+                macroShortfall += shortfall;
                 gapHtml = `
                     <div class="gap-analysis">
                         <div style="font-size: 0.9rem; color: #e74c3c; font-weight: bold; margin-bottom: 5px;">⚠ Shortfall: ${formatINR(shortfall)}</div>
@@ -464,7 +504,42 @@
                 </div>
             `;
         });
+        
         dashGrid.innerHTML = dashHTML;
+
+        // Render Macro Summary if multiple goals exist
+        if (db.goals.length > 1) {
+            summaryDash.style.display = 'block';
+            
+            document.getElementById('sum-target').innerText = formatINR(macroTarget);
+            document.getElementById('sum-projected').innerText = formatINR(macroProjected);
+            
+            let gapEl = document.getElementById('sum-gap');
+            gapEl.innerText = formatINR(macroShortfall);
+            gapEl.className = macroShortfall > 0 ? 'summary-stat-value highlight-red' : 'summary-stat-value highlight-green';
+            
+            let sipEl = document.getElementById('sum-sip');
+            sipEl.innerText = formatINR(macroRequiredSip) + ' / mo';
+            sipEl.className = macroRequiredSip > 0 ? 'summary-stat-value highlight-red' : 'summary-stat-value highlight-green';
+
+            let macroPercent = macroTarget > 0 ? (macroProjected / macroTarget) * 100 : 0;
+            let mDisplayPercent = Math.min(macroPercent, 100).toFixed(1);
+            
+            let mBarColor = '#55efc4'; // Success green
+            if (macroPercent < 70) mBarColor = '#ff7675'; // Danger red
+            else if (macroPercent < 100) mBarColor = '#fdcb6e'; // Warning yellow
+
+            let progressBar = document.getElementById('sum-progress');
+            progressBar.style.width = mDisplayPercent + '%';
+            progressBar.style.background = mBarColor;
+            
+            let progressText = document.getElementById('sum-progress-text');
+            progressText.innerText = mDisplayPercent + '% Fulfilled Overall';
+            progressText.style.color = mBarColor;
+
+        } else {
+            summaryDash.style.display = 'none';
+        }
     }
 
     // Boot App
