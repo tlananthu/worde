@@ -92,13 +92,11 @@
 
 <div class="container">
     <h1>Fintrack</h1>
-    <p style="color: #7f8c8d; margin-top: -10px;">All data is saved locally. Calculates gap shortfalls and dynamically recommends required SIPs.</p>
+    <p style="color: #7f8c8d; margin-top: -10px;">All data is saved locally. Calculates gap shortfalls, recommends required SIPs, and spills over surplus.</p>
 
-    <!-- PROJECTION DASHBOARD -->
     <div style="margin-top: 30px;">
         <h2 style="border-bottom: 2px solid var(--success); display: inline-block; padding-bottom: 5px;">Fulfillment Projections</h2>
         
-        <!-- MASTER SUMMARY WIDGET -->
         <div id="summary-dashboard" class="summary-widget">
             <h3>Master Portfolio Summary</h3>
             <div class="summary-grid">
@@ -128,12 +126,10 @@
         </div>
 
         <div id="dashboard-grid" class="dashboard-container">
-            <!-- Widgets injected via JS -->
-        </div>
+            </div>
     </div>
 
     <div class="grid">
-        <!-- 1. GOAL MANAGEMENT -->
         <div class="card" id="card-goal">
             <h2>1. Define Milestones</h2>
             <div class="form-group">
@@ -158,7 +154,6 @@
             <div id="goal-list" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- 2. ASSET MANAGEMENT -->
         <div class="card" id="card-asset">
             <h2>2. Allocate Existing Assets</h2>
             <div class="form-group">
@@ -183,7 +178,6 @@
             <div id="asset-list" style="margin-top: 20px;"></div>
         </div>
 
-        <!-- 3. SIP MANAGEMENT -->
         <div class="card" id="card-sip">
             <h2>3. Configure Monthly SIPs</h2>
             <div class="form-group">
@@ -209,7 +203,6 @@
         </div>
     </div>
     
-    <!-- DATA MANAGEMENT -->
     <div class="data-management">
         <div>
             <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
@@ -600,6 +593,8 @@
         const unassignedAssets = db.assets.filter(a => !a.goalId || a.goalId === "");
         const unassignedSIPs = db.sips.filter(s => !s.goalId || s.goalId === "");
 
+        let totalSpillover = 0; // Tracks surplus routed to growth
+
         if (db.goals.length === 0 && unassignedAssets.length === 0 && unassignedSIPs.length === 0) {
             summaryDash.style.display = 'none';
             dashGrid.innerHTML = '<div style="color: #7f8c8d; grid-column: 1/-1;">Please define a milestone or add a general investment to see projections.</div>';
@@ -629,9 +624,19 @@
                 projectedSipValue += calcSIPFV(s.amount, s.rate, yearsToGoal);
             });
 
-            const totalProjected = projectedAssetValue + projectedSipValue;
+            let totalProjected = projectedAssetValue + projectedSipValue;
+            let shortfall = targetAmount - totalProjected;
+            let surplus = 0;
+
+            // Spillover Engine Logic
+            if (shortfall < 0) {
+                surplus = Math.abs(shortfall);
+                totalSpillover += surplus;
+                totalProjected = targetAmount; // Cap the goal's widget wealth
+                shortfall = 0;
+            }
+
             let percentFulfilled = targetAmount > 0 ? (totalProjected / targetAmount) * 100 : 0;
-            const shortfall = targetAmount - totalProjected;
             
             macroTarget += targetAmount;
             macroProjected += totalProjected;
@@ -643,7 +648,14 @@
             const displayPercent = Math.min(percentFulfilled, 100).toFixed(1);
 
             let gapHtml = '';
-            if (shortfall > 0 && yearsToGoal > 0) {
+            if (surplus > 0) {
+                gapHtml = `
+                    <div class="gap-analysis-success">
+                        <div style="font-size: 0.9rem; color: #2ecc71; font-weight: bold;">✓ Fully Funded (Surplus Generated)</div>
+                        <div style="font-size: 0.85rem; color: #ecf0f1;">Excess <strong style="color:white;">${formatINR(surplus)}</strong> automatically spilled over to Investment for Growth.</div>
+                    </div>
+                `;
+            } else if (shortfall > 0 && yearsToGoal > 0) {
                 macroShortfall += shortfall;
                 
                 const assumption = getHorizonReturnAssumption(yearsToGoal);
@@ -670,11 +682,11 @@
                         </div>
                     </div>
                 `;
-            } else if (shortfall <= 0) {
+            } else if (shortfall === 0 && surplus === 0) {
                 gapHtml = `
                     <div class="gap-analysis-success">
                         <div style="font-size: 0.9rem; color: #2ecc71; font-weight: bold;">✓ Fully Funded</div>
-                        <div style="font-size: 0.85rem; color: #ecf0f1;">You are projected to meet or exceed this goal.</div>
+                        <div style="font-size: 0.85rem; color: #ecf0f1;">You are projected to meet this goal exactly.</div>
                     </div>
                 `;
             }
@@ -687,7 +699,7 @@
                         <div class="stat-row"><span>Inflated Target Cost:</span> <span class="stat-val target-val">${formatINR(targetAmount)}</span></div>
                         <div class="stat-row"><span>Asset Projection:</span> <span class="stat-val" style="color: #bdc3c7">+ ${formatINR(projectedAssetValue)}</span></div>
                         <div class="stat-row" style="border-bottom: 1px dashed #4a6278; padding-bottom: 5px;"><span>SIP Projection:</span> <span class="stat-val" style="color: #bdc3c7">+ ${formatINR(projectedSipValue)}</span></div>
-                        <div class="stat-row" style="margin-top: 5px;"><span>Total Projected:</span> <span class="stat-val">${formatINR(totalProjected)}</span></div>
+                        <div class="stat-row" style="margin-top: 5px;"><span>Total Retained:</span> <span class="stat-val">${formatINR(totalProjected)}</span></div>
                         
                         <div class="progress-box">
                             <div class="progress-bar-bg">
@@ -706,7 +718,7 @@
         });
         
         // Render 'Investment for Growth' Virtual Widget
-        if (unassignedAssets.length > 0 || unassignedSIPs.length > 0) {
+        if (unassignedAssets.length > 0 || unassignedSIPs.length > 0 || totalSpillover > 0) {
             const growthHorizon = 10; // Standard 10 year projection for unassigned wealth
             let projAsset = 0;
             let projSip = 0;
@@ -714,8 +726,10 @@
             unassignedAssets.forEach(a => projAsset += calcFV(a.value, a.rate, growthHorizon));
             unassignedSIPs.forEach(s => projSip += calcSIPFV(s.amount, s.rate, growthHorizon));
             
-            const totalGrowthProj = projAsset + projSip;
-            macroProjected += totalGrowthProj; // Add pure growth to total portfolio wealth
+            const totalGrowthProj = projAsset + projSip + totalSpillover;
+            macroProjected += totalGrowthProj; // Add pure growth & spillovers to total portfolio wealth
+
+            let spilloverHtml = totalSpillover > 0 ? `<div class="stat-row"><span>Goal Spillovers:</span> <span class="stat-val" style="color: #f1c40f;">+ ${formatINR(totalSpillover)}</span></div>` : '';
 
             dashHTML += `
                 <div class="goal-widget" style="background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">
@@ -724,8 +738,9 @@
                         
                         <div class="stat-row"><span>Target Cost:</span> <span class="stat-val" style="color: rgba(255,255,255,0.7);">N/A (Open-Ended)</span></div>
                         <div class="stat-row"><span>Asset Projection:</span> <span class="stat-val" style="color: #e8f8f5;">+ ${formatINR(projAsset)}</span></div>
-                        <div class="stat-row" style="border-bottom: 1px dashed rgba(255,255,255,0.4); padding-bottom: 5px;"><span>SIP Projection:</span> <span class="stat-val" style="color: #e8f8f5;">+ ${formatINR(projSip)}</span></div>
-                        <div class="stat-row" style="margin-top: 5px;"><span>Total Projected:</span> <span class="stat-val" style="font-size: 1.2rem;">${formatINR(totalGrowthProj)}</span></div>
+                        <div class="stat-row"><span>SIP Projection:</span> <span class="stat-val" style="color: #e8f8f5;">+ ${formatINR(projSip)}</span></div>
+                        ${spilloverHtml}
+                        <div class="stat-row" style="margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.4); padding-top: 5px;"><span>Total Projected:</span> <span class="stat-val" style="font-size: 1.2rem;">${formatINR(totalGrowthProj)}</span></div>
                         
                         <div class="progress-box" style="margin-top: 25px;">
                             <div class="fulfilled-text" style="color: white; text-align: left; font-size: 0.95rem;">
@@ -740,7 +755,7 @@
         dashGrid.innerHTML = dashHTML;
 
         // Render Macro Summary
-        const totalWidgets = db.goals.length + (unassignedAssets.length > 0 || unassignedSIPs.length > 0 ? 1 : 0);
+        const totalWidgets = db.goals.length + ((unassignedAssets.length > 0 || unassignedSIPs.length > 0 || totalSpillover > 0) ? 1 : 0);
         
         if (totalWidgets > 1) {
             summaryDash.style.display = 'block';
