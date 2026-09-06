@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Hub</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #ffffff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Main Viewport */
+    #viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    .view-screen {
+      display: none;
+      height: 100%;
+    }
+
+    .view-screen.active {
+      display: block;
+    }
+
+    /* Bottom Navigation */
+    #bottom-bar {
+      height: 64px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: #ffffff;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: #555;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .nav-btn:hover {
+      background: #f4f4f4;
+      color: #000;
+    }
+
+    .nav-btn:hover svg {
+      stroke: #000;
+    }
+
+    /* Forms & Inputs */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .custom-file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      background: #f8f9fa;
+      border: 1px solid #dcdcdc;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .custom-file-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: #333;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .custom-file-btn:hover {
+      background: #eee;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .action-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .primary-btn {
+      background: #007aff;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .cancel-btn {
+      background: #eee;
+      color: #333;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .back-btn {
+      background: none;
+      border: none;
+      font-size: 14px;
+      color: #007aff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+
+    /* Video List Cards */
+    .media-card {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
+
+    .media-card img.thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      cursor: pointer;
+      margin-right: 14px;
+    }
+
+    .media-card .card-title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+    }
+
+    .delete-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: #ff3b30;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    /* Channels Grid */
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .channel-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .channel-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ddd;
+      background: #eee;
+    }
+
+    .channel-name {
+      margin-top: 8px;
+      font-size: 13px;
+      text-align: center;
+      word-break: break-word;
+      font-weight: 500;
+    }
+
+    .channel-delete {
+      position: absolute;
+      top: -4px;
+      right: 12px;
+      background: #ff3b30;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    /* Fullscreen Player Modal */
+    #media-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 1000;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #media-overlay video {
+      max-width: 90%;
+      max-height: 80%;
+    }
+
+    .close-overlay {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+    }
+
+    /* Fullscreen Calculator Overlay */
+    #calculator-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #1c1c1e;
+      z-index: 1000;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .calc-container {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #calc-display {
+      background: transparent;
+      color: #fff;
+      font-size: 50px;
+      text-align: right;
+      padding: 10px 15px;
+      overflow-x: auto;
+      white-space: nowrap;
+      border: none;
+      outline: none;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .calc-btn {
+      height: 70px;
+      border-radius: 35px;
+      border: none;
+      font-size: 24px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .calc-btn:active {
+      filter: brightness(1.25);
+    }
+
+    .btn-dark { background: #333333; color: #fff; }
+    .btn-gray { background: #a5a5a5; color: #000; }
+    .btn-orange { background: #ff9f0a; color: #fff; }
+    .btn-zero { grid-column: span 2; justify-content: flex-start; padding-left: 28px; border-radius: 35px; }
+  </style>
+</head>
+<body>
+
+  <main id="viewport">
+    <!-- Screen: Global Home Videos -->
+    <section id="screen-home" class="view-screen active">
+      <h2 style="margin-bottom: 16px; align: center; shadow: 7px 7px 7px #000000;">Videos</h2>
+      <div id="video-list"></div>
+    </section>
+
+    <!-- Screen: Video Upload Form -->
+    <section id="screen-upload" class="view-screen">
+      <h2 style="margin-bottom: 20px;">Add New Media</h2>
+
+      <!-- Video Selector -->
+      <div class="form-group">
+        <label>Video File</label>
+        <label class="custom-file-btn" for="input-video">
+          <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          Select Video
+        </label>
+        <input type="file" id="input-video" accept="video/*">
+        <span id="label-video" style="font-size: 12px; margin-left: 8px; color: #666;">No file selected</span>
+      </div>
+
+      <!-- Image Selector -->
+      <div class="form-group">
+        <label>Image Thumbnail</label>
+        <label class="custom-file-btn" for="input-image">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Select Image
+        </label>
+        <input type="file" id="input-image" accept="image/*">
+        <span id="label-image" style="font-size: 12px; margin-left: 8px; color: #666;">No file selected</span>
+      </div>
+
+      <!-- Audio Selector -->
+      <div class="form-group">
+        <label>Voice / Audio</label>
+        <label class="custom-file-btn" for="input-audio">
+          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          Select Audio
+        </label>
+        <input type="file" id="input-audio" accept="audio/*">
+        <span id="label-audio" style="font-size: 12px; margin-left: 8px; color: #666;">No file selected</span>
+      </div>
+
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="input-title" placeholder="Enter title...">
+      </div>
+
+      <div class="action-row">
+        <button class="primary-btn" id="btn-save-video">Save</button>
+        <button class="cancel-btn" id="btn-cancel-video">Cancel</button>
+      </div>
+    </section>
+
+    <!-- Screen: Channels Directory -->
+    <section id="screen-channels" class="view-screen">
+      <h2>Channels</h2>
+      <div style="margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 18px;">
+        <div class="form-group">
+          <label class="custom-file-btn" for="input-channel-img">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Select Channel Avatar
+          </label>
+          <input type="file" id="input-channel-img" accept="image/*">
+          <span id="label-channel-img" style="font-size: 12px; margin-left: 8px; color: #666;">No avatar chosen</span>
+        </div>
+        <div class="form-group">
+          <input type="text" id="input-channel-name" placeholder="Channel name...">
+        </div>
+        <button class="primary-btn" id="btn-add-channel">Create Channel</button>
+      </div>
+
+      <div class="channel-grid" id="channel-container"></div>
+    </section>
+
+    <!-- Screen: Specific Channel Interior -->
+    <section id="screen-channel-view" class="view-screen">
+      <button class="back-btn" id="btn-back-to-channels">&#8592; Back to Channels</button>
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+        <img id="channel-header-img" class="channel-avatar" style="width: 55px; height: 55px;" alt="Avatar">
+        <h2 id="channel-header-name"></h2>
+      </div>
+      <button class="primary-btn" id="btn-channel-upload-trigger" style="margin-bottom: 16px;">Add Video to Channel</button>
+      <div id="channel-video-list"></div>
+    </section>
+  </main>
+
+  <!-- Video/Audio Player Modal -->
+  <div id="media-overlay">
+    <button class="close-overlay" id="btn-close-overlay">&times;</button>
+    <video id="player-video" controls autoplay></video>
+    <audio id="player-audio" autoplay></audio>
+  </div>
+
+  <!-- Fullscreen Calculator Overlay -->
+  <div id="calculator-overlay">
+    <button class="close-overlay" id="btn-close-calc">&times;</button>
+    <div class="calc-container">
+      <div id="calc-display">0</div>
+      <div class="calc-grid">
+        <button class="calc-btn btn-gray" onclick="calcAction('clear')">AC</button>
+        <button class="calc-btn btn-gray" onclick="calcAction('toggleSign')">+/-</button>
+        <button class="calc-btn btn-gray" onclick="calcAction('percent')">%</button>
+        <button class="calc-btn btn-orange" onclick="calcAction('op', '/')">&divide;</button>
+
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '7')">7</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '8')">8</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '9')">9</button>
+        <button class="calc-btn btn-orange" onclick="calcAction('op', '*')">&times;</button>
+
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '4')">4</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '5')">5</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '6')">6</button>
+        <button class="calc-btn btn-orange" onclick="calcAction('op', '-')">&minus;</button>
+
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '1')">1</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '2')">2</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '3')">3</button>
+        <button class="calc-btn btn-orange" onclick="calcAction('op', '+')">+</button>
+
+        <button class="calc-btn btn-dark btn-zero" onclick="calcAction('num', '0')">0</button>
+        <button class="calc-btn btn-dark" onclick="calcAction('num', '.')">.</button>
+        <button class="calc-btn btn-orange" onclick="calcAction('equals')">=</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <nav id="bottom-bar">
+    <button class="nav-btn" id="nav-video">
+      <svg viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      Video
+    </button>
+    <button class="nav-btn" id="nav-channels">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Channels
+    </button>
+    <button class="nav-btn" id="nav-calc">
+      <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="18"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/></svg>
+      Calculator
+    </button>
+    <button class="nav-btn" id="nav-word">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Word
+    </button>
+  </nav>
+<script>
+  // --- IndexedDB Persistent Storage Layer ---
+  const DB_NAME = 'MediaHubDB';
+  const DB_VERSION = 2; // Bumped version to force schema refresh
+  let db = null;
+
+  function openDatabase() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      
+      req.onupgradeneeded = (e) => {
+        const dbInstance = e.target.result;
+        if (!dbInstance.objectStoreNames.contains('videos')) {
+          dbInstance.createObjectStore('videos', { keyPath: 'id' });
+        }
+        if (!dbInstance.objectStoreNames.contains('channels')) {
+          dbInstance.createObjectStore('channels', { keyPath: 'id' });
+        }
+      };
+      
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  function dbPut(storeName, item) {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error("Database not ready"));
+      const tx = db.transaction([storeName], 'readwrite');
+      const store = tx.objectStore(storeName);
+      
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+      
+      store.put(item);
+    });
+  }
+
+  function dbDelete(storeName, id) {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error("Database not ready"));
+      const tx = db.transaction([storeName], 'readwrite');
+      tx.objectStore(storeName).delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function dbGetAll(storeName) {
+    return new Promise((resolve, reject) => {
+      if (!db) return reject(new Error("Database not ready"));
+      const tx = db.transaction([storeName], 'readonly');
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // --- Application State ---
+  const state = {
+    videos: [],
+    channels: [],
+    activeChannelId: null
+  };
+
+  const DEFAULT_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60"><rect width="60" height="60" fill="%23ddd"/></svg>';
+  const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72"><rect width="72" height="72" fill="%23eee"/></svg>';
+
+  // Initialize DB and load stored media
+  window.addEventListener('DOMContentLoaded', async () => {
+    try {
+      db = await openDatabase();
+      state.videos = await dbGetAll('videos');
+      state.channels = await dbGetAll('channels');
+      renderGlobalVideos();
+      renderChannels();
+    } catch (err) {
+      console.error("Failed to initialize database:", err);
+    }
+  });
+
+  // Navigation Switches
+  function setScreen(screenId) {
+    document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  document.getElementById('nav-video').addEventListener('click', () => {
+    state.activeChannelId = null;
+    setScreen('screen-upload');
+  });
+
+  document.getElementById('nav-channels').addEventListener('click', () => {
+    setScreen('screen-channels');
+  });
+
+  document.getElementById('nav-word').addEventListener('click', () => {
+    window.location.href = 's.html';
+  });
+
+  const calcOverlay = document.getElementById('calculator-overlay');
+  document.getElementById('nav-calc').addEventListener('click', () => {
+    calcOverlay.style.display = 'flex';
+  });
+
+  document.getElementById('btn-close-calc').addEventListener('click', () => {
+    calcOverlay.style.display = 'none';
+  });
+
+  document.getElementById('btn-cancel-video').addEventListener('click', () => {
+    clearVideoForm();
+    setScreen(state.activeChannelId ? 'screen-channel-view' : 'screen-home');
+  });
+
+  // File Input Listeners
+  setupFilePreview('input-video', 'label-video');
+  setupFilePreview('input-image', 'label-image');
+  setupFilePreview('input-audio', 'label-audio');
+  setupFilePreview('input-channel-img', 'label-channel-img');
+
+  function setupFilePreview(inputId, labelId) {
+    document.getElementById(inputId).addEventListener('change', (e) => {
+      document.getElementById(labelId).textContent = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+    });
+  }
+
+  // Save Video
+  document.getElementById('btn-save-video').addEventListener('click', async () => {
+    const vFile = document.getElementById('input-video').files[0] || null;
+    const iFile = document.getElementById('input-image').files[0] || null;
+    const aFile = document.getElementById('input-audio').files[0] || null;
+    const title = document.getElementById('input-title').value.trim() || 'Untitled Video';
+
+    const entry = {
+      id: Date.now(),
+      channelId: state.activeChannelId,
+      title: title,
+      videoBlob: vFile,
+      imageBlob: iFile,
+      audioBlob: aFile
+    };
+
+    try {
+      await dbPut('videos', entry);
+      state.videos.unshift(entry);
+
+      clearVideoForm();
+
+      if (state.activeChannelId) {
+        renderChannelVideos(state.activeChannelId);
+        setScreen('screen-channel-view');
+      } else {
+        renderGlobalVideos();
+        setScreen('screen-home');
+      }
+    } catch (err) {
+      console.error("Storage error:", err);
+      alert("Could not save video. Check console for details.");
+    }
+  });
+
+  function clearVideoForm() {
+    ['input-video', 'input-image', 'input-audio', 'input-title'].forEach(id => document.getElementById(id).value = '');
+    ['label-video', 'label-image', 'label-audio'].forEach(id => document.getElementById(id).textContent = 'No file selected');
+  }
+
+  // Rendering Utilities
+  function getBlobUrl(blob, fallback) {
+    if (!blob) return fallback;
+    try {
+      return URL.createObjectURL(blob);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function buildCard(item, onRemove) {
+    const card = document.createElement('div');
+    card.className = 'media-card';
+    const imgUrl = getBlobUrl(item.imageBlob, DEFAULT_IMG);
+
+    card.innerHTML = `
+      <img src="${imgUrl}" class="thumb" alt="Thumbnail">
+      <span class="card-title">${item.title}</span>
+      <button class="delete-btn" title="Delete">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
+    `;
+
+    const play = () => {
+      const vUrl = item.videoBlob ? URL.createObjectURL(item.videoBlob) : '';
+      const aUrl = item.audioBlob ? URL.createObjectURL(item.audioBlob) : '';
+      playMedia(vUrl, aUrl);
+    };
+
+    card.querySelector('img').addEventListener('click', play);
+    card.querySelector('.card-title').addEventListener('click', play);
+    card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await onRemove();
+    });
+
+    return card;
+  }
+
+  function renderGlobalVideos() {
+    const container = document.getElementById('video-list');
+    container.innerHTML = '';
+    state.videos.filter(v => v.channelId === null).forEach(item => {
+      container.appendChild(buildCard(item, async () => {
+        await dbDelete('videos', item.id);
+        state.videos = state.videos.filter(v => v.id !== item.id);
+        renderGlobalVideos();
+      }));
+    });
+  }
+
+  function renderChannelVideos(channelId) {
+    const container = document.getElementById('channel-video-list');
+    container.innerHTML = '';
+    state.videos.filter(v => v.channelId === channelId).forEach(item => {
+      container.appendChild(buildCard(item, async () => {
+        await dbDelete('videos', item.id);
+        state.videos = state.videos.filter(v => v.id !== item.id);
+        renderChannelVideos(channelId);
+      }));
+    });
+  }
+
+  // Playback Engine
+  const overlay = document.getElementById('media-overlay');
+  const playerVideo = document.getElementById('player-video');
+  const playerAudio = document.getElementById('player-audio');
+
+  function playMedia(videoUrl, audioUrl) {
+    if (!videoUrl && !audioUrl) return;
+
+    playerVideo.src = videoUrl;
+    playerAudio.src = audioUrl;
+    overlay.style.display = 'flex';
+
+    playerVideo.play().catch(() => {});
+    if (audioUrl) {
+      playerAudio.play().catch(() => {});
+      playerVideo.onpause = () => playerAudio.pause();
+      playerVideo.onplay = () => playerAudio.play();
+      playerVideo.onseeking = () => { playerAudio.currentTime = playerVideo.currentTime; };
+    }
+  }
+
+  document.getElementById('btn-close-overlay').addEventListener('click', () => {
+    playerVideo.pause();
+    playerAudio.pause();
+    playerVideo.src = '';
+    playerAudio.src = '';
+    overlay.style.display = 'none';
+  });
+
+  // Channel Actions
+  document.getElementById('btn-add-channel').addEventListener('click', async () => {
+    const imgFile = document.getElementById('input-channel-img').files[0] || null;
+    const name = document.getElementById('input-channel-name').value.trim();
+
+    if (!name) return;
+
+    const channel = {
+      id: 'ch_' + Date.now(),
+      name: name,
+      avatarBlob: imgFile
+    };
+
+    await dbPut('channels', channel);
+    state.channels.push(channel);
+    renderChannels();
+
+    document.getElementById('input-channel-img').value = '';
+    document.getElementById('input-channel-name').value = '';
+    document.getElementById('label-channel-img').textContent = 'No avatar chosen';
+  });
+
+  function renderChannels() {
+    const container = document.getElementById('channel-container');
+    container.innerHTML = '';
+
+    state.channels.forEach(ch => {
+      const card = document.createElement('div');
+      card.className = 'channel-card';
+      const avatarUrl = getBlobUrl(ch.avatarBlob, DEFAULT_AVATAR);
+
+      card.innerHTML = `
+        <button class="channel-delete">&times;</button>
+        <img src="${avatarUrl}" class="channel-avatar" alt="Avatar">
+        <div class="channel-name">${ch.name}</div>
+      `;
+
+      card.addEventListener('click', () => openChannel(ch));
+
+      card.querySelector('.channel-delete').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await dbDelete('channels', ch.id);
+        state.channels = state.channels.filter(c => c.id !== ch.id);
+
+        const toDelete = state.videos.filter(v => v.channelId === ch.id);
+        for (const v of toDelete) {
+          await dbDelete('videos', v.id);
+        }
+        state.videos = state.videos.filter(v => v.channelId !== ch.id);
+        renderChannels();
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  function openChannel(ch) {
+    state.activeChannelId = ch.id;
+    document.getElementById('channel-header-name').textContent = ch.name;
+    document.getElementById('channel-header-img').src = getBlobUrl(ch.avatarBlob, DEFAULT_AVATAR);
+    renderChannelVideos(ch.id);
+    setScreen('screen-channel-view');
+  }
+
+  document.getElementById('btn-back-to-channels').addEventListener('click', () => {
+    state.activeChannelId = null;
+    setScreen('screen-channels');
+  });
+
+  document.getElementById('btn-channel-upload-trigger').addEventListener('click', () => {
+    setScreen('screen-upload');
+  });
+
+  // Calculator Logic
+  let currentInput = '0';
+  let prevInput = null;
+  let currentOp = null;
+  let resetNext = false;
+  const displayEl = document.getElementById('calc-display');
+
+  function updateDisplay() {
+    displayEl.textContent = currentInput;
+  }
+
+  function calcAction(type, val) {
+    if (type === 'num') {
+      if (val === '.') {
+        if (resetNext) {
+          currentInput = '0.';
+          resetNext = false;
+        } else if (!currentInput.includes('.')) {
+          currentInput += '.';
+        }
+      } else {
+        if (currentInput === '0' || resetNext) {
+          currentInput = val;
+          resetNext = false;
+        } else {
+          currentInput += val;
+        }
+      }
+    } else if (type === 'clear') {
+      currentInput = '0';
+      prevInput = null;
+      currentOp = null;
+      resetNext = false;
+    } else if (type === 'toggleSign') {
+      currentInput = (parseFloat(currentInput) * -1).toString();
+    } else if (type === 'percent') {
+      currentInput = (parseFloat(currentInput) / 100).toString();
+    } else if (type === 'op') {
+      if (currentOp && !resetNext) {
+        executeCalc();
+      }
+      prevInput = parseFloat(currentInput);
+      currentOp = val;
+      resetNext = true;
+    } else if (type === 'equals') {
+      if (currentOp && prevInput !== null) {
+        executeCalc();
+        currentOp = null;
+        prevInput = null;
+        resetNext = true;
+      }
+    }
+    updateDisplay();
+  }
+
+  function executeCalc() {
+    const current = parseFloat(currentInput);
+    let res = 0;
+    switch (currentOp) {
+      case '+': res = prevInput + current; break;
+      case '-': res = prevInput - current; break;
+      case '*': res = prevInput * current; break;
+      case '/': res = current === 0 ? 'Error' : prevInput / current; break;
+    }
+    currentInput = res.toString();
+  }
+</script>
+</body>
+</html>
