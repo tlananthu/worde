@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Crazy Communication Platform</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif;-webkit-tap-highlight-color:transparent;}
+    body,html{width:100%;height:100%;overflow:hidden;background-color:#f0f2f5;color:#1c1e21;}
+    #app-container{display:flex;flex-direction:column;width:100vw;height:100vh;position:relative;background-color:#0052cc;transition:background-color 0.25s,filter 0.3s;}
+    #app-container.night-vision{filter:invert(100%) hue-rotate(180deg);}
+    .app-bar{height:56px;background:rgba(0,0,0,0.25);backdrop-filter:blur(10px);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 6px rgba(0,0,0,0.2);z-index:100;flex-shrink:0;}
+    .app-bar h1{font-size:1.15rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .icon-btn{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;flex-shrink:0;}
+    .icon-btn:hover{background:rgba(255,255,255,0.15);}
+    .main-viewport{flex:1;position:relative;overflow-y:auto;background:#fff;display:flex;flex-direction:column;}
+    .view-screen{display:none;width:100%;height:100%;position:absolute;top:0;left:0;flex-direction:column;background:#fff;overflow-y:auto;}
+    .view-screen.active{display:flex;}
+    .bottom-bar{height:62px;background:#0052cc;display:flex;align-items:center;box-shadow:0 -2px 8px rgba(0,0,0,0.15);z-index:90;position:relative;flex-shrink:0;}
+    .sticky-home-btn{position:sticky;left:0;z-index:95;background:#003b99;height:100%;display:flex;align-items:center;padding:0 12px;border-right:2px solid rgba(255,255,255,0.25);}
+    .scrollable-nav-items{display:flex;align-items:center;overflow-x:auto;flex:1;height:100%;scrollbar-width:none;-ms-overflow-style:none;}
+    .scrollable-nav-items::-webkit-scrollbar{display:none;}
+    .nav-btn{background:none;border:none;color:#b3d4ff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:0.65rem;cursor:pointer;min-width:62px;height:100%;flex-shrink:0;padding:0 6px;}
+    .nav-btn.active{color:#fff;font-weight:700;}
+    .nav-btn span{font-size:1.15rem;margin-bottom:2px;}
+    .action-btn{background:#f0f2f5;border:1px solid #dcdfe4;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600;color:#333;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;flex-shrink:0;}
+    .action-btn:hover{background:#e4e6eb;}
+    .action-btn.primary{background:#0052cc;color:#fff;border-color:#0052cc;}
+    .action-btn.danger{background:#dc3545;color:#fff;border-color:#dc3545;}
+    .action-btn.active-style{background:#0052cc!important;color:#fff!important;border-color:#0052cc!important;}
+    
+    /* Home Screen Chat List with Always-Visible Title & Draggable Options Below */
+    .chat-list{list-style:none;width:100%;}
+    .chat-item{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid #e0e0e0;gap:8px;}
+    .chat-item:hover{background:#f8f9fa;}
+    .chat-item-main{display:flex;align-items:center;width:100%;cursor:pointer;}
+    .chat-avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;margin-right:12px;background:#0052cc;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:1.1rem;flex-shrink:0;}
+    .chat-info{flex:1;overflow:hidden;}
+    .chat-title{font-weight:600;color:#1c1e21;font-size:1rem;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .chat-preview-text{font-size:0.8rem;color:#65676b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    
+    /* Draggable Action Strip on Home Screen Item */
+    .chat-item-actions-strip{display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:4px 0;width:100%;cursor:grab;}
+    .chat-item-actions-strip::-webkit-scrollbar{display:none;}
+    .chat-item-actions-strip:active{cursor:grabbing;}
+    
+    /* Chat Header */
+    .chat-header{background:#003b99;color:#fff;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .chat-messages{flex:1;padding:14px;overflow-y:auto;background:#e5ddd5;display:flex;flex-direction:column;gap:8px;}
+    .message-bubble{background:#fff;padding:8px 12px;border-radius:8px;max-width:85%;position:relative;box-shadow:0 1px 3px rgba(0,0,0,0.12);display:flex;gap:8px;align-items:flex-start;cursor:pointer;border:2px solid transparent;align-self:flex-start;word-break:break-word;}
+    .message-bubble.selected{border-color:#0052cc;background:#e6f0ff;}
+    .select-circle{width:18px;height:18px;border-radius:50%;border:2px solid #888;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:#fff;flex-shrink:0;margin-top:2px;}
+    .message-bubble.selected .select-circle{background:#0052cc;border-color:#0052cc;}
+    .message-bubble.selected .select-circle::after{content:'✓';}
+    .msg-content{flex:1;display:flex;flex-direction:column;gap:4px;}
+    .message-media{max-width:100%;border-radius:6px;max-height:220px;object-fit:cover;}
+    .message-time{font-size:0.65rem;color:#888;text-align:right;margin-top:2px;}
+    .chat-input-panel{background:#f0f2f5;padding:8px 10px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;border-top:1px solid #dcdfe4;}
+    .input-main-row{display:flex;align-items:center;gap:8px;}
+    .input-main-row textarea{flex:1;height:38px;padding:8px 14px;border-radius:20px;border:1px solid #ccd0d5;resize:none;font-size:0.9rem;outline:none;}
+    .draggable-tools-strip{display:flex;align-items:center;gap:6px;overflow-x:auto;padding:4px 0;scrollbar-width:none;-ms-overflow-style:none;}
+    .draggable-tools-strip::-webkit-scrollbar{display:none;}
+    .poll-box,.checklist-box{background:#f8f9fa;padding:10px;border-radius:6px;border:1px solid #0052cc;width:100%;margin:4px 0;}
+    .poll-option-btn{width:100%;padding:6px 10px;margin-top:6px;background:#fff;border:1px solid #ccd0d5;border-radius:4px;text-align:left;cursor:pointer;font-size:0.85rem;display:flex;justify-content:space-between;}
+    .checklist-row{display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;}
+    .checklist-row.checked span{text-decoration:line-through;color:#888;}
+    .grid-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:12px;padding:16px;width:100%;}
+    .grid-card{background:#f8f9fa;border:1px solid #e2e8f0;border-radius:10px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:0.2s;}
+    .grid-card:hover{background:#e2e8f0;transform:translateY(-2px);}
+    .grid-card .icon{font-size:1.8rem;margin-bottom:6px;}
+    .grid-card .title{font-size:0.75rem;font-weight:600;color:#333;}
+    .sheet-wrapper,.docs-wrapper,.browser-wrapper{display:flex;flex-direction:column;height:100%;width:100%;background:#fff;}
+    .sheet-toolbar,.docs-toolbar,.browser-bar{padding:8px 12px;background:#f0f2f5;display:flex;gap:8px;align-items:center;border-bottom:1px solid #dcdfe4;overflow-x:auto;flex-shrink:0;}
+    .browser-bar input{flex:1;padding:8px 12px;border-radius:20px;border:1px solid #ccd0d5;outline:none;}
+    .browser-frame{flex:1;border:none;width:100%;height:100%;background:#fff;}
+    .sheet-grid-container{flex:1;overflow:auto;position:relative;}
+    .sheet-table{border-collapse:collapse;table-layout:fixed;font-size:0.85rem;}
+    .sheet-table th,.sheet-table td{border:1px solid #dcdfe4;min-width:80px;max-width:140px;height:28px;padding:2px 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+    .sheet-table th{background:#f4f5f7;text-align:center;font-weight:600;color:#5e6c84;position:sticky;top:0;z-index:2;}
+    .sheet-table th.row-header{min-width:40px;max-width:40px;left:0;z-index:3;position:sticky;}
+    .docs-editor-canvas{flex:1;padding:24px;margin:12px auto;max-width:850px;width:100%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.1);border:1px solid #e0e0e0;border-radius:4px;outline:none;overflow-y:auto;line-height:1.7;}
+    .note-card{background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:6px;}
+    .music-wrapper{padding:20px;display:flex;flex-direction:column;gap:16px;height:100%;overflow-y:auto;}
+    .music-player-card{background:linear-gradient(135deg,#0052cc,#0747a6);color:#fff;padding:20px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+    .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;padding:12px;}
+    .gallery-thumb{width:100%;height:110px;object-fit:cover;border-radius:6px;cursor:pointer;transition:transform 0.2s;}
+    .file-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee;}
+    .code-textarea{width:100%;flex:1;min-height:250px;font-family:monospace;padding:10px;background:#1e1e1e;color:#00ff66;border-radius:6px;resize:vertical;}
+    .code-full-runner{display:none;flex-direction:column;width:100%;height:100%;position:absolute;top:0;left:0;background:#fff;z-index:50;}
+    .code-runner-header{padding:8px 12px;background:#333;color:#fff;display:flex;justify-content:space-between;align-items:center;}
+    .code-preview-frame{width:100%;flex:1;border:none;background:#fff;}
+    .book-card{background:#fff8dc;border:1px solid #d2b48c;padding:12px;border-radius:8px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;}
+    .book-cover-img{width:100%;height:110px;object-fit:cover;border-radius:4px;margin-bottom:6px;}
+    .fullscreen-book-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#fffdf0;display:none;flex-direction:column;z-index:200;padding:20px;}
+    .book-content-area{flex:1;overflow-y:auto;line-height:1.7;font-size:1.05rem;color:#2c2c2c;padding-bottom:20px;white-space:pre-wrap;}
+    .book-bottom-controls{height:50px;display:flex;justify-content:space-around;align-items:center;border-top:1px solid #e0e0e0;flex-shrink:0;}
+    .draw-modal-card{width:92%;max-width:480px;background:#fff;padding:14px;border-radius:8px;display:flex;flex-direction:column;gap:8px;}
+    canvas.paint-board{touch-action:none;border:2px solid #333;border-radius:6px;background:#fff;cursor:crosshair;image-rendering:pixelated;}
+    .modal-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:1000;}
+    .modal-card{background:#fff;padding:20px;border-radius:10px;width:88%;max-width:440px;box-shadow:0 6px 20px rgba(0,0,0,0.25);}
+    .modal-card input,.modal-card textarea,.modal-card select{width:100%;padding:8px 10px;margin-bottom:10px;border:1px solid #ccd0d5;border-radius:6px;font-size:0.9rem;}
+    #app-lock-screen{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#003b99;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:20px;text-align:center;}
+  </style>
+</head>
+<body>
+
+<div id="app-lock-screen">
+  <div style="font-size:3rem; margin-bottom:12px;">🔒</div>
+  <h2>Security PIN Required</h2>
+  <p style="margin-bottom:16px; font-size:0.9rem; color:#b3d4ff;">Enter password/PIN to access:</p>
+  <input type="password" id="lock-pass-input" placeholder="Type PIN..." style="padding:12px; border-radius:8px; border:none; width:80%; max-width:280px; font-size:1.2rem; text-align:center; margin-bottom:14px; outline:none;">
+  <button class="action-btn" style="background:#0052cc; color:#fff; padding:10px 28px; font-size:1rem;" onclick="verifyAppUnlockPin()">Unlock App</button>
+</div>
+
+<div id="app-container">
+  <div class="app-bar" id="global-top-bar">
+    <h1 id="top-bar-title">Crazy communication</h1>
+    <div class="app-bar-actions">
+      <button class="icon-btn" id="top-bar-action" onclick="handleTopBarAction()">+</button>
+    </div>
+  </div>
+
+  <div class="main-viewport">
+    <div class="view-screen active" id="view-home"><ul class="chat-list" id="home-chat-list"></ul></div>
+    
+    <!-- Active Chat View -->
+    <div class="view-screen" id="view-chat-detail">
+      <div class="chat-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="icon-btn" onclick="exitChatDetail()">✕</button>
+          <h2 id="active-chat-name" style="font-size:1.1rem;">Chat</h2>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="icon-btn" onclick="archiveCurrentChat()" title="Archive Chat">📦</button>
+          <button class="icon-btn" id="btn-share-msg" style="display:none;" onclick="shareSelectedMessagesPrompt()" title="Share to another chat">🔗</button>
+          <button class="icon-btn" id="btn-edit-msg" style="display:none;" onclick="editSelectedMessage()" title="Edit Selected">✏️</button>
+          <button class="icon-btn" id="btn-delete-msg" style="display:none;" onclick="deleteSelectedMessages()" title="Delete Selected">🗑️</button>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chat-messages-container"></div>
+      
+      <div class="chat-input-panel" id="chat-input-panel">
+        <div class="input-main-row">
+          <button class="action-btn" onclick="openGalleryPicker()">🌸</button>
+          <input type="file" id="chat-gallery-input" style="display:none;" accept="image/*" onchange="handleGalleryImage(event)">
+          <textarea id="chat-msg-input" placeholder="Type a message..."></textarea>
+          <button class="action-btn primary" onclick="sendChatMessage()">Send</button>
+        </div>
+        <div class="draggable-tools-strip" id="chat-tools-strip">
+          <button class="action-btn" onclick="recordAudioMessagePrompt()">🎙️ Voice</button>
+          <button class="action-btn" onclick="createInteractivePoll()">📊 Poll</button>
+          <button class="action-btn" onclick="createInteractiveChecklist()">☑️ Check</button>
+          <button class="action-btn" id="btn-bold" onclick="toggleStyle('bold')"><b>B</b></button>
+          <button class="action-btn" id="btn-italic" onclick="toggleStyle('italic')"><i>I</i></button>
+          <button class="action-btn" id="btn-underline" onclick="toggleStyle('underline')"><u>U</u></button>
+          <button class="action-btn" id="btn-align-left" onclick="setTextAlignment('left')">⬅️ Left</button>
+          <button class="action-btn" id="btn-align-center" onclick="setTextAlignment('center')">↔️ Center</button>
+          <button class="action-btn" id="btn-align-right" onclick="setTextAlignment('right')">➡️ Right</button>
+          <button class="action-btn" id="btn-align-justify" onclick="setTextAlignment('justify')">📄 Justify</button>
+          <button class="action-btn" onclick="openDrawingCanvasModal('chat')">🎨 Draw</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-screen" id="view-favorites"><ul class="chat-list" id="favorites-chat-list"></ul></div>
+    <div class="view-screen" id="view-pinned"><ul class="chat-list" id="pinned-chat-list"></ul></div>
+    <div class="view-screen" id="view-archive"><ul class="chat-list" id="archive-chat-list"></ul></div>
+    <div class="view-screen" id="view-games"><div class="grid-container" id="games-grid"></div></div>
+    <div class="view-screen" id="view-videos">
+      <div style="padding:16px; text-align:center;">
+        <h3>Video Hub</h3>
+        <button class="action-btn primary" style="width:100%; padding:12px; margin-top:10px;" onclick="window.open('videos.html', '_blank')">Open videos.html</button>
+      </div>
+    </div>
+    <div class="view-screen" id="view-code">
+      <div style="padding:12px; display:flex; justify-content:space-between; align-items:center; background:#f0f0f0;">
+        <strong>Virtual File Sandbox</strong>
+        <button class="action-btn primary" onclick="createNewVirtualCodeFile()">+ New File</button>
+      </div>
+      <div id="code-files-list" style="flex:1; overflow-y:auto;"></div>
+      <div id="code-editor-panel" style="display:none; padding:12px; flex:1; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <button class="action-btn" onclick="closeCodeEditor()">← Back</button>
+          <span id="active-code-filename" style="font-weight:bold;">index.html</span>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" onclick="saveActiveCodeFile()">Save</button>
+            <button class="action-btn" style="background:#28a745; color:#fff;" onclick="runActiveCodeFile()">Run ▶</button>
+            <button class="action-btn" onclick="shareActiveCodeFile()">Share</button>
+          </div>
+        </div>
+        <textarea id="code-source-input" class="code-textarea"></textarea>
+      </div>
+      <div id="code-full-runner" class="code-full-runner">
+        <div class="code-runner-header">
+          <span>Live Executable Preview</span>
+          <button class="action-btn" onclick="closeFullCodeRunner()">✕ Close</button>
+        </div>
+        <iframe id="code-preview-frame" class="code-preview-frame"></iframe>
+      </div>
+    </div>
+    <div class="view-screen" id="view-books">
+      <div style="padding:12px; display:flex; justify-content:space-between; align-items:center; background:#f0f0f0;">
+        <strong>Books Shelf</strong>
+        <button class="action-btn primary" onclick="openBookModal()">+ Add Book</button>
+      </div>
+      <div style="padding:16px; display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px;" id="books-grid"></div>
+    </div>
+    <div class="view-screen" id="view-browser">
+      <div class="browser-wrapper">
+        <div class="browser-bar">
+          <button class="action-btn" onclick="document.getElementById('browser-frame').src='https://www.google.com/webhp?igu=1'">🏠</button>
+          <input type="text" id="browser-url-input" value="https://www.google.com/webhp?igu=1">
+          <button class="action-btn primary" onclick="document.getElementById('browser-frame').src=document.getElementById('browser-url-input').value">Go</button>
+        </div>
+        <iframe id="browser-frame" class="browser-frame" src="https://www.google.com/webhp?igu=1"></iframe>
+      </div>
+    </div>
+    <div class="view-screen" id="view-notes">
+      <div style="padding:12px; display:flex; justify-content:space-between; align-items:center; background:#f0f0f0;">
+        <strong>Notes Notebook</strong>
+        <button class="action-btn primary" onclick="createNewNotePrompt()">+ Create Note</button>
+      </div>
+      <div class="notes-list-pane" id="notes-list-container" style="padding:14px; display:flex; flex-direction:column; gap:10px;"></div>
+      <div id="note-detail-subview" style="display:none; flex:1; flex-direction:column; padding:14px; gap:10px; background:#fff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <button class="action-btn" onclick="closeNoteDetailView()">← Back</button>
+          <input type="text" id="active-note-title" placeholder="Note Title..." style="font-weight:bold; font-size:1.1rem; border:1px solid #ccd0d5; border-radius:4px; padding:6px; flex:1; outline:none;">
+          <button class="action-btn primary" onclick="saveActiveNoteContent()">Save Note</button>
+        </div>
+        <div class="draggable-tools-strip" style="background:#f0f2f5; padding:6px; border-radius:6px;">
+          <button class="action-btn" onmousedown="event.preventDefault()" onclick="formatNoteCmd('bold')"><b>B</b></button>
+          <button class="action-btn" onmousedown="event.preventDefault()" onclick="formatNoteCmd('italic')"><i>I</i></button>
+          <button class="action-btn" onmousedown="event.preventDefault()" onclick="formatNoteCmd('underline')"><u>U</u></button>
+          <button class="action-btn" onmousedown="event.preventDefault()" onclick="formatNoteCmd('justifyLeft')">⬅️ Left</button>
+          <button class="action-btn" onmousedown="event.preventDefault()" onclick="formatNoteCmd('justifyCenter')">↔️ Center</button>
+          <button class="action-btn" onmousedown="event.preventDefault()" onclick="formatNoteCmd('justifyRight')">➡️ Right</button>
+          <button class="action-btn" onclick="openDrawingCanvasModal('notes')">🎨 Draw</button>
+        </div>
+        <div id="active-note-body" contenteditable="true" style="flex:1; border:1px solid #ccd0d5; border-radius:6px; padding:14px; outline:none; overflow-y:auto; line-height:1.6; min-height:180px; background:#fff;"></div>
+      </div>
+    </div>
+    <div class="view-screen" id="view-files">
+      <div style="padding:12px; display:flex; justify-content:space-between; align-items:center; background:#f0f0f0;">
+        <strong>Storage Files</strong>
+        <button class="action-btn primary" onclick="document.getElementById('generic-file-upload').click()">+ Upload</button>
+        <input type="file" id="generic-file-upload" style="display:none;" onchange="handleGenericFileUpload(event)">
+      </div>
+      <div id="files-list-container" style="flex:1; overflow-y:auto;"></div>
+    </div>
+    <div class="view-screen" id="view-search">
+      <div style="padding:14px; background:#f0f2f5;">
+        <input type="text" id="global-search-input" placeholder="Search chats, notes, books..." style="width:100%; padding:10px 14px; border-radius:20px; border:1px solid #ccd0d5; outline:none;" oninput="executeGlobalSearch()">
+      </div>
+      <div id="global-search-results" style="flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+    <div class="view-screen" id="view-music">
+      <div class="music-wrapper">
+        <div class="music-player-card">
+          <div style="font-size:2.4rem;">🎵</div>
+          <h3 id="current-song-title">Crazy Music Player</h3>
+          <audio id="global-audio-player" controls style="width:100%; margin-top:8px;"></audio>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong>Playlist</strong>
+          <button class="action-btn primary" onclick="document.getElementById('audio-file-upload').click()">+ Upload Audio</button>
+          <input type="file" id="audio-file-upload" accept="audio/*" style="display:none;" onchange="handleAudioFileUpload(event)">
+        </div>
+        <div id="music-playlist-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+    <div class="view-screen" id="view-sheets">
+      <div class="sheet-wrapper">
+        <div class="sheet-toolbar">
+          <button class="action-btn" onclick="exportSheetToCSV()">📥 Export CSV</button>
+          <button class="action-btn primary" onclick="saveSheetData()">💾 Save</button>
+          <button class="action-btn danger" onclick="clearActiveSheetGrid()">Clear</button>
+        </div>
+        <div class="sheet-grid-container" id="sheet-grid-scroll-box">
+          <table class="sheet-table" id="sheet-data-table"></table>
+        </div>
+      </div>
+    </div>
+    <div class="view-screen" id="view-docs">
+      <div class="docs-wrapper">
+        <div class="docs-toolbar">
+          <button class="action-btn" onclick="document.execCommand('bold',false,null)"><b>B</b></button>
+          <button class="action-btn" onclick="document.execCommand('italic',false,null)"><i>I</i></button>
+          <button class="action-btn primary" onclick="saveDocDocument()">💾 Save</button>
+        </div>
+        <div class="docs-editor-canvas" id="docs-editor-canvas" contenteditable="true"><h1>Document Title</h1><p>Start writing...</p></div>
+      </div>
+    </div>
+    <div class="view-screen" id="view-images">
+      <div style="padding:12px; display:flex; justify-content:space-between; align-items:center; background:#f0f0f0;">
+        <strong>Photo Vault</strong>
+        <button class="action-btn primary" onclick="document.getElementById('infinite-img-upload').click()">+ Upload</button>
+        <input type="file" id="infinite-img-upload" accept="image/*" multiple style="display:none;" onchange="handleInfiniteImagesUpload(event)">
+      </div>
+      <div class="gallery-grid" id="infinite-gallery-grid"></div>
+    </div>
+    <div class="view-screen" id="view-important"><div class="grid-container" id="tools-grid"></div><div id="tool-subview" style="display:none;" class="tool-view"></div></div>
+    <div class="view-screen" id="view-settings">
+      <div style="padding:16px; display:flex; flex-direction:column; gap:14px; overflow-y:auto;">
+        <h3>Settings</h3>
+        <button class="action-btn primary" onclick="openPinConfigModal()">🔑 Set / Change PIN</button>
+        <button class="action-btn danger" onclick="removePinProtection()">🔓 Remove PIN</button>
+        <hr>
+        <label style="font-weight:600; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="toggle-night-vision" onchange="toggleNightVision(this.checked)"> Night Vision (Invert)
+        </label>
+        <label style="font-weight:600; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="toggle-saved-messages" checked onchange="toggleSavedMessagesSetting(this.checked)"> Saved Messages Visibility
+        </label>
+        <button class="action-btn" onclick="openAppNavigationGuide()">📖 User Manual</button>
+        <button class="action-btn danger" onclick="resetEntireApp()">⚠️ Reset App</button>
+        <button class="action-btn" style="background:#ffc107; color:#000;" onclick="triggerAppRestartSequence()">🔄 Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="sticky-home-btn">
+      <button class="nav-btn active" id="nav-sticky-home" onclick="navigateTo('home')"><span>💬</span>Home</button>
+    </div>
+    <div class="scrollable-nav-items" id="main-bottom-nav-strip">
+      <button class="nav-btn" onclick="navigateTo('favorites')"><span>❤️</span>Favs</button>
+      <button class="nav-btn" onclick="navigateTo('pinned')"><span>📌</span>Pinned</button>
+      <button class="nav-btn" onclick="navigateTo('browser')"><span>🌐</span>Browser</button>
+      <button class="nav-btn" onclick="navigateTo('notes')"><span>📝</span>Notes</button>
+      <button class="nav-btn" onclick="navigateTo('files')"><span>📁</span>Files</button>
+      <button class="nav-btn" onclick="navigateTo('search')"><span>🔍</span>Search</button>
+      <button class="nav-btn" onclick="navigateTo('music')"><span>🎵</span>Music</button>
+      <button class="nav-btn" onclick="navigateTo('sheets')"><span>📊</span>Sheets</button>
+      <button class="nav-btn" onclick="navigateTo('docs')"><span>📄</span>Docs</button>
+      <button class="nav-btn" onclick="navigateTo('images')"><span>🖼️</span>Images</button>
+      <button class="nav-btn" onclick="navigateTo('books')"><span>📚</span>Book</button>
+      <button class="nav-btn" onclick="navigateTo('games')"><span>🎮</span>Games</button>
+      <button class="nav-btn" onclick="navigateTo('videos')"><span>📹</span>Videos</button>
+      <button class="nav-btn" onclick="navigateTo('code')"><span>💻</span>Code</button>
+      <button class="nav-btn" onclick="navigateTo('archive')"><span>📦</span>Archive</button>
+      <button class="nav-btn" onclick="navigateTo('important')"><span>⭐</span>Tools</button>
+      <button class="nav-btn" onclick="navigateTo('settings')"><span>⚙️</span>Settings</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="restart-countdown-overlay" style="background:#000; color:#fff; flex-direction:column; gap:16px;">
+    <h2>Restarting…</h2>
+    <div id="restart-countdown-number" style="font-size:3.5rem; font-family:monospace; color:#00ff66;">10</div>
+  </div>
+
+  <div class="modal-overlay" id="pin-config-modal">
+    <div class="modal-card">
+      <h3>Set Security PIN</h3>
+      <input type="password" id="pin-first-input" placeholder="Enter PIN...">
+      <div style="display:flex; justify-content:space-between; margin-top:12px;">
+        <button class="action-btn" onclick="closePinConfigModal('home')">Cancel</button>
+        <button class="action-btn primary" onclick="proceedPinConfirmationStep()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="pin-confirm-modal">
+    <div class="modal-card">
+      <h3>Confirm PIN</h3>
+      <input type="password" id="pin-second-input" placeholder="Confirm PIN...">
+      <div style="display:flex; justify-content:space-between; margin-top:12px;">
+        <button class="action-btn" onclick="closePinConfirmModal()">Cancel</button>
+        <button class="action-btn primary" onclick="finalizePinSaving()">Save PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="fullscreen-book-overlay" id="fullscreen-book-modal">
+    <h2 id="book-reader-title" style="margin-bottom:12px;">Book Title</h2>
+    <div class="book-content-area" id="book-reader-body"></div>
+    <div class="book-bottom-controls">
+      <button class="action-btn" onclick="closeBookReader('book')">Close</button>
+      <button class="action-btn danger" onclick="closeBookReader('home')">Close All</button>
+    </div>
+  </div>
+
+  <div class="fullscreen-book-overlay" id="fullscreen-file-modal">
+    <h2 id="file-preview-title" style="margin-bottom:12px;">File Preview</h2>
+    <div class="book-content-area" id="file-preview-body"></div>
+    <div class="book-bottom-controls">
+      <button class="action-btn primary" onclick="closeFilePreviewModal()">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="book-modal">
+    <div class="modal-card" style="max-width:500px;">
+      <h3 id="book-modal-title">Create / Edit Book</h3>
+      <input type="text" id="book-title-input" placeholder="Book Title...">
+      <textarea id="book-text-input" rows="6" placeholder="Write book text..."></textarea>
+      <label style="font-size:0.75rem; font-weight:bold;">Cover Image:</label>
+      <input type="file" id="book-img1-input" accept="image/*">
+      <label style="font-size:0.75rem; font-weight:bold;">Trailing Image:</label>
+      <input type="file" id="book-img2-input" accept="image/*">
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button class="action-btn" onclick="closeBookModal()">Cancel</button>
+        <button class="action-btn primary" onclick="saveBook()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="chat-draw-modal">
+    <div class="draw-modal-card">
+      <h3>Canvas Drawing Studio</h3>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label>Color: <input type="color" id="drawColor" value="#000000"></label>
+        <label>Size: <input type="range" id="drawWidth" min="1" max="25" value="4" style="width:60px;"></label>
+        <button class="action-btn" onclick="clearChatDrawCanvas()">Clear</button>
+      </div>
+      <canvas id="chatDrawCv" width="300" height="220" class="paint-board"></canvas>
+      <input type="text" id="drawCaptionInput" placeholder="Optional text caption...">
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="action-btn" onclick="closeChatDrawModal()">Cancel</button>
+        <button class="action-btn primary" onclick="sendCanvasDrawingToTarget()">Insert</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="create-chat-modal">
+    <div class="modal-card">
+      <h3 id="modal-title">Create Chat</h3>
+      <input type="text" id="chat-name-input" placeholder="Chat Title...">
+      <input type="file" id="chat-image-input" accept="image/*">
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+        <button class="action-btn" onclick="closeModal()">Cancel</button>
+        <button class="action-btn primary" onclick="saveChat()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let state = {
+    chats: JSON.parse(localStorage.getItem('cc_chats')) || [],
+    archivedChats: JSON.parse(localStorage.getItem('cc_archive')) || [],
+    codeFiles: JSON.parse(localStorage.getItem('cc_code_files')) || [],
+    books: JSON.parse(localStorage.getItem('cc_books')) || [
+      { id: 1, title: "Mahabharata Epic", content: "Chapter 1: The Kurukshetra Gathering...", img1: null, img2: null }
+    ],
+    notes: JSON.parse(localStorage.getItem('cc_notes')) || [
+      { id: 101, title: "Project Overview", body: "<div>Initial plan for notes...</div>" }
+    ],
+    files: JSON.parse(localStorage.getItem('cc_files')) || [],
+    musicPlaylist: JSON.parse(localStorage.getItem('cc_music')) || [
+      { id: 1, title: "Serene Melody", src: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }
+    ],
+    infiniteImages: JSON.parse(localStorage.getItem('cc_inf_images')) || [],
+    sheetGrid: JSON.parse(localStorage.getItem('cc_sheet_grid')) || {},
+    docContent: localStorage.getItem('cc_doc_content') || "<h1>Document Title</h1><p>Start writing...</p>",
+    appBgColor: localStorage.getItem('cc_app_bg_color') || '#0052cc',
+    nightVision: JSON.parse(localStorage.getItem('cc_night_vision')) || false,
+    savedMessagesVisible: JSON.parse(localStorage.getItem('cc_saved_msgs_vis')) ?? true,
+    securityPin: localStorage.getItem('cc_security_pin') || null,
+    tempFirstPin: null,
+    activeChatId: null, editingChatId: null, editingBookId: null, activeCodeFileId: null, activeNoteId: null, activeDrawingTarget: 'chat', pendingBookDrawing: null, selectedImage: null, selectedMsgIds: [], formatting: { bold: false, italic: false, underline: false, align: 'left' }
+  };
+
+  const INDIAN_FESTIVALS_MAP = {
+    "1-1": "New Year's Day", "1-14": "Makar Sankranti", "1-26": "Republic Day",
+    "3-25": "Holi", "8-15": "Independence Day", "10-2": "Gandhi Jayanti", "11-1": "Diwali", "12-25": "Christmas"
+  };
+
+  const GAMES_CONFIG = [
+    { name: "Games created by me", url: "hub.html", icon: "⭐" },
+    { name: "Hill climb racing", url: "https://poki.com/en/g/hill-climb-racing-lite", icon: "🚗" },
+    { name: "Minecraft Planning", url: "MP.html", icon: "🗺️" },
+    { name: "Carnado zoom car", url: "Car.html", icon: "🏎️" },
+    { name: "Drive mad", url: "https://poki.com/en/g/drive-mad", icon: "🚙" },
+    { name: "Minecraft", url: "https://bloxd.io", icon: "🧱" },
+    { name: "Parkour", url: "https://www.crazygames.com/game/crazy-motorcycle", icon: "🏍️" },
+    { name: "Car parking", url: "https://poki.com/en/parking", icon: "🅿️" },
+    { name: "Stickman hook", url: "https://poki.com/en/g/stickman-hook", icon: "🪝" },
+    { name: "Stickman fighter", url: "https://www.crazygames.com/game/stick-epic-fighter", icon: "🤺" },
+    { name: "Dino", url: "https://rekindle.ink/dino", icon: "🦖" },
+    { name: "Maze", url: "https://rekindle.ink/maze", icon: "🌀" },
+    { name: "Wordle", url: "https://rekindle.ink/wordle", icon: "🔤" },
+    { name: "Sudoku", url: "https://kindleplay.com/sudoku/", icon: "🔢" },
+    { name: "Hangman", url: "https://rekindle.ink/hangman", icon: "🪢" },
+    { name: "Minesweeper", url: "https://rekindle.ink/minesweeper", icon: "💣" },
+    { name: "2048", url: "https://rekindle.ink/2048", icon: "🎯" },
+    { name: "Ore miner", url: "https://www.crazygames.com/game/noob-miner-escape-from-prison", icon: "⛏️" },
+    { name: "Carrom", url: "https://www.crazygames.com/game/disk-strike-carrom-challenge", icon: "⚪" },
+    { name: "Soccer", url: "https://poki.com/en/g/soccer-real#fullscreen", icon: "⚽" },
+    { name: "Cricket", url: "https://www.crazygames.com/game/cricket-world-cup", icon: "🏏" },
+    { name: "Tic-Tac-Toe", url: "https://rekindle.ink/tictactoe", icon: "❌" }
+  ];
+
+  function safeStorageSet(key, val) {
+    try {
+      localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+    } catch(e) {
+      console.warn("Storage warning: " + key, e);
+    }
+  }
+
+  function persist() {
+    safeStorageSet('cc_chats', state.chats);
+    safeStorageSet('cc_archive', state.archivedChats);
+    safeStorageSet('cc_code_files', state.codeFiles);
+    safeStorageSet('cc_books', state.books);
+    safeStorageSet('cc_notes', state.notes);
+    safeStorageSet('cc_files', state.files);
+    safeStorageSet('cc_music', state.musicPlaylist);
+    safeStorageSet('cc_inf_images', state.infiniteImages);
+    safeStorageSet('cc_sheet_grid', state.sheetGrid);
+    safeStorageSet('cc_doc_content', state.docContent);
+    safeStorageSet('cc_app_bg_color', state.appBgColor);
+    safeStorageSet('cc_night_vision', state.nightVision);
+    safeStorageSet('cc_saved_msgs_vis', state.savedMessagesVisible);
+    if (state.securityPin) safeStorageSet('cc_security_pin', state.securityPin);
+    else localStorage.removeItem('cc_security_pin');
+  }
+
+  function applySavedBgColor() {
+    const el = document.getElementById('app-container');
+    if (el) { el.style.backgroundColor = state.appBgColor; el.classList.toggle('night-vision', state.nightVision); }
+  }
+
+  function checkAppLockGatekeeper() { if (state.securityPin) document.getElementById('app-lock-screen').style.display = 'flex'; }
+  function verifyAppUnlockPin() {
+    if (document.getElementById('lock-pass-input').value === state.securityPin) {
+      document.getElementById('app-lock-screen').style.display = 'none';
+      document.getElementById('lock-pass-input').value = "";
+    } else alert("Incorrect PIN!");
+  }
+  function openPinConfigModal() { document.getElementById('pin-first-input').value = ""; document.getElementById('pin-config-modal').style.display = 'flex'; }
+  function closePinConfigModal(t) { document.getElementById('pin-config-modal').style.display = 'none'; if(t==='home') navigateTo('home'); }
+  function proceedPinConfirmationStep() {
+    const p = document.getElementById('pin-first-input').value; if(!p) return alert("Type PIN.");
+    state.tempFirstPin = p; closePinConfigModal(); document.getElementById('pin-second-input').value = ""; document.getElementById('pin-confirm-modal').style.display = 'flex';
+  }
+  function closePinConfirmModal() { document.getElementById('pin-confirm-modal').style.display = 'none'; }
+  function finalizePinSaving() {
+    if (document.getElementById('pin-second-input').value === state.tempFirstPin) {
+      state.securityPin = state.tempFirstPin; persist(); closePinConfirmModal(); alert("PIN saved!");
+    } else alert("Mismatch!");
+  }
+  function removePinProtection() { if(confirm("Remove PIN?")) { state.securityPin = null; persist(); alert("PIN removed!"); } }
+
+  function navigateTo(screenId) {
+    document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`view-${screenId}`).classList.add('active');
+    const topBar = document.getElementById('global-top-bar'); topBar.style.display = 'flex';
+
+    if (screenId === 'home') {
+      document.getElementById('top-bar-title').innerText = 'Crazy communication';
+      document.getElementById('top-bar-action').style.display = 'block';
+      document.getElementById('nav-sticky-home').classList.add('active');
+      renderChatList();
+    } else if (screenId === 'favorites') {
+      document.getElementById('top-bar-title').innerText = 'Favorite Chats';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderFavoritesChatList();
+    } else if (screenId === 'pinned') {
+      document.getElementById('top-bar-title').innerText = 'Pinned Chats';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderPinnedChatList();
+    } else if (screenId === 'archive') {
+      document.getElementById('top-bar-title').innerText = 'Archive';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderArchiveList();
+    } else if (screenId === 'chat-detail') {
+      topBar.style.display = 'none';
+    } else if (screenId === 'code') {
+      document.getElementById('top-bar-title').innerText = 'Code Sandbox';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderCodeFilesList();
+    } else if (screenId === 'books') {
+      document.getElementById('top-bar-title').innerText = 'Books Library';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderBooksGrid();
+    } else if (screenId === 'notes') {
+      document.getElementById('top-bar-title').innerText = 'Notes Studio';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderNotesList();
+    } else if (screenId === 'files') {
+      document.getElementById('top-bar-title').innerText = 'File Storage';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderFilesList();
+    } else if (screenId === 'music') {
+      document.getElementById('top-bar-title').innerText = 'Music Player';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderMusicPlaylist();
+    } else if (screenId === 'sheets') {
+      document.getElementById('top-bar-title').innerText = 'In-App Sheets';
+      document.getElementById('top-bar-action').style.display = 'none';
+      initSpreadsheetGrid();
+    } else if (screenId === 'docs') {
+      document.getElementById('top-bar-title').innerText = 'Docs Processor';
+      document.getElementById('top-bar-action').style.display = 'none';
+      loadDocDocument();
+    } else if (screenId === 'images') {
+      document.getElementById('top-bar-title').innerText = 'Photo Vault';
+      document.getElementById('top-bar-action').style.display = 'none';
+      renderInfiniteGallery();
+    } else if (screenId === 'important') {
+      document.getElementById('top-bar-title').innerText = 'Tools';
+      document.getElementById('top-bar-action').style.display = 'none';
+      closeToolSubview();
+    } else {
+      document.getElementById('top-bar-title').innerText = screenId.charAt(0).toUpperCase() + screenId.slice(1);
+      document.getElementById('top-bar-action').style.display = 'none';
+    }
+  }
+
+  function handleTopBarAction() { state.editingChatId = null; document.getElementById('modal-title').innerText = "Create Chat"; document.getElementById('chat-name-input').value = ""; document.getElementById('create-chat-modal').style.display = "flex"; }
+  function closeModal() { document.getElementById('create-chat-modal').style.display = "none"; }
+
+  function getSortedChats(arr) {
+    return [...arr].sort((a,b) => { if (a.isPinned && !b.isPinned) return -1; if (!a.isPinned && b.isPinned) return 1; return a.title.localeCompare(b.title); });
+  }
+
+  function compressImage(file, maxDim = 400) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
+          }
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.onerror = () => resolve(null);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function saveChat() {
+    const title = document.getElementById('chat-name-input').value.trim() || "New Chat";
+    const imgInput = document.getElementById('chat-image-input');
+    let imgUrl = null;
+    if (imgInput.files && imgInput.files[0]) {
+      imgUrl = await compressImage(imgInput.files[0], 200);
+    }
+
+    if (state.editingChatId) {
+      const c = state.chats.find(x => String(x.id) === String(state.editingChatId));
+      if (c) { 
+        c.title = title; 
+        if (imgUrl) c.image = imgUrl; 
+      }
+    } else {
+      state.chats.push({ id: Date.now(), title: title, image: imgUrl || "", messages: [], isFavorite: false, isPinned: false });
+    }
+    persist();
+    closeModal();
+    renderChatList();
+  }
+
+  function renderChatList() {
+    const list = document.getElementById('home-chat-list'); list.innerHTML = "";
+    let saved = state.chats.find(c => c.isSavedMessages);
+    if (state.savedMessagesVisible) {
+      if (!saved) state.chats.unshift({ id: 'saved_messages', title: 'Saved Messages', image: '', isSavedMessages: true, messages: [] });
+    } else state.chats = state.chats.filter(c => !c.isSavedMessages);
+
+    getSortedChats(state.chats).forEach(chat => {
+      const li = document.createElement('li'); li.className = 'chat-item';
+      const av = chat.image ? `<img src="${chat.image}" class="chat-avatar">` : `<div class="chat-avatar">${chat.title.charAt(0)}</div>`;
+      li.innerHTML = `
+        <!-- Line 1: Chat Avatar & Full Title -->
+        <div class="chat-item-main" onclick="openChatDetail('${chat.id}')">
+          ${av}
+          <div class="chat-info">
+            <div class="chat-title">${chat.title} ${chat.isSavedMessages ? '📌' : ''}</div>
+            <div class="chat-preview-text">${chat.messages?.at(-1)?.text || 'No messages yet'}</div>
+          </div>
+        </div>
+        <!-- Line 2: Draggable Action Options Below Chat Name -->
+        ${!chat.isSavedMessages ? `
+          <div class="chat-item-actions-strip" data-drag="true">
+            <button class="action-btn" onclick="toggleChatFavorite('${chat.id}')">${chat.isFavorite?'❤️ Favorited':'🤍 Favorite'}</button>
+            <button class="action-btn" onclick="toggleChatPin('${chat.id}')">${chat.isPinned?'📌 Pinned':'📍 Pin'}</button>
+            <button class="action-btn" onclick="archiveChat('${chat.id}')">📦 Archive</button>
+            <button class="action-btn" onclick="editChat('${chat.id}')">✏️ Edit</button>
+            <button class="action-btn danger" onclick="deleteChat('${chat.id}')">🗑️ Delete</button>
+          </div>
+        ` : ''}
+      `;
+      list.appendChild(li);
+    });
+
+    enableAllActionStripsDrag();
+  }
+
+  function archiveCurrentChat() {
+    if (state.activeChatId && state.activeChatId !== 'saved_messages') {
+      archiveChat(state.activeChatId);
+      exitChatDetail();
+    }
+  }
+
+  function toggleChatFavorite(id) { const c = state.chats.find(x => String(x.id) === String(id)); if(c){ c.isFavorite = !c.isFavorite; persist(); renderChatList(); } }
+  function toggleChatPin(id) { const c = state.chats.find(x => String(x.id) === String(id)); if(c){ c.isPinned = !c.isPinned; persist(); renderChatList(); } }
+  function renderFavoritesChatList() {
+    const list = document.getElementById('favorites-chat-list'); list.innerHTML = "";
+    state.chats.filter(c => c.isFavorite).forEach(chat => {
+      const li = document.createElement('li'); li.className = 'chat-item';
+      li.innerHTML = `
+        <div class="chat-item-main" onclick="openChatDetail('${chat.id}')">
+          <div class="chat-avatar">${chat.title.charAt(0)}</div>
+          <div class="chat-info"><div class="chat-title">${chat.title}</div></div>
+        </div>
+        <div class="chat-item-actions-strip" data-drag="true">
+          <button class="action-btn" onclick="toggleChatFavorite('${chat.id}')">❤️ Remove Fav</button>
+          <button class="action-btn danger" onclick="deleteChat('${chat.id}')">🗑️ Delete</button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+    enableAllActionStripsDrag();
+  }
+  function renderPinnedChatList() {
+    const list = document.getElementById('pinned-chat-list'); list.innerHTML = "";
+    state.chats.filter(c => c.isPinned).forEach(chat => {
+      const li = document.createElement('li'); li.className = 'chat-item';
+      li.innerHTML = `
+        <div class="chat-item-main" onclick="openChatDetail('${chat.id}')">
+          <div class="chat-avatar">${chat.title.charAt(0)}</div>
+          <div class="chat-info"><div class="chat-title">${chat.title} 📌</div></div>
+        </div>
+        <div class="chat-item-actions-strip" data-drag="true">
+          <button class="action-btn" onclick="toggleChatPin('${chat.id}')">Unpin</button>
+          <button class="action-btn danger" onclick="deleteChat('${chat.id}')">🗑️ Delete</button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+    enableAllActionStripsDrag();
+  }
+  function editChat(id) { 
+    state.editingChatId = String(id); 
+    const c = state.chats.find(x => String(x.id) === String(id)); 
+    if(!c) return; 
+    document.getElementById('modal-title').innerText = "Edit Chat"; 
+    document.getElementById('chat-name-input').value = c.title; 
+    document.getElementById('create-chat-modal').style.display = "flex"; 
+  }
+  function deleteChat(id) { state.chats = state.chats.filter(c => String(c.id) !== String(id)); persist(); renderChatList(); }
+  function archiveChat(id) { const i = state.chats.findIndex(c => String(c.id) === String(id)); if(i>-1){ state.archivedChats.push(state.chats.splice(i,1)[0]); persist(); renderChatList(); } }
+  function renderArchiveList() {
+    const list = document.getElementById('archive-chat-list'); list.innerHTML = "";
+    state.archivedChats.forEach(c => { list.innerHTML += `<li class="chat-item"><div class="chat-info"><strong>${c.title}</strong></div><button class="action-btn" onclick="restoreChat('${c.id}')">Restore</button></li>`; });
+  }
+  function restoreChat(id) { const i = state.archivedChats.findIndex(c => String(c.id) === String(id)); if(i>-1){ state.chats.push(state.archivedChats.splice(i,1)[0]); persist(); renderArchiveList(); } }
+
+  function openGalleryPicker() { document.getElementById('chat-gallery-input').click(); }
+  async function handleGalleryImage(e) {
+    const f = e.target.files[0];
+    if(f){
+      state.selectedImage = await compressImage(f, 400);
+      alert("Photo attached!");
+    }
+  }
+  function openChatDetail(id) { state.activeChatId = String(id); state.selectedMsgIds = []; renderMessages(); navigateTo('chat-detail'); }
+  function exitChatDetail() { state.selectedMsgIds = []; navigateTo('home'); }
+  
+  function toggleStyle(k) {
+    state.formatting[k] = !state.formatting[k];
+    const btn = document.getElementById(`btn-${k}`);
+    if (btn) btn.classList.toggle('active-style', state.formatting[k]);
+  }
+  
+  function setTextAlignment(a) {
+    state.formatting.align = a;
+    ['left', 'center', 'right', 'justify'].forEach(mode => {
+      const btn = document.getElementById(`btn-align-${mode}`);
+      if (btn) btn.classList.toggle('active-style', mode === a);
+    });
+  }
+
+  function sendChatMessage() {
+    const input = document.getElementById('chat-msg-input'); const text = input.value; if(!text && !state.selectedImage) return;
+    const c = state.chats.find(x => String(x.id) === String(state.activeChatId));
+    if(c){
+      c.messages.push({
+        id: Date.now(),
+        text: text,
+        image: state.selectedImage,
+        style: { ...state.formatting },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      input.value = "";
+      state.selectedImage = null;
+      renderMessages();
+      persist();
+    }
+  }
+
+  function recordAudioMessagePrompt() {
+    const u = prompt("Voice audio URL:", "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"); if(!u) return;
+    const c = state.chats.find(x => String(x.id) === String(state.activeChatId));
+    if(c){ c.messages.push({ id: Date.now(), audio: u, text: "🎙️ Voice", time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) }); persist(); renderMessages(); }
+  }
+
+  function createInteractivePoll() {
+    const question = prompt("Enter Poll Question:");
+    if (!question) return;
+    const count = parseInt(prompt("How many options to add?", "2"));
+    if (isNaN(count) || count < 1) return;
+    const options = [];
+    for (let i = 1; i <= count; i++) {
+      const optText = prompt(`Enter Option ${i}:`);
+      options.push({ text: optText || `Option ${i}`, votes: 0 });
+    }
+    const chat = state.chats.find(c => String(c.id) === String(state.activeChatId));
+    if (chat) {
+      chat.messages.push({
+        id: Date.now(),
+        poll: { question: question, options: options },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      persist();
+      renderMessages();
+    }
+  }
+
+  function createInteractiveChecklist() {
+    const title = prompt("Enter Checklist Title:");
+    if (!title) return;
+    const count = parseInt(prompt("How many items to add?", "3"));
+    if (isNaN(count) || count < 1) return;
+    const items = [];
+    for (let i = 1; i <= count; i++) {
+      const itemText = prompt(`Enter Item ${i}:`);
+      items.push({ text: itemText || `Item ${i}`, checked: false });
+    }
+    const chat = state.chats.find(c => String(c.id) === String(state.activeChatId));
+    if (chat) {
+      chat.messages.push({
+        id: Date.now(),
+        checklist: { title: title, items: items },
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+      persist();
+      renderMessages();
+    }
+  }
+
+  function votePoll(msgId, optIdx) {
+    const chat = state.chats.find(c => String(c.id) === String(state.activeChatId));
+    const msg = chat?.messages.find(m => m.id === msgId);
+    if (msg && msg.poll) {
+      msg.poll.options[optIdx].votes++;
+      persist();
+      renderMessages();
+    }
+  }
+
+  function toggleChecklistItem(msgId, itemIdx) {
+    const chat = state.chats.find(c => String(c.id) === String(state.activeChatId));
+    const msg = chat?.messages.find(m => m.id === msgId);
+    if (msg && msg.checklist) {
+      msg.checklist.items[itemIdx].checked = !msg.checklist.items[itemIdx].checked;
+      persist();
+      renderMessages();
+    }
+  }
+
+  function toggleSelectMessage(id) { const i = state.selectedMsgIds.indexOf(id); if(i>-1) state.selectedMsgIds.splice(i,1); else state.selectedMsgIds.push(id); renderMessages(); }
+  function deleteSelectedMessages() { const c = state.chats.find(x => String(x.id) === String(state.activeChatId)); if(c){ c.messages = c.messages.filter(m => !state.selectedMsgIds.includes(m.id)); persist(); state.selectedMsgIds=[]; renderMessages(); } }
+  
+  function editSelectedMessage() {
+    if (state.selectedMsgIds.length !== 1) return;
+    const c = state.chats.find(x => String(x.id) === String(state.activeChatId));
+    if (!c) return;
+    const m = c.messages.find(msg => msg.id === state.selectedMsgIds[0]);
+    if (m) {
+      const updated = prompt("Edit message text:", m.text || "");
+      if (updated !== null) {
+        m.text = updated;
+        persist();
+        state.selectedMsgIds = [];
+        renderMessages();
+      }
+    }
+  }
+
+  function renderMessages() {
+    const c = state.chats.find(x => String(x.id) === String(state.activeChatId)); const container = document.getElementById('chat-messages-container'); container.innerHTML = ""; if(!c) return;
+    const count = state.selectedMsgIds.length;
+    document.getElementById('btn-share-msg').style.display = count ? 'inline-flex':'none';
+    document.getElementById('btn-delete-msg').style.display = count ? 'inline-flex':'none';
+    document.getElementById('btn-edit-msg').style.display = count === 1 ? 'inline-flex':'none';
+
+    c.messages.forEach(msg => {
+      const sel = state.selectedMsgIds.includes(msg.id);
+      const b = document.createElement('div'); b.className = `message-bubble ${sel?'selected':''}`; b.onclick = ()=>toggleSelectMessage(msg.id);
+      let inner = `<div class="msg-content" style="text-align:${msg.style?.align||'left'};">`;
+      
+      if (msg.poll) {
+        inner += `<div class="poll-box"><strong>📊 ${msg.poll.question}</strong>`;
+        msg.poll.options.forEach((opt, idx) => {
+          inner += `<button class="poll-option-btn" onclick="event.stopPropagation(); votePoll(${msg.id}, ${idx})"><span>${opt.text}</span><strong>${opt.votes}</strong></button>`;
+        });
+        inner += `</div>`;
+      }
+
+      if (msg.checklist) {
+        inner += `<div class="checklist-box"><strong>☑️ ${msg.checklist.title}</strong>`;
+        msg.checklist.items.forEach((item, idx) => {
+          inner += `<div class="checklist-row ${item.checked ? 'checked' : ''}" onclick="event.stopPropagation(); toggleChecklistItem(${msg.id}, ${idx})">
+            <input type="checkbox" ${item.checked ? 'checked' : ''}> <span>${item.text}</span>
+          </div>`;
+        });
+        inner += `</div>`;
+      }
+
+      if(msg.image) inner += `<img src="${msg.image}" class="message-media">`;
+      if(msg.audio) inner += `<audio src="${msg.audio}" controls style="width:180px;"></audio>`;
+      
+      if(msg.text) {
+        let t = msg.text;
+        if(msg.style?.bold) t = `<b>${t}</b>`;
+        if(msg.style?.italic) t = `<i>${t}</i>`;
+        if(msg.style?.underline) t = `<u>${t}</u>`;
+        inner += `<div>${t}</div>`;
+      }
+      inner += `<div class="message-time">${msg.time}</div></div>`;
+      b.innerHTML = `<div class="select-circle"></div>` + inner; container.appendChild(b);
+    });
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function shareSelectedMessagesPrompt() {
+    const cur = state.chats.find(c => String(c.id) === String(state.activeChatId)); const msgs = cur.messages.filter(m => state.selectedMsgIds.includes(m.id));
+    const others = state.chats.filter(c => String(c.id) !== String(state.activeChatId)); if(!others.length) return alert("No other chats.");
+    const names = others.map((c,i)=>`${i+1}. ${c.title}`).join("\n");
+    const idx = parseInt(prompt(`Target chat number:\n${names}`)) - 1;
+    if(!isNaN(idx) && others[idx]){ msgs.forEach(m => others[idx].messages.push({...m, id:Date.now()+Math.random()})); persist(); alert("Shared!"); state.selectedMsgIds=[]; renderMessages(); }
+  }
+
+  /* CANVAS DRAWING */
+  let chatDrawCv, chatDrawCtx, isChatDrawing = false;
+  function openDrawingCanvasModal(t) {
+    state.activeDrawingTarget = t;
+    document.getElementById('chat-draw-modal').style.display = 'flex';
+    setTimeout(initChatDrawCanvas, 100);
+  }
+  function closeChatDrawModal() { document.getElementById('chat-draw-modal').style.display = 'none'; }
+  function initChatDrawCanvas() {
+    chatDrawCv = document.getElementById('chatDrawCv');
+    if (!chatDrawCv) return;
+    chatDrawCtx = chatDrawCv.getContext('2d');
+
+    const getPos = e => {
+      const r = chatDrawCv.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - r.left, y: clientY - r.top };
+    };
+
+    const start = e => {
+      isChatDrawing = true;
+      const p = getPos(e);
+      chatDrawCtx.beginPath();
+      chatDrawCtx.moveTo(p.x, p.y);
+    };
+
+    const draw = e => {
+      if (!isChatDrawing) return;
+      e.preventDefault();
+      const p = getPos(e);
+      chatDrawCtx.strokeStyle = document.getElementById('drawColor').value;
+      chatDrawCtx.lineWidth = document.getElementById('drawWidth').value;
+      chatDrawCtx.lineCap = 'round';
+      chatDrawCtx.lineTo(p.x, p.y);
+      chatDrawCtx.stroke();
+    };
+
+    const stop = () => { isChatDrawing = false; };
+
+    chatDrawCv.onpointerdown = start;
+    chatDrawCv.onpointermove = draw;
+    chatDrawCv.onpointerup = stop;
+    chatDrawCv.onpointercancel = stop;
+
+    chatDrawCv.ontouchstart = start;
+    chatDrawCv.ontouchmove = draw;
+    chatDrawCv.ontouchend = stop;
+  }
+
+  function clearChatDrawCanvas() {
+    if (chatDrawCtx && chatDrawCv) chatDrawCtx.clearRect(0, 0, chatDrawCv.width, chatDrawCv.height);
+  }
+
+  function sendCanvasDrawingToTarget() {
+    if (!chatDrawCv) return;
+    const url = chatDrawCv.toDataURL('image/jpeg', 0.7);
+    if (state.activeDrawingTarget === 'chat') {
+      const c = state.chats.find(x => String(x.id) === String(state.activeChatId));
+      if (c) {
+        c.messages.push({ id: Date.now(), text: document.getElementById('drawCaptionInput').value, image: url, time: new Date().toLocaleTimeString() });
+        persist();
+        renderMessages();
+      }
+    } else if (state.activeDrawingTarget === 'notes') {
+      const noteBody = document.getElementById('active-note-body');
+      if (noteBody) noteBody.innerHTML += `<img src="${url}" style="max-width:100%; display:block; margin:8px 0;">`;
+    } else if (state.activeDrawingTarget === 'book') {
+      state.pendingBookDrawing = url;
+      alert("Illustration attached to book!");
+    }
+    closeChatDrawModal();
+    clearChatDrawCanvas();
+  }
+
+  /* NOTES */
+  function renderNotesList() {
+    const c = document.getElementById('notes-list-container');
+    c.style.display = 'flex';
+    document.getElementById('note-detail-subview').style.display = 'none';
+    c.innerHTML = "";
+    if (!state.notes.length) {
+      c.innerHTML = "<p style='padding:12px; color:#666;'>No notes created yet. Click '+ Create Note'.</p>";
+      return;
+    }
+    state.notes.forEach(n => {
+      c.innerHTML += `<div class="note-card" onclick="openNoteDetail(${n.id})"><strong>${n.title}</strong><div style="font-size:0.8rem; color:#555; max-height:40px; overflow:hidden;">${n.body.replace(/<[^>]*>?/gm, ' ')}</div><button class="action-btn danger" style="align-self:flex-end; margin-top:4px;" onclick="event.stopPropagation(); deleteNote(${n.id})">Delete</button></div>`;
+    });
+  }
+
+  function createNewNotePrompt() {
+    const t = prompt("Note title:", "New Note") || "New Note";
+    const n = { id: Date.now(), title: t, body: "<div>Type note contents here...</div>" };
+    state.notes.push(n);
+    persist();
+    renderNotesList();
+    openNoteDetail(n.id);
+  }
+
+  function openNoteDetail(id) {
+    state.activeNoteId = id;
+    const n = state.notes.find(x => x.id === id);
+    if (!n) return;
+    document.getElementById('notes-list-container').style.display = 'none';
+    document.getElementById('note-detail-subview').style.display = 'flex';
+    document.getElementById('active-note-title').value = n.title;
+    const editor = document.getElementById('active-note-body');
+    editor.innerHTML = n.body || "";
+    editor.focus();
+  }
+
+  function closeNoteDetailView() { renderNotesList(); }
+
+  function formatNoteCmd(cmd) {
+    const editor = document.getElementById('active-note-body');
+    if (editor) {
+      editor.focus();
+      document.execCommand(cmd, false, null);
+    }
+  }
+
+  function saveActiveNoteContent() {
+    const n = state.notes.find(x => x.id === state.activeNoteId);
+    if (n) {
+      n.title = document.getElementById('active-note-title').value.trim() || "Untitled Note";
+      n.body = document.getElementById('active-note-body').innerHTML;
+      persist();
+      alert("Note saved successfully!");
+    }
+  }
+
+  function deleteNote(id) {
+    state.notes = state.notes.filter(x => x.id !== id);
+    persist();
+    renderNotesList();
+  }
+
+  /* FILES */
+  function renderFilesList() {
+    const c = document.getElementById('files-list-container'); c.innerHTML = "";
+    state.files.forEach(f => { c.innerHTML += `<div class="file-item"><strong>${f.name}</strong><button class="action-btn" onclick="previewStorageFile(${f.id})">Open</button><button class="action-btn danger" onclick="deleteStorageFile(${f.id})">Delete</button></div>`; });
+  }
+  function handleGenericFileUpload(e) {
+    const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = evt => { state.files.push({ id:Date.now(), name:f.name, type:f.type, data:evt.target.result }); persist(); renderFilesList(); }; r.readAsDataURL(f);
+  }
+  function previewStorageFile(id) {
+    const f = state.files.find(x => x.id === id); document.getElementById('file-preview-title').innerText = f.name;
+    document.getElementById('file-preview-body').innerHTML = f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:100%;">`:`<iframe src="${f.data}" style="width:100%; height:400px;"></iframe>`;
+    document.getElementById('fullscreen-file-modal').style.display = 'flex';
+  }
+  function closeFilePreviewModal() { document.getElementById('fullscreen-file-modal').style.display = 'none'; }
+  function deleteStorageFile(id) { state.files = state.files.filter(x => x.id !== id); persist(); renderFilesList(); }
+
+  /* SEARCH */
+  function executeGlobalSearch() {
+    const q = document.getElementById('global-search-input').value.trim().toLowerCase(); const box = document.getElementById('global-search-results'); box.innerHTML = ""; if(!q) return;
+    state.chats.forEach(c => { if(c.title.toLowerCase().includes(q)) box.innerHTML += `<div class="action-btn" onclick="openChatDetail('${c.id}')">Chat: ${c.title}</div>`; });
+    state.notes.forEach(n => { if(n.title.toLowerCase().includes(q)) box.innerHTML += `<div class="action-btn" onclick="navigateTo('notes'); openNoteDetail(${n.id})">Note: ${n.title}</div>`; });
+  }
+
+  /* MUSIC */
+  function renderMusicPlaylist() {
+    const c = document.getElementById('music-playlist-container'); c.innerHTML = "";
+    state.musicPlaylist.forEach((t, i) => { c.innerHTML += `<div class="action-btn" style="justify-content:space-between;"><span onclick="playAudioTrack(${i})">🎵 ${t.title}</span><button class="action-btn danger" onclick="deleteAudioTrack(${t.id})">X</button></div>`; });
+  }
+  function playAudioTrack(i) { const t = state.musicPlaylist[i]; const p = document.getElementById('global-audio-player'); document.getElementById('current-song-title').innerText = t.title; p.src = t.src; p.play(); }
+  function handleAudioFileUpload(e) {
+    const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = evt => { state.musicPlaylist.push({ id:Date.now(), title:f.name, src:evt.target.result }); persist(); renderMusicPlaylist(); }; r.readAsDataURL(f);
+  }
+  function deleteAudioTrack(id) { state.musicPlaylist = state.musicPlaylist.filter(t => t.id !== id); persist(); renderMusicPlaylist(); }
+
+  /* SHEETS */
+  function initSpreadsheetGrid() {
+    const table = document.getElementById('sheet-data-table'); table.innerHTML = "";
+    const COLS = ["A","B","C","D","E","F","G","H"];
+    let h = `<tr><th class="row-header">#</th>`; COLS.forEach(c => h += `<th>${c}</th>`); h += `</tr>`; table.innerHTML += h;
+    for (let r=1; r<=25; r++) {
+      let row = `<tr><th class="row-header">${r}</th>`;
+      COLS.forEach(c => { const id = `${c}${r}`; row += `<td contenteditable="true" onblur="state.sheetGrid['${id}']=this.innerText; persist();">${state.sheetGrid[id]||''}</td>`; });
+      table.innerHTML += row + `</tr>`;
+    }
+  }
+  function saveSheetData() { persist(); alert("Sheet saved!"); }
+  function clearActiveSheetGrid() { state.sheetGrid = {}; persist(); initSpreadsheetGrid(); }
+  function exportSheetToCSV() {
+    let csv = ""; for (let r=1; r<=20; r++) { let row = []; ["A","B","C","D","E"].forEach(c => row.push(`"${state.sheetGrid[c+r]||''}"`)); csv += row.join(",")+"\n"; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = "sheet.csv"; a.click();
+  }
+
+  /* DOCS */
+  function loadDocDocument() { document.getElementById('docs-editor-canvas').innerHTML = state.docContent; }
+  function saveDocDocument() { state.docContent = document.getElementById('docs-editor-canvas').innerHTML; persist(); alert("Doc saved!"); }
+
+  /* IMAGES */
+  function renderInfiniteGallery() {
+    const g = document.getElementById('infinite-gallery-grid'); g.innerHTML = "";
+    state.infiniteImages.forEach((src, idx) => { g.innerHTML += `<img src="${src}" class="gallery-thumb" onclick="if(confirm('Delete?')){state.infiniteImages.splice(${idx},1); persist(); renderInfiniteGallery();}">`; });
+  }
+  function handleInfiniteImagesUpload(e) {
+    Array.from(e.target.files).forEach(async f => {
+      const data = await compressImage(f, 600);
+      if (data) {
+        state.infiniteImages.push(data);
+        persist();
+        renderInfiniteGallery();
+      }
+    });
+  }
+
+  /* BOOKS */
+  function renderBooksGrid() {
+    const g = document.getElementById('books-grid'); g.innerHTML = "";
+    state.books.forEach(b => {
+      g.innerHTML += `<div class="book-card"><div onclick="openBookReader(${b.id})">${b.img1?`<img src="${b.img1}" class="book-cover-img">`:`📖`}<strong>${b.title}</strong></div><div class="book-card-actions"><button class="action-btn" onclick="openBookModal(${b.id})">Edit</button><button class="action-btn danger" onclick="state.books=state.books.filter(x=>x.id!==${b.id}); persist(); renderBooksGrid();">Delete</button></div></div>`;
+    });
+  }
+  function openBookModal(id = null) {
+    state.editingBookId = id; document.getElementById('book-modal').style.display = 'flex';
+    if(id){ const b = state.books.find(x=>x.id===id); document.getElementById('book-title-input').value=b.title; document.getElementById('book-text-input').value=b.content; }
+    else { document.getElementById('book-title-input').value=""; document.getElementById('book-text-input').value=""; }
+  }
+  function closeBookModal() { document.getElementById('book-modal').style.display = 'none'; }
+  async function saveBook() {
+    const title = document.getElementById('book-title-input').value || "Book"; const content = document.getElementById('book-text-input').value;
+    const i1 = document.getElementById('book-img1-input').files[0]; const i2 = document.getElementById('book-img2-input').files[0];
+    const r1 = i1 ? await compressImage(i1, 400) : null;
+    const r2 = i2 ? await compressImage(i2, 400) : null;
+    if(state.editingBookId){ const b = state.books.find(x=>x.id===state.editingBookId); b.title=title; b.content=content; if(r1)b.img1=r1; if(r2)b.img2=r2; }
+    else state.books.push({ id:Date.now(), title, content, img1:r1, img2:r2 });
+    persist(); closeBookModal(); renderBooksGrid();
+  }
+  function openBookReader(id) {
+    const b = state.books.find(x=>x.id===id); document.getElementById('book-reader-title').innerText = b.title;
+    document.getElementById('book-reader-body').innerHTML = `${b.img1?`<img src="${b.img1}" style="max-width:100%;">`:''}<div>${b.content}</div>${b.img2?`<img src="${b.img2}" style="max-width:100%;">`:''}`;
+    document.getElementById('fullscreen-book-modal').style.display = 'flex';
+  }
+  function closeBookReader(m) { document.getElementById('fullscreen-book-modal').style.display = 'none'; navigateTo(m==='home'?'home':'books'); }
+
+  /* CODE SANDBOX */
+  function renderCodeFilesList() {
+    const list = document.getElementById('code-files-list'); list.style.display='block'; document.getElementById('code-editor-panel').style.display='none'; list.innerHTML="";
+    if(!state.codeFiles.length) state.codeFiles.push({ id:1, name:"index.html", content:"<h1>Hello</h1>" });
+    state.codeFiles.forEach(f => { list.innerHTML += `<div class="file-item"><strong>${f.name}</strong><button class="action-btn" onclick="openCodeEditor(${f.id})">Open</button></div>`; });
+  }
+  function createNewVirtualCodeFile() { state.codeFiles.push({ id:Date.now(), name:"script.js", content:"// code" }); persist(); renderCodeFilesList(); }
+  function openCodeEditor(id) { state.activeCodeFileId=id; const f = state.codeFiles.find(x=>x.id===id); document.getElementById('code-files-list').style.display='none'; document.getElementById('code-editor-panel').style.display='flex'; document.getElementById('active-code-filename').innerText=f.name; document.getElementById('code-source-input').value=f.content; }
+  function closeCodeEditor() { renderCodeFilesList(); }
+  function saveActiveCodeFile() { const f = state.codeFiles.find(x=>x.id===state.activeCodeFileId); f.content=document.getElementById('code-source-input').value; persist(); alert("Saved!"); }
+  function runActiveCodeFile() { document.getElementById('code-preview-frame').srcdoc = document.getElementById('code-source-input').value; document.getElementById('code-full-runner').style.display='flex'; }
+  function closeFullCodeRunner() { document.getElementById('code-full-runner').style.display='none'; }
+  function shareActiveCodeFile() { navigator.clipboard.writeText(document.getElementById('code-source-input').value); alert("Copied!"); }
+
+  /* TOOLS */
+  const TOOLS = [
+    { name: "Maps", icon: "🗺️", act: () => { const sub = openToolView("Maps"); sub.innerHTML += `<iframe src="https://maps.google.com/maps?output=embed" style="width:100%; height:320px; border:none;"></iframe>`; } },
+    { name: "Notes", icon: "📝", act: () => navigateTo('notes') },
+    { name: "Pixel", icon: "🎨", act: openPixelStudio },
+    { name: "Calculator", icon: "🔢", act: openCalculator },
+    { name: "Countdown", icon: "⏱️", act: openCountdownTimer },
+    { name: "Dictionary", icon: "📖", act: openDictionary },
+    { name: "Translate", icon: "🌐", act: openTranslate },
+    { name: "Calendar", icon: "📅", act: openCalendarNav }
+  ];
+  function openToolView(t) { document.getElementById('tools-grid').style.display='none'; const sub = document.getElementById('tool-subview'); sub.style.display='flex'; sub.innerHTML=`<button class="action-btn" onclick="closeToolSubview()">← Back</button><h3>${t}</h3>`; return sub; }
+  function closeToolSubview() { document.getElementById('tools-grid').style.display='grid'; document.getElementById('tool-subview').style.display='none'; }
+  
+  function openPixelStudio() { const sub = openToolView("Pixel Studio"); sub.innerHTML += `<canvas id="pxCv" width="200" height="200" class="paint-board"></canvas>`; }
+  function openCalculator() { const sub = openToolView("Calculator"); sub.innerHTML += `<input id="calc" readonly style="width:100%;"><button class="action-btn primary" onclick="document.getElementById('calc').value=eval(document.getElementById('calc').value)">=</button>`; }
+  function openCountdownTimer() { const sub = openToolView("Timer"); sub.innerHTML += `<h1>00:00</h1>`; }
+  function openDictionary() { const sub = openToolView("Dictionary"); sub.innerHTML += `<input placeholder="Word"><button class="action-btn primary">Lookup</button>`; }
+  function openTranslate() { const sub = openToolView("Translate"); sub.innerHTML += `<textarea></textarea><button class="action-btn primary">Translate</button>`; }
+  function openCalendarNav() { const sub = openToolView("Calendar"); sub.innerHTML += `<h4>August 2026</h4>`; }
+
+  /* SETTINGS */
+  function toggleNightVision(e) { state.nightVision = e; persist(); applySavedBgColor(); }
+  function toggleSavedMessagesSetting(e) { state.savedMessagesVisible = e; persist(); renderChatList(); }
+  function openAppNavigationGuide() { alert("Guide: Use bottom bar to switch features. All data saves automatically."); }
+  function resetEntireApp() { if(confirm("Reset everything?")) { localStorage.clear(); location.reload(); } }
+  function triggerAppRestartSequence() {
+    const o = document.getElementById('restart-countdown-overlay'); o.style.display='flex'; let c=10;
+    const t = setInterval(()=>{ c--; document.getElementById('restart-countdown-number').innerText=c; if(c<=0){clearInterval(t); location.reload();} }, 1000);
+  }
+
+  // Bind Grid Cards
+  TOOLS.forEach(t => { const card = document.createElement('div'); card.className='grid-card'; card.innerHTML=`<div class="icon">${t.icon}</div><div class="title">${t.name}</div>`; card.onclick=t.act; document.getElementById('tools-grid').appendChild(card); });
+  GAMES_CONFIG.forEach(g => { const card = document.createElement('div'); card.className='grid-card'; card.innerHTML=`<div class="icon">${g.icon}</div><div class="title">${g.name}</div>`; card.onclick=()=>window.open(g.url,'_blank'); document.getElementById('games-grid').appendChild(card); });
+
+  // Drag scroll helper for all strips
+  function enableDrag(el) {
+    if (!el) return;
+    let down = false, startX, scrollLeft;
+    el.addEventListener('mousedown', e => {
+      down = true;
+      startX = e.pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    });
+    el.addEventListener('mouseleave', () => down = false);
+    el.addEventListener('mouseup', () => down = false);
+    el.addEventListener('mousemove', e => {
+      if (!down) return;
+      e.preventDefault();
+      el.scrollLeft = scrollLeft - ((e.pageX - el.offsetLeft) - startX) * 2;
+    });
+  }
+
+  function enableAllActionStripsDrag() {
+    document.querySelectorAll('[data-drag="true"]').forEach(enableDrag);
+  }
+
+  enableDrag(document.getElementById('main-bottom-nav-strip'));
+  enableDrag(document.getElementById('chat-tools-strip'));
+
+  document.getElementById('toggle-night-vision').checked = state.nightVision;
+  document.getElementById('toggle-saved-messages').checked = state.savedMessagesVisible;
+  applySavedBgColor(); checkAppLockGatekeeper();
+  if(!state.chats.length) state.chats.push({ id:Date.now(), title:"General Chat", messages:[], isFavorite:false, isPinned:false });
+  renderChatList();
+</script>
+</body>
+</html>
