@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zenith Canvas Pro - Share, Download & File Manager</title>
+    <title>Zenith Canvas Pro - Fixed IndexedDB Persistence</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -603,7 +603,7 @@
 
         function initIndexedDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbName, 1);
+                const request = indexedDB.open(dbName, 2);
                 request.onerror = (e) => reject(e);
                 request.onsuccess = (e) => { db = e.target.result; resolve(db); };
                 request.onupgradeneeded = (e) => {
@@ -616,18 +616,18 @@
         }
 
         async function saveToDB(key, data) {
-            if (!db) return;
+            if (!db) await initIndexedDB();
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(storeName, "readwrite");
                 const store = tx.objectStore(storeName);
-                store.put({ id: key, payload: data });
+                store.put({ id: key, payload: JSON.parse(JSON.stringify(data)) });
                 tx.oncomplete = () => resolve();
                 tx.onerror = (e) => reject(e);
             });
         }
 
         async function loadFromDB(key) {
-            if (!db) return null;
+            if (!db) await initIndexedDB();
             return new Promise((resolve, reject) => {
                 const tx = db.transaction(storeName, "readonly");
                 const store = tx.objectStore(storeName);
@@ -787,7 +787,6 @@
                     url: window.location.href
                 }).catch(() => {});
             } else {
-                // Fallback share options prompt
                 const choice = prompt("Share via:\n1. WhatsApp\n2. Telegram\n3. Copy Text", "1");
                 if (choice === "1") {
                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
@@ -837,7 +836,6 @@
                     } else if (file.type.startsWith('video/')) {
                         document.execCommand('insertHTML', false, `<video controls width="400" style="display:inline-block;"><source src="${result}"></video>`);
                     } else {
-                        // Text or PDF general insert widget representation
                         document.execCommand('insertHTML', false, `<div style="border:1px solid var(--border); background:var(--card-bg); padding:10px; border-radius:6px; margin:10px 0;">📎 <strong>File Attached:</strong> ${file.name} (${Math.round(file.size/1024)} KB)</div><p></p>`);
                     }
                     updateActiveNote();
