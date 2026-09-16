@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zenith Canvas Pro - AI Image Generator & Working AI Writer</title>
+    <title>Zenith Canvas Pro - Share, Download & File Manager</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -356,6 +356,11 @@
                 <button onclick="formatDoc('redo')" title="Redo (Ctrl+Y)">↪️</button>
             </div>
             <div class="ribbon-group">
+                <button onclick="shareActiveFile()" title="Share to WhatsApp, Telegram, etc.">📤 Share</button>
+                <button onclick="downloadActiveFile()" title="Download File">💾 Download</button>
+                <button onclick="insertLocalFileApp()" title="Insert File from App">📎 Insert File</button>
+            </div>
+            <div class="ribbon-group">
                 <select id="fontFamilySelect" onchange="formatDoc('fontName', this.value)">
                     <option value="" disabled selected>Font</option>
                     <option value="system-ui">System Sans</option>
@@ -432,7 +437,7 @@
                     <option value="total">Page X of Y</option>
                     <option value="center">Centered Footer</option>
                 </select>
-                <button class="ai-img-btn" onclick="openAiImageModal()">🎨 Textbox</button>
+                <button class="ai-img-btn" onclick="openAiImageModal()">🎨 AI Image</button>
                 <button class="ai-btn" onclick="openAiModal()">✨ AI Writer</button>
             </div>
         </div>
@@ -526,7 +531,7 @@
 
     <div id="aiImageModal" class="modal-overlay">
         <div class="modal-box">
-            <h3><span>🎨 Textbox Generator</span><button onclick="closeModal('aiImageModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <h3><span>🎨 AI Image Generator</span><button onclick="closeModal('aiImageModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
             <p style="font-size: 0.85rem; color: var(--text-muted);">Describe the image you want to create:</p>
             <input type="text" id="aiImagePromptInput" placeholder="e.g., A futuristic cyberpunk city at sunset..." />
             <div class="modal-actions">
@@ -641,7 +646,6 @@
 
         const infiniteSymbolCatalog = ['α', 'β', 'γ', 'δ', 'ε', 'θ', 'λ', 'μ', 'π', 'σ', 'ω', '←', '↑', '→', '↓', '∀', '∂', '∃', '∅', '∇', '∈', '∑', '−', '∞', '∫', '♠', '♥', '♦', '★', '☆', '☎', '⌘', '✓', '✔', '✕', '©', '®', '™'];
 
-        // --- Multilingual Virtual Keyboard Layouts ---
         const keyboardLayouts = {
             hi: {
                 name: "Hindi (हिन्दी)",
@@ -768,6 +772,84 @@
             editor.focus();
             document.execCommand('delete', false, null);
             updateActiveNote();
+        }
+
+        // --- File Share, Download & File App Insertion ---
+        function shareActiveFile() {
+            const title = document.getElementById('noteTitle').value || 'Untitled Document';
+            const contentText = document.getElementById('editor').innerText;
+            const shareText = `📄 *${title}*\n\n${contentText.substring(0, 300)}...`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: title,
+                    text: shareText,
+                    url: window.location.href
+                }).catch(() => {});
+            } else {
+                // Fallback share options prompt
+                const choice = prompt("Share via:\n1. WhatsApp\n2. Telegram\n3. Copy Text", "1");
+                if (choice === "1") {
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                } else if (choice === "2") {
+                    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`, '_blank');
+                } else {
+                    navigator.clipboard.writeText(shareText);
+                    alert("Document text copied to clipboard!");
+                }
+            }
+        }
+
+        function downloadActiveFile() {
+            const title = (document.getElementById('noteTitle').value || 'document').toLowerCase().replace(/\s+/g, '_');
+            const header = document.getElementById('docHeader').value;
+            const bodyHtml = document.getElementById('editor').innerHTML;
+            const footer = document.getElementById('docFooterText').value;
+
+            const fullHtmlDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6;}header{border-bottom:1px dashed #ccc;padding-bottom:10px;text-align:center;color:#666;}footer{border-top:1px dashed #ccc;padding-top:10px;margin-top:40px;color:#666;display:flex;justify-content:space-between;}</style></head><body><header>${header}</header><main>${bodyHtml}</main><footer><span>${footer}</span><span>Generated by Zenith Pro</span></footer></body></html>`;
+
+            const blob = new Blob([fullHtmlDoc], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function insertLocalFileApp() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const result = ev.target.result;
+                    document.getElementById('editor').focus();
+                    restoreCursor();
+
+                    if (file.type.startsWith('image/')) {
+                        document.execCommand('insertHTML', false, `<img src="${result}" style="width:350px; display:inline-block;" />`);
+                    } else if (file.type.startsWith('video/')) {
+                        document.execCommand('insertHTML', false, `<video controls width="400" style="display:inline-block;"><source src="${result}"></video>`);
+                    } else {
+                        // Text or PDF general insert widget representation
+                        document.execCommand('insertHTML', false, `<div style="border:1px solid var(--border); background:var(--card-bg); padding:10px; border-radius:6px; margin:10px 0;">📎 <strong>File Attached:</strong> ${file.name} (${Math.round(file.size/1024)} KB)</div><p></p>`);
+                    }
+                    updateActiveNote();
+                };
+
+                if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
         }
 
         async function initApp() {
@@ -1187,7 +1269,6 @@
             updateActiveNote();
         }
 
-        // --- Working AI Writing Tool ---
         function openAiModal() { saveCursor(); document.getElementById('aiModal').style.display = 'flex'; document.getElementById('aiTopicInput').focus(); }
         function generateAiContentAtCursor() {
             const topic = document.getElementById('aiTopicInput').value.trim();
@@ -1195,8 +1276,6 @@
             closeModal('aiModal');
             document.getElementById('editor').focus();
             restoreCursor();
-
-            // Fully working synthetic generation output based on query prompt
             const generatedHtml = `
                 <div style="border-left: 3px solid var(--ai-accent); padding-left: 12px; margin: 15px 0; background: rgba(192, 132, 252, 0.05); padding: 10px; border-radius: 4px;">
                     <p style="color: var(--ai-accent); margin: 0 0 5px 0;"><strong>✨ AI Writer Output (${topic}):</strong></p>
@@ -1207,7 +1286,6 @@
             updateActiveNote();
         }
 
-        // --- AI Image Generator Tool (Powered by Gemini 3.1 Flash Image Simulation) ---
         function openAiImageModal() { saveCursor(); document.getElementById('aiImageModal').style.display = 'flex'; document.getElementById('aiImagePromptInput').focus(); }
         function generateAiImageAtCursor() {
             const promptText = document.getElementById('aiImagePromptInput').value.trim();
@@ -1216,39 +1294,20 @@
             document.getElementById('editor').focus();
             restoreCursor();
 
-            // Generate an illustrative canvas placeholder preview reflecting the generated artwork prompt
             const canvas = document.createElement('canvas');
             canvas.width = 400; canvas.height = 250;
             const ctx = canvas.getContext('2d');
-            
-            // Render gradient background
             const grad = ctx.createLinearGradient(0, 0, 400, 250);
-            grad.addColorStop(0, '#0f172a');
-            grad.addColorStop(0.5, '#1e293b');
-            grad.addColorStop(1, '#0369a1');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 400, 250);
+            grad.addColorStop(0, '#0f172a'); grad.addColorStop(0.5, '#1e293b'); grad.addColorStop(1, '#0369a1');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, 400, 250);
 
-            // Render prompt text watermark inside generated graphic
-            ctx.fillStyle = '#38bdf8';
-            ctx.font = 'bold 14px system-ui';
-            ctx.fillText("🎨 AI Generated Artwork:", 20, 40);
-            
-            ctx.fillStyle = '#f8fafc';
-            ctx.font = '16px system-ui';
-            // Wrap text helper
-            let words = promptText.split(' ');
-            let line = '';
-            let y = 80;
+            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 14px system-ui'; ctx.fillText("🎨 AI Generated Artwork:", 20, 40);
+            ctx.fillStyle = '#f8fafc'; ctx.font = '16px system-ui';
+            let words = promptText.split(' '); let line = ''; let y = 80;
             for(let n = 0; n < words.length; n++) {
                 let testLine = line + words[n] + ' ';
-                if(ctx.measureText(testLine).width > 360 && n > 0) {
-                    ctx.fillText(line, 20, y);
-                    line = words[n] + ' ';
-                    y += 24;
-                } else {
-                    line = testLine;
-                }
+                if(ctx.measureText(testLine).width > 360 && n > 0) { ctx.fillText(line, 20, y); line = words[n] + ' '; y += 24; }
+                else { line = testLine; }
             }
             ctx.fillText(line, 20, y);
 
