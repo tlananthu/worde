@@ -1,1 +1,1500 @@
-Minecraft is a critically acclaimed 3D sandbox video game developed by Mojang Studios where players explore an infinite, procedurally generated world made of 3D blocks. Originally created by Markus Persson in 2009, it has grown to become the best-selling video game of all time. [1] (https://en.wikipedia.org/wiki/Minecraft), [2] (https://minecraft.wiki/)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith Canvas Pro - Fixed Highlighter & Working Toolbars</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --ai-accent: #c084fc;
+            --danger: #f43f5e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --hover-bg: rgba(56, 189, 248, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar & Tree Structure */
+        aside {
+            width: 300px;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            margin-top: 0;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .top-action-buttons {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0 8px 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .tree-container {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-top: 5px;
+        }
+
+        ul.tree-list {
+            list-style: none;
+            padding-left: 15px;
+            margin: 0;
+        }
+        ul.tree-list.root-list { padding-left: 0; }
+        .tree-item { margin: 4px 0; }
+        .tree-node-content {
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        .tree-node-content:hover { background: var(--hover-bg); }
+        .tree-node-content.active { background: rgba(56, 189, 248, 0.2); border-left: 3px solid var(--accent); }
+        .node-label { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
+        
+        .node-actions { display: flex; gap: 3px; opacity: 0; transition: opacity 0.2s; }
+        .tree-node-content:hover .node-actions { opacity: 1; }
+        .node-actions button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.75rem; padding: 2px 4px; border-radius: 4px; }
+        .node-actions button:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.1); }
+        .node-actions button.delete-btn:hover { color: var(--danger); }
+
+        .grid-view-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-top: 5px;
+        }
+        .grid-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+        .grid-card:hover { background: var(--hover-bg); border-color: var(--accent); }
+
+        /* Main Workspace */
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        input.title-input {
+            background: transparent;
+            border: none;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            outline: none;
+            width: 100%;
+        }
+
+        /* Scrollable Single-Line Ribbon Toolbar */
+        .ribbon {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px 8px 0 0;
+            padding: 8px 10px;
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 6px;
+            align-items: center;
+            white-space: nowrap;
+        }
+        .ribbon::-webkit-scrollbar { height: 4px; }
+        .ribbon::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .ribbon-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-right: 1px solid var(--border);
+            padding-right: 8px;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+        .ribbon-group:last-child { border-right: none; }
+
+        .ribbon button, .ribbon select, .ribbon input[type="color"] {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .ribbon input[type="color"] { width: 24px; height: 24px; padding: 0; border: 1px solid var(--border); }
+        .ribbon button:hover, .ribbon select:hover { background: var(--hover-bg); border-color: var(--border); }
+        .ribbon select { background-color: var(--bg-color); border-color: var(--border); }
+
+        .ai-btn { background: rgba(192, 132, 252, 0.15) !important; color: var(--ai-accent) !important; border: 1px solid rgba(192, 132, 252, 0.3) !important; font-weight: bold; }
+        .ai-btn:hover { background: rgba(192, 132, 252, 0.25) !important; }
+
+        .ai-img-btn { background: rgba(56, 189, 248, 0.15) !important; color: var(--accent) !important; border: 1px solid rgba(56, 189, 248, 0.3) !important; font-weight: bold; }
+        .ai-img-btn:hover { background: rgba(56, 189, 248, 0.25) !important; }
+
+        /* Document Sheet Layout */
+        .document-sheet {
+            flex-grow: 1;
+            background-color: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--border);
+            border-top: none;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .doc-header-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: none;
+            border-bottom: 1px dashed var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 6px 20px;
+            outline: none;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .editor-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            outline: none;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .doc-footer-container {
+            background: rgba(15, 23, 42, 0.6);
+            border-top: 1px dashed var(--border);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 6px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .doc-footer-input { background: transparent; border: none; color: var(--text-muted); outline: none; flex-grow: 1; text-align: left; }
+
+        .editor-container img { max-width: 100%; border-radius: 6px; margin: 10px; cursor: pointer; display: inline-block; }
+        .editor-container video { max-width: 100%; border-radius: 6px; margin: 10px; cursor: pointer; display: inline-block; }
+        .editor-container table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .editor-container th, .editor-container td { border: 1px solid var(--border); padding: 8px; position: relative; }
+        .editor-container a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+        
+        .custom-text-box { border: 2px dashed var(--accent); background: rgba(56, 189, 248, 0.05); padding: 15px; border-radius: 8px; margin: 15px 0; outline: none; min-height: 50px; }
+        .checklist-item { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+        .poll-widget { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .poll-option { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; margin: 6px 0; cursor: pointer; }
+        .poll-option:hover { background: var(--hover-bg); }
+
+        /* On-Screen Multilingual Virtual Keyboard */
+        #virtualKeyboardContainer {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--accent);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 -10px 15px rgba(0,0,0,0.4);
+        }
+        .vk-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--accent); padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+        .vk-row { display: flex; justify-content: center; gap: 5px; }
+        .vk-key { background: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.95rem; min-width: 32px; text-align: center; transition: background 0.1s; }
+        .vk-key:hover { background: var(--hover-bg); border-color: var(--accent); }
+        .vk-key:active { background: var(--accent); color: var(--bg-color); }
+
+        /* Floating Toolbars */
+        .floating-toolbar {
+            position: absolute;
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 6px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+            z-index: 100;
+            gap: 6px;
+            align-items: center;
+        }
+        .floating-toolbar select, .floating-toolbar button, .floating-toolbar input {
+            background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+        }
+
+        /* Modal Overlays */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-box {
+            background: var(--card-bg); border: 1px solid var(--accent); padding: 25px; border-radius: 12px; width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+        }
+        .modal-box h3 { margin-top: 0; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
+        .modal-box input, .modal-box select { width: 100%; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: 6px; margin: 10px 0; box-sizing: border-box; font-size: 1rem; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .modal-actions button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-cancel { background: var(--border); color: var(--text-main); }
+        .btn-generate { background: var(--accent); color: #0f172a; }
+
+        #drawCanvas { background: #0f172a; border: 2px dashed var(--border); border-radius: 8px; cursor: crosshair; display: block; margin: 10px auto; }
+        .symbol-match-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; max-height: 120px; overflow-y: auto; }
+        .symbol-chip { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent); color: var(--text-main); font-size: 1.5rem; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .symbol-chip:hover { background: var(--accent); color: var(--bg-color); }
+
+        .toolbar-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; color: var(--text-muted); font-size: 0.85rem; }
+        button.primary-btn { background-color: var(--accent); color: var(--bg-color); border: none; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 0.9rem; }
+        button.primary-btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <h2>
+            <span>✨ Zenith Pro</span>
+            <button onclick="openShortcutsModal()" title="Keyboard Shortcuts" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:1.1rem;">⌨️</button>
+        </h2>
+        <div class="top-action-buttons">
+            <button class="primary-btn" onclick="createRootItem('file')">+ New File</button>
+            <button class="primary-btn" onclick="createRootItem('folder')" style="background:var(--card-bg); border:1px solid var(--border); color:var(--text-main);">+ New Folder</button>
+        </div>
+        
+        <div class="sidebar-header-row">
+            <span class="sidebar-section-title">Workspace Tree</span>
+            <button onclick="toggleViewMode()" id="viewModeToggleBtn" title="Toggle Grid/List View" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:0.85rem;">Grid View</button>
+        </div>
+
+        <div class="tree-container" id="treeContainer"></div>
+
+        <div class="sidebar-header-row">
+            <span class="sidebar-section-title">🗑️ Bin (Trash)</span>
+            <button onclick="clearEntireBin()" title="Clear Bin" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem; font-weight:bold;">🗑️ Clear All</button>
+        </div>
+        <ul class="note-list" id="binList" style="max-height: 90px; list-style:none; padding:0; overflow-y:auto;"></ul>
+    </aside>
+
+    <main>
+        <input type="text" id="noteTitle" class="title-input" placeholder="Untitled Document..." oninput="updateActiveNote()">
+        
+        <!-- Scrollable Single-Line Ribbon Toolbar -->
+        <div class="ribbon">
+            <div class="ribbon-group">
+                <button onclick="formatDoc('undo')" title="Undo (Ctrl+Z)">↩️</button>
+                <button onclick="formatDoc('redo')" title="Redo (Ctrl+Y)">↪️</button>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="shareActiveFile()" title="Share to WhatsApp, Telegram, etc.">📤 Share</button>
+                <button onclick="downloadActiveFile()" title="Download File">💾 Download</button>
+                <button onclick="insertLocalFileApp()" title="Insert File from App">📎 Insert File</button>
+            </div>
+            <div class="ribbon-group">
+                <select id="fontFamilySelect" onchange="formatDoc('fontName', this.value)">
+                    <option value="" disabled selected>Font</option>
+                    <option value="system-ui">System Sans</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="Courier New, monospace">Courier</option>
+                    <option value="Comic Sans MS, cursive">Comic Sans</option>
+                </select>
+                <select id="fontSizeSelect" onchange="formatDoc('fontSize', this.value)">
+                    <option value="" disabled selected>Size</option>
+                    <option value="1">Small</option>
+                    <option value="3">Normal</option>
+                    <option value="5">Large</option>
+                    <option value="7">Huge</option>
+                </select>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
+                <button onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
+                <button onclick="formatDoc('underline')" title="Underline"><u>U</u></button>
+                <button onclick="formatDoc('superscript')" title="Superscript">X²</button>
+                <button onclick="formatDoc('subscript')" title="Subscript">H₂O</button>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="formatDoc('justifyLeft')" title="Align Left">⬅️</button>
+                <button onclick="formatDoc('justifyCenter')" title="Align Center">⬌</button>
+                <button onclick="formatDoc('justifyRight')" title="Align Right">➡️</button>
+            </div>
+            <div class="ribbon-group">
+                <label title="Text Color">🎨 <input type="color" id="textColorInput" value="#f8fafc"></label>
+                <button onclick="applyTextColor()" style="font-size:0.75rem; padding:2px 4px; background:var(--border);">OK</button>
+                
+                <label title="Highlight">🖍️ <input type="color" id="highlightColorInput" value="#38bdf8"></label>
+                <button onclick="applyHighlightColor()" style="font-size:0.75rem; padding:2px 4px; background:var(--border);">OK</button>
+            </div>
+            <div class="ribbon-group">
+                <select id="langKeyboardSelect" onchange="switchVirtualKeyboard(this.value)" title="Select On-Screen Keyboard Language">
+                    <option value="none" selected>⌨️ Lang Keyboard</option>
+                    <option value="hi">🇮🇳 Hindi (हिन्दी)</option>
+                    <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
+                    <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
+                    <option value="es">🇪🇸 Spanish (Español)</option>
+                    <option value="fr">🇫🇷 French (Français)</option>
+                    <option value="de">🇩🇪 German (Deutsch)</option>
+                    <option value="ar">🇸🇦 Arabic (العربية)</option>
+                </select>
+            </div>
+            <div class="ribbon-group">
+                <select id="bulletSelect" onchange="applyBulletStyle(this.value)" title="Bullet Lists">
+                    <option value="" disabled selected>Bullets</option>
+                    <option value="disc">Disc (•)</option>
+                    <option value="circle">Circle (◦)</option>
+                    <option value="square">Square (▪)</option>
+                    <option value="decimal">Numbers (1, 2, 3)</option>
+                    <option value="upper-roman">Roman (I, II, III)</option>
+                </select>
+                <button onclick="insertHyperlink()" title="Insert Hyperlink">🔗 Link</button>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="openDrawSymbolModal()" title="Draw Symbols">🎨 Symbol</button>
+                <button onclick="openDrawImageModal()" title="Draw & Insert Image">✏️ Draw Image</button>
+                <button onclick="openShapeModal()" title="Insert Geometric Shapes">🔶 Shapes</button>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="insertTextBox()" title="Insert Text Box">📝 Box</button>
+                <button onclick="insertChecklist()" title="Insert Checklist">☑️ Check</button>
+                <button onclick="insertPollWidget()" title="Insert Live Poll">📊 Poll</button>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="insertTable()" title="Insert Table">📊 Table</button>
+                <button onclick="promptImageSource()" title="Image">🖼️</button>
+                <button onclick="promptVideoSource()" title="Video">🎥</button>
+            </div>
+            <div class="ribbon-group">
+                <select id="pageNoStyle" onchange="updatePageNumberStyle(this.value)" title="Page #">
+                    <option value="" disabled selected>Page #</option>
+                    <option value="simple">Page X</option>
+                    <option value="total">Page X of Y</option>
+                    <option value="center">Centered Footer</option>
+                </select>
+                <button class="ai-img-btn" onclick="openAiImageModal()">🎨 AI Image</button>
+                <button class="ai-btn" onclick="openAiModal()">✨ AI Writer</button>
+            </div>
+        </div>
+
+        <!-- Document Sheet -->
+        <div class="document-sheet">
+            <input type="text" id="docHeader" class="doc-header-input" placeholder="Document Header..." oninput="updateActiveNote()">
+            
+            <div id="editor" class="editor-container" contenteditable="true" oninput="updateActiveNote()"></div>
+            
+            <!-- On-Screen Multilingual Virtual Keyboard Drawer -->
+            <div id="virtualKeyboardContainer">
+                <div class="vk-header">
+                    <span id="vkTitle">Virtual Keyboard</span>
+                    <button onclick="closeVirtualKeyboard()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">Close ✕</button>
+                </div>
+                <div id="vkKeysArea" style="display:flex; flex-direction:column; gap:5px;"></div>
+            </div>
+
+            <div class="doc-footer-container">
+                <input type="text" id="docFooterText" class="doc-footer-input" placeholder="Footer text..." oninput="updateActiveNote()">
+                <span id="docPageNumberDisplay" style="font-weight: bold; color: var(--accent);">Page 1 of 1</span>
+            </div>
+        </div>
+        
+        <div class="toolbar-footer">
+            <span id="wordCount">0 words</span>
+            <span id="saveStatus">💾 IndexedDB Active</span>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="drawSymbolModal" class="modal-overlay">
+        <div class="modal-box" style="width: 380px;">
+            <h3><span>🎨 Draw Symbol Matcher</span><button onclick="closeModal('drawSymbolModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <canvas id="drawCanvas" width="330" height="150"></canvas>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button onclick="clearDrawCanvas()" style="background:var(--border); color:white; border:none; padding:4px 8px; border-radius:4px; font-size:0.8rem; cursor:pointer;">Clear</button>
+                <span style="font-size:0.8rem; color:var(--accent);">Closest Matches:</span>
+            </div>
+            <div id="symbolMatchGrid" class="symbol-match-grid"></div>
+        </div>
+    </div>
+
+    <div id="drawImageModal" class="modal-overlay">
+        <div class="modal-box" style="width: 380px;">
+            <h3><span>✏️ Draw & Insert Image</span><button onclick="closeModal('drawImageModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <canvas id="imageDrawCanvas" width="330" height="180" style="background:#1e293b; border:2px dashed var(--border); border-radius:8px; cursor:crosshair; display:block; margin:10px auto;"></canvas>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="clearImageCanvas()">Clear</button>
+                <button class="btn-generate" onclick="insertDrawnImageToEditor()">Insert Image</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shapeModal" class="modal-overlay">
+        <div class="modal-box" style="width: 350px;">
+            <h3><span>🔶 Insert Shape</span><button onclick="closeModal('shapeModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <label style="font-size:0.85rem; color:var(--text-muted);">Shape Type:</label>
+            <select id="shapeTypeSelect">
+                <option value="rect">Rectangle / Box</option>
+                <option value="circle">Circle / Ellipse</option>
+                <option value="star">Star</option>
+                <option value="triangle">Triangle</option>
+            </select>
+            <label style="font-size:0.85rem; color:var(--text-muted);">Style:</label>
+            <select id="shapeFillSelect">
+                <option value="filled">Filled Shape</option>
+                <option value="unfilled">Unfilled (Outline Only)</option>
+            </select>
+            <label style="font-size:0.85rem; color:var(--text-muted);">Color:</label>
+            <input type="color" id="shapePickerColor" value="#38bdf8" style="height:35px;">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('shapeModal')">Cancel</button>
+                <button class="btn-generate" onclick="insertSelectedShape()">Insert Shape</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3><span>✨ Zenith AI Writer</span><button onclick="closeModal('aiModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Describe what you want to write or research:</p>
+            <input type="text" id="aiTopicInput" placeholder="e.g., Explain quantum computing..." />
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('aiModal')">Cancel</button>
+                <button class="btn-generate" onclick="generateAiContentAtCursor()">Write at Cursor</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiImageModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3><span>🎨 AI Image Generator</span><button onclick="closeModal('aiImageModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Describe the image you want to create:</p>
+            <input type="text" id="aiImagePromptInput" placeholder="e.g., A futuristic cyberpunk city at sunset..." />
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('aiImageModal')">Cancel</button>
+                <button class="btn-generate" onclick="generateAiImageAtCursor()">Generate Image</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shortcutsModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3><span>⌨️ Keyboard Shortcuts</span><button onclick="closeModal('shortcutsModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <ul style="font-size:0.9rem; line-height:1.8; color:var(--text-muted); padding-left:20px; margin:0;">
+                <li><strong style="color:var(--text-main);">Ctrl + B:</strong> Bold text</li>
+                <li><strong style="color:var(--text-main);">Ctrl + I:</strong> Italic text</li>
+                <li><strong style="color:var(--text-main);">Ctrl + U:</strong> Underline text</li>
+                <li><strong style="color:var(--text-main);">Ctrl + Z:</strong> Undo action</li>
+                <li><strong style="color:var(--text-main);">Ctrl + Y:</strong> Redo action</li>
+                <li><strong style="color:var(--text-main);">Click Table:</strong> Delete cells, merge cells, change color & presets</li>
+                <li><strong style="color:var(--text-main);">Click Image/Video:</strong> Opacity sliders, sizing, text wrapping</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Floating Toolbars -->
+    <div id="imgToolbar" class="floating-toolbar">
+        <span style="font-size:0.8rem; color:var(--accent);">Width:</span>
+        <input type="range" id="imgSizeRange" min="50" max="800" step="10" oninput="resizeMediaBySlider(this.value)">
+        <span style="font-size:0.8rem; color:var(--accent);">Opacity:</span>
+        <input type="range" id="imgOpacityRange" min="0.1" max="1" step="0.05" oninput="changeMediaOpacity(this.value)">
+        <select onchange="wrapMedia(this.value)">
+            <option value="" disabled selected>Wrap / Layout...</option>
+            <option value="inline">Inline</option>
+            <option value="left">Float Left</option>
+            <option value="right">Float Right</option>
+            <option value="overlay">Image on Text (Overlay)</option>
+        </select>
+        <button onclick="deleteSelectedElement()" style="background:var(--danger); color:white; border:none;">✕</button>
+    </div>
+
+    <div id="videoToolbar" class="floating-toolbar">
+        <span style="font-size:0.8rem; color:var(--accent);">Width:</span>
+        <input type="range" id="videoSizeRange" min="100" max="800" step="10" oninput="resizeMediaBySlider(this.value)">
+        <span style="font-size:0.8rem; color:var(--accent);">Opacity:</span>
+        <input type="range" id="videoOpacityRange" min="0.1" max="1" step="0.05" oninput="changeMediaOpacity(this.value)">
+        <button onclick="deleteSelectedElement()" style="background:var(--danger); color:white; border:none;">✕</button>
+    </div>
+
+    <div id="tableToolbar" class="floating-toolbar">
+        <span style="font-size:0.8rem; color:var(--accent);">Table:</span>
+        <button onclick="tableAddRow()">+ Row</button>
+        <button onclick="tableAddCol()">+ Col</button>
+        <button onclick="tableDeleteCell()" title="Delete Selected Cell">🗑️ Cell</button>
+        <button onclick="tableMergeCells()" title="Merge Selected Cells">🔗 Merge</button>
+        <label title="Opacity">👻<input type="range" min="0.2" max="1" step="0.05" value="1" oninput="changeTableOpacity(this.value)" style="width:60px;"></label>
+        <select onchange="applyTableStylePreset(this.value)">
+            <option value="" disabled selected>Style...</option>
+            <option value="modern">Modern Dark</option>
+            <option value="clean">Clean Minimal</option>
+            <option value="blue">Vibrant Blue</option>
+        </select>
+        <button onclick="deleteSelectedElement()" style="background:var(--danger); color:white; border:none;">✕</button>
+    </div>
+
+    <script>
+        let db;
+        const dbName = "ZenithCanvasDB";
+        const storeName = "workspace";
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, 2);
+                request.onerror = (e) => reject(e);
+                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains(storeName)) {
+                        database.createObjectStore(storeName, { keyPath: "id" });
+                    }
+                };
+            });
+        }
+
+        async function saveToDB(key, data) {
+            if (!db) await initIndexedDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, "readwrite");
+                const store = tx.objectStore(storeName);
+                store.put({ id: key, payload: JSON.parse(JSON.stringify(data)) });
+                tx.oncomplete = () => resolve();
+                tx.onerror = (e) => reject(e);
+            });
+        }
+
+        async function loadFromDB(key) {
+            if (!db) await initIndexedDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, "readonly");
+                const store = tx.objectStore(storeName);
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.payload : null);
+                req.onerror = (e) => reject(e);
+            });
+        }
+
+        let fileSystem = [];
+        let bin = [];
+        let activeFileId = null;
+        let viewMode = 'list';
+        let selectedElement = null;
+        let savedRange = null;
+
+        const infiniteSymbolCatalog = ['α', 'β', 'γ', 'δ', 'ε', 'θ', 'λ', 'μ', 'π', 'σ', 'ω', '←', '↑', '→', '↓', '∀', '∂', '∃', '∅', '∇', '∈', '∑', '−', '∞', '∫', '♠', '♥', '♦', '★', '☆', '☎', '⌘', '✓', '✔', '✕', '©', '®', '™'];
+
+        const keyboardLayouts = {
+            hi: {
+                name: "Hindi (हिन्दी)",
+                rows: [
+                    ["अ", "आ", "इ", "ई", "उ", "ऊ", "ऋ", "ए", "ऐ", "ओ", "औ"],
+                    ["क", "ख", "ग", "घ", "ङ", "च", "छ", "ज", "झ", "ञ"],
+                    ["ट", "ठ", "ड", "ढ", "ण", "त", "थ", "द", "ध", "न"],
+                    ["प", "फ", "ब", "भ", "म", "य", "र", "ल", "व", "श"],
+                    ["ष", "स", "ह", "क्ष", "त्र", "ज्ञ", "्", "ा", "ि", "ी"],
+                    ["space", "Backspace"]
+                ]
+            },
+            ta: {
+                name: "Tamil (தமிழ்)",
+                rows: [
+                    ["அ", "ஆ", "இ", "ஈ", "உ", "ஊ", "எ", "ஏ", "ஐ", "ஒ", "ஓ"],
+                    ["க்", "ங்", "च्", "ഞ്", "ட்", "ண்", "த்", "ந்", "ப்", "ம்"],
+                    ["ய்", "ர்", "ல்", "வ்", "ழ்", "ள்", "ற்", "ன்", "ஜ", "ஷ"],
+                    ["ஸ", "ஹ", "ா", "ி", "ீ", "ு", "ூ", "ெ", "ே", "ை"],
+                    ["space", "Backspace"]
+                ]
+            },
+            ml: {
+                name: "Malayalam (മലയാളം)",
+                rows: [
+                    ["അ", "ആ", "ഇ", "ഈ", "ഉ", "ഊ", "ഋ", "എ", "ഏ", "ഐ", "ഒ", "ഓ"],
+                    ["ക്", "ങ്", "ച്", "ഞ്", "ട്", "ണ്", "ത്", "ന്", "പ്", "മ്"],
+                    ["യ്", "ര്", "ല്", "ഴ്", "ള്", "റ്", "ശ", "ഷ", "സ", "ഹ"],
+                    ["ാ", "ി", "ീ", "ു", "ൂ", "െ", "േ", "ൈ"],
+                    ["space", "Backspace"]
+                ]
+            },
+            es: {
+                name: "Spanish (Español)",
+                rows: [
+                    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "ñ"],
+                    ["a", "s", "d", "f", "g", "h", "j", "k", "l", "á", "é"],
+                    ["z", "x", "c", "v", "b", "n", "m", "í", "ó", "ú"],
+                    ["space", "Backspace"]
+                ]
+            },
+            fr: {
+                name: "French (Français)",
+                rows: [
+                    ["a", "z", "e", "r", "t", "y", "u", "i", "o", "p", "ç"],
+                    ["q", "s", "d", "f", "g", "h", "j", "k", "l", "m", "à"],
+                    ["w", "x", "c", "v", "b", "n", "é", "è", "ê", "ù"],
+                    ["space", "Backspace"]
+                ]
+            },
+            de: {
+                name: "German (Deutsch)",
+                rows: [
+                    ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p", "ü"],
+                    ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ö", "ä"],
+                    ["y", "x", "c", "v", "b", "n", "m", "ß", ".", ","],
+                    ["space", "Backspace"]
+                ]
+            },
+            ar: {
+                name: "Arabic (العربية)",
+                rows: [
+                    ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"],
+                    ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"],
+                    ["ئ", "ء", "ؤ", "ر", "لا", "ى", "ة", "و", "ز", "ظ"],
+                    ["space", "Backspace"]
+                ]
+            }
+        };
+
+        function switchVirtualKeyboard(langKey) {
+            const container = document.getElementById('virtualKeyboardContainer');
+            if (langKey === 'none') {
+                container.style.display = 'none';
+                return;
+            }
+
+            const layout = keyboardLayouts[langKey];
+            if (!layout) return;
+
+            document.getElementById('vkTitle').textContent = `Virtual Keyboard: ${layout.name}`;
+            const keysArea = document.getElementById('vkKeysArea');
+            keysArea.innerHTML = '';
+
+            layout.rows.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'vk-row';
+                row.forEach(keyChar => {
+                    const btn = document.createElement('button');
+                    btn.className = 'vk-key';
+                    if (keyChar === 'space') {
+                        btn.textContent = 'Space';
+                        btn.style.flexGrow = '1';
+                        btn.onclick = () => insertKeyToEditor(' ');
+                    } else if (keyChar === 'Backspace') {
+                        btn.textContent = '⌫';
+                        btn.onclick = () => handleVirtualBackspace();
+                    } else {
+                        btn.textContent = keyChar;
+                        btn.onclick = () => insertKeyToEditor(keyChar);
+                    }
+                    rowDiv.appendChild(btn);
+                });
+                keysArea.appendChild(rowDiv);
+            });
+
+            container.style.display = 'flex';
+        }
+
+        function closeVirtualKeyboard() {
+            document.getElementById('virtualKeyboardContainer').style.display = 'none';
+            document.getElementById('langKeyboardSelect').value = 'none';
+        }
+
+        function insertKeyToEditor(char) {
+            const editor = document.getElementById('editor');
+            editor.focus();
+            document.execCommand('insertText', false, char);
+            updateActiveNote();
+        }
+
+        function handleVirtualBackspace() {
+            const editor = document.getElementById('editor');
+            editor.focus();
+            document.execCommand('delete', false, null);
+            updateActiveNote();
+        }
+
+        // --- Explicit Color & Highlight Handlers with OK button ---
+        function applyTextColor() {
+            const color = document.getElementById('textColorInput').value;
+            document.getElementById('editor').focus();
+            document.execCommand('foreColor', false, color);
+            updateActiveNote();
+        }
+
+        function applyHighlightColor() {
+            const color = document.getElementById('highlightColorInput').value;
+            document.getElementById('editor').focus();
+            // Wrap selection in styled span for reliable highlight rendering across browsers
+            const selection = window.getSelection();
+            if (!selection.isCollapsed) {
+                const range = selection.getRangeAt(0);
+                const span = document.createElement('span');
+                span.style.backgroundColor = color;
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            } else {
+                document.execCommand('hiliteColor', false, color);
+            }
+            updateActiveNote();
+        }
+
+        // --- File Share, Download & File App Insertion ---
+        function shareActiveFile() {
+            const title = document.getElementById('noteTitle').value || 'Untitled Document';
+            const contentText = document.getElementById('editor').innerText;
+            const shareText = `📄 *${title}*\n\n${contentText.substring(0, 300)}...`;
+
+            if (navigator.share) {
+                navigator.share({ title: title, text: shareText, url: window.location.href }).catch(() => {});
+            } else {
+                const choice = prompt("Share via:\n1. WhatsApp\n2. Telegram\n3. Copy Text", "1");
+                if (choice === "1") {
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                } else if (choice === "2") {
+                    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`, '_blank');
+                } else {
+                    navigator.clipboard.writeText(shareText);
+                    alert("Document text copied to clipboard!");
+                }
+            }
+        }
+
+        function downloadActiveFile() {
+            const title = (document.getElementById('noteTitle').value || 'document').toLowerCase().replace(/\s+/g, '_');
+            const header = document.getElementById('docHeader').value;
+            const bodyHtml = document.getElementById('editor').innerHTML;
+            const footer = document.getElementById('docFooterText').value;
+
+            const fullHtmlDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6;}header{border-bottom:1px dashed #ccc;padding-bottom:10px;text-align:center;color:#666;}footer{border-top:1px dashed #ccc;padding-top:10px;margin-top:40px;color:#666;display:flex;justify-content:space-between;}</style></head><body><header>${header}</header><main>${bodyHtml}</main><footer><span>${footer}</span><span>Generated by Zenith Pro</span></footer></body></html>`;
+
+            const blob = new Blob([fullHtmlDoc], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function insertLocalFileApp() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const result = ev.target.result;
+                    document.getElementById('editor').focus();
+                    restoreCursor();
+
+                    if (file.type.startsWith('image/')) {
+                        document.execCommand('insertHTML', false, `<img src="${result}" style="width:350px; display:inline-block;" />`);
+                    } else if (file.type.startsWith('video/')) {
+                        document.execCommand('insertHTML', false, `<video controls width="400" style="display:inline-block;"><source src="${result}"></video>`);
+                    } else {
+                        document.execCommand('insertHTML', false, `<div style="border:1px solid var(--border); background:var(--card-bg); padding:10px; border-radius:6px; margin:10px 0;">📎 <strong>File Attached:</strong> ${file.name} (${Math.round(file.size/1024)} KB)</div><p></p>`);
+                    }
+                    updateActiveNote();
+                };
+
+                if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        async function initApp() {
+            await initIndexedDB();
+            let storedFS = await loadFromDB('filesystem');
+            let storedBin = await loadFromDB('bin');
+            let storedView = await loadFromDB('viewMode');
+
+            if (storedFS) fileSystem = storedFS;
+            if (storedBin) bin = storedBin;
+            if (storedView) viewMode = storedView;
+
+            renderFileSystem();
+            if (fileSystem.length > 0) {
+                let first = findFirstFile(fileSystem);
+                if (first) selectFile(first.id);
+            }
+        }
+
+        function renderFileSystem() {
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '';
+            
+            const toggleBtn = document.getElementById('viewModeToggleBtn');
+            toggleBtn.textContent = viewMode === 'list' ? 'Grid View' : 'List View';
+
+            if (viewMode === 'list') {
+                const rootUl = document.createElement('ul');
+                rootUl.className = 'tree-list root-list';
+                fileSystem.forEach(node => rootUl.appendChild(createTreeNodeElement(node)));
+                container.appendChild(rootUl);
+            } else {
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid-view-container';
+                fileSystem.forEach(node => {
+                    const card = document.createElement('div');
+                    card.className = 'grid-card';
+                    card.innerHTML = `<span style="font-size:1.5rem;">${node.type === 'folder' ? '📁' : '📄'}</span><span style="margin-top:6px;">${node.title}</span>`;
+                    card.onclick = () => {
+                        if (node.type === 'file') selectFile(node.id);
+                        else { node.isOpen = !node.isOpen; saveAndRender(); }
+                    };
+                    gridDiv.appendChild(card);
+                });
+                container.appendChild(gridDiv);
+            }
+
+            const binListEl = document.getElementById('binList');
+            binListEl.innerHTML = '';
+            bin.forEach(node => {
+                const li = document.createElement('li');
+                li.className = 'note-item';
+                li.innerHTML = `
+                    <span class="note-title-text" style="color:var(--text-muted);">${node.type === 'folder' ? '📁' : '📄'} ${node.title}</span>
+                    <div class="file-actions" style="opacity:1;">
+                        <button onclick="restoreFromBin(${node.id})" title="Restore">♻️</button>
+                        <button class="delete-btn" onclick="deleteForever(${node.id})" title="Delete Forever">✕</button>
+                    </div>
+                `;
+                binListEl.appendChild(li);
+            });
+        }
+
+        function toggleViewMode() {
+            viewMode = viewMode === 'list' ? 'grid' : 'list';
+            saveToDB('viewMode', viewMode);
+            renderFileSystem();
+        }
+
+        function createTreeNodeElement(node) {
+            const li = document.createElement('li');
+            li.className = 'tree-item';
+            const div = document.createElement('div');
+            div.className = `tree-node-content ${node.id === activeFileId ? 'active' : ''}`;
+            
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'node-label';
+            
+            if (node.type === 'folder') {
+                labelSpan.innerHTML = `${node.isOpen ? '📂' : '📁'} ${node.title}`;
+                div.onclick = (e) => { e.stopPropagation(); node.isOpen = !node.isOpen; saveAndRender(); };
+            } else {
+                labelSpan.innerHTML = `📄 ${node.title}`;
+                div.onclick = (e) => { e.stopPropagation(); selectFile(node.id); };
+            }
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'node-actions';
+
+            if (node.type === 'folder') {
+                const addFileBtn = document.createElement('button');
+                addFileBtn.textContent = '+📄';
+                addFileBtn.onclick = (e) => { e.stopPropagation(); addChildItem(node.id, 'file'); };
+                const addFolderBtn = document.createElement('button');
+                addFolderBtn.textContent = '+📁';
+                addFolderBtn.onclick = (e) => { e.stopPropagation(); addChildItem(node.id, 'folder'); };
+                actionsDiv.appendChild(addFileBtn);
+                actionsDiv.appendChild(addFolderBtn);
+            }
+
+            const renameBtn = document.createElement('button');
+            renameBtn.textContent = '✏️';
+            renameBtn.onclick = (e) => { e.stopPropagation(); renameNode(node.id); };
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.onclick = (e) => { e.stopPropagation(); moveToBin(node.id); };
+
+            actionsDiv.appendChild(renameBtn);
+            actionsDiv.appendChild(deleteBtn);
+            div.appendChild(labelSpan);
+            div.appendChild(actionsDiv);
+            li.appendChild(div);
+
+            if (node.type === 'folder' && node.isOpen && node.children && node.children.length > 0) {
+                const childUl = document.createElement('ul');
+                childUl.className = 'tree-list';
+                node.children.forEach(child => childUl.appendChild(createTreeNodeElement(child)));
+                li.appendChild(childUl);
+            }
+            return li;
+        }
+
+        function findNode(id, list = fileSystem) {
+            for (let node of list) {
+                if (node.id === id) return node;
+                if (node.type === 'folder' && node.children) {
+                    let found = findNode(id, node.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        function removeNode(id, list = fileSystem) {
+            for (let i = 0; i < list.length; i++) {
+                if (list[i].id === id) return list.splice(i, 1)[0];
+                if (list[i].type === 'folder' && list[i].children) {
+                    let removed = removeNode(id, list[i].children);
+                    if (removed) return removed;
+                }
+            }
+            return null;
+        }
+
+        function selectFile(id) {
+            const node = findNode(id);
+            if (node && node.type === 'file') {
+                activeFileId = id;
+                document.getElementById('noteTitle').value = node.title;
+                document.getElementById('editor').innerHTML = node.content;
+                document.getElementById('docHeader').value = node.header || '';
+                document.getElementById('docFooterText').value = node.footerText || '';
+                updatePageNumberStyle(node.pageStyle || 'total');
+                updateWordCount(document.getElementById('editor').innerText);
+                renderFileSystem();
+                hideAllToolbars();
+            }
+        }
+
+        function createRootItem(type) {
+            const newNode = type === 'file' ? {
+                id: Date.now(), type: 'file', title: 'New File', content: '<p>Start typing...</p>', header: '', footerText: '', pageStyle: 'total'
+            } : {
+                id: Date.now(), type: 'folder', title: 'New Folder', isOpen: true, children: []
+            };
+            fileSystem.push(newNode);
+            saveAndRender();
+            if (type === 'file') selectFile(newNode.id);
+        }
+
+        function addChildItem(parentId, type) {
+            const parentNode = findNode(parentId);
+            if (parentNode && parentNode.type === 'folder') {
+                parentNode.isOpen = true;
+                const newNode = type === 'file' ? {
+                    id: Date.now(), type: 'file', title: 'New Sub-File', content: '<p>Start typing...</p>', header: '', footerText: '', pageStyle: 'total'
+                } : {
+                    id: Date.now(), type: 'folder', title: 'New Sub-Folder', isOpen: true, children: []
+                };
+                if (!parentNode.children) parentNode.children = [];
+                parentNode.children.push(newNode);
+                saveAndRender();
+                if (type === 'file') selectFile(newNode.id);
+            }
+        }
+
+        function renameNode(id) {
+            const node = findNode(id);
+            if (!node) return;
+            const newName = prompt(`Rename ${node.type}:`, node.title);
+            if (newName && newName.trim() !== "") {
+                node.title = newName.trim();
+                saveAndRender();
+                if (node.type === 'file' && activeFileId === id) document.getElementById('noteTitle').value = node.title;
+            }
+        }
+
+        function moveToBin(id) {
+            let removed = removeNode(id);
+            if (removed) {
+                bin.push(removed);
+                if (removed.type === 'file' && activeFileId === id) {
+                    let first = findFirstFile(fileSystem);
+                    if (first) selectFile(first.id);
+                    else {
+                        document.getElementById('noteTitle').value = '';
+                        document.getElementById('editor').innerHTML = '';
+                        activeFileId = null;
+                    }
+                }
+                saveAndRender();
+            }
+        }
+
+        function findFirstFile(list) {
+            for (let node of list) {
+                if (node.type === 'file') return node;
+                if (node.type === 'folder' && node.children) {
+                    let f = findFirstFile(node.children);
+                    if (f) return f;
+                }
+            }
+            return null;
+        }
+
+        function restoreFromBin(id) {
+            for (let i = 0; i < bin.length; i++) {
+                if (bin[i].id === id) {
+                    let restored = bin.splice(i, 1)[0];
+                    fileSystem.push(restored);
+                    saveAndRender();
+                    if (restored.type === 'file') selectFile(restored.id);
+                    break;
+                }
+            }
+        }
+
+        function deleteForever(id) {
+            if (confirm("Permanently delete?")) {
+                bin = bin.filter(n => n.id !== id);
+                saveAndRender();
+            }
+        }
+
+        function clearEntireBin() {
+            if (bin.length === 0) return;
+            if (confirm("Permanently empty the entire bin?")) {
+                bin = [];
+                saveAndRender();
+            }
+        }
+
+        function updateActiveNote() {
+            if (!activeFileId) return;
+            const node = findNode(activeFileId);
+            if (node && node.type === 'file') {
+                node.title = document.getElementById('noteTitle').value;
+                node.content = document.getElementById('editor').innerHTML;
+                node.header = document.getElementById('docHeader').value;
+                node.footerText = document.getElementById('docFooterText').value;
+                updateWordCount(document.getElementById('editor').innerText);
+                saveToDB('filesystem', fileSystem);
+                saveToDB('bin', bin);
+            }
+        }
+
+        function updateWordCount(text) {
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            document.getElementById('wordCount').textContent = `${words} word${words === 1 ? '' : 's'}`;
+            const simulatedPages = Math.max(1, Math.ceil(words / 250));
+            const node = findNode(activeFileId);
+            const style = node ? (node.pageStyle || 'total') : 'total';
+            if (style === 'simple') document.getElementById('docPageNumberDisplay').textContent = `Page ${simulatedPages}`;
+            else if (style === 'total') document.getElementById('docPageNumberDisplay').textContent = `Page ${simulatedPages} of ${simulatedPages}`;
+            else if (style === 'center') document.getElementById('docPageNumberDisplay').textContent = `- ${simulatedPages} -`;
+        }
+
+        function updatePageNumberStyle(style) {
+            const node = findNode(activeFileId);
+            if (node && node.type === 'file') { node.pageStyle = style; updateWordCount(document.getElementById('editor').innerText); saveAndRender(); }
+        }
+
+        function formatDoc(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor').focus();
+            updateActiveNote();
+        }
+
+        function applyBulletStyle(styleType) {
+            if (styleType === 'decimal' || styleType === 'upper-roman') document.execCommand('insertOrderedList', false, null);
+            else document.execCommand('insertUnorderedList', false, null);
+            setTimeout(() => {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    let list = selection.anchorNode.parentElement.closest('ul, ol');
+                    if (list) list.style.listStyleType = styleType;
+                }
+            }, 50);
+            updateActiveNote();
+        }
+
+        function insertHyperlink() {
+            const url = prompt("Enter URL:");
+            if (!url) return;
+            const selection = window.getSelection();
+            if (!selection.toString()) {
+                const text = prompt("Display text:", url);
+                if (!text) return;
+                document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+            } else {
+                document.execCommand('createLink', false, url);
+            }
+            updateActiveNote();
+        }
+
+        function insertTextBox() {
+            const html = `<div class="custom-text-box" contenteditable="true">Type inside your custom text box here...</div><p></p>`;
+            document.execCommand('insertHTML', false, html);
+            updateActiveNote();
+        }
+
+        function insertChecklist() {
+            const html = `<div class="checklist-item"><input type="checkbox"> <span contenteditable="true">Checklist task item</span></div><p></p>`;
+            document.execCommand('insertHTML', false, html);
+            updateActiveNote();
+        }
+
+        function insertPollWidget() {
+            const question = prompt("Enter Poll Question:", "What is your preference?");
+            if (!question) return;
+            const html = `
+                <div class="poll-widget">
+                    <strong>📊 ${question}</strong>
+                    <div class="poll-option" onclick="this.style.background='rgba(56,189,248,0.3)'">Option A</div>
+                    <div class="poll-option" onclick="this.style.background='rgba(56,189,248,0.3)'">Option B</div>
+                </div><p></p>`;
+            document.execCommand('insertHTML', false, html);
+            updateActiveNote();
+        }
+
+        let isDrawingSymbol = false;
+        const drawCanvas = document.getElementById('drawCanvas');
+        const ctxSymbol = drawCanvas.getContext('2d');
+        drawCanvas.addEventListener('mousedown', (e) => { isDrawingSymbol = true; ctxSymbol.beginPath(); const r = drawCanvas.getBoundingClientRect(); ctxSymbol.moveTo(e.clientX - r.left, e.clientY - r.top); ctxSymbol.strokeStyle = '#38bdf8'; ctxSymbol.lineWidth = 3; });
+        drawCanvas.addEventListener('mousemove', (e) => { if (!isDrawingSymbol) return; const r = drawCanvas.getBoundingClientRect(); ctxSymbol.lineTo(e.clientX - r.left, e.clientY - r.top); ctxSymbol.stroke(); triggerSymbolMatching(); });
+        drawCanvas.addEventListener('mouseup', () => isDrawingSymbol = false);
+
+        function clearDrawCanvas() { ctxSymbol.clearRect(0, 0, drawCanvas.width, drawCanvas.height); document.getElementById('symbolMatchGrid').innerHTML = ''; }
+        function triggerSymbolMatching() {
+            const grid = document.getElementById('symbolMatchGrid');
+            grid.innerHTML = '';
+            [...infiniteSymbolCatalog].sort(() => 0.5 - Math.random()).slice(0, 15).forEach(sym => {
+                const chip = document.createElement('div');
+                chip.className = 'symbol-chip';
+                chip.textContent = sym;
+                chip.onclick = () => { insertSymbolAtCursor(sym); closeModal('drawSymbolModal'); };
+                grid.appendChild(chip);
+            });
+        }
+        function openDrawSymbolModal() { saveCursor(); document.getElementById('drawSymbolModal').style.display = 'flex'; clearDrawCanvas(); }
+        function insertSymbolAtCursor(sym) { document.getElementById('editor').focus(); restoreCursor(); document.execCommand('insertText', false, sym); updateActiveNote(); }
+
+        let isDrawingImage = false;
+        const imgCanvas = document.getElementById('imageDrawCanvas');
+        const ctxImg = imgCanvas.getContext('2d');
+        imgCanvas.addEventListener('mousedown', (e) => { isDrawingImage = true; ctxImg.beginPath(); const r = imgCanvas.getBoundingClientRect(); ctxImg.moveTo(e.clientX - r.left, e.clientY - r.top); ctxImg.strokeStyle = '#f8fafc'; ctxImg.lineWidth = 3; });
+        imgCanvas.addEventListener('mousemove', (e) => { if (!isDrawingImage) return; const r = imgCanvas.getBoundingClientRect(); ctxImg.lineTo(e.clientX - r.left, e.clientY - r.top); ctxImg.stroke(); });
+        imgCanvas.addEventListener('mouseup', () => isDrawingImage = false);
+
+        function openDrawImageModal() { saveCursor(); document.getElementById('drawImageModal').style.display = 'flex'; clearImageCanvas(); }
+        function clearImageCanvas() { ctxImg.clearRect(0, 0, imgCanvas.width, imgCanvas.height); }
+        function insertDrawnImageToEditor() {
+            const dataUrl = imgCanvas.toDataURL();
+            document.getElementById('editor').focus();
+            restoreCursor();
+            document.execCommand('insertHTML', false, `<img src="${dataUrl}" style="width: 300px; display: inline-block;" />`);
+            closeModal('drawImageModal');
+            updateActiveNote();
+        }
+
+        function openShapeModal() { saveCursor(); document.getElementById('shapeModal').style.display = 'flex'; }
+        function insertSelectedShape() {
+            const type = document.getElementById('shapeTypeSelect').value;
+            const fill = document.getElementById('shapeFillSelect').value;
+            const color = document.getElementById('shapePickerColor').value;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 120; canvas.height = 120;
+            const c = canvas.getContext('2d');
+            c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 4;
+
+            if (type === 'rect') {
+                if (fill === 'filled') c.fillRect(10, 10, 100, 100);
+                else c.strokeRect(10, 10, 100, 100);
+            } else if (type === 'circle') {
+                c.beginPath(); c.arc(60, 60, 50, 0, 2 * Math.PI);
+                if (fill === 'filled') c.fill(); else c.stroke();
+            } else if (type === 'triangle') {
+                c.beginPath(); c.moveTo(60, 10); c.lineTo(110, 110); c.lineTo(10, 110); c.closePath();
+                if (fill === 'filled') c.fill(); else c.stroke();
+            } else if (type === 'star') {
+                c.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    c.lineTo(60 + 50 * Math.cos((18 + i * 72) * Math.PI / 180), 60 - 50 * Math.sin((18 + i * 72) * Math.PI / 180));
+                    c.lineTo(60 + 20 * Math.cos((54 + i * 72) * Math.PI / 180), 60 - 20 * Math.sin((54 + i * 72) * Math.PI / 180));
+                }
+                c.closePath();
+                if (fill === 'filled') c.fill(); else c.stroke();
+            }
+
+            const dataUrl = canvas.toDataURL();
+            document.getElementById('editor').focus();
+            restoreCursor();
+            document.execCommand('insertHTML', false, `<img src="${dataUrl}" style="width: 80px; display: inline-block;" />`);
+            closeModal('shapeModal');
+            updateActiveNote();
+        }
+
+        function openAiModal() { saveCursor(); document.getElementById('aiModal').style.display = 'flex'; document.getElementById('aiTopicInput').focus(); }
+        function generateAiContentAtCursor() {
+            const topic = document.getElementById('aiTopicInput').value.trim();
+            if(!topic) return;
+            closeModal('aiModal');
+            document.getElementById('editor').focus();
+            restoreCursor();
+            const generatedHtml = `
+                <div style="border-left: 3px solid var(--ai-accent); padding-left: 12px; margin: 15px 0; background: rgba(192, 132, 252, 0.05); padding: 10px; border-radius: 4px;">
+                    <p style="color: var(--ai-accent); margin: 0 0 5px 0;"><strong>✨ AI Writer Output (${topic}):</strong></p>
+                    <p>Comprehensive research and analysis regarding <strong>${topic}</strong> highlights key advancements, structural optimizations, and multi-sector scalability. Industry standards emphasize enhanced parallel processing and streamlined deployment pipelines to maximize workflow efficiency.</p>
+                </div><p></p>
+            `;
+            document.execCommand('insertHTML', false, generatedHtml);
+            updateActiveNote();
+        }
+
+        function openAiImageModal() { saveCursor(); document.getElementById('aiImageModal').style.display = 'flex'; document.getElementById('aiImagePromptInput').focus(); }
+        function generateAiImageAtCursor() {
+            const promptText = document.getElementById('aiImagePromptInput').value.trim();
+            if(!promptText) return;
+            closeModal('aiImageModal');
+            document.getElementById('editor').focus();
+            restoreCursor();
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 400; canvas.height = 250;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 400, 250);
+            grad.addColorStop(0, '#0f172a'); grad.addColorStop(0.5, '#1e293b'); grad.addColorStop(1, '#0369a1');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, 400, 250);
+
+            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 14px system-ui'; ctx.fillText("🎨 AI Generated Artwork:", 20, 40);
+            ctx.fillStyle = '#f8fafc'; ctx.font = '16px system-ui';
+            let words = promptText.split(' '); let line = ''; let y = 80;
+            for(let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                if(ctx.measureText(testLine).width > 360 && n > 0) { ctx.fillText(line, 20, y); line = words[n] + ' '; y += 24; }
+                else { line = testLine; }
+            }
+            ctx.fillText(line, 20, y);
+
+            const dataUrl = canvas.toDataURL();
+            document.execCommand('insertHTML', false, `<div style="text-align:center; margin:15px 0;"><img src="${dataUrl}" style="width: 400px; border-radius: 8px; border: 1px solid var(--accent); display: inline-block;" title="AI Art: ${promptText}"/><br><span style="font-size:0.75rem; color:var(--text-muted);">AI Prompt: "${promptText}"</span></div><p></p>`);
+            updateActiveNote();
+        }
+
+        function promptImageSource() {
+            const c = prompt("Type 'file' to upload, or 'link' for web URL:");
+            if(c === 'file') createHiddenPicker('image');
+            else if(c === 'link') { const u = prompt("Image URL:"); if(u) { document.execCommand('insertHTML', false, `<img src="${u}" style="width: 350px; opacity: 1;" />`); updateActiveNote(); } }
+        }
+        function promptVideoSource() {
+            const c = prompt("Type 'file' to upload, or 'link' for video URL:");
+            if(c === 'file') createHiddenPicker('video');
+            else if(c === 'link') { const u = prompt("Video URL:"); if(u) { document.execCommand('insertHTML', false, `<video controls width="400" style="opacity:1;"><source src="${u}"></video>`); updateActiveNote(); } }
+        }
+        function createHiddenPicker(type) {
+            const i = document.createElement('input'); i.type = 'file'; i.accept = type === 'image' ? 'image/*' : 'video/mp4';
+            i.onchange = (e) => {
+                const f = e.target.files[0]; if(!f) return;
+                if(type === 'image') {
+                    const r = new FileReader(); r.onload = (ev) => { document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="width: 350px; opacity:1;" />`); updateActiveNote(); }; r.readAsDataURL(f);
+                } else {
+                    const b = URL.createObjectURL(f); document.execCommand('insertHTML', false, `<video controls width="400" style="opacity:1;"><source src="${b}" type="${f.type}"></video>`); updateActiveNote();
+                }
+            };
+            i.click();
+        }
+
+        function insertTable() {
+            let html = '<table style="width:100%; border-collapse: collapse;">';
+            for (let i = 0; i < 3; i++) {
+                html += '<tr>';
+                for (let j = 0; j < 3; j++) html += `<td style="border: 2px solid #334155; padding: 10px; background-color: ${i===0?'#1e293b':'transparent'}">Cell</td>`;
+                html += '</tr>';
+            }
+            html += '</table><p></p>';
+            document.execCommand('insertHTML', false, html);
+            updateActiveNote();
+        }
+        function tableAddRow() {
+            if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
+            const cols = selectedElement.rows[0].cells.length;
+            const r = selectedElement.insertRow();
+            for(let i=0; i<cols; i++) { const c = r.insertCell(); c.style.border = '2px solid #334155'; c.style.padding = '10px'; c.innerText = 'Cell'; }
+            updateActiveNote(); showToolbar(selectedElement, tableToolbar);
+        }
+        function tableAddCol() {
+            if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
+            for(let r of selectedElement.rows) { const c = r.insertCell(); c.style.border = '2px solid #334155'; c.style.padding = '10px'; c.innerText = 'Cell'; }
+            updateActiveNote(); showToolbar(selectedElement, tableToolbar);
+        }
+        function tableDeleteCell() {
+            const s = window.getSelection();
+            let cell = s.anchorNode ? s.anchorNode.parentElement.closest('td, th') : null;
+            if(cell) { cell.remove(); updateActiveNote(); hideAllToolbars(); }
+        }
+        function tableMergeCells() {
+            const s = window.getSelection();
+            let cell = s.anchorNode ? s.anchorNode.parentElement.closest('td, th') : null;
+            if(cell) {
+                let nextCell = cell.nextElementSibling;
+                if(nextCell) {
+                    cell.colSpan = (cell.colSpan || 1) + (nextCell.colSpan || 1);
+                    cell.innerHTML += " " + nextCell.innerHTML;
+                    nextCell.remove();
+                    updateActiveNote();
+                    showToolbar(selectedElement, tableToolbar);
+                }
+            }
+        }
+        function changeTableOpacity(val) {
+            if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
+            selectedElement.style.opacity = val;
+            updateActiveNote();
+            showToolbar(selectedElement, tableToolbar);
+        }
+        function applyTableStylePreset(preset) {
+            if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
+            if(preset === 'modern') {
+                for(let i=0; i<selectedElement.rows.length; i++) {
+                    let r = selectedElement.rows[i];
+                    for(let c of r.cells) { c.style.border='1px solid #334155'; c.style.padding='10px'; c.style.backgroundColor=i===0?'#1e293b':'#0f172a'; }
+                }
+            } else if(preset === 'clean') {
+                for(let r of selectedElement.rows) {
+                    for(let c of r.cells) { c.style.border='none'; c.style.borderBottom='1px solid #334155'; c.style.padding='12px'; c.style.backgroundColor='transparent'; }
+                }
+            } else if(preset === 'blue') {
+                for(let i=0; i<selectedElement.rows.length; i++) {
+                    let r = selectedElement.rows[i];
+                    for(let c of r.cells) { c.style.border='1px solid #38bdf8'; c.style.padding='10px'; c.style.backgroundColor=i===0?'#0369a1':'rgba(3,105,161,0.15)'; }
+                }
+            }
+            updateActiveNote(); showToolbar(selectedElement, tableToolbar);
+        }
+
+        document.getElementById('editor').addEventListener('click', (e) => {
+            hideAllToolbars();
+            if (e.target.tagName === 'IMG') {
+                selectedElement = e.target;
+                document.getElementById('imgSizeRange').value = parseInt(selectedElement.style.width) || 350;
+                document.getElementById('imgOpacityRange').value = selectedElement.style.opacity || 1;
+                showToolbar(selectedElement, imgToolbar);
+            } else if (e.target.tagName === 'VIDEO') {
+                selectedElement = e.target;
+                document.getElementById('videoSizeRange').value = parseInt(selectedElement.style.width) || 400;
+                document.getElementById('videoOpacityRange').value = selectedElement.style.opacity || 1;
+                showToolbar(selectedElement, videoToolbar);
+            } else {
+                let cell = e.target.closest('td, th');
+                if (cell) { selectedElement = cell.closest('table'); showToolbar(selectedElement, tableToolbar); }
+            }
+        });
+
+        function showToolbar(el, toolbar) {
+            const rect = el.getBoundingClientRect();
+            toolbar.style.display = 'flex';
+            toolbar.style.top = `${window.scrollY + rect.top - 40}px`;
+            toolbar.style.left = `${window.scrollX + rect.left}px`;
+        }
+        function hideAllToolbars() { imgToolbar.style.display = 'none'; videoToolbar.style.display = 'none'; tableToolbar.style.display = 'none'; }
+        
+        function resizeMediaBySlider(val) {
+            if(!selectedElement) return;
+            selectedElement.style.width = val + 'px';
+            updateActiveNote();
+            showToolbar(selectedElement, selectedElement.tagName === 'IMG' ? imgToolbar : videoToolbar);
+        }
+        function changeMediaOpacity(val) {
+            if(!selectedElement) return;
+            selectedElement.style.opacity = val;
+            updateActiveNote();
+            showToolbar(selectedElement, selectedElement.tagName === 'IMG' ? imgToolbar : videoToolbar);
+        }
+        function wrapMedia(wrapType) {
+            if(!selectedElement || selectedElement.tagName !== 'IMG') return;
+            if(wrapType === 'inline') { selectedElement.style.float='none'; selectedElement.style.margin='10px'; }
+            else if(wrapType === 'left') { selectedElement.style.float='left'; selectedElement.style.margin='10px 15px 10px 0'; }
+            else if(wrapType === 'right') { selectedElement.style.float='right'; selectedElement.style.margin='10px 0 10px 15px'; }
+            else if(wrapType === 'overlay') { selectedElement.style.position='absolute'; selectedElement.style.zIndex='10'; }
+            updateActiveNote(); showToolbar(selectedElement, imgToolbar);
+        }
+        function deleteSelectedElement() { if(selectedElement) { selectedElement.remove(); hideAllToolbars(); updateActiveNote(); } }
+
+        function saveCursor() {
+            const s = window.getSelection();
+            savedRange = s.rangeCount > 0 && document.getElementById('editor').contains(s.anchorNode) ? s.getRangeAt(0) : document.createRange();
+        }
+        function restoreCursor() {
+            const s = window.getSelection();
+            if(savedRange) { s.removeAllRanges(); s.addRange(savedRange); }
+        }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function openShortcutsModal() { document.getElementById('shortcutsModal').style.display = 'flex'; }
+
+        async function saveAndRender() {
+            await saveToDB('filesystem', fileSystem);
+            await saveToDB('bin', bin);
+            renderFileSystem();
+        }
+
+        initApp();
+    </script>
+</body>
+</html>
