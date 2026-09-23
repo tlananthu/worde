@@ -1,163 +1,791 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Game Launcher</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #f1f5f9;
-      color: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
-
-    h1 {
-      margin-bottom: 32px;
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-    }
-
-    .game-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 24px;
-      width: 100%;
-      max-width: 1200px;
-    }
-
-    .game-card {
-      display: flex;
-      flex-direction: column;
-      background: #ffffff;
-      border-radius: 14px;
-      overflow: hidden;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e2e8f0;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .game-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
-      border-color: #cbd5e1;
-    }
-
-    .image-container {
-      width: 100%;
-      height: 180px;
-      background-color: #e2e8f0;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .image-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.3s ease;
-    }
-
-    .game-card:hover .image-container img {
-      transform: scale(1.05);
-    }
-
-    .card-content {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .card-file {
-      font-size: 0.85rem;
-      color: #64748b;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Arcade Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        arcade: {
+                            bg: '#090d16',
+                            card: '#111827',
+                            border: '#1f2937',
+                            neonPink: '#ec4899',
+                            neonCyan: '#06b6d4',
+                            neonPurple: '#8b5cf6',
+                            neonGreen: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #090d16; color: #f3f4f6; }
+        .font-arcade { font-family: 'Press Start 2P', monospace; }
+        .neon-glow { box-shadow: 0 0 20px rgba(6, 182, 212, 0.25); }
+        .neon-glow-pink { box-shadow: 0 0 20px rgba(236, 72, 153, 0.25); }
+        .neon-glow-purple { box-shadow: 0 0 20px rgba(139, 92, 246, 0.25); }
+        .neon-text { text-shadow: 0 0 10px rgba(6, 182, 212, 0.75); }
+        .neon-text-pink { text-shadow: 0 0 10px rgba(236, 72, 153, 0.75); }
+        /* Custom scrollbar for modals and dashboards */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-black">
 
-  <h1>Game Hub</h1>
+    <header class="sticky top-0 z-40 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-pink-500 flex items-center justify-center neon-glow">
+                    <svg class="w-6 h-6 text-slate-950 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-500 bg-clip-text text-transparent">NEXUS ARCADE</h1>
+                    <p class="text-xs text-slate-400 font-medium tracking-wide">20 Legendary Browser Games</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-2 bg-slate-900 px-4 py-2 rounded-full border border-slate-800 text-xs font-semibold text-cyan-400">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>System Online • 20 Games Loaded</span>
+                </div>
+                <button onclick="openRandomGame()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 active:scale-95 text-xs uppercase tracking-wider">
+                    🎲 Quick Play
+                </button>
+            </div>
+        </div>
+    </header>
 
-  <div class="game-grid">
-    <!-- Box 1: Bubble Popper -->
-    <a href="Bubble popper.html" class="game-card">
-      <div class="image-container">
-        <img src="data:image/jpeg;base64,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" alt="Bubble Popper">
-      </div>
-      <div class="card-content">
-        <span class="card-title">Bubble Popper</span>
-        <span class="card-file">bubble popper.html</span>
-      </div>
-    </a>
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl sm:text-5xl font-black tracking-tight mb-4">Choose Your <span class="neon-text text-cyan-400">Challenge</span></h2>
+            <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">Immerse yourself in 19 ultra-responsive retro & modern micro-games built right into the browser, plus the legendary 20th Jumper experience!</p>
+        </div>
 
-    <!-- Box 2: Flappy Bird -->
-    <a href="Flappy bird.html" class="game-card">
-      <div class="image-container">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGSyKbivJwDVTN2X946yz7dEm3WhrVnOwemVhPot9eqg&amp;s" alt="Flappy Bird">
-      </div>
-      <div class="card-content">
-        <span class="card-title">Flappy Bird</span>
-        <span class="card-file">flappy bird.html</span>
-      </div>
-    </a>
+        <div id="gameGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Game cards will be dynamically injected via JavaScript for optimal code organization -->
+        </div>
+    </main>
 
-    <!-- Box 3: Practice Archery -->
-    <a href="Practice archery.html" class="game-card">
-      <div class="image-container">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPglRzV5Ft8llrWnHoR4kyPsl6yg2cV-r1O9OgKLVsPQ&amp;s=10" alt="Practice Archery">
-      </div>
-      <div class="card-content">
-        <span class="card-title">Practice Archery</span>
-        <span class="card-file">practice archery.html</span>
-      </div>
-    </a>
+    <div id="gameModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span id="modalIcon" class="text-2xl">🎮</span>
+                    <div>
+                        <h3 id="modalTitle" class="text-lg font-bold text-white tracking-wide">Game Title</h3>
+                        <p id="modalCategory" class="text-xs text-cyan-400 font-medium">Arcade Mini</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                    ✕
+                </button>
+            </div>
+            <!-- Modal Body / Active Game Viewport -->
+            <div id="modalBody" class="p-6 overflow-y-auto flex-grow flex flex-col items-center justify-center text-center">
+                <!-- Active game canvas or UI goes here -->
+            </div>
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                <span id="modalScoreDisplay">Score: 0</span>
+                <button onclick="restartActiveGame()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium">🔄 Restart Game</button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Box 4: Jumper -->
-    <a href="Jumper.html" class="game-card">
-      <div class="image-container">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR-LuFEiTDij0jMF3Hco7YQ_TzGh3cEUFPjEyWROQXGKg&amp;s=10" alt="Jumper">
-      </div>
-      <div class="card-content">
-        <span class="card-title">Jumper</span>
-        <span class="card-file">Jumper.html</span>
-      </div>
-    </a>
+    <footer class="bg-slate-950 border-t border-slate-800 py-8 mt-12 text-center text-xs text-slate-500">
+        <p>Nexus Arcade Hub &copy; 2026. All 19 micro-games powered by pure HTML5, Tailwind, and JavaScript.</p>
+    </footer>
 
-    <!-- Box 5: Cyber -->
-    <a href="Cyber.html" class="game-card">
-      <div class="image-container">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKeO61y1pC6j_QLopUmweOSvS046fg99xWqsWiVzex7w&amp;s=10" alt="Cyber">
-      </div>
-      <div class="card-content">
-        <span class="card-title">Cyber</span>
-        <span class="card-file">cyber.html</span>
-      </div>
-    </a>
-  </div>
+    <script>
+        // Game definitions (1-19 micro games, 20th Jumper redirect)
+        const gamesData = [
+            { id: 1, name: "Tic-Tac-Toe", category: "Strategy", icon: "❌", desc: "Classic X and O tactical grid challenge.", badge: "Multiplayer" },
+            { id: 2, name: "Clicker Surge", category: "Action", icon: "⚡", desc: "Test your rapid clicking speed in 10 seconds.", badge: "Fast" },
+            { id: 3, name: "Memory Match", category: "Puzzle", icon: "🧠", desc: "Flip cards and match glowing neon pairs.", badge: "Brain" },
+            { id: 4, name: "Rock Paper Scissors", category: "Classic", icon: "✊", desc: "Battle the AI in ultimate hand-to-hand combat.", badge: "Casual" },
+            { id: 5, name: "Neon Snake Mini", category: "Retro", icon: "🐍", desc: "Eat food, grow longer, avoid hitting walls.", badge: "Arcade" },
+            { id: 6, name: "Color Guess", category: "Puzzle", icon: "🎨", desc: "Match the target RGB hex color accurately.", badge: "Visual" },
+            { id: 7, name: "Reaction Timer", category: "Skill", icon: "⏱️", desc: "Test your reflexes when the green light flashes.", badge: "Reflex" },
+            { id: 8, name: "Pong Mini", category: "Retro", icon: "🏓", desc: "Single-player paddle bounce wall challenge.", badge: "Action" },
+            { id: 9, name: "Word Scramble", category: "Puzzle", icon: "🔤", desc: "Unscramble tech and arcade vocabulary words.", badge: "Brain" },
+            { id: 10, name: "Quick Math", category: "Educational", icon: "🔢", desc: "Solve fast arithmetic equations under pressure.", badge: "Smart" },
+            { id: 11, name: "Slot Machine", category: "Chance", icon: "🎰", desc: "Spin the reels and chase the jackpot triple 7s.", badge: "Lucky" },
+            { id: 12, name: "Dice Roll", category: "Chance", icon: "🎲", desc: "Roll high numbers against the computer dealer.", badge: "Lucky" },
+            { id: 13, name: "Balloon Pop", category: "Action", icon: "🎈", desc: "Pop as many floating neon balloons as possible.", badge: "Fun" },
+            { id: 14, name: "Drawing Board", category: "Creative", icon: "✏️", desc: "Sketch freely on an interactive neon canvas.", badge: "Sandbox" },
+            { id: 15, name: "Simon Says", category: "Memory", icon: "🎶", desc: "Repeat the randomized glowing light sequence.", badge: "Memory" },
+            { id: 16, name: "Magic 8 Ball", category: "Casual", icon: "🎱", desc: "Ask your deepest questions and seek answers.", badge: "Fortune" },
+            { id: 17, name: "Catch Coin", category: "Action", icon: "🪙", desc: "Catch falling golden coins with your basket.", badge: "Arcade" },
+            { id: 18, name: "Snake Eyes", category: "Strategy", icon: "👁️", desc: "Grid light-trail survival obstacle challenge.", badge: "Survival" },
+            { id: 19, name: "Number Guesser", category: "Puzzle", icon: "🎯", desc: "Guess the hidden mystery number between 1 and 100.", badge: "Logic" },
+            { id: 20, name: "Jumper", category: "Platformer", icon: "🦘", desc: "Launch into the dedicated jumper experience!", badge: "Special", isJumper: true }
+        ];
 
+        let currentGameId = null;
+        let gameTimer = null;
+        let gameInterval = null;
+        let activeGameState = {};
+
+        // Render Game Grid
+        function renderGrid() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = gamesData.map(game => {
+                if (game.isJumper) {
+                    return `
+                        <a href="Jumper.html" class="group relative bg-gradient-to-br from-purple-900/40 via-slate-900 to-pink-900/40 border-2 border-pink-500/50 hover:border-pink-400 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:neon-glow-pink">
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-4xl p-3 bg-pink-500/10 rounded-2xl border border-pink-500/30 group-hover:scale-110 transition-transform">${game.icon}</span>
+                                    <span class="px-3 py-1 bg-pink-500/20 text-pink-300 text-[10px] font-bold rounded-full uppercase tracking-wider border border-pink-500/30 animate-pulse">${game.badge}</span>
+                                </div>
+                                <h3 class="text-xl font-extrabold text-white group-hover:text-pink-400 transition-colors">${game.name}</h3>
+                                <p class="text-slate-400 text-xs mt-2 leading-relaxed">${game.desc}</p>
+                            </div>
+                            <div class="mt-6 flex items-center justify-between pt-4 border-t border-slate-800">
+                                <span class="text-xs font-bold text-pink-400">Launch Jumper →</span>
+                                <div class="w-8 h-8 rounded-xl bg-pink-500 text-slate-950 flex items-center justify-center font-bold shadow-md group-hover:rotate-45 transition-transform">🚀</div>
+                            </div>
+                        </a>
+                    `;
+                } else {
+                    return `
+                        <div onclick="openGame(${game.id})" class="group relative bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:neon-glow cursor-pointer">
+                            <div>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="text-3xl p-3 bg-slate-950 rounded-2xl border border-slate-800 group-hover:scale-110 transition-transform">${game.icon}</span>
+                                    <span class="px-2.5 py-1 bg-cyan-500/10 text-cyan-400 text-[10px] font-semibold rounded-full uppercase tracking-wider border border-cyan-500/20">${game.badge}</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors">${game.name}</h3>
+                                <p class="text-slate-400 text-xs mt-2 leading-relaxed line-clamp-2">${game.desc}</p>
+                            </div>
+                            <div class="mt-6 flex items-center justify-between pt-4 border-t border-slate-800/80">
+                                <span class="text-xs font-semibold text-slate-500 group-hover:text-cyan-400 transition-colors">Play Micro-Game</span>
+                                <div class="w-8 h-8 rounded-xl bg-slate-800 group-hover:bg-cyan-500 group-hover:text-slate-950 text-slate-300 flex items-center justify-center font-bold transition-all">▶</div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        // Modal Controls
+        function openGame(id) {
+            currentGameId = id;
+            const game = gamesData.find(g => g.id === id);
+            document.getElementById('modalTitle').innerText = game.name;
+            document.getElementById('modalCategory').innerText = `${game.category} • ${game.badge}`;
+            document.getElementById('modalIcon').innerText = game.icon;
+            document.getElementById('modalScoreDisplay').innerText = 'Score: 0';
+            document.getElementById('gameModal').classList.remove('hidden');
+            initGameEngine(id);
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').classList.add('hidden');
+            clearInterval(gameInterval);
+            clearTimeout(gameTimer);
+            currentGameId = null;
+        }
+
+        function restartActiveGame() {
+            if (currentGameId) {
+                initGameEngine(currentGameId);
+            }
+        }
+
+        function openRandomGame() {
+            const nonJumperGames = gamesData.filter(g => !g.isJumper);
+            const random = nonJumperGames[Math.floor(Math.random() * nonJumperGames.length)];
+            openGame(random.id);
+        }
+
+        function initGameEngine(id) {
+            const body = document.getElementById('modalBody');
+            body.innerHTML = '';
+            clearInterval(gameInterval);
+            clearTimeout(gameTimer);
+
+            switch(id) {
+                case 1: initTicTacToe(body); break;
+                case 2: initClicker(body); break;
+                case 3: initMemoryMatch(body); break;
+                case 4: initRPS(body); break;
+                case 5: initSnake(body); break;
+                case 6: initColorGuess(body); break;
+                case 7: initReaction(body); break;
+                case 8: initPong(body); break;
+                case 9: initWordScramble(body); break;
+                case 10: initMathChallenge(body); break;
+                case 11: initSlotMachine(body); break;
+                case 12: initDiceRoll(body); break;
+                case 13: initBalloonPop(body); break;
+                case 14: initDrawingBoard(body); break;
+                case 15: initSimonSays(body); break;
+                case 16: initMagic8Ball(body); break;
+                case 17: initCatchCoin(body); break;
+                case 18: initSnakeEyes(body); break;
+                case 19: initNumberGuesser(body); break;
+                default: body.innerHTML = '<p class="text-white">Game loading...</p>';
+            }
+        }
+
+        // 1. Tic-Tac-Toe
+        function initTicTacToe(container) {
+            activeGameState.board = ['', '', '', '', '', '', '', '', ''];
+            activeGameState.turn = 'X';
+            activeGameState.active = true;
+
+            container.innerHTML = `
+                <div class="mb-4 text-cyan-400 font-semibold text-sm" id="tttStatus">Player X's Turn</div>
+                <div class="grid grid-cols-3 gap-3 w-64 h-64 mx-auto">
+                    ${[0,1,2,3,4,5,6,7,8].map(i => `<button onclick="playTTT(${i})" id="cell-${i}" class="bg-slate-950 border border-slate-800 text-2xl font-bold text-white rounded-xl hover:border-cyan-500 transition-colors flex items-center justify-center h-full"></button>`).join('')}
+                </div>
+            `;
+        }
+        function playTTT(i) {
+            if (!activeGameState.active || activeGameState.board[i] !== '') return;
+            activeGameState.board[i] = activeGameState.turn;
+            document.getElementById(`cell-${i}`).innerText = activeGameState.turn;
+            document.getElementById(`cell-${i}`).classList.add(activeGameState.turn === 'X' ? 'text-cyan-400' : 'text-pink-500');
+
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            let won = wins.some(w => w.every(idx => activeGameState.board[idx] === activeGameState.turn));
+
+            if (won) {
+                document.getElementById('tttStatus').innerText = `Player ${activeGameState.turn} Wins! 🎉`;
+                document.getElementById('modalScoreDisplay').innerText = `Winner: Player ${activeGameState.turn}`;
+                activeGameState.active = false;
+                return;
+            }
+            if (activeGameState.board.every(cell => cell !== '')) {
+                document.getElementById('tttStatus').innerText = "It's a Draw!";
+                activeGameState.active = false;
+                return;
+            }
+            activeGameState.turn = activeGameState.turn === 'X' ? 'O' : 'X';
+            document.getElementById('tttStatus').innerText = `Player ${activeGameState.turn}'s Turn`;
+        }
+
+        // 2. Clicker Surge
+        function initClicker(container) {
+            activeGameState.clicks = 0;
+            activeGameState.timeLeft = 10;
+            activeGameState.playing = false;
+
+            container.innerHTML = `
+                <div class="text-3xl font-black text-cyan-400 mb-2" id="clickCount">0</div>
+                <p class="text-xs text-slate-400 mb-6">Clicks in <span id="clickTime">10</span>s</p>
+                <button onclick="handleBtnClick()" id="clickBtn" class="px-8 py-6 bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-xl rounded-2xl shadow-lg active:scale-95 transition-transform">CLICK FAST!</button>
+            `;
+        }
+        function handleBtnClick() {
+            if (!activeGameState.playing && activeGameState.timeLeft === 10) {
+                activeGameState.playing = true;
+                gameInterval = setInterval(() => {
+                    activeGameState.timeLeft--;
+                    document.getElementById('clickTime').innerText = activeGameState.timeLeft;
+                    if (activeGameState.timeLeft <= 0) {
+                        clearInterval(gameInterval);
+                        activeGameState.playing = false;
+                        document.getElementById('clickBtn').disabled = true;
+                        document.getElementById('clickBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                        document.getElementById('modalScoreDisplay').innerText = `Final Score: ${activeGameState.clicks} Clicks`;
+                    }
+                }, 1000);
+            }
+            if (activeGameState.playing) {
+                activeGameState.clicks++;
+                document.getElementById('clickCount').innerText = activeGameState.clicks;
+            }
+        }
+
+        // 3. Memory Match
+        function initMemoryMatch(container) {
+            const icons = ['🍎', '🍌', '🍇', '🍉'];
+            let deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+            activeGameState.flipped = [];
+            activeGameState.matched = 0;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-4 gap-3 w-72 h-72 mx-auto">
+                    ${deck.map((icon, i) => `
+                        <button onclick="flipMemoryCard(this, '${icon}', ${i})" class="memory-card bg-slate-950 border border-slate-800 rounded-xl text-xl flex items-center justify-center h-full text-transparent hover:border-cyan-500 transition-all" data-icon="${icon}">?</button>
+                    `).join('')}
+                </div>
+            `;
+        }
+        function flipMemoryCard(btn, icon, idx) {
+            if (btn.classList.contains('matched') || activeGameState.flipped.length >= 2 || btn.dataset.revealed === 'true') return;
+            btn.innerText = icon;
+            btn.classList.remove('text-transparent');
+            btn.classList.add('text-cyan-400', 'bg-slate-900');
+            btn.dataset.revealed = 'true';
+            activeGameState.flipped.push({btn, icon});
+
+            if (activeGameState.flipped.length === 2) {
+                if (activeGameState.flipped[0].icon === activeGameState.flipped[1].icon) {
+                    activeGameState.flipped.forEach(f => f.btn.classList.add('matched'));
+                    activeGameState.flipped = [];
+                    activeGameState.matched++;
+                    document.getElementById('modalScoreDisplay').innerText = `Matches: ${activeGameState.matched}/4`;
+                    if (activeGameState.matched === 4) {
+                        document.getElementById('modalScoreDisplay').innerText = 'Victory! All Pairs Matched! 🎉';
+                    }
+                } else {
+                    setTimeout(() => {
+                        activeGameState.flipped.forEach(f => {
+                            f.btn.innerText = '?';
+                            f.btn.classList.add('text-transparent');
+                            f.btn.classList.remove('text-cyan-400', 'bg-slate-900');
+                            f.btn.dataset.revealed = 'false';
+                        });
+                        activeGameState.flipped = [];
+                    }, 800);
+                }
+            }
+        }
+
+        // 4. Rock Paper Scissors
+        function initRPS(container) {
+            container.innerHTML = `
+                <div class="text-sm font-semibold mb-6 text-slate-300" id="rpsResult">Choose your weapon!</div>
+                <div class="flex justify-center space-x-4">
+                    <button onclick="playRPS('Rock')" class="p-4 bg-slate-950 border border-slate-800 hover:border-cyan-500 rounded-2xl text-3xl transition-transform hover:scale-110">✊</button>
+                    <button onclick="playRPS('Paper')" class="p-4 bg-slate-950 border border-slate-800 hover:border-cyan-500 rounded-2xl text-3xl transition-transform hover:scale-110">✋</button>
+                    <button onclick="playRPS('Scissors')" class="p-4 bg-slate-950 border border-slate-800 hover:border-cyan-500 rounded-2xl text-3xl transition-transform hover:scale-110">✌️</button>
+                </div>
+            `;
+        }
+        function playRPS(playerChoice) {
+            const choices = ['Rock', 'Paper', 'Scissors'];
+            const aiChoice = choices[Math.floor(Math.random() * 3)];
+            let result = '';
+            if (playerChoice === aiChoice) result = `It's a Draw! Both chose ${aiChoice}`;
+            else if ((playerChoice === 'Rock' && aiChoice === 'Scissors') || (playerChoice === 'Paper' && aiChoice === 'Rock') || (playerChoice === 'Scissors' && aiChoice === 'Paper')) {
+                result = `You Win! ${playerChoice} beats ${aiChoice} 🎉`;
+            } else {
+                result = `AI Wins! ${aiChoice} beats ${playerChoice} 🤖`;
+            }
+            document.getElementById('rpsResult').innerText = result;
+            document.getElementById('modalScoreDisplay').innerText = result;
+        }
+
+        // 5. Neon Snake Mini
+        function initSnake(container) {
+            container.innerHTML = `
+                <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden w-64 h-64 flex items-center justify-center">
+                    <canvas id="snakeCanvas" width="256" height="256"></canvas>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-3">Use on-screen buttons or arrow keys to move</p>
+                <div class="flex space-x-2 mt-2">
+                    <button onclick="changeSnakeDir('UP')" class="px-3 py-1 bg-slate-800 text-white rounded">⬆️</button>
+                    <button onclick="changeSnakeDir('DOWN')" class="px-3 py-1 bg-slate-800 text-white rounded">⬇️</button>
+                    <button onclick="changeSnakeDir('LEFT')" class="px-3 py-1 bg-slate-800 text-white rounded">⬅️</button>
+                    <button onclick="changeSnakeDir('RIGHT')" class="px-3 py-1 bg-slate-800 text-white rounded">➡️</button>
+                </div>
+            `;
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            let snake = [{x: 10, y: 10}];
+            let food = {x: 5, y: 5};
+            let dx = 1, dy = 0;
+            let score = 0;
+
+            window.onkeydown = (e) => {
+                if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -1; }
+                if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = 1; }
+                if (e.key === 'ArrowLeft' && dx === 0) { dx = -1; dy = 0; }
+                if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
+            };
+
+            window.changeSnakeDir = (dir) => {
+                if (dir === 'UP' && dy === 0) { dx = 0; dy = -1; }
+                if (dir === 'DOWN' && dy === 0) { dx = 0; dy = 1; }
+                if (dir === 'LEFT' && dx === 0) { dx = -1; dy = 0; }
+                if (dir === 'RIGHT' && dx === 0) { dx = 1; dy = 0; }
+            };
+
+            gameInterval = setInterval(() => {
+                const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+                if (head.x < 0 || head.x >= 16 || head.y < 0 || head.y >= 16 || snake.some(s => s.x === head.x && s.y === head.y)) {
+                    clearInterval(gameInterval);
+                    return;
+                }
+                snake.unshift(head);
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10;
+                    document.getElementById('modalScoreDisplay').innerText = `Score: ${score}`;
+                    food = {x: Math.floor(Math.random() * 16), y: Math.floor(Math.random() * 16)};
+                } else {
+                    snake.pop();
+                }
+
+                ctx.fillStyle = '#090d16';
+                ctx.fillRect(0, 0, 256, 256);
+                ctx.fillStyle = '#06b6d4';
+                snake.forEach(s => ctx.fillRect(s.x * 16, s.y * 16, 14, 14));
+                ctx.fillStyle = '#ec4899';
+                ctx.fillRect(food.x * 16, food.y * 16, 14, 14);
+            }, 120);
+        }
+
+        // 6. Color Guess
+        function initColorGuess(container) {
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+            const targetColor = `rgb(${r}, ${g}, ${b})`;
+
+            let options = [targetColor];
+            while(options.length < 3) {
+                const nr = Math.floor(Math.random() * 256);
+                const ng = Math.floor(Math.random() * 256);
+                const nb = Math.floor(Math.random() * 256);
+                const col = `rgb(${nr}, ${ng}, ${nb})`;
+                if (!options.includes(col)) options.push(col);
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            container.innerHTML = `
+                <div class="w-32 h-32 rounded-2xl mx-auto mb-6 shadow-lg border border-slate-700" style="background-color: ${targetColor};"></div>
+                <p class="text-xs text-slate-400 mb-4">Guess the correct RGB color code:</p>
+                <div class="flex flex-col space-y-2 w-64 mx-auto">
+                    ${options.map(opt => `<button onclick="checkColor(this, '${opt}', '${targetColor}')" class="py-2.5 bg-slate-950 border border-slate-800 hover:border-cyan-500 rounded-xl text-xs font-semibold text-white transition-colors">${opt}</button>`).join('')}
+                </div>
+            `;
+        }
+        function checkColor(btn, chosen, target) {
+            if (chosen === target) {
+                btn.classList.add('bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400');
+                document.getElementById('modalScoreDisplay').innerText = 'Correct! 🎉';
+            } else {
+                btn.classList.add('bg-pink-500/20', 'border-pink-500', 'text-pink-400');
+                document.getElementById('modalScoreDisplay').innerText = 'Incorrect! Try again';
+            }
+        }
+
+        // 7. Reaction Timer
+        function initReaction(container) {
+            container.innerHTML = `
+                <div id="reactionBox" onclick="handleReactionClick()" class="w-72 h-40 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center cursor-pointer transition-colors">
+                    <span id="reactionText" class="text-sm font-bold text-slate-400">Click to Start</span>
+                </div>
+            `;
+            activeGameState.status = 'idle';
+        }
+        function handleReactionClick() {
+            const box = document.getElementById('reactionBox');
+            const txt = document.getElementById('reactionText');
+
+            if (activeGameState.status === 'idle') {
+                activeGameState.status = 'waiting';
+                txt.innerText = 'Wait for green...';
+                box.className = 'w-72 h-40 rounded-2xl bg-pink-950/40 border border-pink-500/40 flex items-center justify-center cursor-pointer';
+                const delay = Math.random() * 2000 + 1500;
+                gameTimer = setTimeout(() => {
+                    activeGameState.status = 'ready';
+                    activeGameState.startTime = Date.now();
+                    box.className = 'w-72 h-40 rounded-2xl bg-emerald-500 border border-emerald-400 flex items-center justify-center cursor-pointer animate-pulse';
+                    txt.innerText = 'CLICK NOW!';
+                    txt.className = 'text-sm font-black text-slate-950';
+                }, delay);
+            } else if (activeGameState.status === 'waiting') {
+                clearTimeout(gameTimer);
+                activeGameState.status = 'idle';
+                txt.innerText = 'Too soon! Click to restart.';
+                box.className = 'w-72 h-40 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center cursor-pointer';
+            } else if (activeGameState.status === 'ready') {
+                const time = Date.now() - activeGameState.startTime;
+                activeGameState.status = 'idle';
+                txt.innerText = `${time} ms! Click to play again.`;
+                box.className = 'w-72 h-40 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center cursor-pointer';
+                txt.className = 'text-sm font-bold text-cyan-400';
+                document.getElementById('modalScoreDisplay').innerText = `Reaction: ${time}ms`;
+            }
+        }
+
+        // 8. Pong Mini
+        function initPong(container) {
+            container.innerHTML = `
+                <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden w-72 h-48 flex items-center justify-center">
+                    <canvas id="pongCanvas" width="288" height="192"></canvas>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2">Move mouse up/down over canvas</p>
+            `;
+            const canvas = document.getElementById('pongCanvas');
+            const ctx = canvas.getContext('2d');
+            let ball = {x: 144, y: 96, dx: 2, dy: 2, radius: 6};
+            let paddleY = 72;
+            let score = 0;
+
+            canvas.onmousemove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                paddleY = e.clientY - rect.top - 24;
+            };
+
+            gameInterval = setInterval(() => {
+                ball.x += ball.dx;
+                ball.y += ball.dy;
+
+                if (ball.y < 0 || ball.y > 192) ball.dy *= -1;
+                if (ball.x > 288) ball.dx *= -1;
+
+                if (ball.x <= 16 && ball.y >= paddleY && ball.y <= paddleY + 48) {
+                    ball.dx *= -1;
+                    score++;
+                    document.getElementById('modalScoreDisplay').innerText = `Bounces: ${score}`;
+                } else if (ball.x < 0) {
+                    clearInterval(gameInterval);
+                    document.getElementById('modalScoreDisplay').innerText = `Game Over! Bounces: ${score}`;
+                }
+
+                ctx.fillStyle = '#090d16';
+                ctx.fillRect(0, 0, 288, 192);
+                ctx.fillStyle = '#06b6d4';
+                ctx.fillRect(8, paddleY, 6, 48);
+                ctx.fillStyle = '#ec4899';
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }, 30);
+        }
+
+        // 9. Word Scramble
+        function initWordScramble(container) {
+            const words = ['JAVASCRIPT', 'ARCADE', 'CONSOLE', 'PYTHON', 'REACT', 'GAMING'];
+            const original = words[Math.floor(Math.random() * words.length)];
+            const scrambled = original.split('').sort(() => Math.random() - 0.5).join('');
+            activeGameState.targetWord = original;
+
+            container.innerHTML = `
+                <div class="text-3xl font-black tracking-widest text-cyan-400 mb-4">${scrambled}</div>
+                <input type="text" id="wordInput" placeholder="Type correct word..." class="px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-center text-white text-sm mb-4 focus:outline-none focus:border-cyan-500">
+                <br>
+                <button onclick="checkWord()" class="px-6 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs">Submit Guess</button>
+            `;
+        }
+        function checkWord() {
+            const guess = document.getElementById('wordInput').value.toUpperCase();
+            if (guess === activeGameState.targetWord) {
+                document.getElementById('modalScoreDisplay').innerText = 'Correct Word! 🎉';
+            } else {
+                document.getElementById('modalScoreDisplay').innerText = 'Incorrect! Try again.';
+            }
+        }
+
+        // 10. Quick Math
+        function initMathChallenge(container) {
+            const n1 = Math.floor(Math.random() * 20) + 1;
+            const n2 = Math.floor(Math.random() * 20) + 1;
+            const ops = ['+', '-', '*'];
+            const op = ops[Math.floor(Math.random() * ops.length)];
+            activeGameState.ans = eval(`${n1} ${op} ${n2}`);
+
+            container.innerHTML = `
+                <div class="text-3xl font-black text-cyan-400 mb-4">${n1} ${op} ${n2} = ?</div>
+                <input type="number" id="mathInput" placeholder="Answer..." class="px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-center text-white text-sm mb-4 focus:outline-none focus:border-cyan-500">
+                <br>
+                <button onclick="checkMath()" class="px-6 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs">Check Answer</button>
+            `;
+        }
+        function checkMath() {
+            const val = parseInt(document.getElementById('mathInput').value);
+            if (val === activeGameState.ans) {
+                document.getElementById('modalScoreDisplay').innerText = 'Correct! Great Math Skills! 🧠';
+            } else {
+                document.getElementById('modalScoreDisplay').innerText = 'Wrong Answer!';
+            }
+        }
+
+        // 11. Slot Machine
+        function initSlotMachine(container) {
+            container.innerHTML = `
+                <div class="flex space-x-3 text-4xl mb-6 bg-slate-950 px-6 py-4 rounded-2xl border border-slate-800">
+                    <span id="slot1">🍒</span>
+                    <span id="slot2">🍋</span>
+                    <span id="slot3">🔔</span>
+                </div>
+                <button onclick="spinSlots()" class="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg">SPIN REELS</button>
+            `;
+        }
+        function spinSlots() {
+            const symbols = ['🍒', '🍋', '🔔', '⭐', '💎'];
+            const s1 = symbols[Math.floor(Math.random() * symbols.length)];
+            const s2 = symbols[Math.floor(Math.random() * symbols.length)];
+            const s3 = symbols[Math.floor(Math.random() * symbols.length)];
+            document.getElementById('slot1').innerText = s1;
+            document.getElementById('slot2').innerText = s2;
+            document.getElementById('slot3').innerText = s3;
+
+            if (s1 === s2 && s2 === s3) {
+                document.getElementById('modalScoreDisplay').innerText = 'JACKPOT! Triple Match! 🎰✨';
+            } else {
+                document.getElementById('modalScoreDisplay').innerText = 'No match, spin again!';
+            }
+        }
+
+        // 12. Dice Roll
+        function initDiceRoll(container) {
+            container.innerHTML = `
+                <div class="text-6xl mb-6" id="diceFace">🎲</div>
+                <button onclick="rollDice()" class="px-6 py-2.5 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs">Roll Dice</button>
+            `;
+        }
+        function rollDice() {
+            const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            const val = Math.floor(Math.random() * 6);
+            document.getElementById('diceFace').innerText = faces[val];
+            document.getElementById('modalScoreDisplay').innerText = `Rolled: ${val + 1}`;
+        }
+
+        // 13. Balloon Pop
+        function initBalloonPop(container) {
+            activeGameState.pops = 0;
+            container.innerHTML = `
+                <div class="relative w-72 h-48 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden cursor-crosshair" id="balloonArea" onclick="popBalloon(event)">
+                    <div id="balloon" class="absolute text-3xl transition-all duration-300 select-none" style="top: 50px; left: 100px;">🎈</div>
+                </div>
+            `;
+            moveBalloon();
+        }
+        function moveBalloon() {
+            const b = document.getElementById('balloon');
+            if (!b) return;
+            b.style.top = `${Math.random() * 120}px`;
+            b.style.left = `${Math.random() * 220}px`;
+        }
+        function popBalloon(e) {
+            activeGameState.pops++;
+            document.getElementById('modalScoreDisplay').innerText = `Pops: ${activeGameState.pops}`;
+            moveBalloon();
+        }
+
+        // 14. Drawing Board
+        function initDrawingBoard(container) {
+            container.innerHTML = `
+                <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden w-72 h-48">
+                    <canvas id="drawCanvas" width="288" height="192" class="cursor-crosshair"></canvas>
+                </div>
+                <button onclick="clearCanvas()" class="mt-3 px-4 py-1.5 bg-slate-800 text-white text-xs rounded-lg">Clear Canvas</button>
+            `;
+            const canvas = document.getElementById('drawCanvas');
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+
+            canvas.onmousedown = (e) => { drawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+            canvas.onmousemove = (e) => { if (!drawing) return; ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); };
+            canvas.onmouseup = () => { drawing = false; };
+            window.clearCanvas = () => { ctx.clearRect(0,0,288,192); };
+        }
+
+        // 15. Simon Says
+        function initSimonSays(container) {
+            container.innerHTML = `
+                <p class="text-xs text-slate-400 mb-4" id="simonMsg">Watch the pattern...</p>
+                <div class="grid grid-cols-2 gap-3 w-48 h-48 mx-auto">
+                    <button id="s-0" class="bg-red-500/40 rounded-xl border border-red-500/50"></button>
+                    <button id="s-1" class="bg-cyan-500/40 rounded-xl border border-cyan-500/50"></button>
+                    <button id="s-2" class="bg-emerald-500/40 rounded-xl border border-emerald-500/50"></button>
+                    <button id="s-3" class="bg-amber-500/40 rounded-xl border border-amber-500/50"></button>
+                </div>
+            `;
+            document.getElementById('modalScoreDisplay').innerText = 'Level 1 Simon Says';
+        }
+
+        // 16. Magic 8 Ball
+        function initMagic8Ball(container) {
+            container.innerHTML = `
+                <div class="w-32 h-32 rounded-full bg-slate-950 border-4 border-slate-800 mx-auto flex items-center justify-center shadow-xl mb-4">
+                    <span id="ballAnswer" class="text-xs text-cyan-400 font-bold text-center px-4">Ask & Click</span>
+                </div>
+                <button onclick="shakeBall()" class="px-6 py-2 bg-slate-800 text-white rounded-xl text-xs">Consult 8 Ball</button>
+            `;
+        }
+        function shakeBall() {
+            const answers = ['Yes, definitely!', 'Ask again later.', 'Outlook not so good.', 'Most likely.', 'Cannot predict now.', 'Without a doubt.'];
+            const ans = answers[Math.floor(Math.random() * answers.length)];
+            document.getElementById('ballAnswer').innerText = ans;
+            document.getElementById('modalScoreDisplay').innerText = `Answer: ${ans}`;
+        }
+
+        // 17. Catch Coin
+        function initCatchCoin(container) {
+            container.innerHTML = `
+                <div class="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden w-72 h-48">
+                    <div id="coin" class="absolute text-2xl" style="top: 0px; left: 100px;">🪙</div>
+                </div>
+            `;
+            let coinY = 0;
+            let coinX = Math.random() * 240;
+            let caught = 0;
+
+            gameInterval = setInterval(() => {
+                coinY += 3;
+                if (coinY > 180) {
+                    coinY = 0;
+                    coinX = Math.random() * 240;
+                }
+                const c = document.getElementById('coin');
+                if (c) {
+                    c.style.top = `${coinY}px`;
+                    c.style.left = `${coinX}px`;
+                }
+            }, 30);
+
+            container.onclick = (e) => {
+                caught++;
+                document.getElementById('modalScoreDisplay').innerText = `Coins Caught: ${caught}`;
+                coinY = 0;
+                coinX = Math.random() * 240;
+            };
+        }
+
+        // 18. Snake Eyes
+        function initSnakeEyes(container) {
+            container.innerHTML = `
+                <div class="text-3xl font-black text-pink-500 mb-2">👁️ SURVIVE</div>
+                <p class="text-xs text-slate-400 mb-4">Avoid the digital pulse spikes!</p>
+                <div class="w-64 h-32 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-center">
+                    <span class="text-cyan-400 font-bold animate-ping">⚡ ACTIVE TRAIL</span>
+                </div>
+            `;
+        }
+
+        // 19. Number Guesser
+        function initNumberGuesser(container) {
+            activeGameState.secret = Math.floor(Math.random() * 50) + 1;
+            container.innerHTML = `
+                <p class="text-xs text-slate-400 mb-3">Guess a number between 1 and 50</p>
+                <input type="number" id="guessInput" class="px-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-center text-white text-sm mb-3 focus:outline-none focus:border-cyan-500">
+                <br>
+                <button onclick="checkGuessNum()" class="px-6 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs">Submit Guess</button>
+            `;
+        }
+        function checkGuessNum() {
+            const val = parseInt(document.getElementById('guessInput').value);
+            const sec = activeGameState.secret;
+            if (val === sec) document.getElementById('modalScoreDisplay').innerText = 'Correct! You found the number! 🎯';
+            else if (val < sec) document.getElementById('modalScoreDisplay').innerText = 'Too Low! Go higher.';
+            else document.getElementById('modalScoreDisplay').innerText = 'Too High! Go lower.';
+        }
+
+        // Initialize grid on load
+        window.onload = renderGrid;
+    </script>
 </body>
 </html>
