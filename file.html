@@ -1,210 +1,1078 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Indirect HTML Playground</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dialect Studio - Custom HTML Live IDE</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: #0f172a;
-      color: #f8fafc;
-      overflow: hidden;
+      font-family: 'Inter', sans-serif;
     }
-    header {
-      padding: 12px 20px;
-      background: #1e293b;
-      border-bottom: 1px solid #334155;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    
+    .font-mono-code {
+      font-family: 'Fira Code', monospace;
     }
-    header h1 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #38bdf8;
+
+    /* Custom subtle scrollbars */
+    ::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
     }
-    header span {
-      font-size: 0.85rem;
-      color: #94a3b8;
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
     }
-    .main-container {
-      display: flex;
-      flex: 1;
-      height: calc(100vh - 53px);
-    }
-    .panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-    .panel-header {
-      background: #1e293b;
-      padding: 8px 16px;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #94a3b8;
-      border-bottom: 1px solid #334155;
-    }
-    #editor {
-      flex: 1;
-      width: 100%;
-      background: #090d16;
-      color: #e2e8f0;
-      font-family: "Fira Code", monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      padding: 16px;
-      border: none;
-      resize: none;
-      outline: none;
-      tab-size: 2;
-    }
-    .divider {
-      width: 4px;
+    ::-webkit-scrollbar-thumb {
       background: #334155;
-      cursor: col-resize;
+      border-radius: 4px;
     }
-    #preview-frame {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      border: none;
-      background: #ffffff;
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Editor line numbers & textarea sync */
+    #code-editor {
+      tab-size: 2;
+      -moz-tab-size: 2;
+    }
+
+    /* Split drag divider */
+    .resizer-handle:hover, .resizer-handle.dragging {
+      background-color: #38bdf8 !important;
     }
   </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
 
-  <header>
-    <h1>Indirect Markup Studio</h1>
-    <span>Use <code>&lt;invisible for="..."&gt;</code> or <code>&lt;indirect for="..."&gt;</code> instead of &lt;style&gt;</span>
-  </header>
-
-  <div class="main-container">
-    <!-- Code Editor Panel -->
-    <div class="panel">
-      <div class="panel-header">Custom HTML Editor</div>
-      <textarea id="editor" spellcheck="false"></textarea>
+  <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur flex items-center justify-between px-4 z-20 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+        <i data-lucide="code-2" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-100 tracking-tight text-base">DialectStudio</span>
+          <span class="text-[10px] uppercase font-bold tracking-widest bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800/60">Custom HTML</span>
+        </div>
+      </div>
     </div>
 
-    <div class="divider"></div>
+    <!-- Center Preset Select & Quick Info -->
+    <div class="flex items-center space-x-2">
+      <label class="text-xs text-slate-400 font-medium hidden sm:inline-block">Template:</label>
+      <select id="preset-selector" class="bg-slate-800 text-xs border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer">
+        <option value="complete">🌟 Full Dialect Showcase (&lt;t&gt;, &lt;vr&gt;, &lt;vr+""&gt;, &lt;invisible&gt;)</option>
+        <option value="table_demo">📊 Modern Table with &lt;t&gt; &amp; &lt;indirect&gt;</option>
+        <option value="divider_demo">📏 Vertical Rules &amp; Named Anchors &lt;vr+"id"&gt;</option>
+        <option value="minimal">✨ Minimal Clean Template</option>
+      </select>
+    </div>
 
-    <!-- Live Preview Panel -->
-    <div class="panel">
-      <div class="panel-header">Live Output</div>
-      <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
+    <!-- Right Action Buttons -->
+    <div class="flex items-center space-x-2">
+      <button id="doc-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition">
+        <i data-lucide="book-open" class="w-3.5 h-3.5 text-sky-400"></i>
+        <span>Syntax Cheat Sheet</span>
+      </button>
+
+      <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition" title="Copy raw markup">
+        <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-400"></i>
+        <span class="hidden md:inline">Copy</span>
+      </button>
+
+      <button id="download-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 border border-sky-400/30 transition shadow-sm" title="Download transformed standard HTML">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        <span class="hidden md:inline">Export HTML</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative" id="workspace-container">
+    
+    <!-- Left: Code Editor Panel -->
+    <section class="flex flex-col h-1/2 md:h-full w-full md:w-1/2 border-r border-slate-800 bg-slate-950" id="editor-pane">
+      <!-- Editor Top Bar -->
+      <div class="h-9 bg-slate-900/60 border-b border-slate-800/80 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="file-code" class="w-3.5 h-3.5 text-sky-400"></i>
+          <span class="font-medium text-slate-300">document.custom.html</span>
+          <span id="char-counter" class="text-[11px] text-slate-500">0 chars</span>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div id="syntax-status" class="flex items-center gap-1.5 text-[11px] text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Syntactically Valid</span>
+          </div>
+          <button id="format-btn" title="Auto Indent / Clean Code" class="hover:text-slate-200">
+            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor Container with synchronized Line Numbers -->
+      <div class="flex-1 flex overflow-hidden relative font-mono-code text-sm">
+        <!-- Line Numbers Column -->
+        <div id="line-numbers" class="w-12 bg-slate-950 border-r border-slate-800/70 text-slate-600 select-none py-3 text-right pr-3 overflow-hidden text-xs leading-6">
+          1
+        </div>
+        <!-- Raw Textarea Input -->
+        <textarea id="code-editor" spellcheck="false" class="flex-1 bg-transparent text-slate-200 p-3 leading-6 resize-none focus:outline-none overflow-auto whitespace-pre font-mono-code placeholder-slate-700"></textarea>
+      </div>
+
+      <!-- Editor Bottom Status Bar -->
+      <div class="h-6 bg-slate-900 border-t border-slate-800/70 px-3 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+        <div class="flex items-center space-x-3">
+          <span>Dialect: <b>v1.2 (VR + Indirect + &lt;t&gt;)</b></span>
+          <span>Tab: 2 spaces</span>
+        </div>
+        <div id="cursor-pos">Ln 1, Col 1</div>
+      </div>
+    </section>
+
+    <!-- Resizer bar between editor and preview -->
+    <div id="split-resizer" class="h-1.5 md:h-full md:w-1 bg-slate-800 hover:bg-sky-500 cursor-row-resize md:cursor-col-resize resizer-handle transition-colors z-10 shrink-0"></div>
+
+    <!-- Right: Live Preview Panel -->
+    <section class="flex flex-col h-1/2 md:h-full flex-1 bg-slate-900" id="preview-pane">
+      <!-- Preview Header -->
+      <div class="h-9 bg-slate-900/60 border-b border-slate-800/80 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span class="font-medium text-slate-300">Compiled Render Preview</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <!-- View Compiled Standard Source Modal Trigger -->
+          <button id="view-compiled-btn" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 flex items-center gap-1 transition">
+            <i data-lucide="binary" class="w-3 h-3 text-sky-400"></i>
+            <span>Inspect Standard HTML</span>
+          </button>
+          <button id="refresh-preview-btn" title="Force Refresh Render" class="hover:text-slate-200 p-1">
+            <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Iframe sandbox -->
+      <div class="flex-1 bg-white relative overflow-hidden">
+        <iframe id="preview-frame" title="Renderer" class="w-full h-full border-none" sandbox="allow-scripts allow-modals"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <div id="docs-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/70">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i data-lucide="help-circle" class="w-4 h-4"></i>
+          </div>
+          <h2 class="text-base font-semibold text-slate-100">Custom HTML Dialect Specification</h2>
+        </div>
+        <button id="close-docs-btn" class="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300">
+        <!-- Rule 1: Invisible & Indirect tags -->
+        <div class="space-y-2 border-l-2 border-sky-500 pl-3">
+          <h3 class="font-semibold text-sky-400 text-sm">1. Invisible &amp; Indirect Styling Tags</h3>
+          <p class="text-xs text-slate-400">
+            Instead of standard <code>&lt;style&gt;</code>, styles are declared through <code>&lt;invisible&gt;</code> or <code>&lt;indirect&gt;</code>. You can target selectors directly using the <code>for="..."</code> attribute, or pass global CSS rules inside.
+          </p>
+          <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;invisible for="h1"&gt;
+  color: #38bdf8;
+  font-weight: 700;
+&lt;/invisible&gt;
+
+&lt;indirect for=".card"&gt;
+  border-radius: 12px;
+  background: #f8fafc;
+&lt;/indirect&gt;</pre>
+        </div>
+
+        <!-- Rule 2: Table tag alias -->
+        <div class="space-y-2 border-l-2 border-indigo-500 pl-3">
+          <h3 class="font-semibold text-indigo-400 text-sm">2. Table Tag Alias (&lt;t&gt;)</h3>
+          <p class="text-xs text-slate-400">
+            Instead of writing <code>&lt;table&gt;...&lt;/table&gt;</code>, the dialect uses succinct <code>&lt;t&gt;...&lt;/t&gt;</code> tags. It preserves all native table contents (<code>&lt;tr&gt;</code>, <code>&lt;td&gt;</code>, <code>&lt;th&gt;</code>).
+          </p>
+          <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;t border="1" class="custom-table"&gt;
+  &lt;tr&gt;
+    &lt;th&gt;Item&lt;/th&gt;
+    &lt;th&gt;Status&lt;/th&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+    &lt;td&gt;Engine&lt;/td&gt;
+    &lt;td&gt;Active&lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/t&gt;</pre>
+        </div>
+
+        <!-- Rule 3: Single Line Break -->
+        <div class="space-y-2 border-l-2 border-teal-500 pl-3">
+          <h3 class="font-semibold text-teal-400 text-sm">3. Lean Line Break</h3>
+          <p class="text-xs text-slate-400">
+            Write clean <code>&lt;br&gt;</code> instead of self-closing XML-like <code>&lt;br/&gt;</code> or <code>&lt;br /&gt;</code>.
+          </p>
+        </div>
+
+        <!-- Rule 4 & 5: Vertical Rules & Named Spot Rules -->
+        <div class="space-y-2 border-l-2 border-amber-500 pl-3">
+          <h3 class="font-semibold text-amber-400 text-sm">4. Vertical Lines (&lt;vr&gt;) &amp; Named Anchors (&lt;vr+"name"&gt;)</h3>
+          <p class="text-xs text-slate-400">
+            Vertical rules can be declared with custom thickness, length/height, and color:
+          </p>
+          <ul class="list-disc list-inside text-xs text-slate-400 space-y-1 ml-1">
+            <li>Standard attributes: <code>&lt;vr width="3px" height="80px" color="#3b82f6"&gt;</code></li>
+            <li>Shorthand: <code>&lt;vr 2px 100px #6366f1&gt;</code></li>
+            <li><b>Named Rule Anchors:</b> <code>&lt;vr+"divider_main"&gt;</code> or <code>&lt;vr+"header-line" height="50px" color="#f43f5e"&gt;</code>. You can write custom invisible styles for this specific spot via <code>&lt;invisible for="#divider_main"&gt;</code>!</li>
+          </ul>
+          <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;!-- Inline vertical line --&gt;
+&lt;vr width="2px" height="60px" color="#64748b"&gt;
+
+&lt;!-- Named vertical line anchored at specific spot --&gt;
+&lt;vr+"customSeparator" height="120px" color="#ec4899"&gt;
+
+&lt;invisible for="#customSeparator"&gt;
+  box-shadow: 0 0 10px #ec4899;
+&lt;/invisible&gt;</pre>
+        </div>
+      </div>
+
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/80 flex justify-end">
+        <button id="got-it-btn" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold transition">Got it</button>
+      </div>
     </div>
   </div>
 
+  <div id="inspector-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
+          <h2 class="text-sm font-semibold text-slate-100">Transpiled Standard HTML Preview</h2>
+        </div>
+        <button id="close-inspector-btn" class="text-slate-400 hover:text-slate-200 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-4 flex-1 overflow-auto bg-slate-950 font-mono-code text-xs text-slate-300">
+        <pre id="compiled-code-display" class="whitespace-pre-wrap"></pre>
+      </div>
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900 flex justify-between items-center">
+        <span class="text-xs text-slate-400">Ready for modern browsers</span>
+        <button id="copy-compiled-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs border border-slate-700">Copy Compiled HTML</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-slate-100 border border-slate-700 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs translate-y-20 opacity-0 pointer-events-none transition-all duration-200 z-50">
+    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg">Action completed!</span>
+  </div>
+
   <script>
-    // Initial sample code demonstrating indirect/invisible tags
-    const defaultMarkup = `<div class="card">
-  <h2>Welcome to the Indirect App</h2>
-  <p>This layout uses invisible tags instead of standard &lt;style&gt; blocks.</p>
-  <button class="btn">Explore Custom Tags</button>
+    const TEMPLATES = {
+      complete: `<!-- Custom Dialect Showcase -->
+<div class="app-card">
+  <h2>Dialect Showcase</h2>
+  <p class="subtitle">Written with &lt;invisible&gt;, &lt;t&gt; tables, and &lt;vr&gt; rules<br>Clean & modern markup syntax.</p>
+
+  <!-- Flex container using vertical rule <vr> -->
+  <div class="metric-row">
+    <div class="metric-box">
+      <span class="num">1,480</span>
+      <span class="lbl">Page Views</span>
+    </div>
+
+    <!-- Standard Vertical Line with custom width, length (height), color -->
+    <vr width="2px" height="50px" color="#cbd5e1">
+
+    <div class="metric-box">
+      <span class="num">99.98%</span>
+      <span class="lbl">Live Uptime</span>
+    </div>
+
+    <!-- Named vertical line at this spot: <vr+"mid-divider"> -->
+    <vr+"mid-divider" width="3px" height="50px" color="#38bdf8">
+
+    <div class="metric-box">
+      <span class="num">42 ms</span>
+      <span class="lbl">Latency</span>
+    </div>
+  </div>
+
+  <br>
+
+  <!-- Custom Table using <t> tag instead of <table> -->
+  <t class="styled-table">
+    <tr>
+      <th>Module</th>
+      <th>Dialect Tag</th>
+      <th>Rendered As</th>
+    </tr>
+    <tr>
+      <td>Styling</td>
+      <td>&lt;invisible&gt; / &lt;indirect&gt;</td>
+      <td>Virtual CSS</td>
+    </tr>
+    <tr>
+      <td>Table Alias</td>
+      <td>&lt;t&gt; ... &lt;/t&gt;</td>
+      <td>&lt;table&gt; element</td>
+    </tr>
+    <tr>
+      <td>Dividers</td>
+      <td>&lt;vr width="..." height="..."&gt;</td>
+      <td>Vertical Divider</td>
+    </tr>
+    <tr>
+      <td>Spot Anchor</td>
+      <td>&lt;vr+"name"&gt;</td>
+      <td>Targetable #name</td>
+    </tr>
+  </t>
 </div>
 
-<!-- Indirect styling block targeted to .card -->
-<indirect for=".card">
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-  max-width: 480px;
-  margin: 40px auto;
-  font-family: system-ui, sans-serif;
+<!-- INVISIBLE STYLING BLOCK -->
+<invisible for="body">
+  background-color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+</invisible>
+
+<!-- INDIRECT STYLING BLOCK FOR CARD -->
+<indirect for=".app-card">
+  background: #ffffff;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
+  max-width: 620px;
+  width: 100%;
+  border: 1px solid #e2e8f0;
 </indirect>
 
-<!-- Invisible styling block targeted to heading & buttons -->
 <invisible for="h2">
-  color: #1e293b;
-  margin-bottom: 8px;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  font-size: 22px;
+</invisible>
+
+<invisible for=".subtitle">
+  color: #64748b;
+  font-size: 14px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+</invisible>
+
+<indirect for=".metric-row">
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid #edf2f7;
+</indirect>
+
+<invisible for=".metric-box">
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+</invisible>
+
+<invisible for=".metric-box .num">
+  font-weight: 700;
+  font-size: 20px;
+  color: #0284c7;
+</invisible>
+
+<invisible for=".metric-box .lbl">
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+</invisible>
+
+<!-- Custom targeted styling for named vertical rule #mid-divider -->
+<invisible for="#mid-divider">
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  border-radius: 2px;
+</invisible>
+
+<!-- Table Styling via <t> alias -->
+<indirect for=".styled-table">
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+</indirect>
+
+<invisible for=".styled-table th">
+  background: #f8fafc;
+  color: #475569;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+</invisible>
+
+<invisible for=".styled-table td">
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+</invisible>
+
+<invisible for=".styled-table tr:hover td">
+  background: #f8fafc;
+</invisible>`,
+
+      table_demo: `<div class="container">
+  <h3>Financial Report Summary</h3>
+  <p>Compact data compiled through the <code>&lt;t&gt;</code> table dialect.</p>
+
+  <!-- Table with dialect <t> -->
+  <t class="fin-table">
+    <thead>
+      <tr>
+        <th>Quarter</th>
+        <th>Revenue</th>
+        <th>Expenses</th>
+        <th>Net Profit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Q1 2026</td>
+        <td>$124,000</td>
+        <td>$78,000</td>
+        <td class="profit">+$46,000</td>
+      </tr>
+      <tr>
+        <td>Q2 2026</td>
+        <td>$168,500</td>
+        <td>$82,300</td>
+        <td class="profit">+$86,200</td>
+      </tr>
+      <tr>
+        <td>Q3 2026</td>
+        <td>$210,000</td>
+        <td>$94,000</td>
+        <td class="profit">+$116,000</td>
+      </tr>
+    </tbody>
+  </t>
+</div>
+
+<invisible for="body">
+  font-family: -apple-system, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 40px 20px;
+  display: flex;
+  justify-content: center;
+</invisible>
+
+<indirect for=".container">
+  width: 100%;
+  max-width: 600px;
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #334155;
+</indirect>
+
+<invisible for="h3">
+  margin: 0 0 4px 0;
+  color: #38bdf8;
 </invisible>
 
 <invisible for="p">
-  color: #64748b;
-  line-height: 1.5;
-  margin-bottom: 16px;
+  margin: 0 0 18px 0;
+  color: #94a3b8;
+  font-size: 14px;
 </invisible>
 
-<indirect for=".btn">
-  background-color: #2563eb;
-  color: #ffffff;
-  padding: 10px 18px;
-  border-radius: 6px;
-  border: none;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.15s ease;
+<indirect for=".fin-table">
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 </indirect>
 
-<invisible for=".btn:hover">
-  transform: translateY(-2px);
-  background-color: #1d4ed8;
-</invisible>`;
+<invisible for=".fin-table th, .fin-table td">
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #334155;
+</invisible>
 
-    const editor = document.getElementById("editor");
-    const previewFrame = document.getElementById("preview-frame");
+<invisible for=".fin-table th">
+  color: #94a3b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+</invisible>
 
-    editor.value = defaultMarkup;
+<invisible for=".profit">
+  color: #34d399;
+  font-weight: 600;
+</invisible>`,
 
-    function transformAndRender() {
-      const rawMarkup = editor.value;
+      divider_demo: `<div class="board">
+  <h2>Side-by-Side Comparison</h2>
+  <br>
 
-      // Extract <invisible> and <indirect> tags
-      // Matches both <tag for="...">css</tag> and generic <tag>css</tag>
-      const tagRegex = /<(invisible|indirect)(?:\s+for=["']([^"']+)["'])?>([\s\S]*?)<\/\1>/gi;
+  <div class="columns-wrap">
+    <div class="col">
+      <h4>Plan Essential</h4>
+      <p class="price">$19 / mo</p>
+      <ul>
+        <li>10 Projects</li>
+        <li>Basic Analytics</li>
+        <li>Community Support</li>
+      </ul>
+    </div>
 
-      let extractedCss = "";
-      
-      // Convert all invisible/indirect tags into compiled CSS rules
-      const cleanedMarkup = rawMarkup.replace(tagRegex, (match, tagName, selector, cssRules) => {
-        const trimmedRules = cssRules.trim();
-        if (selector) {
-          extractedCss += `${selector} { ${trimmedRules} }\n`;
-        } else {
-          // If no selector is defined, apply directly as raw rules or root styles
-          extractedCss += `${trimmedRules}\n`;
-        }
-        return ""; // Remove tag from body HTML
-      });
+    <!-- First Named Vertical line -->
+    <vr+"plan-divider" width="2px" height="180px" color="#cbd5e1">
 
-      // Construct safe sandbox document
-      const outputDoc = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8" />
-          <style>
-            ${extractedCss}
-          </style>
-        </head>
-        <body>
-          ${cleanedMarkup}
-        </body>
-        </html>
-      `;
+    <div class="col featured">
+      <h4>Plan Enterprise</h4>
+      <p class="price">$79 / mo</p>
+      <ul>
+        <li>Unlimited Projects</li>
+        <li>Predictive Analytics</li>
+        <li>24/7 Dedicated Support</li>
+      </ul>
+    </div>
+  </div>
+</div>
 
-      previewFrame.srcdoc = outputDoc;
+<invisible for="body">
+  background: #f3f4f6;
+  font-family: system-ui, sans-serif;
+  padding: 40px 16px;
+  display: flex;
+  justify-content: center;
+</invisible>
+
+<indirect for=".board">
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  max-width: 580px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+</indirect>
+
+<invisible for=".columns-wrap">
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+</invisible>
+
+<invisible for=".col">
+  flex: 1;
+  padding: 8px;
+</invisible>
+
+<invisible for=".price">
+  font-size: 26px;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 8px 0;
+</invisible>
+
+<invisible for="ul">
+  padding-left: 18px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.8;
+</invisible>
+
+<!-- Styling the specific named rule marker -->
+<invisible for="#plan-divider">
+  opacity: 0.7;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.4);
+</invisible>`,
+
+      minimal: `<h2>Clean Custom HTML Dialect</h2>
+<p>Clean line breaks with simple &lt;br&gt;<br>No need for self-closing slashes.</p>
+
+<div class="flex-box">
+  <span>Left Content</span>
+  <vr width="2px" height="40px" color="#94a3b8">
+  <span>Right Content</span>
+</div>
+
+<t border="1">
+  <tr>
+    <td>Alias cell A</td>
+    <td>Alias cell B</td>
+  </tr>
+</t>
+
+<invisible for="body">
+  font-family: system-ui, sans-serif;
+  padding: 24px;
+  background: #ffffff;
+  color: #1e293b;
+</invisible>
+
+<indirect for=".flex-box">
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+</indirect>`
+    };
+  </script>
+
+  <script>
+    /**
+     * Dialect Compiler
+     * Transforms custom dialect rules into pure valid HTML5 + CSS.
+     */
+    class DialectCompiler {
+      constructor() {
+        this.errors = [];
+      }
+
+      compile(customCode) {
+        this.errors = [];
+        let html = customCode || '';
+        let extractedStyles = [];
+
+        // 1. Transform <invisible> and <indirect> styling blocks
+        // Formats supported:
+        // <invisible for="selector"> rules </invisible>
+        // <indirect for="selector"> rules </indirect>
+        // Or generic <invisible> rules </invisible>
+        const styleTagPattern = /<(invisible|indirect)(?:\s+for=["']([^"']+)["'])?\s*>([\s\S]*?)<\/\1>/gi;
+        html = html.replace(styleTagPattern, (match, tagType, selector, cssRules) => {
+          const rules = (cssRules || '').trim();
+          if (selector && selector.trim()) {
+            extractedStyles.push(`${selector.trim()} {\n  ${rules.split('\n').join('\n  ')}\n}`);
+          } else if (rules) {
+            extractedStyles.push(rules);
+          }
+          return ''; // Strip from the visual body HTML
+        });
+
+        // 2. Transform Named Vertical Rule syntax: <vr+"rule_name" ...> or <vr+"rule_name">
+        // Example: <vr+"divider1" width="3px" height="80px" color="#3b82f6">
+        const namedVrShortPattern = /<vr\+["']([^"']+)["']([^>]*)>/gi;
+        html = html.replace(namedVrShortPattern, (match, name, extraAttrs) => {
+          return this.buildVrElement(name, extraAttrs);
+        });
+
+        // 3. Transform Standard <vr> elements with custom length/height, width, color:
+        // Example: <vr width="3px" height="60px" color="#3b82f6">
+        // Or shorthand attributes: <vr 2px 80px red>
+        const standardVrPattern = /<vr(?:\s+name=["']([^"']+)["'])?([^>]*)>/gi;
+        html = html.replace(standardVrPattern, (match, explicitName, attrs) => {
+          return this.buildVrElement(explicitName || null, attrs);
+        });
+
+        // 4. Transform Table aliases: <t ...> to <table ...> and </t> to </table>
+        // Matches <t> and <t class="...">
+        html = html.replace(/<t(\s+[^>]*)?>/gi, (match, attrs) => {
+          return `<table${attrs || ''}>`;
+        });
+        html = html.replace(/<\/t>/gi, '</table>');
+
+        // 5. Transform line breaks: clean lenient <br>
+        // Ensure explicit normalization of any rogue XML tags back to clean HTML <br>
+        html = html.replace(/<br\s*\/?>/gi, '<br>');
+
+        // Check for unbalanced or unclosed basic tags
+        this.validateTags(customCode);
+
+        // Assemble Final HTML document for Iframe sandbox
+        const compiledDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Default resets for seamless embedded viewing */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    /* Base styling for vertical rules */
+    .dialect-vr {
+      display: inline-block;
+      vertical-align: middle;
+      border: none;
+      flex-shrink: 0;
+      margin: 0 8px;
+    }
+    /* Extracted custom indirect/invisible styles */
+    ${extractedStyles.join('\n\n')}
+  </style>
+</head>
+<body>
+${html.trim()}
+</body>
+</html>`;
+
+        return {
+          html: compiledDoc,
+          extractedCss: extractedStyles.join('\n\n'),
+          hasErrors: this.errors.length > 0,
+          errors: this.errors
+        };
+      }
+
+      /**
+       * Helper to construct vertical divider spans from attributes
+       */
+      buildVrElement(name, attrString = '') {
+        let width = '2px';
+        let height = '40px';
+        let color = '#94a3b8'; // Default slate-400
+        let userClasses = '';
+        let inlineStyles = [];
+
+        // Check for explicit width="..." or w="..."
+        const widthMatch = attrString.match(/(?:width|w)=["']([^"']+)["']/i);
+        if (widthMatch) width = widthMatch[1];
+
+        // Check for explicit height="..." or length="..." or h="..."
+        const heightMatch = attrString.match(/(?:height|length|len|h)=["']([^"']+)["']/i);
+        if (heightMatch) height = heightMatch[1];
+
+        // Check for explicit color="..." or bg="..."
+        const colorMatch = attrString.match(/(?:color|bg|background)=["']([^"']+)["']/i);
+        if (colorMatch) color = colorMatch[1];
+
+        // Check for class="..."
+        const classMatch = attrString.match(/class=["']([^"']+)["']/i);
+        if (classMatch) userClasses = classMatch[1];
+
+        // Also check if shorthand was used (e.g. <vr 3px 60px #ff0000>)
+        const shorthandTokens = attrString.replace(/width|height|length|color|class=["'][^"']*["']/gi, '').trim().split(/\s+/).filter(Boolean);
+        shorthandTokens.forEach(tok => {
+          if (/^\d+(?:px|rem|em|vh|%)$/i.test(tok)) {
+            if (!widthMatch) {
+              width = tok;
+            } else if (!heightMatch) {
+              height = tok;
+            }
+          } else if (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(tok) || /^(rgb|hsl)/i.test(tok)) {
+            color = tok;
+          }
+        });
+
+        // Ensure dimension units exist
+        if (/^\d+$/.test(width)) width += 'px';
+        if (/^\d+$/.test(height)) height += 'px';
+
+        const idAttr = name ? ` id="${name}" data-named-vr="${name}"` : '';
+        const styleAttr = `style="width: ${width}; height: ${height}; background-color: ${color};"`;
+
+        return `<span class="dialect-vr ${userClasses}"${idAttr} ${styleAttr} role="separator" aria-orientation="vertical"></span>`;
+      }
+
+      /**
+       * Simple validation for unclosed custom tags
+       */
+      validateTags(code) {
+        const checkPair = (openPattern, closePattern, tagName) => {
+          const openCount = (code.match(openPattern) || []).length;
+          const closeCount = (code.match(closePattern) || []).length;
+          if (openCount !== closeCount) {
+            this.errors.push(`Tag &lt;${tagName}&gt; count (${openCount}) does not match &lt;/${tagName}&gt; count (${closeCount})`);
+          }
+        };
+
+        checkPair(/<invisible(?:\s+[^>]*)?>/gi, /<\/invisible>/gi, 'invisible');
+        checkPair(/<indirect(?:\s+[^>]*)?>/gi, /<\/indirect>/gi, 'indirect');
+        checkPair(/<t(?:\s+[^>]*)?>/gi, /<\/t>/gi, 't');
+      }
+    }
+  </script>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    const editor = document.getElementById('code-editor');
+    const lineNumbers = document.getElementById('line-numbers');
+    const previewFrame = document.getElementById('preview-frame');
+    const presetSelector = document.getElementById('preset-selector');
+    const syntaxStatus = document.getElementById('syntax-status');
+    const charCounter = document.getElementById('char-counter');
+    const cursorPos = document.getElementById('cursor-pos');
+
+    // Modals & triggers
+    const docsModal = document.getElementById('docs-modal');
+    const docBtn = document.getElementById('doc-btn');
+    const closeDocsBtn = document.getElementById('close-docs-btn');
+    const gotItBtn = document.getElementById('got-it-btn');
+
+    const inspectorModal = document.getElementById('inspector-modal');
+    const viewCompiledBtn = document.getElementById('view-compiled-btn');
+    const closeInspectorBtn = document.getElementById('close-inspector-btn');
+    const compiledCodeDisplay = document.getElementById('compiled-code-display');
+    const copyCompiledBtn = document.getElementById('copy-compiled-btn');
+
+    const copyBtn = document.getElementById('copy-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const formatBtn = document.getElementById('format-btn');
+    const refreshPreviewBtn = document.getElementById('refresh-preview-btn');
+
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toast-msg');
+
+    const compiler = new DialectCompiler();
+    let currentCompiledOutput = '';
+
+    // Show temporary toast message
+    function showToast(text, isError = false) {
+      toastMsg.innerText = text;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      if (isError) {
+        toast.classList.add('border-rose-500');
+      } else {
+        toast.classList.remove('border-rose-500');
+      }
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2600);
     }
 
-    // Auto-update on typing
-    editor.addEventListener("input", transformAndRender);
+    // Line numbers synchronizer
+    function updateLineNumbers() {
+      const lines = editor.value.split('\n').length;
+      let lineHtml = '';
+      for (let i = 1; i <= lines; i++) {
+        lineHtml += `<div>${i}</div>`;
+      }
+      lineNumbers.innerHTML = lineHtml;
+      lineNumbers.scrollTop = editor.scrollTop;
+    }
 
-    // Initial compilation
-    transformAndRender();
+    // Update cursor position display
+    function updateCursorInfo() {
+      const selStart = editor.selectionStart;
+      const textBefore = editor.value.substring(0, selStart);
+      const lines = textBefore.split('\n');
+      const currentLine = lines.length;
+      const currentCol = lines[lines.length - 1].length + 1;
+      cursorPos.innerText = `Ln ${currentLine}, Col ${currentCol}`;
+      charCounter.innerText = `${editor.value.length} chars`;
+    }
+
+    // Main Compilation & Render Routine
+    function runCompile() {
+      const code = editor.value;
+      const result = compiler.compile(code);
+      currentCompiledOutput = result.html;
+
+      // Update Live Preview Iframe
+      previewFrame.srcdoc = result.html;
+
+      // Update Syntax Status UI
+      if (result.hasErrors) {
+        syntaxStatus.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span class="text-amber-400 font-medium">${result.errors[0]}</span>
+        `;
+      } else {
+        syntaxStatus.innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span class="text-emerald-400">Syntactically Valid</span>
+        `;
+      }
+    }
+
+    // Handle Editor Input
+    editor.addEventListener('input', () => {
+      updateLineNumbers();
+      updateCursorInfo();
+      runCompile();
+    });
+
+    editor.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = editor.scrollTop;
+    });
+
+    ['click', 'keyup'].forEach(ev => {
+      editor.addEventListener(ev, updateCursorInfo);
+    });
+
+    editor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        // Insert 2 spaces
+        editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 2;
+        updateLineNumbers();
+        updateCursorInfo();
+        runCompile();
+      }
+    });
+
+    // Preset Selector Change
+    presetSelector.addEventListener('change', (e) => {
+      const selected = e.target.value;
+      if (TEMPLATES[selected]) {
+        editor.value = TEMPLATES[selected];
+        updateLineNumbers();
+        updateCursorInfo();
+        runCompile();
+        showToast(`Loaded ${e.target.options[e.target.selectedIndex].text.split('(')[0]}`);
+      }
+    });
+
+    // Syntax Documentation Modal Listeners
+    docBtn.addEventListener('click', () => docsModal.classList.remove('hidden'));
+    closeDocsBtn.addEventListener('click', () => docsModal.classList.add('hidden'));
+    gotItBtn.addEventListener('click', () => docsModal.classList.add('hidden'));
+    docsModal.addEventListener('click', (e) => {
+      if (e.target === docsModal) docsModal.classList.add('hidden');
+    });
+
+    // Inspector Compiled HTML Modal Listeners
+    viewCompiledBtn.addEventListener('click', () => {
+      compiledCodeDisplay.textContent = currentCompiledOutput;
+      inspectorModal.classList.remove('hidden');
+    });
+    closeInspectorBtn.addEventListener('click', () => inspectorModal.classList.add('hidden'));
+    inspectorModal.addEventListener('click', (e) => {
+      if (e.target === inspectorModal) inspectorModal.classList.add('hidden');
+    });
+
+    // Copy Raw Dialect Code to Clipboard
+    copyBtn.addEventListener('click', () => {
+      try {
+        editor.select();
+        document.execCommand('copy');
+        showToast('Dialect markup copied to clipboard!');
+      } catch (err) {
+        showToast('Failed to copy', true);
+      }
+    });
+
+    // Copy Transpiled HTML to Clipboard
+    copyCompiledBtn.addEventListener('click', () => {
+      try {
+        const dummy = document.createElement('textarea');
+        dummy.value = currentCompiledOutput;
+        document.body.appendChild(dummy);
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+        showToast('Transpiled standard HTML copied!');
+      } catch (err) {
+        showToast('Failed to copy', true);
+      }
+    });
+
+    // Download compiled standard HTML
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([currentCompiledOutput], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dialect-export.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Exported standard HTML downloaded!');
+    });
+
+    // Quick Format / Clean
+    formatBtn.addEventListener('click', () => {
+      // Basic whitespace cleanup
+      const cleaned = editor.value
+        .split('\n')
+        .map(line => line.replace(/\s+$/, ''))
+        .join('\n');
+      editor.value = cleaned;
+      updateLineNumbers();
+      runCompile();
+      showToast('Cleaned trailing whitespace');
+    });
+
+    // Refresh Preview
+    refreshPreviewBtn.addEventListener('click', () => {
+      runCompile();
+      showToast('Preview refreshed');
+    });
+
+    const splitResizer = document.getElementById('split-resizer');
+    const editorPane = document.getElementById('editor-pane');
+    const workspaceContainer = document.getElementById('workspace-container');
+    let isDragging = false;
+
+    splitResizer.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      splitResizer.classList.add('dragging');
+      document.body.style.cursor = window.innerWidth >= 768 ? 'col-resize' : 'row-resize';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const isDesktop = window.innerWidth >= 768;
+      const rect = workspaceContainer.getBoundingClientRect();
+
+      if (isDesktop) {
+        const offset = e.clientX - rect.left;
+        const percentage = Math.max(15, Math.min(85, (offset / rect.width) * 100));
+        editorPane.style.width = `${percentage}%`;
+        editorPane.style.height = '100%';
+      } else {
+        const offset = e.clientY - rect.top;
+        const percentage = Math.max(15, Math.min(85, (offset / rect.height) * 100));
+        editorPane.style.height = `${percentage}%`;
+        editorPane.style.width = '100%';
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        splitResizer.classList.remove('dragging');
+        document.body.style.cursor = 'default';
+      }
+    });
+
+    // Initial Load
+    editor.value = TEMPLATES.complete;
+    updateLineNumbers();
+    updateCursorInfo();
+    runCompile();
   </script>
 </body>
 </html>
