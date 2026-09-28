@@ -3,48 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IML</title>
-  <!-- Tailwind CSS CDN -->
+  <title>IML- Compilers</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    
-    .font-mono-code {
-      font-family: 'Fira Code', monospace;
-    }
-
-    /* Custom subtle scrollbars */
-    ::-webkit-scrollbar {
-      width: 7px;
-      height: 7px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
-    }
-
-    /* Editor line numbers & textarea sync */
-    #code-editor {
-      tab-size: 2;
-      -moz-tab-size: 2;
-    }
-
-    /* Split drag divider */
-    .resizer-handle:hover, .resizer-handle.dragging {
-      background-color: #38bdf8 !important;
-    }
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-code { font-family: 'Fira Code', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    #code-editor { tab-size: 2; -moz-tab-size: 2; }
+    .resizer-handle:hover, .resizer-handle.dragging { background-color: #38bdf8 !important; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden select-none">
@@ -57,37 +28,42 @@
       <div>
         <div class="flex items-center gap-2">
           <span class="font-bold text-slate-100 tracking-tight text-base">DialectStudio</span>
-          <span class="text-[10px] uppercase font-bold tracking-widest bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800/60">Custom HTML</span>
+          <span class="text-[10px] uppercase font-bold tracking-widest bg-sky-950 text-sky-400 px-2 py-0.5 rounded border border-sky-800/60">IndexedDB Synced</span>
         </div>
       </div>
     </div>
 
-    <!-- Center Preset Select & Quick Info -->
-    <div class="flex items-center space-x-2">
-      <label class="text-xs text-slate-400 font-medium hidden sm:inline-block">Template:</label>
-      <select id="preset-selector" class="bg-slate-800 text-xs border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer">
-        <option value="complete">🌟 Full Dialect Showcase (&lt;t&gt;, &lt;vr&gt;, &lt;vr+""&gt;, &lt;invisible&gt;)</option>
+    <!-- Center Status & Presets -->
+    <div class="flex items-center space-x-3">
+      <!-- IndexedDB Status Indicator -->
+      <div id="db-status-badge" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-[11px] text-slate-300">
+        <span id="db-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span id="db-status-text">IndexedDB Active</span>
+      </div>
+
+      <select id="preset-selector" class="bg-slate-800 text-xs border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer hidden sm:block">
+        <option value="complete">🌟 Full Dialect Showcase (&lt;t&gt;, &lt;vr=""&gt;, &lt;invisible&gt;)</option>
         <option value="table_demo">📊 Modern Table with &lt;t&gt; &amp; &lt;indirect&gt;</option>
-        <option value="divider_demo">📏 Vertical Rules &amp; Named Anchors &lt;vr+"id"&gt;</option>
+        <option value="divider_demo">📏 Vertical Rules &amp; Named Anchors &lt;vr="id"&gt;</option>
         <option value="minimal">✨ Minimal Clean Template</option>
       </select>
     </div>
 
-    <!-- Right Action Buttons -->
+    <!-- Actions -->
     <div class="flex items-center space-x-2">
-      <button id="doc-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition">
+      <button id="reset-template-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition" title="Reset to initial template">
+        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span class="hidden md:inline">Reset</span>
+      </button>
+
+      <button id="doc-btn" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition">
         <i data-lucide="book-open" class="w-3.5 h-3.5 text-sky-400"></i>
-        <span>Syntax Cheat Sheet</span>
+        <span class="hidden md:inline">Cheat Sheet</span>
       </button>
 
-      <button id="copy-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition" title="Copy raw markup">
-        <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-400"></i>
-        <span class="hidden md:inline">Copy</span>
-      </button>
-
-      <button id="download-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 border border-sky-400/30 transition shadow-sm" title="Download transformed standard HTML">
+      <button id="download-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-sky-600 hover:bg-sky-500 border border-sky-400/30 transition shadow-sm" title="Export HTML">
         <i data-lucide="download" class="w-3.5 h-3.5"></i>
-        <span class="hidden md:inline">Export HTML</span>
+        <span>Export</span>
       </button>
     </div>
   </header>
@@ -96,167 +72,71 @@
     
     <!-- Left: Code Editor Panel -->
     <section class="flex flex-col h-1/2 md:h-full w-full md:w-1/2 border-r border-slate-800 bg-slate-950" id="editor-pane">
-      <!-- Editor Top Bar -->
       <div class="h-9 bg-slate-900/60 border-b border-slate-800/80 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
         <div class="flex items-center space-x-2">
           <i data-lucide="file-code" class="w-3.5 h-3.5 text-sky-400"></i>
-          <span class="font-medium text-slate-300">document.custom.html</span>
+          <span class="font-medium text-slate-300">workspace.dialect.html</span>
           <span id="char-counter" class="text-[11px] text-slate-500">0 chars</span>
         </div>
         <div class="flex items-center space-x-3">
-          <div id="syntax-status" class="flex items-center gap-1.5 text-[11px] text-emerald-400">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Syntactically Valid</span>
-          </div>
-          <button id="format-btn" title="Auto Indent / Clean Code" class="hover:text-slate-200">
+          <div id="save-time-indicator" class="text-[11px] text-slate-400">Saved</div>
+          <button id="format-btn" title="Clean Code" class="hover:text-slate-200">
             <i data-lucide="wand-2" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
 
-      <!-- Editor Container with synchronized Line Numbers -->
+      <!-- Editor area with synced line numbers -->
       <div class="flex-1 flex overflow-hidden relative font-mono-code text-sm">
-        <!-- Line Numbers Column -->
         <div id="line-numbers" class="w-12 bg-slate-950 border-r border-slate-800/70 text-slate-600 select-none py-3 text-right pr-3 overflow-hidden text-xs leading-6">
           1
         </div>
-        <!-- Raw Textarea Input -->
         <textarea id="code-editor" spellcheck="false" class="flex-1 bg-transparent text-slate-200 p-3 leading-6 resize-none focus:outline-none overflow-auto whitespace-pre font-mono-code placeholder-slate-700"></textarea>
       </div>
 
-      <!-- Editor Bottom Status Bar -->
       <div class="h-6 bg-slate-900 border-t border-slate-800/70 px-3 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
         <div class="flex items-center space-x-3">
-          <span>Dialect: <b>v1.2 (VR + Indirect + &lt;t&gt;)</b></span>
-          <span>Tab: 2 spaces</span>
+          <span>Dialect: <b>&lt;invisible&gt; + &lt;t&gt; + &lt;vr=""&gt;</b></span>
+          <span class="text-emerald-400 flex items-center gap-1"><i data-lucide="database" class="w-3 h-3"></i> Auto-saved in browser</span>
         </div>
         <div id="cursor-pos">Ln 1, Col 1</div>
       </div>
     </section>
 
-    <!-- Resizer bar between editor and preview -->
+    <!-- Resizer bar -->
     <div id="split-resizer" class="h-1.5 md:h-full md:w-1 bg-slate-800 hover:bg-sky-500 cursor-row-resize md:cursor-col-resize resizer-handle transition-colors z-10 shrink-0"></div>
 
-    <!-- Right: Live Preview Panel -->
+    <!-- Right: Preview Panel -->
     <section class="flex flex-col h-1/2 md:h-full flex-1 bg-slate-900" id="preview-pane">
-      <!-- Preview Header -->
       <div class="h-9 bg-slate-900/60 border-b border-slate-800/80 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
         <div class="flex items-center space-x-2">
           <i data-lucide="eye" class="w-3.5 h-3.5 text-emerald-400"></i>
-          <span class="font-medium text-slate-300">Compiled Render Preview</span>
+          <span class="font-medium text-slate-300">Live Preview</span>
         </div>
         <div class="flex items-center space-x-2">
-          <!-- View Compiled Standard Source Modal Trigger -->
           <button id="view-compiled-btn" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 flex items-center gap-1 transition">
             <i data-lucide="binary" class="w-3 h-3 text-sky-400"></i>
-            <span>Inspect Standard HTML</span>
+            <span>View Transpiled HTML</span>
           </button>
-          <button id="refresh-preview-btn" title="Force Refresh Render" class="hover:text-slate-200 p-1">
+          <button id="refresh-preview-btn" title="Refresh Render" class="hover:text-slate-200 p-1">
             <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
 
-      <!-- Iframe sandbox -->
       <div class="flex-1 bg-white relative overflow-hidden">
         <iframe id="preview-frame" title="Renderer" class="w-full h-full border-none" sandbox="allow-scripts allow-modals"></iframe>
       </div>
     </section>
   </main>
 
-  <div id="docs-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/70">
-        <div class="flex items-center space-x-2.5">
-          <div class="w-7 h-7 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center">
-            <i data-lucide="help-circle" class="w-4 h-4"></i>
-          </div>
-          <h2 class="text-base font-semibold text-slate-100">Custom HTML Dialect Specification</h2>
-        </div>
-        <button id="close-docs-btn" class="text-slate-400 hover:text-slate-200 p-1 rounded-md hover:bg-slate-800 transition">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-300">
-        <!-- Rule 1: Invisible & Indirect tags -->
-        <div class="space-y-2 border-l-2 border-sky-500 pl-3">
-          <h3 class="font-semibold text-sky-400 text-sm">1. Invisible &amp; Indirect Styling Tags</h3>
-          <p class="text-xs text-slate-400">
-            Instead of standard <code>&lt;style&gt;</code>, styles are declared through <code>&lt;invisible&gt;</code> or <code>&lt;indirect&gt;</code>. You can target selectors directly using the <code>for="..."</code> attribute, or pass global CSS rules inside.
-          </p>
-          <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;invisible for="h1"&gt;
-  color: #38bdf8;
-  font-weight: 700;
-&lt;/invisible&gt;
-
-&lt;indirect for=".card"&gt;
-  border-radius: 12px;
-  background: #f8fafc;
-&lt;/indirect&gt;</pre>
-        </div>
-
-        <!-- Rule 2: Table tag alias -->
-        <div class="space-y-2 border-l-2 border-indigo-500 pl-3">
-          <h3 class="font-semibold text-indigo-400 text-sm">2. Table Tag Alias (&lt;t&gt;)</h3>
-          <p class="text-xs text-slate-400">
-            Instead of writing <code>&lt;table&gt;...&lt;/table&gt;</code>, the dialect uses succinct <code>&lt;t&gt;...&lt;/t&gt;</code> tags. It preserves all native table contents (<code>&lt;tr&gt;</code>, <code>&lt;td&gt;</code>, <code>&lt;th&gt;</code>).
-          </p>
-          <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;t border="1" class="custom-table"&gt;
-  &lt;tr&gt;
-    &lt;th&gt;Item&lt;/th&gt;
-    &lt;th&gt;Status&lt;/th&gt;
-  &lt;/tr&gt;
-  &lt;tr&gt;
-    &lt;td&gt;Engine&lt;/td&gt;
-    &lt;td&gt;Active&lt;/td&gt;
-  &lt;/tr&gt;
-&lt;/t&gt;</pre>
-        </div>
-
-        <!-- Rule 3: Single Line Break -->
-        <div class="space-y-2 border-l-2 border-teal-500 pl-3">
-          <h3 class="font-semibold text-teal-400 text-sm">3. Lean Line Break</h3>
-          <p class="text-xs text-slate-400">
-            Write clean <code>&lt;br&gt;</code> instead of self-closing XML-like <code>&lt;br/&gt;</code> or <code>&lt;br /&gt;</code>.
-          </p>
-        </div>
-
-        <!-- Rule 4 & 5: Vertical Rules & Named Spot Rules -->
-        <div class="space-y-2 border-l-2 border-amber-500 pl-3">
-          <h3 class="font-semibold text-amber-400 text-sm">4. Vertical Lines (&lt;vr&gt;) &amp; Named Anchors (&lt;vr="name"&gt;)</h3>
-          <p class="text-xs text-slate-400">
-            Vertical rules can be declared with custom thickness, length, and color (defaults to 1px width, 50px length, and black color):
-          </p>
-          <ul class="list-disc list-inside text-xs text-slate-400 space-y-1 ml-1">
-            <li>Standard attributes: <code>&lt;vr width="3px" length="80px" color="#3b82f6"&gt;</code></li>
-            <li>Default line: <code>&lt;vr&gt;</code></li>
-            <li><b>Named Rule Anchors:</b> <code>&lt;vr="divider_main"&gt;</code> or <code>&lt;vr="header-line" length="50px" color="#f43f5e"&gt;</code>. You can write custom invisible styles for this specific spot via <code>&lt;invisible for="#divider_main"&gt;</code>!</li>
-          </ul>
-          <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;!-- Inline vertical line --&gt;
-&lt;vr width="2px" length="60px" color="#64748b"&gt;
-
-&lt;!-- Named vertical line anchored at specific spot --&gt;
-&lt;vr="customSeparator" length="120px" color="red"&gt;
-
-&lt;invisible for="#customSeparator"&gt;
-  box-shadow: 0 0 10px #ec4899;
-&lt;/invisible&gt;</pre>
-        </div>
-      </div>
-
-      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900/80 flex justify-end">
-        <button id="got-it-btn" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-semibold transition">Got it</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Transpiled HTML Inspector Modal -->
   <div id="inspector-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
       <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <i data-lucide="code" class="w-4 h-4 text-emerald-400"></i>
-          <h2 class="text-sm font-semibold text-slate-100">Transpiled Standard HTML Preview</h2>
+          <i data-lucide="binary" class="w-4 h-4 text-emerald-400"></i>
+          <h2 class="text-sm font-semibold text-slate-100">Transpiled Standard HTML Output</h2>
         </div>
         <button id="close-inspector-btn" class="text-slate-400 hover:text-slate-200 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -265,83 +145,165 @@
       <div class="p-4 flex-1 overflow-auto bg-slate-950 font-mono-code text-xs text-slate-300">
         <pre id="compiled-code-display" class="whitespace-pre-wrap"></pre>
       </div>
-      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900 flex justify-between items-center">
-        <span class="text-xs text-slate-400">Ready for modern browsers</span>
-        <button id="copy-compiled-btn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs border border-slate-700">Copy Compiled HTML</button>
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900 flex justify-end">
+        <button id="copy-compiled-btn" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded text-xs">Copy Standard HTML</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification System -->
+  <!-- Cheat Sheet Modal -->
+  <div id="docs-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-slate-100">Custom Dialect Rules</h2>
+        <button id="close-docs-btn" class="text-slate-400 hover:text-slate-200 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-4 text-xs text-slate-300">
+        <div>
+          <b class="text-sky-400 text-sm">1. Styling: &lt;invisible&gt; / &lt;indirect&gt;</b>
+          <p class="text-slate-400 mt-1">Use <code>&lt;invisible for="selector"&gt;</code> or <code>&lt;indirect for="selector"&gt;</code> instead of &lt;style&gt;.</p>
+        </div>
+        <div>
+          <b class="text-indigo-400 text-sm">2. Tables: &lt;t&gt; ... &lt;/t&gt;</b>
+          <p class="text-slate-400 mt-1">Use <code>&lt;t&gt;</code> instead of <code>&lt;table&gt;</code>. Standard &lt;tr&gt;, &lt;th&gt;, &lt;td&gt; work inside.</p>
+        </div>
+        <div>
+          <b class="text-teal-400 text-sm">3. Line breaks: &lt;br&gt;</b>
+          <p class="text-slate-400 mt-1">Clean lean line break without closing slash.</p>
+        </div>
+        <div>
+          <b class="text-amber-400 text-sm">4. Vertical Rules: &lt;vr&gt; and &lt;vr="name"&gt;</b>
+          <p class="text-slate-400 mt-1">Default: <code>&lt;vr&gt;</code> (1px width, 50px height, #000). Customize with <code>width</code>, <code>length</code>/<code>height</code>, <code>color</code>.</p>
+          <p class="text-slate-400 mt-1">Name rule: <code>&lt;vr="myDivider" length="80px" color="blue"&gt;</code> can be styled via <code>&lt;invisible for="#myDivider"&gt;</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
   <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-slate-100 border border-slate-700 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs translate-y-20 opacity-0 pointer-events-none transition-all duration-200 z-50">
     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-    <span id="toast-msg">Action completed!</span>
+    <span id="toast-msg">Saved</span>
   </div>
 
   <script>
-    const TEMPLATES = {
-      complete: `<!-- Custom Dialect Showcase -->
-<div class="app-card">
-  <h2>Dialect Showcase</h2>
-  <p class="subtitle">Written with &lt;invisible&gt;, &lt;t&gt; tables, and &lt;vr&gt; rules<br>Clean & modern markup syntax.</p>
+    class StorageDB {
+      constructor() {
+        this.dbName = 'custom_html_ide_db';
+        this.storeName = 'editor_state';
+        this.db = null;
+      }
 
-  <!-- Flex container using vertical rule <vr> -->
-  <div class="metric-row">
-    <div class="metric-box">
-      <span class="num">1,480</span>
-      <span class="lbl">Page Views</span>
+      async init() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(this.dbName, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(this.storeName)) {
+              db.createObjectStore(this.storeName, { keyPath: 'id' });
+            }
+          };
+          req.onsuccess = (e) => {
+            this.db = e.target.result;
+            resolve(this.db);
+          };
+          req.onerror = (e) => {
+            reject(e.target.error);
+          };
+        });
+      }
+
+      async saveCode(code) {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction([this.storeName], 'readwrite');
+          const store = tx.objectStore(this.storeName);
+          const record = {
+            id: 'current_document',
+            content: code,
+            updatedAt: new Date().toISOString()
+          };
+          const req = store.put(record);
+          req.onsuccess = () => resolve(record);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async loadCode() {
+        if (!this.db) await this.init();
+        return new Promise((resolve, reject) => {
+          const tx = this.db.transaction([this.storeName], 'readonly');
+          const store = tx.objectStore(this.storeName);
+          const req = store.get('current_document');
+          req.onsuccess = () => resolve(req.result ? req.result.content : null);
+          req.onerror = () => reject(req.error);
+        });
+      }
+    }
+
+    const storage = new StorageDB();
+  </script>
+
+  <script>
+    const TEMPLATES = {
+      complete: `<!-- Custom Dialect Showcase with Persistent IndexedDB -->
+<div class="card">
+  <h2>Custom Dialect Playground</h2>
+  <p class="desc">Styled with &lt;invisible&gt;, tables written with &lt;t&gt;, dividers with &lt;vr&gt;.<br>Auto-saved directly in IndexedDB!</p>
+
+  <div class="stats-row">
+    <div>
+      <span class="val">99.9%</span>
+      <span class="sub">Storage Reliability</span>
     </div>
 
-    <!-- Standard Default Vertical Line (1px width, 50px length, black color) -->
+    <!-- Default 1px width, 50px length, black vertical line -->
     <vr>
 
-    <div class="metric-box">
-      <span class="num">99.98%</span>
-      <span class="lbl">Live Uptime</span>
+    <div>
+      <span class="val">0 ms</span>
+      <span class="sub">Data Loss</span>
     </div>
 
-    <!-- Named vertical line at this spot: <vr="myLine"> -->
-    <vr="myLine" width="3px" length="100px" color="red">
+    <!-- Named vertical rule targeting spot: <vr="accentDivider"> -->
+    <vr="accentDivider" width="3px" length="60px" color="#3b82f6">
 
-    <div class="metric-box">
-      <span class="num">42 ms</span>
-      <span class="lbl">Latency</span>
+    <div>
+      <span class="val">IndexedDB</span>
+      <span class="sub">Persistence</span>
     </div>
   </div>
 
   <br>
 
-  <!-- Custom Table using <t> tag instead of <table> -->
-  <t class="styled-table">
+  <!-- Table tag alias <t> instead of <table> -->
+  <t class="data-table">
     <tr>
-      <th>Module</th>
+      <th>Feature</th>
       <th>Dialect Tag</th>
-      <th>Rendered As</th>
+      <th>Output</th>
     </tr>
     <tr>
       <td>Styling</td>
-      <td>&lt;invisible&gt; / &lt;indirect&gt;</td>
+      <td>&lt;invisible for="..."&gt;</td>
       <td>Virtual CSS</td>
     </tr>
     <tr>
-      <td>Table Alias</td>
+      <td>Table</td>
       <td>&lt;t&gt; ... &lt;/t&gt;</td>
-      <td>&lt;table&gt; element</td>
+      <td>Pure &lt;table&gt;</td>
     </tr>
     <tr>
-      <td>Dividers</td>
-      <td>&lt;vr width="..." length="..."&gt;</td>
-      <td>Vertical Divider</td>
-    </tr>
-    <tr>
-      <td>Spot Anchor</td>
-      <td>&lt;vr="name"&gt;</td>
-      <td>Targetable #name</td>
+      <td>Named Vertical Rule</td>
+      <td>&lt;vr="accentDivider"&gt;</td>
+      <td>Anchor #accentDivider</td>
     </tr>
   </t>
 </div>
 
-<!-- INVISIBLE STYLING BLOCK -->
+<!-- INVISIBLE STYLING BLOCKS -->
 <invisible for="body">
   background-color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -354,15 +316,14 @@
   box-sizing: border-box;
 </invisible>
 
-<!-- INDIRECT STYLING BLOCK FOR CARD -->
-<indirect for=".app-card">
+<indirect for=".card">
   background: #ffffff;
   padding: 28px;
   border-radius: 16px;
-  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.03);
   max-width: 620px;
   width: 100%;
   border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06);
 </indirect>
 
 <invisible for="h2">
@@ -371,301 +332,182 @@
   font-size: 22px;
 </invisible>
 
-<invisible for=".subtitle">
+<invisible for=".desc">
   color: #64748b;
   font-size: 14px;
   margin: 0 0 20px 0;
   line-height: 1.5;
 </invisible>
 
-<indirect for=".metric-row">
+<indirect for=".stats-row">
   display: flex;
   align-items: center;
   justify-content: space-around;
   background: #f8fafc;
   padding: 16px;
   border-radius: 12px;
-  margin-bottom: 24px;
-  border: 1px solid #edf2f7;
+  border: 1px solid #e2e8f0;
 </indirect>
 
-<invisible for=".metric-box">
+<invisible for=".stats-row div">
   display: flex;
   flex-direction: column;
   align-items: center;
 </invisible>
 
-<invisible for=".metric-box .num">
+<invisible for=".val">
   font-weight: 700;
-  font-size: 20px;
+  font-size: 18px;
   color: #0284c7;
 </invisible>
 
-<invisible for=".metric-box .lbl">
-  font-size: 12px;
+<invisible for=".sub">
+  font-size: 11px;
   color: #64748b;
   margin-top: 2px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 </invisible>
 
-<!-- Custom targeted styling for named vertical rule #myLine -->
-<invisible for="#myLine">
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
-  border-radius: 2px;
+<!-- Targeted style specifically for the named vr -->
+<invisible for="#accentDivider">
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  border-radius: 3px;
 </invisible>
 
-<!-- Table Styling via <t> alias -->
-<indirect for=".styled-table">
+<!-- Table styling with <t> -->
+<indirect for=".data-table">
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  margin-top: 14px;
 </indirect>
 
-<invisible for=".styled-table th">
+<invisible for=".data-table th">
   background: #f8fafc;
   color: #475569;
   text-align: left;
-  padding: 10px 14px;
+  padding: 10px 12px;
   border-bottom: 2px solid #e2e8f0;
-  font-weight: 600;
 </invisible>
 
-<invisible for=".styled-table td">
-  padding: 10px 14px;
+<invisible for=".data-table td">
+  padding: 10px 12px;
   border-bottom: 1px solid #f1f5f9;
   color: #334155;
-</invisible>
-
-<invisible for=".styled-table tr:hover td">
-  background: #f8fafc;
 </invisible>`,
 
-      table_demo: `<div class="container">
-  <h3>Financial Report Summary</h3>
-  <p>Compact data compiled through the <code>&lt;t&gt;</code> table dialect.</p>
-
-  <!-- Table with dialect <t> -->
-  <t class="fin-table">
-    <thead>
-      <tr>
-        <th>Quarter</th>
-        <th>Revenue</th>
-        <th>Expenses</th>
-        <th>Net Profit</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Q1 2026</td>
-        <td>$124,000</td>
-        <td>$78,000</td>
-        <td class="profit">+$46,000</td>
-      </tr>
-      <tr>
-        <td>Q2 2026</td>
-        <td>$168,500</td>
-        <td>$82,300</td>
-        <td class="profit">+$86,200</td>
-      </tr>
-      <tr>
-        <td>Q3 2026</td>
-        <td>$210,000</td>
-        <td>$94,000</td>
-        <td class="profit">+$116,000</td>
-      </tr>
-    </tbody>
+      table_demo: `<div class="box">
+  <h3>Q3 Inventory Summary</h3>
+  <br>
+  <t class="styled-t">
+    <tr>
+      <th>SKU</th>
+      <th>Item</th>
+      <th>Stock</th>
+    </tr>
+    <tr>
+      <td>A-101</td>
+      <td>Server Nodes</td>
+      <td>48</td>
+    </tr>
+    <tr>
+      <td>B-204</td>
+      <td>NVMe Arrays</td>
+      <td>112</td>
+    </tr>
   </t>
 </div>
 
 <invisible for="body">
-  font-family: -apple-system, sans-serif;
   background: #0f172a;
-  color: #e2e8f0;
-  padding: 40px 20px;
+  color: #f8fafc;
+  font-family: sans-serif;
+  padding: 40px;
   display: flex;
   justify-content: center;
 </invisible>
 
-<indirect for=".container">
-  width: 100%;
-  max-width: 600px;
+<indirect for=".box">
   background: #1e293b;
-  border-radius: 12px;
   padding: 24px;
+  border-radius: 12px;
+  width: 440px;
   border: 1px solid #334155;
 </indirect>
 
 <invisible for="h3">
-  margin: 0 0 4px 0;
+  margin: 0;
   color: #38bdf8;
 </invisible>
 
-<invisible for="p">
-  margin: 0 0 18px 0;
-  color: #94a3b8;
-  font-size: 14px;
-</invisible>
-
-<indirect for=".fin-table">
+<indirect for=".styled-t">
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
 </indirect>
 
-<invisible for=".fin-table th, .fin-table td">
-  padding: 12px 14px;
+<invisible for=".styled-t th, .styled-t td">
+  padding: 10px;
   text-align: left;
   border-bottom: 1px solid #334155;
-</invisible>
-
-<invisible for=".fin-table th">
-  color: #94a3b8;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-</invisible>
-
-<invisible for=".profit">
-  color: #34d399;
-  font-weight: 600;
 </invisible>`,
 
-      divider_demo: `<div class="board">
-  <h2>Side-by-Side Comparison</h2>
-  <br>
-
-  <div class="columns-wrap">
-    <div class="col">
-      <h4>Plan Essential</h4>
-      <p class="price">$19 / mo</p>
-      <ul>
-        <li>10 Projects</li>
-        <li>Basic Analytics</li>
-        <li>Community Support</li>
-      </ul>
-    </div>
-
-    <!-- First Named Vertical line -->
-    <vr="plan-divider" width="2px" length="180px" color="#cbd5e1">
-
-    <div class="col featured">
-      <h4>Plan Enterprise</h4>
-      <p class="price">$79 / mo</p>
-      <ul>
-        <li>Unlimited Projects</li>
-        <li>Predictive Analytics</li>
-        <li>24/7 Dedicated Support</li>
-      </ul>
-    </div>
-  </div>
+      divider_demo: `<div class="wrap">
+  <span>Column Alpha</span>
+  <vr="divAlpha" width="2px" length="60px" color="#64748b">
+  <span>Column Beta</span>
+  <vr width="1px" length="40px" color="#cbd5e1">
+  <span>Column Gamma</span>
 </div>
 
 <invisible for="body">
-  background: #f3f4f6;
-  font-family: system-ui, sans-serif;
-  padding: 40px 16px;
-  display: flex;
-  justify-content: center;
+  font-family: sans-serif;
+  padding: 40px;
+  background: #f8fafc;
 </invisible>
 
-<indirect for=".board">
-  background: #ffffff;
-  padding: 32px;
-  border-radius: 16px;
-  max-width: 580px;
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-</indirect>
-
-<invisible for=".columns-wrap">
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-</invisible>
-
-<invisible for=".col">
-  flex: 1;
-  padding: 8px;
-</invisible>
-
-<invisible for=".price">
-  font-size: 26px;
-  font-weight: 700;
-  color: #2563eb;
-  margin: 8px 0;
-</invisible>
-
-<invisible for="ul">
-  padding-left: 18px;
-  color: #475569;
-  font-size: 13px;
-  line-height: 1.8;
-</invisible>
-
-<!-- Styling the specific named rule marker -->
-<invisible for="#plan-divider">
-  opacity: 0.7;
-  border-radius: 2px;
-  box-shadow: 0 0 6px rgba(37, 99, 235, 0.4);
-</invisible>`,
-
-      minimal: `<h2>Clean Custom HTML Dialect</h2>
-<p>Clean line breaks with simple &lt;br&gt;<br>No need for self-closing slashes.</p>
-
-<div class="flex-box">
-  <span>Left Content</span>
-  <vr width="2px" length="40px" color="#94a3b8">
-  <span>Right Content</span>
-</div>
-
-<t border="1">
-  <tr>
-    <td>Alias cell A</td>
-    <td>Alias cell B</td>
-  </tr>
-</t>
-
-<invisible for="body">
-  font-family: system-ui, sans-serif;
-  padding: 24px;
-  background: #ffffff;
-  color: #1e293b;
-</invisible>
-
-<indirect for=".flex-box">
+<indirect for=".wrap">
   display: flex;
   align-items: center;
   gap: 16px;
-  margin: 18px 0;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-</indirect>`
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  width: fit-content;
+</indirect>
+
+<invisible for="#divAlpha">
+  transform: rotate(5deg);
+</invisible>`,
+
+      minimal: `<h2>Clean Custom Dialect</h2>
+<p>Clean line breaks with simple &lt;br&gt;<br>Saved in IndexedDB.</p>
+
+<div style="display:flex; align-items:center; gap: 12px;">
+  <span>Left</span>
+  <vr>
+  <span>Right</span>
+</div>
+
+<t border="1">
+  <tr><td>Alpha</td><td>Beta</td></tr>
+</t>
+
+<invisible for="body">
+  font-family: sans-serif;
+  padding: 24px;
+</invisible>`
     };
   </script>
 
   <script>
-    /**
-     * Dialect Compiler
-     * Transforms custom dialect rules into pure valid HTML5 + CSS.
-     */
     class DialectCompiler {
-      constructor() {
-        this.errors = [];
-      }
-
       compile(customCode) {
-        this.errors = [];
         let html = customCode || '';
         let extractedStyles = [];
 
-        // 1. Transform <invisible> and <indirect> styling blocks
-        // Formats supported:
-        // <invisible for="selector"> rules </invisible>
-        // <indirect for="selector"> rules </indirect>
-        // Or generic <invisible> rules </invisible>
+        // 1. Transform <invisible for="..."> and <indirect for="...">
         const styleTagPattern = /<(invisible|indirect)(?:\s+for=["']([^"']+)["'])?\s*>([\s\S]*?)<\/\1>/gi;
         html = html.replace(styleTagPattern, (match, tagType, selector, cssRules) => {
           const rules = (cssRules || '').trim();
@@ -674,53 +516,41 @@
           } else if (rules) {
             extractedStyles.push(rules);
           }
-          return ''; // Strip from the visual body HTML
+          return '';
         });
 
-        // 2 & 3. Transform Vertical Rule syntax: <vr="rule_name" ...> or <vr ...>
-        // Example: <vr="myLine" width="3px" length="100px" color="red">
+        // 2. Transform <vr="name" ...> or <vr ...>
+        // Supports: <vr>, <vr="mySpot">, <vr="mySpot" width="3px" length="80px" color="red">
         const vrPattern = /<vr(?:=["']([^"']+)["'])?([^>]*)>/gi;
         html = html.replace(vrPattern, (match, name, attrs) => {
           return this.buildVrElement(name, attrs);
         });
 
-        // 4. Transform Table aliases: <t ...> to <table ...> and </t> to </table>
-        // Matches <t> and <t class="..."> robustly
+        // 3. Transform <t> and </t> to <table> and </table>
         html = html.replace(/<t(?=[\s>])([^>]*)>/gi, '<table$1>');
         html = html.replace(/<\/t>/gi, '</table>');
 
-        // 5. Transform line breaks: clean lenient <br>
-        // Ensure explicit normalization of any rogue XML tags back to clean HTML <br>
+        // 4. Transform clean <br>
         html = html.replace(/<br\s*\/?>/gi, '<br>');
 
-        // Check for unbalanced or unclosed basic tags
-        this.validateTags(customCode);
-
-        // Assemble Final HTML document for Iframe sandbox
         const compiledDoc = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* Default resets for seamless embedded viewing */
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 16px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    /* Base styling for vertical rules */
     .dialect-vr {
       display: inline-block;
       vertical-align: middle;
-      border: none;
       flex-shrink: 0;
       margin: 0 8px;
     }
-    /* Extracted custom indirect/invisible styles */
     ${extractedStyles.join('\n\n')}
   </style>
 </head>
@@ -731,81 +561,49 @@ ${html.trim()}
 
         return {
           html: compiledDoc,
-          extractedCss: extractedStyles.join('\n\n'),
-          hasErrors: this.errors.length > 0,
-          errors: this.errors
+          extractedCss: extractedStyles.join('\n\n')
         };
       }
 
-      /**
-       * Helper to construct vertical divider elements from attributes
-       */
       buildVrElement(name, attrString = '') {
         let width = '1px';
         let length = '50px';
-        let color = 'black';
+        let color = '#000000';
         let userClasses = '';
 
         if (attrString) {
-          // Check for explicit width="..."
-          const widthMatch = attrString.match(/width=["']([^"']+)["']/i);
-          if (widthMatch) width = widthMatch[1];
+          const w = attrString.match(/width=["']([^"']+)["']/i);
+          if (w) width = w[1];
 
-          // Check for explicit length="..." or height="..."
-          const lengthMatch = attrString.match(/(?:length|height)=["']([^"']+)["']/i);
-          if (lengthMatch) length = lengthMatch[1];
+          const l = attrString.match(/(?:length|height)=["']([^"']+)["']/i);
+          if (l) length = l[1];
 
-          // Check for explicit color="..."
-          const colorMatch = attrString.match(/color=["']([^"']+)["']/i);
-          if (colorMatch) color = colorMatch[1];
+          const c = attrString.match(/color=["']([^"']+)["']/i);
+          if (c) color = c[1];
 
-          // Check for class="..."
-          const classMatch = attrString.match(/class=["']([^"']+)["']/i);
-          if (classMatch) userClasses = classMatch[1];
+          const cls = attrString.match(/class=["']([^"']+)["']/i);
+          if (cls) userClasses = cls[1];
         }
 
-        const idAttr = name ? ` id="${name}" data-named-vr="${name}"` : '';
-        const styleAttr = `style="display: inline-block; vertical-align: middle; flex-shrink: 0; margin: 0 8px; width: ${width}; height: ${length}; background-color: ${color};"`;
+        const idAttr = name ? ` id="${name}"` : '';
+        const style = `style="display: inline-block; vertical-align: middle; flex-shrink: 0; margin: 0 8px; width: ${width}; height: ${length}; background-color: ${color};"`;
 
-        return `<div class="dialect-vr ${userClasses}"${idAttr} ${styleAttr} role="separator" aria-orientation="vertical"></div>`;
-      }
-
-      /**
-       * Simple validation for unclosed custom tags
-       */
-      validateTags(code) {
-        const checkPair = (openPattern, closePattern, tagName) => {
-          const openCount = (code.match(openPattern) || []).length;
-          const closeCount = (code.match(closePattern) || []).length;
-          if (openCount !== closeCount) {
-            this.errors.push(`Tag &lt;${tagName}&gt; count (${openCount}) does not match &lt;/${tagName}&gt; count (${closeCount})`);
-          }
-        };
-
-        checkPair(/<invisible(?:\s+[^>]*)?>/gi, /<\/invisible>/gi, 'invisible');
-        checkPair(/<indirect(?:\s+[^>]*)?>/gi, /<\/indirect>/gi, 'indirect');
-        checkPair(/<t(?:\s+[^>]*)?>/gi, /<\/t>/gi, 't');
+        return `<div class="dialect-vr ${userClasses}"${idAttr} ${style} role="separator" aria-orientation="vertical"></div>`;
       }
     }
   </script>
 
   <script>
-    // Initialize Lucide Icons
     lucide.createIcons();
 
     const editor = document.getElementById('code-editor');
     const lineNumbers = document.getElementById('line-numbers');
     const previewFrame = document.getElementById('preview-frame');
     const presetSelector = document.getElementById('preset-selector');
-    const syntaxStatus = document.getElementById('syntax-status');
     const charCounter = document.getElementById('char-counter');
     const cursorPos = document.getElementById('cursor-pos');
-
-    // Modals & triggers
-    const docsModal = document.getElementById('docs-modal');
-    const docBtn = document.getElementById('doc-btn');
-    const closeDocsBtn = document.getElementById('close-docs-btn');
-    const gotItBtn = document.getElementById('got-it-btn');
+    const saveTimeIndicator = document.getElementById('save-time-indicator');
+    const dbDot = document.getElementById('db-dot');
 
     const inspectorModal = document.getElementById('inspector-modal');
     const viewCompiledBtn = document.getElementById('view-compiled-btn');
@@ -813,9 +611,13 @@ ${html.trim()}
     const compiledCodeDisplay = document.getElementById('compiled-code-display');
     const copyCompiledBtn = document.getElementById('copy-compiled-btn');
 
-    const copyBtn = document.getElementById('copy-btn');
+    const docsModal = document.getElementById('docs-modal');
+    const docBtn = document.getElementById('doc-btn');
+    const closeDocsBtn = document.getElementById('close-docs-btn');
+
     const downloadBtn = document.getElementById('download-btn');
     const formatBtn = document.getElementById('format-btn');
+    const resetTemplateBtn = document.getElementById('reset-template-btn');
     const refreshPreviewBtn = document.getElementById('refresh-preview-btn');
 
     const toast = document.getElementById('toast');
@@ -823,24 +625,18 @@ ${html.trim()}
 
     const compiler = new DialectCompiler();
     let currentCompiledOutput = '';
+    let saveTimeout = null;
 
-    // Show temporary toast message
-    function showToast(text, isError = false) {
+    function showToast(text) {
       toastMsg.innerText = text;
       toast.classList.remove('translate-y-20', 'opacity-0');
       toast.classList.add('translate-y-0', 'opacity-100');
-      if (isError) {
-        toast.classList.add('border-rose-500');
-      } else {
-        toast.classList.remove('border-rose-500');
-      }
       setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
         toast.classList.add('translate-y-20', 'opacity-0');
-      }, 2600);
+      }, 2200);
     }
 
-    // Line numbers synchronizer
     function updateLineNumbers() {
       const lines = editor.value.split('\n').length;
       let lineHtml = '';
@@ -851,7 +647,6 @@ ${html.trim()}
       lineNumbers.scrollTop = editor.scrollTop;
     }
 
-    // Update cursor position display
     function updateCursorInfo() {
       const selStart = editor.selectionStart;
       const textBefore = editor.value.substring(0, selStart);
@@ -862,34 +657,38 @@ ${html.trim()}
       charCounter.innerText = `${editor.value.length} chars`;
     }
 
-    // Main Compilation & Render Routine
     function runCompile() {
       const code = editor.value;
       const result = compiler.compile(code);
       currentCompiledOutput = result.html;
-
-      // Update Live Preview Iframe
       previewFrame.srcdoc = result.html;
-
-      // Update Syntax Status UI
-      if (result.hasErrors) {
-        syntaxStatus.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span class="text-amber-400 font-medium">${result.errors[0]}</span>
-        `;
-      } else {
-        syntaxStatus.innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span class="text-emerald-400">Syntactically Valid</span>
-        `;
-      }
     }
 
-    // Handle Editor Input
+    // Debounced auto-save directly to IndexedDB
+    function triggerAutoSave() {
+      saveTimeIndicator.innerText = 'Saving...';
+      dbDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        try {
+          await storage.saveCode(editor.value);
+          const now = new Date();
+          const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          saveTimeIndicator.innerText = `Saved (${timeStr})`;
+          dbDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        } catch (err) {
+          saveTimeIndicator.innerText = 'Save error';
+          dbDot.className = 'w-2 h-2 rounded-full bg-rose-500';
+        }
+      }, 350);
+    }
+
     editor.addEventListener('input', () => {
       updateLineNumbers();
       updateCursorInfo();
       runCompile();
+      triggerAutoSave();
     });
 
     editor.addEventListener('scroll', () => {
@@ -900,109 +699,88 @@ ${html.trim()}
       editor.addEventListener(ev, updateCursorInfo);
     });
 
+    // Tab key support
     editor.addEventListener('keydown', (e) => {
       if (e.key === 'Tab') {
         e.preventDefault();
         const start = editor.selectionStart;
         const end = editor.selectionEnd;
-        // Insert 2 spaces
         editor.value = editor.value.substring(0, start) + '  ' + editor.value.substring(end);
         editor.selectionStart = editor.selectionEnd = start + 2;
         updateLineNumbers();
         updateCursorInfo();
         runCompile();
+        triggerAutoSave();
       }
     });
 
-    // Preset Selector Change
-    presetSelector.addEventListener('change', (e) => {
+    presetSelector.addEventListener('change', async (e) => {
       const selected = e.target.value;
       if (TEMPLATES[selected]) {
         editor.value = TEMPLATES[selected];
         updateLineNumbers();
         updateCursorInfo();
         runCompile();
-        showToast(`Loaded ${e.target.options[e.target.selectedIndex].text.split('(')[0]}`);
+        await storage.saveCode(editor.value);
+        showToast('Template loaded & saved to IndexedDB');
       }
     });
 
-    // Syntax Documentation Modal Listeners
-    docBtn.addEventListener('click', () => docsModal.classList.remove('hidden'));
-    closeDocsBtn.addEventListener('click', () => docsModal.classList.add('hidden'));
-    gotItBtn.addEventListener('click', () => docsModal.classList.add('hidden'));
-    docsModal.addEventListener('click', (e) => {
-      if (e.target === docsModal) docsModal.classList.add('hidden');
+    resetTemplateBtn.addEventListener('click', async () => {
+      editor.value = TEMPLATES.complete;
+      updateLineNumbers();
+      updateCursorInfo();
+      runCompile();
+      await storage.saveCode(editor.value);
+      showToast('Reset to showcase template');
     });
 
-    // Inspector Compiled HTML Modal Listeners
     viewCompiledBtn.addEventListener('click', () => {
       compiledCodeDisplay.textContent = currentCompiledOutput;
       inspectorModal.classList.remove('hidden');
     });
     closeInspectorBtn.addEventListener('click', () => inspectorModal.classList.add('hidden'));
-    inspectorModal.addEventListener('click', (e) => {
-      if (e.target === inspectorModal) inspectorModal.classList.add('hidden');
-    });
 
-    // Copy Raw Dialect Code to Clipboard
-    copyBtn.addEventListener('click', () => {
-      try {
-        editor.select();
-        document.execCommand('copy');
-        showToast('Dialect markup copied to clipboard!');
-      } catch (err) {
-        showToast('Failed to copy', true);
-      }
-    });
+    docBtn.addEventListener('click', () => docsModal.classList.remove('hidden'));
+    closeDocsBtn.addEventListener('click', () => docsModal.classList.add('hidden'));
 
-    // Copy Transpiled HTML to Clipboard
     copyCompiledBtn.addEventListener('click', () => {
-      try {
-        const dummy = document.createElement('textarea');
-        dummy.value = currentCompiledOutput;
-        document.body.appendChild(dummy);
-        dummy.select();
-        document.execCommand('copy');
-        document.body.removeChild(dummy);
-        showToast('Transpiled standard HTML copied!');
-      } catch (err) {
-        showToast('Failed to copy', true);
-      }
+      const dummy = document.createElement('textarea');
+      dummy.value = currentCompiledOutput;
+      document.body.appendChild(dummy);
+      dummy.select();
+      document.execCommand('copy');
+      document.body.removeChild(dummy);
+      showToast('Standard HTML copied!');
     });
 
-    // Download compiled standard HTML
     downloadBtn.addEventListener('click', () => {
       const blob = new Blob([currentCompiledOutput], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'dialect-export.html';
+      a.download = 'custom-dialect-export.html';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      showToast('Exported standard HTML downloaded!');
+      showToast('Downloaded standard HTML file');
     });
 
-    // Quick Format / Clean
     formatBtn.addEventListener('click', () => {
-      // Basic whitespace cleanup
-      const cleaned = editor.value
-        .split('\n')
-        .map(line => line.replace(/\s+$/, ''))
-        .join('\n');
-      editor.value = cleaned;
+      editor.value = editor.value.split('\n').map(l => l.replace(/\s+$/, '')).join('\n');
       updateLineNumbers();
       runCompile();
-      showToast('Cleaned trailing whitespace');
+      triggerAutoSave();
+      showToast('Cleaned trailing spaces');
     });
 
-    // Refresh Preview
     refreshPreviewBtn.addEventListener('click', () => {
       runCompile();
-      showToast('Preview refreshed');
+      showToast('Preview re-rendered');
     });
 
+    // Draggable Split Panes
     const splitResizer = document.getElementById('split-resizer');
     const editorPane = document.getElementById('editor-pane');
     const workspaceContainer = document.getElementById('workspace-container');
@@ -1041,11 +819,24 @@ ${html.trim()}
       }
     });
 
-    // Initial Load
-    editor.value = TEMPLATES.complete;
-    updateLineNumbers();
-    updateCursorInfo();
-    runCompile();
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await storage.init();
+        const savedCode = await storage.loadCode();
+        if (savedCode && savedCode.trim()) {
+          editor.value = savedCode;
+          showToast('Loaded previously saved session from IndexedDB');
+        } else {
+          editor.value = TEMPLATES.complete;
+          await storage.saveCode(editor.value);
+        }
+      } catch (err) {
+        editor.value = TEMPLATES.complete;
+      }
+      updateLineNumbers();
+      updateCursorInfo();
+      runCompile();
+    });
   </script>
 </body>
 </html>
