@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indirect HTML Playground</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #0f172a;
+      color: #f8fafc;
+      overflow: hidden;
+    }
+    header {
+      padding: 12px 20px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+    header span {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 53px);
+    }
+    .panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .panel-header {
+      background: #1e293b;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      border-bottom: 1px solid #334155;
+    }
+    #editor {
+      flex: 1;
+      width: 100%;
+      background: #090d16;
+      color: #e2e8f0;
+      font-family: "Fira Code", monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 16px;
+      border: none;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+    }
+    .divider {
+      width: 4px;
+      background: #334155;
+      cursor: col-resize;
+    }
+    #preview-frame {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Indirect Markup Studio</h1>
+    <span>Use <code>&lt;invisible for="..."&gt;</code> or <code>&lt;indirect for="..."&gt;</code> instead of &lt;style&gt;</span>
+  </header>
+
+  <div class="main-container">
+    <!-- Code Editor Panel -->
+    <div class="panel">
+      <div class="panel-header">Custom HTML Editor</div>
+      <textarea id="editor" spellcheck="false"></textarea>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Live Preview Panel -->
+    <div class="panel">
+      <div class="panel-header">Live Output</div>
+      <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Initial sample code demonstrating indirect/invisible tags
+    const defaultMarkup = `<div class="card">
+  <h2>Welcome to the Indirect App</h2>
+  <p>This layout uses invisible tags instead of standard &lt;style&gt; blocks.</p>
+  <button class="btn">Explore Custom Tags</button>
+</div>
+
+<!-- Indirect styling block targeted to .card -->
+<indirect for=".card">
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 480px;
+  margin: 40px auto;
+  font-family: system-ui, sans-serif;
+</indirect>
+
+<!-- Invisible styling block targeted to heading & buttons -->
+<invisible for="h2">
+  color: #1e293b;
+  margin-bottom: 8px;
+</invisible>
+
+<invisible for="p">
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 16px;
+</invisible>
+
+<indirect for=".btn">
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+</indirect>
+
+<invisible for=".btn:hover">
+  transform: translateY(-2px);
+  background-color: #1d4ed8;
+</invisible>`;
+
+    const editor = document.getElementById("editor");
+    const previewFrame = document.getElementById("preview-frame");
+
+    editor.value = defaultMarkup;
+
+    function transformAndRender() {
+      const rawMarkup = editor.value;
+
+      // Extract <invisible> and <indirect> tags
+      // Matches both <tag for="...">css</tag> and generic <tag>css</tag>
+      const tagRegex = /<(invisible|indirect)(?:\s+for=["']([^"']+)["'])?>([\s\S]*?)<\/\1>/gi;
+
+      let extractedCss = "";
+      
+      // Convert all invisible/indirect tags into compiled CSS rules
+      const cleanedMarkup = rawMarkup.replace(tagRegex, (match, tagName, selector, cssRules) => {
+        const trimmedRules = cssRules.trim();
+        if (selector) {
+          extractedCss += `${selector} { ${trimmedRules} }\n`;
+        } else {
+          // If no selector is defined, apply directly as raw rules or root styles
+          extractedCss += `${trimmedRules}\n`;
+        }
+        return ""; // Remove tag from body HTML
+      });
+
+      // Construct safe sandbox document
+      const outputDoc = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8" />
+          <style>
+            ${extractedCss}
+          </style>
+        </head>
+        <body>
+          ${cleanedMarkup}
+        </body>
+        </html>
+      `;
+
+      previewFrame.srcdoc = outputDoc;
+    }
+
+    // Auto-update on typing
+    editor.addEventListener("input", transformAndRender);
+
+    // Initial compilation
+    transformAndRender();
+  </script>
+</body>
+</html>
