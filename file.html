@@ -224,20 +224,20 @@
 
         <!-- Rule 4 & 5: Vertical Rules & Named Spot Rules -->
         <div class="space-y-2 border-l-2 border-amber-500 pl-3">
-          <h3 class="font-semibold text-amber-400 text-sm">4. Vertical Lines (&lt;vr&gt;) &amp; Named Anchors (&lt;vr+"name"&gt;)</h3>
+          <h3 class="font-semibold text-amber-400 text-sm">4. Vertical Lines (&lt;vr&gt;) &amp; Named Anchors (&lt;vr="name"&gt;)</h3>
           <p class="text-xs text-slate-400">
-            Vertical rules can be declared with custom thickness, length/height, and color:
+            Vertical rules can be declared with custom thickness, length, and color (defaults to 1px width, 50px length, and black color):
           </p>
           <ul class="list-disc list-inside text-xs text-slate-400 space-y-1 ml-1">
-            <li>Standard attributes: <code>&lt;vr width="3px" height="80px" color="#3b82f6"&gt;</code></li>
-            <li>Shorthand: <code>&lt;vr 2px 100px #6366f1&gt;</code></li>
-            <li><b>Named Rule Anchors:</b> <code>&lt;vr+"divider_main"&gt;</code> or <code>&lt;vr+"header-line" height="50px" color="#f43f5e"&gt;</code>. You can write custom invisible styles for this specific spot via <code>&lt;invisible for="#divider_main"&gt;</code>!</li>
+            <li>Standard attributes: <code>&lt;vr width="3px" length="80px" color="#3b82f6"&gt;</code></li>
+            <li>Default line: <code>&lt;vr&gt;</code></li>
+            <li><b>Named Rule Anchors:</b> <code>&lt;vr="divider_main"&gt;</code> or <code>&lt;vr="header-line" length="50px" color="#f43f5e"&gt;</code>. You can write custom invisible styles for this specific spot via <code>&lt;invisible for="#divider_main"&gt;</code>!</li>
           </ul>
           <pre class="bg-slate-950 p-2.5 rounded-lg text-xs font-mono-code text-slate-200 border border-slate-800">&lt;!-- Inline vertical line --&gt;
-&lt;vr width="2px" height="60px" color="#64748b"&gt;
+&lt;vr width="2px" length="60px" color="#64748b"&gt;
 
 &lt;!-- Named vertical line anchored at specific spot --&gt;
-&lt;vr+"customSeparator" height="120px" color="#ec4899"&gt;
+&lt;vr="customSeparator" length="120px" color="red"&gt;
 
 &lt;invisible for="#customSeparator"&gt;
   box-shadow: 0 0 10px #ec4899;
@@ -292,16 +292,16 @@
       <span class="lbl">Page Views</span>
     </div>
 
-    <!-- Standard Vertical Line with custom width, length (height), color -->
-    <vr width="2px" height="50px" color="#cbd5e1">
+    <!-- Standard Default Vertical Line (1px width, 50px length, black color) -->
+    <vr>
 
     <div class="metric-box">
       <span class="num">99.98%</span>
       <span class="lbl">Live Uptime</span>
     </div>
 
-    <!-- Named vertical line at this spot: <vr+"mid-divider"> -->
-    <vr+"mid-divider" width="3px" height="50px" color="#38bdf8">
+    <!-- Named vertical line at this spot: <vr="myLine"> -->
+    <vr="myLine" width="3px" length="100px" color="red">
 
     <div class="metric-box">
       <span class="num">42 ms</span>
@@ -330,12 +330,12 @@
     </tr>
     <tr>
       <td>Dividers</td>
-      <td>&lt;vr width="..." height="..."&gt;</td>
+      <td>&lt;vr width="..." length="..."&gt;</td>
       <td>Vertical Divider</td>
     </tr>
     <tr>
       <td>Spot Anchor</td>
-      <td>&lt;vr+"name"&gt;</td>
+      <td>&lt;vr="name"&gt;</td>
       <td>Targetable #name</td>
     </tr>
   </t>
@@ -409,9 +409,9 @@
   letter-spacing: 0.05em;
 </invisible>
 
-<!-- Custom targeted styling for named vertical rule #mid-divider -->
-<invisible for="#mid-divider">
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+<!-- Custom targeted styling for named vertical rule #myLine -->
+<invisible for="#myLine">
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
   border-radius: 2px;
 </invisible>
 
@@ -547,7 +547,7 @@
     </div>
 
     <!-- First Named Vertical line -->
-    <vr+"plan-divider" width="2px" height="180px" color="#cbd5e1">
+    <vr="plan-divider" width="2px" length="180px" color="#cbd5e1">
 
     <div class="col featured">
       <h4>Plan Enterprise</h4>
@@ -616,7 +616,7 @@
 
 <div class="flex-box">
   <span>Left Content</span>
-  <vr width="2px" height="40px" color="#94a3b8">
+  <vr width="2px" length="40px" color="#94a3b8">
   <span>Right Content</span>
 </div>
 
@@ -677,26 +677,16 @@
           return ''; // Strip from the visual body HTML
         });
 
-        // 2. Transform Named Vertical Rule syntax: <vr+"rule_name" ...> or <vr+"rule_name">
-        // Example: <vr+"divider1" width="3px" height="80px" color="#3b82f6">
-        const namedVrShortPattern = /<vr\+["']([^"']+)["']([^>]*)>/gi;
-        html = html.replace(namedVrShortPattern, (match, name, extraAttrs) => {
-          return this.buildVrElement(name, extraAttrs);
-        });
-
-        // 3. Transform Standard <vr> elements with custom length/height, width, color:
-        // Example: <vr width="3px" height="60px" color="#3b82f6">
-        // Or shorthand attributes: <vr 2px 80px red>
-        const standardVrPattern = /<vr(?:\s+name=["']([^"']+)["'])?([^>]*)>/gi;
-        html = html.replace(standardVrPattern, (match, explicitName, attrs) => {
-          return this.buildVrElement(explicitName || null, attrs);
+        // 2 & 3. Transform Vertical Rule syntax: <vr="rule_name" ...> or <vr ...>
+        // Example: <vr="myLine" width="3px" length="100px" color="red">
+        const vrPattern = /<vr(?:=["']([^"']+)["'])?([^>]*)>/gi;
+        html = html.replace(vrPattern, (match, name, attrs) => {
+          return this.buildVrElement(name, attrs);
         });
 
         // 4. Transform Table aliases: <t ...> to <table ...> and </t> to </table>
-        // Matches <t> and <t class="...">
-        html = html.replace(/<t(\s+[^>]*)?>/gi, (match, attrs) => {
-          return `<table${attrs || ''}>`;
-        });
+        // Matches <t> and <t class="..."> robustly
+        html = html.replace(/<t(?=[\s>])([^>]*)>/gi, '<table$1>');
         html = html.replace(/<\/t>/gi, '</table>');
 
         // 5. Transform line breaks: clean lenient <br>
@@ -748,53 +738,36 @@ ${html.trim()}
       }
 
       /**
-       * Helper to construct vertical divider spans from attributes
+       * Helper to construct vertical divider elements from attributes
        */
       buildVrElement(name, attrString = '') {
-        let width = '2px';
-        let height = '40px';
-        let color = '#94a3b8'; // Default slate-400
+        let width = '1px';
+        let length = '50px';
+        let color = 'black';
         let userClasses = '';
-        let inlineStyles = [];
 
-        // Check for explicit width="..." or w="..."
-        const widthMatch = attrString.match(/(?:width|w)=["']([^"']+)["']/i);
-        if (widthMatch) width = widthMatch[1];
+        if (attrString) {
+          // Check for explicit width="..."
+          const widthMatch = attrString.match(/width=["']([^"']+)["']/i);
+          if (widthMatch) width = widthMatch[1];
 
-        // Check for explicit height="..." or length="..." or h="..."
-        const heightMatch = attrString.match(/(?:height|length|len|h)=["']([^"']+)["']/i);
-        if (heightMatch) height = heightMatch[1];
+          // Check for explicit length="..." or height="..."
+          const lengthMatch = attrString.match(/(?:length|height)=["']([^"']+)["']/i);
+          if (lengthMatch) length = lengthMatch[1];
 
-        // Check for explicit color="..." or bg="..."
-        const colorMatch = attrString.match(/(?:color|bg|background)=["']([^"']+)["']/i);
-        if (colorMatch) color = colorMatch[1];
+          // Check for explicit color="..."
+          const colorMatch = attrString.match(/color=["']([^"']+)["']/i);
+          if (colorMatch) color = colorMatch[1];
 
-        // Check for class="..."
-        const classMatch = attrString.match(/class=["']([^"']+)["']/i);
-        if (classMatch) userClasses = classMatch[1];
-
-        // Also check if shorthand was used (e.g. <vr 3px 60px #ff0000>)
-        const shorthandTokens = attrString.replace(/width|height|length|color|class=["'][^"']*["']/gi, '').trim().split(/\s+/).filter(Boolean);
-        shorthandTokens.forEach(tok => {
-          if (/^\d+(?:px|rem|em|vh|%)$/i.test(tok)) {
-            if (!widthMatch) {
-              width = tok;
-            } else if (!heightMatch) {
-              height = tok;
-            }
-          } else if (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(tok) || /^(rgb|hsl)/i.test(tok)) {
-            color = tok;
-          }
-        });
-
-        // Ensure dimension units exist
-        if (/^\d+$/.test(width)) width += 'px';
-        if (/^\d+$/.test(height)) height += 'px';
+          // Check for class="..."
+          const classMatch = attrString.match(/class=["']([^"']+)["']/i);
+          if (classMatch) userClasses = classMatch[1];
+        }
 
         const idAttr = name ? ` id="${name}" data-named-vr="${name}"` : '';
-        const styleAttr = `style="width: ${width}; height: ${height}; background-color: ${color};"`;
+        const styleAttr = `style="display: inline-block; vertical-align: middle; flex-shrink: 0; margin: 0 8px; width: ${width}; height: ${length}; background-color: ${color};"`;
 
-        return `<span class="dialect-vr ${userClasses}"${idAttr} ${styleAttr} role="separator" aria-orientation="vertical"></span>`;
+        return `<div class="dialect-vr ${userClasses}"${idAttr} ${styleAttr} role="separator" aria-orientation="vertical"></div>`;
       }
 
       /**
