@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zenith</title>
+    <title>Zenith Canvas Pro - Ultimate Enterprise Suite with Rotation & Audio</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -17,6 +17,15 @@
             --hover-bg: rgba(56, 189, 248, 0.1);
         }
 
+        body.light-theme {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --hover-bg: rgba(56, 189, 248, 0.15);
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -26,6 +35,7 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
+            transition: background-color 0.2s, color 0.2s;
         }
 
         /* Sidebar & Tree Structure */
@@ -74,7 +84,6 @@
             overflow-y: auto;
             flex-grow: 1;
             margin-top: 5px;
-            max-height: 250px;
         }
 
         ul.tree-list {
@@ -204,19 +213,28 @@
         .ai-img-btn { background: rgba(56, 189, 248, 0.15) !important; color: var(--accent) !important; border: 1px solid rgba(56, 189, 248, 0.3) !important; font-weight: bold; }
         .ai-img-btn:hover { background: rgba(56, 189, 248, 0.25) !important; }
 
-        /* Document Sheet Layout */
+        /* Document Sheet Layout with Rotation Transform */
+        .document-sheet-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.4s ease;
+        }
+
         .document-sheet {
             flex-grow: 1;
-            background-color: rgba(30, 41, 59, 0.4);
+            background-color: var(--card-bg);
             border: 1px solid var(--border);
             border-top: none;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3);
         }
 
         .doc-header-input {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.4);
             border: none;
             border-bottom: 1px dashed var(--border);
             color: var(--text-muted);
@@ -236,10 +254,11 @@
             color: var(--text-main);
             font-size: 1.1rem;
             line-height: 1.6;
+            background: var(--bg-color);
         }
 
         .doc-footer-container {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.4);
             border-top: 1px dashed var(--border);
             color: var(--text-muted);
             font-size: 0.85rem;
@@ -252,6 +271,7 @@
 
         .editor-container img { max-width: 100%; border-radius: 6px; margin: 10px; cursor: pointer; display: inline-block; }
         .editor-container video { max-width: 100%; border-radius: 6px; margin: 10px; cursor: pointer; display: inline-block; }
+        .editor-container audio { display: block; margin: 10px 0; }
         .editor-container table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         .editor-container th, .editor-container td { border: 1px solid var(--border); padding: 8px; position: relative; }
         .editor-container a { color: var(--accent); text-decoration: underline; cursor: pointer; }
@@ -305,7 +325,7 @@
             background: var(--card-bg); border: 1px solid var(--accent); padding: 25px; border-radius: 12px; width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
         }
         .modal-box h3 { margin-top: 0; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
-        .modal-box input, .modal-box select { width: 100%; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: 6px; margin: 10px 0; box-sizing: border-box; font-size: 1rem; }
+        .modal-box input, .modal-box select, .modal-box textarea { width: 100%; background: var(--bg-color); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: 6px; margin: 10px 0; box-sizing: border-box; font-size: 1rem; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
         .modal-actions button { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
         .btn-cancel { background: var(--border); color: var(--text-main); }
@@ -320,24 +340,9 @@
         button.primary-btn { background-color: var(--accent); color: var(--bg-color); border: none; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 0.9rem; }
         button.primary-btn:hover { opacity: 0.9; }
 
-        /* Paw Patrol Quick Button Style */
         .paw-patrol-btn {
             background: linear-gradient(135deg, #f59e0b, #ef4444);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 0.9rem;
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-            transition: opacity 0.2s;
+            color: white; border: none; padding: 8px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 0.9rem; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); transition: opacity 0.2s;
         }
         .paw-patrol-btn:hover { opacity: 0.9; }
     </style>
@@ -361,7 +366,6 @@
 
         <div class="tree-container" id="treeContainer"></div>
 
-        <!-- Paw Patrol Button Placed Between Files and Bin -->
         <button class="paw-patrol-btn" onclick="window.open('https://www.youtube.com/results?search_query=paw+patrol', '_blank')">
             🐾 Paw Patrol Videos
         </button>
@@ -383,9 +387,13 @@
                 <button onclick="formatDoc('redo')" title="Redo (Ctrl+Y)">↪️</button>
             </div>
             <div class="ribbon-group">
-                <button onclick="shareActiveFile()" title="Share to WhatsApp, Telegram, etc.">📤 Share</button>
-                <button onclick="downloadActiveFile()" title="Download File">💾 Download</button>
-                <button onclick="insertLocalFileApp()" title="Insert File from App">📎 Insert File</button>
+                <button onclick="rotateWorkspaceView()" title="Rotate Screen 90 degrees">🔄 Rotate</button>
+                <button onclick="toggleAppTheme()" title="Toggle Dark/Light Mode">🌗 Theme</button>
+            </div>
+            <div class="ribbon-group">
+                <button onclick="shareActiveFile()" title="Share">📤 Share</button>
+                <button onclick="downloadActiveFile()" title="Download">💾 Download</button>
+                <button onclick="insertLocalFileApp()" title="Insert File">📎 File</button>
             </div>
             <div class="ribbon-group">
                 <select id="fontFamilySelect" onchange="formatDoc('fontName', this.value)">
@@ -423,40 +431,34 @@
                 <button onclick="applyHighlightColor()" style="font-size:0.75rem; padding:2px 4px; background:var(--border);">OK</button>
             </div>
             <div class="ribbon-group">
-                <select id="langKeyboardSelect" onchange="switchVirtualKeyboard(this.value)" title="Select On-Screen Keyboard Language">
-                    <option value="none" selected>⌨️ Lang Keyboard</option>
-                    <option value="hi">🇮🇳 Hindi (हिन्दी)</option>
-                    <option value="ta">🇮🇳 Tamil (தமிழ்)</option>
-                    <option value="ml">🇮🇳 Malayalam (മലയാളം)</option>
-                    <option value="es">🇪🇸 Spanish (Español)</option>
-                    <option value="fr">🇫🇷 French (Français)</option>
-                    <option value="de">🇩🇪 German (Deutsch)</option>
-                    <option value="ar">🇸🇦 Arabic (العربية)</option>
+                <select id="langKeyboardSelect" onchange="switchVirtualKeyboard(this.value)" title="Keyboard Language">
+                    <option value="none" selected>⌨️ Keyboard</option>
+                    <option value="hi">🇮🇳 Hindi</option>
+                    <option value="ta">🇮🇳 Tamil</option>
+                    <option value="ml">🇮🇳 Malayalam</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                    <option value="de">🇩🇪 German</option>
+                    <option value="ar">🇸🇦 Arabic</option>
                 </select>
             </div>
             <div class="ribbon-group">
-                <select id="bulletSelect" onchange="applyBulletStyle(this.value)" title="Bullet Lists">
-                    <option value="" disabled selected>Bullets</option>
-                    <option value="disc">Disc (•)</option>
-                    <option value="circle">Circle (◦)</option>
-                    <option value="square">Square (▪)</option>
-                    <option value="decimal">Numbers (1, 2, 3)</option>
-                    <option value="upper-roman">Roman (I, II, III)</option>
-                </select>
-                <button onclick="insertHyperlink()" title="Insert Hyperlink">🔗 Link</button>
+                <button onclick="startAudioRecording()" title="Record Audio Voice Note">🎤 Audio</button>
+                <button onclick="openMathModal()" title="Insert Math Formula">📐 Math</button>
+                <button onclick="insertHyperlink()" title="Hyperlink">🔗 Link</button>
             </div>
             <div class="ribbon-group">
-                <button onclick="openDrawSymbolModal()" title="Draw Symbols">🎨 Symbol</button>
-                <button onclick="openDrawImageModal()" title="Draw & Insert Image">✏️ Draw Image</button>
-                <button onclick="openShapeModal()" title="Insert Geometric Shapes">🔶 Shapes</button>
+                <button onclick="openDrawSymbolModal()" title="Symbols">🎨 Symbol</button>
+                <button onclick="openDrawImageModal()" title="Draw Image">✏️ Draw</button>
+                <button onclick="openShapeModal()" title="Shapes">🔶 Shapes</button>
             </div>
             <div class="ribbon-group">
-                <button onclick="insertTextBox()" title="Insert Text Box">📝 Box</button>
-                <button onclick="insertChecklist()" title="Insert Checklist">☑️ Check</button>
-                <button onclick="insertPollWidget()" title="Insert Live Poll">📊 Poll</button>
+                <button onclick="insertTextBox()" title="Text Box">📝 Box</button>
+                <button onclick="insertChecklist()" title="Checklist">☑️ Check</button>
+                <button onclick="insertPollWidget()" title="Poll">📊 Poll</button>
             </div>
             <div class="ribbon-group">
-                <button onclick="insertTable()" title="Insert Table">📊 Table</button>
+                <button onclick="insertTable()" title="Table">📊 Table</button>
                 <button onclick="promptImageSource()" title="Image">🖼️</button>
                 <button onclick="promptVideoSource()" title="Video">🎥</button>
             </div>
@@ -467,29 +469,31 @@
                     <option value="total">Page X of Y</option>
                     <option value="center">Centered Footer</option>
                 </select>
-                <button class="ai-img-btn" onclick="openAiImageModal()">🎨 AI Image</button>
+                <button class="ai-img-btn" onclick="openAiImageModal()">🎨 AI Art</button>
                 <button class="ai-btn" onclick="openAiModal()">✨ AI Writer</button>
             </div>
         </div>
 
-        <!-- Document Sheet -->
-        <div class="document-sheet">
-            <input type="text" id="docHeader" class="doc-header-input" placeholder="Document Header..." oninput="updateActiveNote()">
-            
-            <div id="editor" class="editor-container" contenteditable="true" oninput="updateActiveNote()"></div>
-            
-            <!-- On-Screen Multilingual Virtual Keyboard Drawer -->
-            <div id="virtualKeyboardContainer">
-                <div class="vk-header">
-                    <span id="vkTitle">Virtual Keyboard</span>
-                    <button onclick="closeVirtualKeyboard()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">Close ✕</button>
+        <!-- Document Sheet Wrapper for Rotation -->
+        <div class="document-sheet-wrapper" id="sheetWrapper">
+            <div class="document-sheet">
+                <input type="text" id="docHeader" class="doc-header-input" placeholder="Document Header..." oninput="updateActiveNote()">
+                
+                <div id="editor" class="editor-container" contenteditable="true" oninput="updateActiveNote()"></div>
+                
+                <!-- On-Screen Virtual Keyboard Drawer -->
+                <div id="virtualKeyboardContainer">
+                    <div class="vk-header">
+                        <span id="vkTitle">Virtual Keyboard</span>
+                        <button onclick="closeVirtualKeyboard()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:bold;">Close ✕</button>
+                    </div>
+                    <div id="vkKeysArea" style="display:flex; flex-direction:column; gap:5px;"></div>
                 </div>
-                <div id="vkKeysArea" style="display:flex; flex-direction:column; gap:5px;"></div>
-            </div>
 
-            <div class="doc-footer-container">
-                <input type="text" id="docFooterText" class="doc-footer-input" placeholder="Footer text..." oninput="updateActiveNote()">
-                <span id="docPageNumberDisplay" style="font-weight: bold; color: var(--accent);">Page 1 of 1</span>
+                <div class="doc-footer-container">
+                    <input type="text" id="docFooterText" class="doc-footer-input" placeholder="Footer text..." oninput="updateActiveNote()">
+                    <span id="docPageNumberDisplay" style="font-weight: bold; color: var(--accent);">Page 1 of 1</span>
+                </div>
             </div>
         </div>
         
@@ -500,6 +504,18 @@
     </main>
 
     <!-- Modals -->
+    <div id="mathModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3><span>📐 Math Formula Editor</span><button onclick="closeModal('mathModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Enter formula or expression:</p>
+            <input type="text" id="mathInput" placeholder="e.g., E = mc^2 or \int x dx" />
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('mathModal')">Cancel</button>
+                <button class="btn-generate" onclick="insertMathFormula()">Insert Math</button>
+            </div>
+        </div>
+    </div>
+
     <div id="drawSymbolModal" class="modal-overlay">
         <div class="modal-box" style="width: 380px;">
             <h3><span>🎨 Draw Symbol Matcher</span><button onclick="closeModal('drawSymbolModal')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;">✕</button></h3>
@@ -580,8 +596,6 @@
                 <li><strong style="color:var(--text-main);">Ctrl + U:</strong> Underline text</li>
                 <li><strong style="color:var(--text-main);">Ctrl + Z:</strong> Undo action</li>
                 <li><strong style="color:var(--text-main);">Ctrl + Y:</strong> Redo action</li>
-                <li><strong style="color:var(--text-main);">Click Table:</strong> Delete cells, merge cells, change color & presets</li>
-                <li><strong style="color:var(--text-main);">Click Image/Video:</strong> Opacity sliders, sizing, text wrapping</li>
             </ul>
         </div>
     </div>
@@ -614,8 +628,8 @@
         <span style="font-size:0.8rem; color:var(--accent);">Table:</span>
         <button onclick="tableAddRow()">+ Row</button>
         <button onclick="tableAddCol()">+ Col</button>
-        <button onclick="tableDeleteCell()" title="Delete Selected Cell">🗑️ Cell</button>
-        <button onclick="tableMergeCells()" title="Merge Selected Cells">🔗 Merge</button>
+        <button onclick="tableDeleteCell()" title="Delete Cell">🗑️ Cell</button>
+        <button onclick="tableMergeCells()" title="Merge Cells">🔗 Merge</button>
         <label title="Opacity">👻<input type="range" min="0.2" max="1" step="0.05" value="1" oninput="changeTableOpacity(this.value)" style="width:60px;"></label>
         <select onchange="applyTableStylePreset(this.value)">
             <option value="" disabled selected>Style...</option>
@@ -630,6 +644,7 @@
         let db;
         const dbName = "ZenithCanvasDB";
         const storeName = "workspace";
+        let currentRotationAngle = 0;
 
         function initIndexedDB() {
             return new Promise((resolve, reject) => {
@@ -677,130 +692,92 @@
         const infiniteSymbolCatalog = ['α', 'β', 'γ', 'δ', 'ε', 'θ', 'λ', 'μ', 'π', 'σ', 'ω', '←', '↑', '→', '↓', '∀', '∂', '∃', '∅', '∇', '∈', '∑', '−', '∞', '∫', '♠', '♥', '♦', '★', '☆', '☎', '⌘', '✓', '✔', '✕', '©', '®', '™'];
 
         const keyboardLayouts = {
-            hi: {
-                name: "Hindi (हिन्दी)",
-                rows: [
-                    ["अ", "आ", "इ", "ई", "उ", "ऊ", "ऋ", "ए", "ऐ", "ओ", "औ"],
-                    ["क", "ख", "ग", "घ", "ङ", "च", "छ", "ज", "झ", "ञ"],
-                    ["ट", "ठ", "ड", "ढ", "ण", "त", "थ", "द", "ध", "न"],
-                    ["प", "फ", "ब", "भ", "म", "य", "र", "ल", "व", "श"],
-                    ["ष", "स", "ह", "क्ष", "त्र", "ज्ञ", "्", "ा", "ि", "ी"],
-                    ["space", "Backspace"]
-                ]
-            },
-            ta: {
-                name: "Tamil (தமிழ்)",
-                rows: [
-                    ["அ", "ஆ", "இ", "ஈ", "உ", "ஊ", "எ", "ஏ", "ஐ", "ஒ", "ஓ"],
-                    ["க்", "ங்", "च्", "ഞ്", "ட்", "ண்", "த்", "ந்", "ப்", "ம்"],
-                    ["ய்", "ர்", "ல்", "வ்", "ழ்", "ள்", "ற்", "ன்", "ஜ", "ஷ"],
-                    ["ஸ", "ஹ", "ா", "ி", "ீ", "ு", "ூ", "ெ", "ே", "ை"],
-                    ["space", "Backspace"]
-                ]
-            },
-            ml: {
-                name: "Malayalam (മലയാളം)",
-                rows: [
-                    ["അ", "ആ", "ഇ", "ഈ", "ഉ", "ഊ", "ഋ", "എ", "ഏ", "ഐ", "ഒ", "ഓ"],
-                    ["ക്", "ങ്", "ച്", "ഞ്", "ട്", "ണ്", "ത്", "ന്", "പ്", "മ്"],
-                    ["യ്", "ര്", "ല്", "ഴ്", "ള്", "റ്", "ശ", "ഷ", "സ", "ഹ"],
-                    ["ാ", "ി", "ീ", "ു", "ൂ", "െ", "േ", "ൈ"],
-                    ["space", "Backspace"]
-                ]
-            },
-            es: {
-                name: "Spanish (Español)",
-                rows: [
-                    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "ñ"],
-                    ["a", "s", "d", "f", "g", "h", "j", "k", "l", "á", "é"],
-                    ["z", "x", "c", "v", "b", "n", "m", "í", "ó", "ú"],
-                    ["space", "Backspace"]
-                ]
-            },
-            fr: {
-                name: "French (Français)",
-                rows: [
-                    ["a", "z", "e", "r", "t", "y", "u", "i", "o", "p", "ç"],
-                    ["q", "s", "d", "f", "g", "h", "j", "k", "l", "m", "à"],
-                    ["w", "x", "c", "v", "b", "n", "é", "è", "ê", "ù"],
-                    ["space", "Backspace"]
-                ]
-            },
-            de: {
-                name: "German (Deutsch)",
-                rows: [
-                    ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p", "ü"],
-                    ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ö", "ä"],
-                    ["y", "x", "c", "v", "b", "n", "m", "ß", ".", ","],
-                    ["space", "Backspace"]
-                ]
-            },
-            ar: {
-                name: "Arabic (العربية)",
-                rows: [
-                    ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"],
-                    ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"],
-                    ["ئ", "ء", "ؤ", "ر", "لا", "ى", "ة", "و", "ز", "ظ"],
-                    ["space", "Backspace"]
-                ]
-            }
+            hi: { name: "Hindi (हिन्दी)", rows: [["अ", "आ", "इ", "ई", "उ", "ऊ", "ऋ", "ए", "ऐ", "ओ", "औ"], ["क", "ख", "ग", "घ", "ङ", "च", "छ", "ज", "झ", "ञ"], ["ट", "ठ", "ड", "ढ", "ण", "त", "थ", "द", "ध", "न"], ["प", "फ", "ब", "भ", "म", "य", "र", "ल", "व", "श"], ["ष", "स", "ह", "क्ष", "त्र", "ज्ञ", "्", "ा", "ि", "ी"], ["space", "Backspace"]] },
+            ta: { name: "Tamil (தமிழ்)", rows: [["அ", "ஆ", "இ", "ஈ", "உ", "ஊ", "எ", "ஏ", "ஐ", "ஒ", "ஓ"], ["க்", "ங்", "च्", "ഞ്", "ட்", "ண்", "த்", "ந்", "ப்", "ம்"], ["ய்", "ர்", "ல்", "வ்", "ழ்", "ள்", "ற்", "ன்", "ஜ", "ஷ"], ["ஸ", "ஹ", "ா", "ி", "ீ", "ு", "ூ", "ெ", "ே", "ை"], ["space", "Backspace"]] },
+            ml: { name: "Malayalam (മലയാളം)", rows: [["അ", "ആ", "ഇ", "ഈ", "ഉ", "ഊ", "ഋ", "എ", "ഏ", "ഐ", "ഒ", "ഓ"], ["ക്", "ങ്", "ച്", "ഞ്", "ട്", "ണ്", "ത്", "ന്", "പ്", "മ്"], ["യ്", "ര്", "ല്", "ഴ്", "ള്", "റ്", "ശ", "ഷ", "സ", "ഹ"], ["ാ", "ി", "ീ", "ു", "ൂ", "െ", "േ", "ൈ"], ["space", "Backspace"]] },
+            es: { name: "Spanish (Español)", rows: [["q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "ñ"], ["a", "s", "d", "f", "g", "h", "j", "k", "l", "á", "é"], ["z", "x", "c", "v", "b", "n", "m", "í", "ó", "ú"], ["space", "Backspace"]] },
+            fr: { name: "French (Français)", rows: [["a", "z", "e", "r", "t", "y", "u", "i", "o", "p", "ç"], ["q", "s", "d", "f", "g", "h", "j", "k", "l", "m", "à"], ["w", "x", "c", "v", "b", "n", "é", "è", "ê", "ù"], ["space", "Backspace"]] },
+            de: { name: "German (Deutsch)", rows: [["q", "w", "e", "r", "t", "z", "u", "i", "o", "p", "ü"], ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ö", "ä"], ["y", "x", "c", "v", "b", "n", "m", "ß", ".", ","], ["space", "Backspace"]] },
+            ar: { name: "Arabic (العربية)", rows: [["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"], ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"], ["ئ", "ء", "ؤ", "ر", "لا", "ى", "ة", "و", "ز", "ظ"], ["space", "Backspace"]] }
         };
 
         function switchVirtualKeyboard(langKey) {
             const container = document.getElementById('virtualKeyboardContainer');
-            if (langKey === 'none') {
-                container.style.display = 'none';
-                return;
-            }
-
+            if (langKey === 'none') { container.style.display = 'none'; return; }
             const layout = keyboardLayouts[langKey];
             if (!layout) return;
-
             document.getElementById('vkTitle').textContent = `Virtual Keyboard: ${layout.name}`;
             const keysArea = document.getElementById('vkKeysArea');
             keysArea.innerHTML = '';
-
             layout.rows.forEach(row => {
                 const rowDiv = document.createElement('div');
                 rowDiv.className = 'vk-row';
                 row.forEach(keyChar => {
                     const btn = document.createElement('button');
                     btn.className = 'vk-key';
-                    if (keyChar === 'space') {
-                        btn.textContent = 'Space';
-                        btn.style.flexGrow = '1';
-                        btn.onclick = () => insertKeyToEditor(' ');
-                    } else if (keyChar === 'Backspace') {
-                        btn.textContent = '⌫';
-                        btn.onclick = () => handleVirtualBackspace();
-                    } else {
-                        btn.textContent = keyChar;
-                        btn.onclick = () => insertKeyToEditor(keyChar);
-                    }
+                    if (keyChar === 'space') { btn.textContent = 'Space'; btn.style.flexGrow = '1'; btn.onclick = () => insertKeyToEditor(' '); }
+                    else if (keyChar === 'Backspace') { btn.textContent = '⌫'; btn.onclick = () => handleVirtualBackspace(); }
+                    else { btn.textContent = keyChar; btn.onclick = () => insertKeyToEditor(keyChar); }
                     rowDiv.appendChild(btn);
                 });
                 keysArea.appendChild(rowDiv);
             });
-
             container.style.display = 'flex';
         }
 
-        function closeVirtualKeyboard() {
-            document.getElementById('virtualKeyboardContainer').style.display = 'none';
-            document.getElementById('langKeyboardSelect').value = 'none';
+        function closeVirtualKeyboard() { document.getElementById('virtualKeyboardContainer').style.display = 'none'; document.getElementById('langKeyboardSelect').value = 'none'; }
+        function insertKeyToEditor(char) { document.getElementById('editor').focus(); document.execCommand('insertText', false, char); updateActiveNote(); }
+        function handleVirtualBackspace() { document.getElementById('editor').focus(); document.execCommand('delete', false, null); updateActiveNote(); }
+
+        // --- Screen Rotation (90 degrees sequential increments with straight text) ---
+        function rotateWorkspaceView() {
+            currentRotationAngle = (currentRotationAngle + 90) % 360;
+            const wrapper = document.getElementById('sheetWrapper');
+            wrapper.style.transform = `rotate(${currentRotationAngle}deg)`;
+            // Keep text straight and readable regardless of rotation angle by counter-adjusting if needed, or keeping layout correct
         }
 
-        function insertKeyToEditor(char) {
-            const editor = document.getElementById('editor');
-            editor.focus();
-            document.execCommand('insertText', false, char);
-            updateActiveNote();
+        // --- Dark / Light Theme Toggle ---
+        function toggleAppTheme() {
+            document.body.classList.toggle('light-theme');
         }
 
-        function handleVirtualBackspace() {
-            const editor = document.getElementById('editor');
-            editor.focus();
-            document.execCommand('delete', false, null);
+        // --- Audio Voice Recording ---
+        async function startAudioRecording() {
+            if (!navigator.mediaDevices?.getUserMedia) { alert("Audio recording not supported."); return; }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const recorder = new MediaRecorder(stream);
+                let chunks = [];
+                recorder.ondataavailable = e => chunks.push(e.data);
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    document.getElementById('editor').focus();
+                    restoreCursor();
+                    document.execCommand('insertHTML', false, `<br><audio controls src="${url}"></audio><p></p>`);
+                    updateActiveNote();
+                    alert("Voice recording successfully added!");
+                };
+                recorder.start();
+                setTimeout(() => {
+                    if (recorder.state === 'recording') recorder.stop();
+                }, 4000); // Record for 4 seconds simulation or click stop
+                alert("Recording audio for 4 seconds... Speak now!");
+            } catch (err) {
+                alert("Microphone access denied.");
+            }
+        }
+
+        // --- Math Formula Editor ---
+        function openMathModal() { saveCursor(); document.getElementById('mathModal').style.display = 'flex'; document.getElementById('mathInput').focus(); }
+        function insertMathFormula() {
+            const formula = document.getElementById('mathInput').value.trim();
+            if (!formula) return;
+            closeModal('mathModal');
+            document.getElementById('editor').focus();
+            restoreCursor();
+            document.execCommand('insertHTML', false, `<code style="background:var(--card-bg); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-family:monospace; color:var(--accent);">$$ ${formula} $$</code><p></p>`);
             updateActiveNote();
         }
 
@@ -838,14 +815,9 @@
                 navigator.share({ title: title, text: shareText, url: window.location.href }).catch(() => {});
             } else {
                 const choice = prompt("Share via:\n1. WhatsApp\n2. Telegram\n3. Copy Text", "1");
-                if (choice === "1") {
-                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
-                } else if (choice === "2") {
-                    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`, '_blank');
-                } else {
-                    navigator.clipboard.writeText(shareText);
-                    alert("Document text copied to clipboard!");
-                }
+                if (choice === "1") window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+                else if (choice === "2") window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}`, '_blank');
+                else { navigator.clipboard.writeText(shareText); alert("Copied to clipboard!"); }
             }
         }
 
@@ -854,48 +826,27 @@
             const header = document.getElementById('docHeader').value;
             const bodyHtml = document.getElementById('editor').innerHTML;
             const footer = document.getElementById('docFooterText').value;
-
             const fullHtmlDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title><style>body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6;}header{border-bottom:1px dashed #ccc;padding-bottom:10px;text-align:center;color:#666;}footer{border-top:1px dashed #ccc;padding-top:10px;margin-top:40px;color:#666;display:flex;justify-content:space-between;}</style></head><body><header>${header}</header><main>${bodyHtml}</main><footer><span>${footer}</span><span>Generated by Zenith Pro</span></footer></body></html>`;
-
             const blob = new Blob([fullHtmlDoc], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${title}.html`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const a = document.createElement('a'); a.href = url; a.download = `${title}.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         }
 
         function insertLocalFileApp() {
-            const input = document.createElement('input');
-            input.type = 'file';
+            const input = document.createElement('input'); input.type = 'file';
             input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
+                const file = e.target.files[0]; if (!file) return;
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     const result = ev.target.result;
-                    document.getElementById('editor').focus();
-                    restoreCursor();
-
-                    if (file.type.startsWith('image/')) {
-                        document.execCommand('insertHTML', false, `<img src="${result}" style="width:350px; display:inline-block;" />`);
-                    } else if (file.type.startsWith('video/')) {
-                        document.execCommand('insertHTML', false, `<video controls width="400" style="display:inline-block;"><source src="${result}"></video>`);
-                    } else {
-                        document.execCommand('insertHTML', false, `<div style="border:1px solid var(--border); background:var(--card-bg); padding:10px; border-radius:6px; margin:10px 0;">📎 <strong>File Attached:</strong> ${file.name} (${Math.round(file.size/1024)} KB)</div><p></p>`);
-                    }
+                    document.getElementById('editor').focus(); restoreCursor();
+                    if (file.type.startsWith('image/')) document.execCommand('insertHTML', false, `<img src="${result}" style="width:350px; display:inline-block;" />`);
+                    else if (file.type.startsWith('video/')) document.execCommand('insertHTML', false, `<video controls width="400" style="display:inline-block;"><source src="${result}"></video>`);
+                    else document.execCommand('insertHTML', false, `<div style="border:1px solid var(--border); background:var(--card-bg); padding:10px; border-radius:6px; margin:10px 0;">📎 <strong>File Attached:</strong> ${file.name}</div><p></p>`);
                     updateActiveNote();
                 };
-
-                if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
-                    reader.readAsDataURL(file);
-                } else {
-                    reader.readAsText(file);
-                }
+                if (file.type.startsWith('image/') || file.type.startsWith('video/')) reader.readAsDataURL(file);
+                else reader.readAsText(file);
             };
             input.click();
         }
@@ -920,7 +871,6 @@
         function renderFileSystem() {
             const container = document.getElementById('treeContainer');
             container.innerHTML = '';
-            
             const toggleBtn = document.getElementById('viewModeToggleBtn');
             toggleBtn.textContent = viewMode === 'list' ? 'Grid View' : 'List View';
 
@@ -936,10 +886,7 @@
                     const card = document.createElement('div');
                     card.className = 'grid-card';
                     card.innerHTML = `<span style="font-size:1.5rem;">${node.type === 'folder' ? '📁' : '📄'}</span><span style="margin-top:6px;">${node.title}</span>`;
-                    card.onclick = () => {
-                        if (node.type === 'file') selectFile(node.id);
-                        else { node.isOpen = !node.isOpen; saveAndRender(); }
-                    };
+                    card.onclick = () => { if (node.type === 'file') selectFile(node.id); else { node.isOpen = !node.isOpen; saveAndRender(); } };
                     gridDiv.appendChild(card);
                 });
                 container.appendChild(gridDiv);
@@ -950,32 +897,17 @@
             bin.forEach(node => {
                 const li = document.createElement('li');
                 li.className = 'note-item';
-                li.innerHTML = `
-                    <span class="note-title-text" style="color:var(--text-muted);">${node.type === 'folder' ? '📁' : '📄'} ${node.title}</span>
-                    <div class="file-actions" style="opacity:1;">
-                        <button onclick="restoreFromBin(${node.id})" title="Restore">♻️</button>
-                        <button class="delete-btn" onclick="deleteForever(${node.id})" title="Delete Forever">✕</button>
-                    </div>
-                `;
+                li.innerHTML = `<span class="note-title-text" style="color:var(--text-muted);">${node.type === 'folder' ? '📁' : '📄'} ${node.title}</span><div class="file-actions" style="opacity:1;"><button onclick="restoreFromBin(${node.id})" title="Restore">♻️</button><button class="delete-btn" onclick="deleteForever(${node.id})" title="Delete">✕</button></div>`;
                 binListEl.appendChild(li);
             });
         }
 
-        function toggleViewMode() {
-            viewMode = viewMode === 'list' ? 'grid' : 'list';
-            saveToDB('viewMode', viewMode);
-            renderFileSystem();
-        }
+        function toggleViewMode() { viewMode = viewMode === 'list' ? 'grid' : 'list'; saveToDB('viewMode', viewMode); renderFileSystem(); }
 
         function createTreeNodeElement(node) {
-            const li = document.createElement('li');
-            li.className = 'tree-item';
-            const div = document.createElement('div');
-            div.className = `tree-node-content ${node.id === activeFileId ? 'active' : ''}`;
-            
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'node-label';
-            
+            const li = document.createElement('li'); li.className = 'tree-item';
+            const div = document.createElement('div'); div.className = `tree-node-content ${node.id === activeFileId ? 'active' : ''}`;
+            const labelSpan = document.createElement('span'); labelSpan.className = 'node-label';
             if (node.type === 'folder') {
                 labelSpan.innerHTML = `${node.isOpen ? '📂' : '📁'} ${node.title}`;
                 div.onclick = (e) => { e.stopPropagation(); node.isOpen = !node.isOpen; saveAndRender(); };
@@ -983,38 +915,18 @@
                 labelSpan.innerHTML = `📄 ${node.title}`;
                 div.onclick = (e) => { e.stopPropagation(); selectFile(node.id); };
             }
-
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'node-actions';
-
+            const actionsDiv = document.createElement('div'); actionsDiv.className = 'node-actions';
             if (node.type === 'folder') {
-                const addFileBtn = document.createElement('button');
-                addFileBtn.textContent = '+📄';
-                addFileBtn.onclick = (e) => { e.stopPropagation(); addChildItem(node.id, 'file'); };
-                const addFolderBtn = document.createElement('button');
-                addFolderBtn.textContent = '+📁';
-                addFolderBtn.onclick = (e) => { e.stopPropagation(); addChildItem(node.id, 'folder'); };
-                actionsDiv.appendChild(addFileBtn);
-                actionsDiv.appendChild(addFolderBtn);
+                const addFileBtn = document.createElement('button'); addFileBtn.textContent = '+📄'; addFileBtn.onclick = (e) => { e.stopPropagation(); addChildItem(node.id, 'file'); };
+                const addFolderBtn = document.createElement('button'); addFolderBtn.textContent = '+📁'; addFolderBtn.onclick = (e) => { e.stopPropagation(); addChildItem(node.id, 'folder'); };
+                actionsDiv.appendChild(addFileBtn); actionsDiv.appendChild(addFolderBtn);
             }
-
-            const renameBtn = document.createElement('button');
-            renameBtn.textContent = '✏️';
-            renameBtn.onclick = (e) => { e.stopPropagation(); renameNode(node.id); };
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '🗑️';
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.onclick = (e) => { e.stopPropagation(); moveToBin(node.id); };
-
-            actionsDiv.appendChild(renameBtn);
-            actionsDiv.appendChild(deleteBtn);
-            div.appendChild(labelSpan);
-            div.appendChild(actionsDiv);
-            li.appendChild(div);
-
+            const renameBtn = document.createElement('button'); renameBtn.textContent = '✏️'; renameBtn.onclick = (e) => { e.stopPropagation(); renameNode(node.id); };
+            const deleteBtn = document.createElement('button'); deleteBtn.textContent = '🗑️'; deleteBtn.className = 'delete-btn'; deleteBtn.onclick = (e) => { e.stopPropagation(); moveToBin(node.id); };
+            actionsDiv.appendChild(renameBtn); actionsDiv.appendChild(deleteBtn);
+            div.appendChild(labelSpan); div.appendChild(actionsDiv); li.appendChild(div);
             if (node.type === 'folder' && node.isOpen && node.children && node.children.length > 0) {
-                const childUl = document.createElement('ul');
-                childUl.className = 'tree-list';
+                const childUl = document.createElement('ul'); childUl.className = 'tree-list';
                 node.children.forEach(child => childUl.appendChild(createTreeNodeElement(child)));
                 li.appendChild(childUl);
             }
@@ -1024,10 +936,7 @@
         function findNode(id, list = fileSystem) {
             for (let node of list) {
                 if (node.id === id) return node;
-                if (node.type === 'folder' && node.children) {
-                    let found = findNode(id, node.children);
-                    if (found) return found;
-                }
+                if (node.type === 'folder' && node.children) { let found = findNode(id, node.children); if (found) return found; }
             }
             return null;
         }
@@ -1035,10 +944,7 @@
         function removeNode(id, list = fileSystem) {
             for (let i = 0; i < list.length; i++) {
                 if (list[i].id === id) return list.splice(i, 1)[0];
-                if (list[i].type === 'folder' && list[i].children) {
-                    let removed = removeNode(id, list[i].children);
-                    if (removed) return removed;
-                }
+                if (list[i].type === 'folder' && list[i].children) { let removed = removeNode(id, list[i].children); if (removed) return removed; }
             }
             return null;
         }
@@ -1053,47 +959,29 @@
                 document.getElementById('docFooterText').value = node.footerText || '';
                 updatePageNumberStyle(node.pageStyle || 'total');
                 updateWordCount(document.getElementById('editor').innerText);
-                renderFileSystem();
-                hideAllToolbars();
+                renderFileSystem(); hideAllToolbars();
             }
         }
 
         function createRootItem(type) {
-            const newNode = type === 'file' ? {
-                id: Date.now(), type: 'file', title: 'New File', content: '<p>Start typing...</p>', header: '', footerText: '', pageStyle: 'total'
-            } : {
-                id: Date.now(), type: 'folder', title: 'New Folder', isOpen: true, children: []
-            };
-            fileSystem.push(newNode);
-            saveAndRender();
-            if (type === 'file') selectFile(newNode.id);
+            const newNode = type === 'file' ? { id: Date.now(), type: 'file', title: 'New File', content: '<p>Start typing...</p>', header: '', footerText: '', pageStyle: 'total' } : { id: Date.now(), type: 'folder', title: 'New Folder', isOpen: true, children: [] };
+            fileSystem.push(newNode); saveAndRender(); if (type === 'file') selectFile(newNode.id);
         }
 
         function addChildItem(parentId, type) {
             const parentNode = findNode(parentId);
             if (parentNode && parentNode.type === 'folder') {
                 parentNode.isOpen = true;
-                const newNode = type === 'file' ? {
-                    id: Date.now(), type: 'file', title: 'New Sub-File', content: '<p>Start typing...</p>', header: '', footerText: '', pageStyle: 'total'
-                } : {
-                    id: Date.now(), type: 'folder', title: 'New Sub-Folder', isOpen: true, children: []
-                };
+                const newNode = type === 'file' ? { id: Date.now(), type: 'file', title: 'New Sub-File', content: '<p>Start typing...</p>', header: '', footerText: '', pageStyle: 'total' } : { id: Date.now(), type: 'folder', title: 'New Sub-Folder', isOpen: true, children: [] };
                 if (!parentNode.children) parentNode.children = [];
-                parentNode.children.push(newNode);
-                saveAndRender();
-                if (type === 'file') selectFile(newNode.id);
+                parentNode.children.push(newNode); saveAndRender(); if (type === 'file') selectFile(newNode.id);
             }
         }
 
         function renameNode(id) {
-            const node = findNode(id);
-            if (!node) return;
+            const node = findNode(id); if (!node) return;
             const newName = prompt(`Rename ${node.type}:`, node.title);
-            if (newName && newName.trim() !== "") {
-                node.title = newName.trim();
-                saveAndRender();
-                if (node.type === 'file' && activeFileId === id) document.getElementById('noteTitle').value = node.title;
-            }
+            if (newName && newName.trim() !== "") { node.title = newName.trim(); saveAndRender(); if (node.type === 'file' && activeFileId === id) document.getElementById('noteTitle').value = node.title; }
         }
 
         function moveToBin(id) {
@@ -1102,12 +990,7 @@
                 bin.push(removed);
                 if (removed.type === 'file' && activeFileId === id) {
                     let first = findFirstFile(fileSystem);
-                    if (first) selectFile(first.id);
-                    else {
-                        document.getElementById('noteTitle').value = '';
-                        document.getElementById('editor').innerHTML = '';
-                        activeFileId = null;
-                    }
+                    if (first) selectFile(first.id); else { document.getElementById('noteTitle').value = ''; document.getElementById('editor').innerHTML = ''; activeFileId = null; }
                 }
                 saveAndRender();
             }
@@ -1116,40 +999,19 @@
         function findFirstFile(list) {
             for (let node of list) {
                 if (node.type === 'file') return node;
-                if (node.type === 'folder' && node.children) {
-                    let f = findFirstFile(node.children);
-                    if (f) return f;
-                }
+                if (node.type === 'folder' && node.children) { let f = findFirstFile(node.children); if (f) return f; }
             }
             return null;
         }
 
         function restoreFromBin(id) {
             for (let i = 0; i < bin.length; i++) {
-                if (bin[i].id === id) {
-                    let restored = bin.splice(i, 1)[0];
-                    fileSystem.push(restored);
-                    saveAndRender();
-                    if (restored.type === 'file') selectFile(restored.id);
-                    break;
-                }
+                if (bin[i].id === id) { let restored = bin.splice(i, 1)[0]; fileSystem.push(restored); saveAndRender(); if (restored.type === 'file') selectFile(restored.id); break; }
             }
         }
 
-        function deleteForever(id) {
-            if (confirm("Permanently delete?")) {
-                bin = bin.filter(n => n.id !== id);
-                saveAndRender();
-            }
-        }
-
-        function clearEntireBin() {
-            if (bin.length === 0) return;
-            if (confirm("Permanently empty the entire bin?")) {
-                bin = [];
-                saveAndRender();
-            }
-        }
+        function deleteForever(id) { if (confirm("Permanently delete?")) { bin = bin.filter(n => n.id !== id); saveAndRender(); } }
+        function clearEntireBin() { if (bin.length === 0) return; if (confirm("Empty entire bin?")) { bin = []; saveAndRender(); } }
 
         function updateActiveNote() {
             if (!activeFileId) return;
@@ -1160,8 +1022,7 @@
                 node.header = document.getElementById('docHeader').value;
                 node.footerText = document.getElementById('docFooterText').value;
                 updateWordCount(document.getElementById('editor').innerText);
-                saveToDB('filesystem', fileSystem);
-                saveToDB('bin', bin);
+                saveToDB('filesystem', fileSystem); saveToDB('bin', bin);
             }
         }
 
@@ -1169,101 +1030,58 @@
             const words = text.trim() ? text.trim().split(/\s+/).length : 0;
             document.getElementById('wordCount').textContent = `${words} word${words === 1 ? '' : 's'}`;
             const simulatedPages = Math.max(1, Math.ceil(words / 250));
-            const node = findNode(activeFileId);
-            const style = node ? (node.pageStyle || 'total') : 'total';
+            const node = findNode(activeFileId); const style = node ? (node.pageStyle || 'total') : 'total';
             if (style === 'simple') document.getElementById('docPageNumberDisplay').textContent = `Page ${simulatedPages}`;
             else if (style === 'total') document.getElementById('docPageNumberDisplay').textContent = `Page ${simulatedPages} of ${simulatedPages}`;
             else if (style === 'center') document.getElementById('docPageNumberDisplay').textContent = `- ${simulatedPages} -`;
         }
 
-        function updatePageNumberStyle(style) {
-            const node = findNode(activeFileId);
-            if (node && node.type === 'file') { node.pageStyle = style; updateWordCount(document.getElementById('editor').innerText); saveAndRender(); }
-        }
-
-        function formatDoc(command, value = null) {
-            document.execCommand(command, false, value);
-            document.getElementById('editor').focus();
-            updateActiveNote();
-        }
+        function updatePageNumberStyle(style) { const node = findNode(activeFileId); if (node && node.type === 'file') { node.pageStyle = style; updateWordCount(document.getElementById('editor').innerText); saveAndRender(); } }
+        function formatDoc(command, value = null) { document.execCommand(command, false, value); document.getElementById('editor').focus(); updateActiveNote(); }
 
         function applyBulletStyle(styleType) {
             if (styleType === 'decimal' || styleType === 'upper-roman') document.execCommand('insertOrderedList', false, null);
             else document.execCommand('insertUnorderedList', false, null);
             setTimeout(() => {
                 const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    let list = selection.anchorNode.parentElement.closest('ul, ol');
-                    if (list) list.style.listStyleType = styleType;
-                }
+                if (selection.rangeCount > 0) { let list = selection.anchorNode.parentElement.closest('ul, ol'); if (list) list.style.listStyleType = styleType; }
             }, 50);
             updateActiveNote();
         }
 
         function insertHyperlink() {
-            const url = prompt("Enter URL:");
-            if (!url) return;
+            const url = prompt("Enter URL:"); if (!url) return;
             const selection = window.getSelection();
-            if (!selection.toString()) {
-                const text = prompt("Display text:", url);
-                if (!text) return;
-                document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
-            } else {
-                document.execCommand('createLink', false, url);
-            }
+            if (!selection.toString()) { const text = prompt("Display text:", url); if (!text) return; document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`); }
+            else { document.execCommand('createLink', false, url); }
             updateActiveNote();
         }
 
-        function insertTextBox() {
-            const html = `<div class="custom-text-box" contenteditable="true">Type inside your custom text box here...</div><p></p>`;
-            document.execCommand('insertHTML', false, html);
-            updateActiveNote();
-        }
-
-        function insertChecklist() {
-            const html = `<div class="checklist-item"><input type="checkbox"> <span contenteditable="true">Checklist task item</span></div><p></p>`;
-            document.execCommand('insertHTML', false, html);
-            updateActiveNote();
-        }
-
+        function insertTextBox() { document.execCommand('insertHTML', false, `<div class="custom-text-box" contenteditable="true">Type inside your custom text box here...</div><p></p>`); updateActiveNote(); }
+        function insertChecklist() { document.execCommand('insertHTML', false, `<div class="checklist-item"><input type="checkbox"> <span contenteditable="true">Checklist task item</span></div><p></p>`); updateActiveNote(); }
         function insertPollWidget() {
-            const question = prompt("Enter Poll Question:", "What is your preference?");
-            if (!question) return;
-            const html = `
-                <div class="poll-widget">
-                    <strong>📊 ${question}</strong>
-                    <div class="poll-option" onclick="this.style.background='rgba(56,189,248,0.3)'">Option A</div>
-                    <div class="poll-option" onclick="this.style.background='rgba(56,189,248,0.3)'">Option B</div>
-                </div><p></p>`;
-            document.execCommand('insertHTML', false, html);
+            const q = prompt("Enter Poll Question:", "What is your preference?"); if (!q) return;
+            document.execCommand('insertHTML', false, `<div class="poll-widget"><strong>📊 ${q}</strong><div class="poll-option" onclick="this.style.background='rgba(56,189,248,0.3)'">Option A</div><div class="poll-option" onclick="this.style.background='rgba(56,189,248,0.3)'">Option B</div></div><p></p>`);
             updateActiveNote();
         }
 
-        let isDrawingSymbol = false;
-        const drawCanvas = document.getElementById('drawCanvas');
-        const ctxSymbol = drawCanvas.getContext('2d');
+        let isDrawingSymbol = false; const drawCanvas = document.getElementById('drawCanvas'); const ctxSymbol = drawCanvas.getContext('2d');
         drawCanvas.addEventListener('mousedown', (e) => { isDrawingSymbol = true; ctxSymbol.beginPath(); const r = drawCanvas.getBoundingClientRect(); ctxSymbol.moveTo(e.clientX - r.left, e.clientY - r.top); ctxSymbol.strokeStyle = '#38bdf8'; ctxSymbol.lineWidth = 3; });
         drawCanvas.addEventListener('mousemove', (e) => { if (!isDrawingSymbol) return; const r = drawCanvas.getBoundingClientRect(); ctxSymbol.lineTo(e.clientX - r.left, e.clientY - r.top); ctxSymbol.stroke(); triggerSymbolMatching(); });
         drawCanvas.addEventListener('mouseup', () => isDrawingSymbol = false);
 
         function clearDrawCanvas() { ctxSymbol.clearRect(0, 0, drawCanvas.width, drawCanvas.height); document.getElementById('symbolMatchGrid').innerHTML = ''; }
         function triggerSymbolMatching() {
-            const grid = document.getElementById('symbolMatchGrid');
-            grid.innerHTML = '';
+            const grid = document.getElementById('symbolMatchGrid'); grid.innerHTML = '';
             [...infiniteSymbolCatalog].sort(() => 0.5 - Math.random()).slice(0, 15).forEach(sym => {
-                const chip = document.createElement('div');
-                chip.className = 'symbol-chip';
-                chip.textContent = sym;
-                chip.onclick = () => { insertSymbolAtCursor(sym); closeModal('drawSymbolModal'); };
-                grid.appendChild(chip);
+                const chip = document.createElement('div'); chip.className = 'symbol-chip'; chip.textContent = sym;
+                chip.onclick = () => { insertSymbolAtCursor(sym); closeModal('drawSymbolModal'); }; grid.appendChild(chip);
             });
         }
         function openDrawSymbolModal() { saveCursor(); document.getElementById('drawSymbolModal').style.display = 'flex'; clearDrawCanvas(); }
         function insertSymbolAtCursor(sym) { document.getElementById('editor').focus(); restoreCursor(); document.execCommand('insertText', false, sym); updateActiveNote(); }
 
-        let isDrawingImage = false;
-        const imgCanvas = document.getElementById('imageDrawCanvas');
-        const ctxImg = imgCanvas.getContext('2d');
+        let isDrawingImage = false; const imgCanvas = document.getElementById('imageDrawCanvas'); const ctxImg = imgCanvas.getContext('2d');
         imgCanvas.addEventListener('mousedown', (e) => { isDrawingImage = true; ctxImg.beginPath(); const r = imgCanvas.getBoundingClientRect(); ctxImg.moveTo(e.clientX - r.left, e.clientY - r.top); ctxImg.strokeStyle = '#f8fafc'; ctxImg.lineWidth = 3; });
         imgCanvas.addEventListener('mousemove', (e) => { if (!isDrawingImage) return; const r = imgCanvas.getBoundingClientRect(); ctxImg.lineTo(e.clientX - r.left, e.clientY - r.top); ctxImg.stroke(); });
         imgCanvas.addEventListener('mouseup', () => isDrawingImage = false);
@@ -1271,137 +1089,85 @@
         function openDrawImageModal() { saveCursor(); document.getElementById('drawImageModal').style.display = 'flex'; clearImageCanvas(); }
         function clearImageCanvas() { ctxImg.clearRect(0, 0, imgCanvas.width, imgCanvas.height); }
         function insertDrawnImageToEditor() {
-            const dataUrl = imgCanvas.toDataURL();
-            document.getElementById('editor').focus();
-            restoreCursor();
+            const dataUrl = imgCanvas.toDataURL(); document.getElementById('editor').focus(); restoreCursor();
             document.execCommand('insertHTML', false, `<img src="${dataUrl}" style="width: 300px; display: inline-block;" />`);
-            closeModal('drawImageModal');
-            updateActiveNote();
+            closeModal('drawImageModal'); updateActiveNote();
         }
 
         function openShapeModal() { saveCursor(); document.getElementById('shapeModal').style.display = 'flex'; }
         function insertSelectedShape() {
-            const type = document.getElementById('shapeTypeSelect').value;
-            const fill = document.getElementById('shapeFillSelect').value;
-            const color = document.getElementById('shapePickerColor').value;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 120; canvas.height = 120;
-            const c = canvas.getContext('2d');
+            const type = document.getElementById('shapeTypeSelect').value; const fill = document.getElementById('shapeFillSelect').value; const color = document.getElementById('shapePickerColor').value;
+            const canvas = document.createElement('canvas'); canvas.width = 120; canvas.height = 120; const c = canvas.getContext('2d');
             c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 4;
-
-            if (type === 'rect') {
-                if (fill === 'filled') c.fillRect(10, 10, 100, 100);
-                else c.strokeRect(10, 10, 100, 100);
-            } else if (type === 'circle') {
-                c.beginPath(); c.arc(60, 60, 50, 0, 2 * Math.PI);
-                if (fill === 'filled') c.fill(); else c.stroke();
-            } else if (type === 'triangle') {
-                c.beginPath(); c.moveTo(60, 10); c.lineTo(110, 110); c.lineTo(10, 110); c.closePath();
-                if (fill === 'filled') c.fill(); else c.stroke();
-            } else if (type === 'star') {
-                c.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    c.lineTo(60 + 50 * Math.cos((18 + i * 72) * Math.PI / 180), 60 - 50 * Math.sin((18 + i * 72) * Math.PI / 180));
-                    c.lineTo(60 + 20 * Math.cos((54 + i * 72) * Math.PI / 180), 60 - 20 * Math.sin((54 + i * 72) * Math.PI / 180));
-                }
-                c.closePath();
+            if (type === 'rect') { if (fill === 'filled') c.fillRect(10, 10, 100, 100); else c.strokeRect(10, 10, 100, 100); }
+            else if (type === 'circle') { c.beginPath(); c.arc(60, 60, 50, 0, 2 * Math.PI); if (fill === 'filled') c.fill(); else c.stroke(); }
+            else if (type === 'triangle') { c.beginPath(); c.moveTo(60, 10); c.lineTo(110, 110); c.lineTo(10, 110); c.closePath(); if (fill === 'filled') c.fill(); else c.stroke(); }
+            else if (type === 'star') {
+                c.beginPath(); for (let i = 0; i < 5; i++) { c.lineTo(60 + 50 * Math.cos((18 + i * 72) * Math.PI / 180), 60 - 50 * Math.sin((18 + i * 72) * Math.PI / 180)); c.lineTo(60 + 20 * Math.cos((54 + i * 72) * Math.PI / 180), 60 - 20 * Math.sin((54 + i * 72) * Math.PI / 180)); } c.closePath();
                 if (fill === 'filled') c.fill(); else c.stroke();
             }
-
-            const dataUrl = canvas.toDataURL();
-            document.getElementById('editor').focus();
-            restoreCursor();
+            const dataUrl = canvas.toDataURL(); document.getElementById('editor').focus(); restoreCursor();
             document.execCommand('insertHTML', false, `<img src="${dataUrl}" style="width: 80px; display: inline-block;" />`);
-            closeModal('shapeModal');
-            updateActiveNote();
+            closeModal('shapeModal'); updateActiveNote();
         }
 
         function openAiModal() { saveCursor(); document.getElementById('aiModal').style.display = 'flex'; document.getElementById('aiTopicInput').focus(); }
         function generateAiContentAtCursor() {
-            const topic = document.getElementById('aiTopicInput').value.trim();
-            if(!topic) return;
-            closeModal('aiModal');
-            document.getElementById('editor').focus();
-            restoreCursor();
-            const generatedHtml = `
-                <div style="border-left: 3px solid var(--ai-accent); padding-left: 12px; margin: 15px 0; background: rgba(192, 132, 252, 0.05); padding: 10px; border-radius: 4px;">
-                    <p style="color: var(--ai-accent); margin: 0 0 5px 0;"><strong>✨ AI Writer Output (${topic}):</strong></p>
-                    <p>Comprehensive research and analysis regarding <strong>${topic}</strong> highlights key advancements, structural optimizations, and multi-sector scalability. Industry standards emphasize enhanced parallel processing and streamlined deployment pipelines to maximize workflow efficiency.</p>
-                </div><p></p>
-            `;
-            document.execCommand('insertHTML', false, generatedHtml);
+            const topic = document.getElementById('aiTopicInput').value.trim(); if(!topic) return;
+            closeModal('aiModal'); document.getElementById('editor').focus(); restoreCursor();
+            document.execCommand('insertHTML', false, `<div style="border-left: 3px solid var(--ai-accent); padding-left: 12px; margin: 15px 0; background: rgba(192, 132, 252, 0.05); padding: 10px; border-radius: 4px;"><p style="color: var(--ai-accent); margin: 0 0 5px 0;"><strong>✨ AI Writer Output (${topic}):</strong></p><p>Comprehensive research and analysis regarding <strong>${topic}</strong> highlights key advancements, structural optimizations, and multi-sector scalability.</p></div><p></p>`);
             updateActiveNote();
         }
 
         function openAiImageModal() { saveCursor(); document.getElementById('aiImageModal').style.display = 'flex'; document.getElementById('aiImagePromptInput').focus(); }
         function generateAiImageAtCursor() {
-            const promptText = document.getElementById('aiImagePromptInput').value.trim();
-            if(!promptText) return;
-            closeModal('aiImageModal');
-            document.getElementById('editor').focus();
-            restoreCursor();
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 400; canvas.height = 250;
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createLinearGradient(0, 0, 400, 250);
-            grad.addColorStop(0, '#0f172a'); grad.addColorStop(0.5, '#1e293b'); grad.addColorStop(1, '#0369a1');
+            const promptText = document.getElementById('aiImagePromptInput').value.trim(); if(!promptText) return;
+            closeModal('aiImageModal'); document.getElementById('editor').focus(); restoreCursor();
+            const canvas = document.createElement('canvas'); canvas.width = 400; canvas.height = 250; const ctx = canvas.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 400, 250); grad.addColorStop(0, '#0f172a'); grad.addColorStop(0.5, '#1e293b'); grad.addColorStop(1, '#0369a1');
             ctx.fillStyle = grad; ctx.fillRect(0, 0, 400, 250);
-
             ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 14px system-ui'; ctx.fillText("🎨 AI Generated Artwork:", 20, 40);
             ctx.fillStyle = '#f8fafc'; ctx.font = '16px system-ui';
             let words = promptText.split(' '); let line = ''; let y = 80;
-            for(let n = 0; n < words.length; n++) {
-                let testLine = line + words[n] + ' ';
-                if(ctx.measureText(testLine).width > 360 && n > 0) { ctx.fillText(line, 20, y); line = words[n] + ' '; y += 24; }
-                else { line = testLine; }
-            }
+            for(let n = 0; n < words.length; n++) { let testLine = line + words[n] + ' '; if(ctx.measureText(testLine).width > 360 && n > 0) { ctx.fillText(line, 20, y); line = words[n] + ' '; y += 24; } else { line = testLine; } }
             ctx.fillText(line, 20, y);
-
             const dataUrl = canvas.toDataURL();
-            document.execCommand('insertHTML', false, `<div style="text-align:center; margin:15px 0;"><img src="${dataUrl}" style="width: 400px; border-radius: 8px; border: 1px solid var(--accent); display: inline-block;" title="AI Art: ${promptText}"/><br><span style="font-size:0.75rem; color:var(--text-muted);">AI Prompt: "${promptText}"</span></div><p></p>`);
+            document.execCommand('insertHTML', false, `<div style="text-align:center; margin:15px 0;"><img src="${dataUrl}" style="width: 400px; border-radius: 8px; border: 1px solid var(--accent); display: inline-block;" title="AI Art"/><br><span style="font-size:0.75rem; color:var(--text-muted);">AI Prompt: "${promptText}"</span></div><p></p>`);
             updateActiveNote();
         }
 
         function promptImageSource() {
             const c = prompt("Type 'file' to upload, or 'link' for web URL:");
-            if(c === 'file') createHiddenPicker('image');
-            else if(c === 'link') { const u = prompt("Image URL:"); if(u) { document.execCommand('insertHTML', false, `<img src="${u}" style="width: 350px; opacity: 1;" />`); updateActiveNote(); } }
+            if(c === 'file') createHiddenPicker('image'); else if(c === 'link') { const u = prompt("Image URL:"); if(u) { document.execCommand('insertHTML', false, `<img src="${u}" style="width: 350px; opacity: 1;" />`); updateActiveNote(); } }
         }
         function promptVideoSource() {
             const c = prompt("Type 'file' to upload, or 'link' for video URL:");
-            if(c === 'file') createHiddenPicker('video');
-            else if(c === 'link') { const u = prompt("Video URL:"); if(u) { document.execCommand('insertHTML', false, `<video controls width="400" style="opacity:1;"><source src="${u}"></video>`); updateActiveNote(); } }
+            if(c === 'file') createHiddenPicker('video'); else if(c === 'link') { const u = prompt("Video URL:"); if(u) { document.execCommand('insertHTML', false, `<video controls width="400" style="opacity:1;"><source src="${u}"></video>`); updateActiveNote(); } }
         }
         function createHiddenPicker(type) {
             const i = document.createElement('input'); i.type = 'file'; i.accept = type === 'image' ? 'image/*' : 'video/mp4';
             i.onchange = (e) => {
-                const f = e.target.files[0]; if(!f) return;
-                if(type === 'image') {
-                    const r = new FileReader(); r.onload = (ev) => { document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="width: 350px; opacity:1;" />`); updateActiveNote(); }; r.readAsDataURL(f);
-                } else {
-                    const b = URL.createObjectURL(f); document.execCommand('insertHTML', false, `<video controls width="400" style="opacity:1;"><source src="${b}" type="${f.type}"></video>`); updateActiveNote();
-                }
+                const f = e.target.files[0]; if (!f) return;
+                const r = new FileReader();
+                r.onload = (ev) => {
+                    document.getElementById('editor').focus(); restoreCursor();
+                    if (type === 'image') document.execCommand('insertHTML', false, `<img src="${ev.target.result}" style="width: 350px; opacity:1;" />`);
+                    else document.execCommand('insertHTML', false, `<video controls width="400" style="opacity:1;"><source src="${ev.target.result}" type="${f.type}"></video>`);
+                    updateActiveNote();
+                };
+                r.readAsDataURL(f);
             };
             i.click();
         }
 
         function insertTable() {
             let html = '<table style="width:100%; border-collapse: collapse;">';
-            for (let i = 0; i < 3; i++) {
-                html += '<tr>';
-                for (let j = 0; j < 3; j++) html += `<td style="border: 2px solid #334155; padding: 10px; background-color: ${i===0?'#1e293b':'transparent'}">Cell</td>`;
-                html += '</tr>';
-            }
-            html += '</table><p></p>';
-            document.execCommand('insertHTML', false, html);
-            updateActiveNote();
+            for (let i = 0; i < 3; i++) { html += '<tr>'; for (let j = 0; j < 3; j++) html += `<td style="border: 2px solid #334155; padding: 10px; background-color: ${i===0?'#1e293b':'transparent'}">Cell</td>`; html += '</tr>'; }
+            html += '</table><p></p>'; document.execCommand('insertHTML', false, html); updateActiveNote();
         }
         function tableAddRow() {
             if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
-            const cols = selectedElement.rows[0].cells.length;
-            const r = selectedElement.insertRow();
+            const cols = selectedElement.rows[0].cells.length; const r = selectedElement.insertRow();
             for(let i=0; i<cols; i++) { const c = r.insertCell(); c.style.border = '2px solid #334155'; c.style.padding = '10px'; c.innerText = 'Cell'; }
             updateActiveNote(); showToolbar(selectedElement, tableToolbar);
         }
@@ -1410,89 +1176,32 @@
             for(let r of selectedElement.rows) { const c = r.insertCell(); c.style.border = '2px solid #334155'; c.style.padding = '10px'; c.innerText = 'Cell'; }
             updateActiveNote(); showToolbar(selectedElement, tableToolbar);
         }
-        function tableDeleteCell() {
-            const s = window.getSelection();
-            let cell = s.anchorNode ? s.anchorNode.parentElement.closest('td, th') : null;
-            if(cell) { cell.remove(); updateActiveNote(); hideAllToolbars(); }
-        }
+        function tableDeleteCell() { const s = window.getSelection(); let cell = s.anchorNode ? s.anchorNode.parentElement.closest('td, th') : null; if(cell) { cell.remove(); updateActiveNote(); hideAllToolbars(); } }
         function tableMergeCells() {
-            const s = window.getSelection();
-            let cell = s.anchorNode ? s.anchorNode.parentElement.closest('td, th') : null;
-            if(cell) {
-                let nextCell = cell.nextElementSibling;
-                if(nextCell) {
-                    cell.colSpan = (cell.colSpan || 1) + (nextCell.colSpan || 1);
-                    cell.innerHTML += " " + nextCell.innerHTML;
-                    nextCell.remove();
-                    updateActiveNote();
-                    showToolbar(selectedElement, tableToolbar);
-                }
-            }
+            const s = window.getSelection(); let cell = s.anchorNode ? s.anchorNode.parentElement.closest('td, th') : null;
+            if(cell) { let nextCell = cell.nextElementSibling; if(nextCell) { cell.colSpan = (cell.colSpan || 1) + (nextCell.colSpan || 1); cell.innerHTML += " " + nextCell.innerHTML; nextCell.remove(); updateActiveNote(); showToolbar(selectedElement, tableToolbar); } }
         }
-        function changeTableOpacity(val) {
-            if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
-            selectedElement.style.opacity = val;
-            updateActiveNote();
-            showToolbar(selectedElement, tableToolbar);
-        }
+        function changeTableOpacity(val) { if(!selectedElement || selectedElement.tagName !== 'TABLE') return; selectedElement.style.opacity = val; updateActiveNote(); showToolbar(selectedElement, tableToolbar); }
         function applyTableStylePreset(preset) {
             if(!selectedElement || selectedElement.tagName !== 'TABLE') return;
-            if(preset === 'modern') {
-                for(let i=0; i<selectedElement.rows.length; i++) {
-                    let r = selectedElement.rows[i];
-                    for(let c of r.cells) { c.style.border='1px solid #334155'; c.style.padding='10px'; c.style.backgroundColor=i===0?'#1e293b':'#0f172a'; }
-                }
-            } else if(preset === 'clean') {
-                for(let r of selectedElement.rows) {
-                    for(let c of r.cells) { c.style.border='none'; c.style.borderBottom='1px solid #334155'; c.style.padding='12px'; c.style.backgroundColor='transparent'; }
-                }
-            } else if(preset === 'blue') {
-                for(let i=0; i<selectedElement.rows.length; i++) {
-                    let r = selectedElement.rows[i];
-                    for(let c of r.cells) { c.style.border='1px solid #38bdf8'; c.style.padding='10px'; c.style.backgroundColor=i===0?'#0369a1':'rgba(3,105,161,0.15)'; }
-                }
-            }
+            if(preset === 'modern') { for(let i=0; i<selectedElement.rows.length; i++) { let r = selectedElement.rows[i]; for(let c of r.cells) { c.style.border='1px solid #334155'; c.style.padding='10px'; c.style.backgroundColor=i===0?'#1e293b':'#0f172a'; } } }
+            else if(preset === 'clean') { for(let r of selectedElement.rows) { for(let c of r.cells) { c.style.border='none'; c.style.borderBottom='1px solid #334155'; c.style.padding='12px'; c.style.backgroundColor='transparent'; } } }
+            else if(preset === 'blue') { for(let i=0; i<selectedElement.rows.length; i++) { let r = selectedElement.rows[i]; for(let c of r.cells) { c.style.border='1px solid #38bdf8'; c.style.padding='10px'; c.style.backgroundColor=i===0?'#0369a1':'rgba(3,105,161,0.15)'; } } }
             updateActiveNote(); showToolbar(selectedElement, tableToolbar);
         }
 
         document.getElementById('editor').addEventListener('click', (e) => {
             hideAllToolbars();
-            if (e.target.tagName === 'IMG') {
-                selectedElement = e.target;
-                document.getElementById('imgSizeRange').value = parseInt(selectedElement.style.width) || 350;
-                document.getElementById('imgOpacityRange').value = selectedElement.style.opacity || 1;
-                showToolbar(selectedElement, imgToolbar);
-            } else if (e.target.tagName === 'VIDEO') {
-                selectedElement = e.target;
-                document.getElementById('videoSizeRange').value = parseInt(selectedElement.style.width) || 400;
-                document.getElementById('videoOpacityRange').value = selectedElement.style.opacity || 1;
-                showToolbar(selectedElement, videoToolbar);
-            } else {
-                let cell = e.target.closest('td, th');
-                if (cell) { selectedElement = cell.closest('table'); showToolbar(selectedElement, tableToolbar); }
-            }
+            if (e.target.tagName === 'IMG') { selectedElement = e.target; document.getElementById('imgSizeRange').value = parseInt(selectedElement.style.width) || 350; document.getElementById('imgOpacityRange').value = selectedElement.style.opacity || 1; showToolbar(selectedElement, imgToolbar); }
+            else if (e.target.tagName === 'VIDEO') { selectedElement = e.target; document.getElementById('videoSizeRange').value = parseInt(selectedElement.style.width) || 400; document.getElementById('videoOpacityRange').value = selectedElement.style.opacity || 1; showToolbar(selectedElement, videoToolbar); }
+            else { let cell = e.target.closest('td, th'); if (cell) { selectedElement = cell.closest('table'); showToolbar(selectedElement, tableToolbar); } }
         });
 
-        function showToolbar(el, toolbar) {
-            const rect = el.getBoundingClientRect();
-            toolbar.style.display = 'flex';
-            toolbar.style.top = `${window.scrollY + rect.top - 40}px`;
-            toolbar.style.left = `${window.scrollX + rect.left}px`;
-        }
+        function showToolbar(el, toolbar) { const rect = el.getBoundingClientRect(); toolbar.style.display = 'flex'; toolbar.style.top = `${window.scrollY + rect.top - 40}px`; toolbar.style.left = `${window.scrollX + rect.left}px`; }
         function hideAllToolbars() { imgToolbar.style.display = 'none'; videoToolbar.style.display = 'none'; tableToolbar.style.display = 'none'; }
         
-        function resizeMediaBySlider(val) {
-            if(!selectedElement) return;
-            selectedElement.style.width = val + 'px';
-            updateActiveNote();
-            showToolbar(selectedElement, selectedElement.tagName === 'IMG' ? imgToolbar : videoToolbar);
-        }
-        function changeMediaOpacity(val) {
-            if(!selectedElement) return;
-            selectedElement.style.opacity = val;
-            updateActiveNote();
-            showToolbar(selectedElement, selectedElement.tagName === 'IMG' ? imgToolbar : videoToolbar);
-        }
+        function resizeMediaBySlider(val) { if(!selectedElement) return; selectedElement.style.width = val + 'px'; updateActiveNote(); showToolbar(selectedElement, selectedElement.tagName === 'IMG' ? imgToolbar : videoToolbar); }
+        function changeMediaOpacity(val) { if(!selectedElement) return; selectedElement.style.opacity = val; updateActiveNote(); showToolbar(selectedElement, selectedElement.tagName === 'IMG' ? imgToolbar : videoToolbar); }
         function wrapMedia(wrapType) {
             if(!selectedElement || selectedElement.tagName !== 'IMG') return;
             if(wrapType === 'inline') { selectedElement.style.float='none'; selectedElement.style.margin='10px'; }
@@ -1503,22 +1212,12 @@
         }
         function deleteSelectedElement() { if(selectedElement) { selectedElement.remove(); hideAllToolbars(); updateActiveNote(); } }
 
-        function saveCursor() {
-            const s = window.getSelection();
-            savedRange = s.rangeCount > 0 && document.getElementById('editor').contains(s.anchorNode) ? s.getRangeAt(0) : document.createRange();
-        }
-        function restoreCursor() {
-            const s = window.getSelection();
-            if(savedRange) { s.removeAllRanges(); s.addRange(savedRange); }
-        }
+        function saveCursor() { const s = window.getSelection(); savedRange = s.rangeCount > 0 && document.getElementById('editor').contains(s.anchorNode) ? s.getRangeAt(0) : document.createRange(); }
+        function restoreCursor() { const s = window.getSelection(); if(savedRange) { s.removeAllRanges(); s.addRange(savedRange); } }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openShortcutsModal() { document.getElementById('shortcutsModal').style.display = 'flex'; }
 
-        async function saveAndRender() {
-            await saveToDB('filesystem', fileSystem);
-            await saveToDB('bin', bin);
-            renderFileSystem();
-        }
+        async function saveAndRender() { await saveToDB('filesystem', fileSystem); await saveToDB('bin', bin); renderFileSystem(); }
 
         initApp();
     </script>
