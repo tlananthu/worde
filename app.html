@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word- AI created</title>
+    <title>Zenith Canvas Pro - Paw Patrol Integration</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -74,6 +74,7 @@
             overflow-y: auto;
             flex-grow: 1;
             margin-top: 5px;
+            max-height: 250px;
         }
 
         ul.tree-list {
@@ -318,6 +319,27 @@
         .toolbar-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; color: var(--text-muted); font-size: 0.85rem; }
         button.primary-btn { background-color: var(--accent); color: var(--bg-color); border: none; padding: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; font-size: 0.9rem; }
         button.primary-btn:hover { opacity: 0.9; }
+
+        /* Paw Patrol Quick Button Style */
+        .paw-patrol-btn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            transition: opacity 0.2s;
+        }
+        .paw-patrol-btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -338,6 +360,11 @@
         </div>
 
         <div class="tree-container" id="treeContainer"></div>
+
+        <!-- Paw Patrol Button Placed Between Files and Bin -->
+        <button class="paw-patrol-btn" onclick="window.open('https://www.youtube.com/results?search_query=paw+patrol', '_blank')">
+            🐾 Paw Patrol Videos
+        </button>
 
         <div class="sidebar-header-row">
             <span class="sidebar-section-title">🗑️ Bin (Trash)</span>
@@ -788,7 +815,6 @@
         function applyHighlightColor() {
             const color = document.getElementById('highlightColorInput').value;
             document.getElementById('editor').focus();
-            // Wrap selection in styled span for reliable highlight rendering across browsers
             const selection = window.getSelection();
             if (!selection.isCollapsed) {
                 const range = selection.getRangeAt(0);
