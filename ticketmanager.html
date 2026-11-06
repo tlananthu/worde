@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neighbor Ticket Manager</title>
+    <title>Ticket Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -11,8 +11,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .modal { transition: opacity 0.25s ease; }
         body.modal-active { overflow-x: hidden; overflow-y: hidden; }
-        /* Hide scrollbar for cleaner look */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
@@ -22,125 +21,171 @@
 
     <!-- Navbar -->
     <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex-shrink-0 flex items-center">
-                    <i class="fas fa-ticket-alt text-blue-600 text-2xl mr-3"></i>
-                    <span class="font-bold text-xl text-gray-900">Ticket Manager</span>
+                    <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center mr-3 shadow-sm">
+                        <i class="fas fa-ticket-alt text-white text-sm"></i>
+                    </div>
+                    <span class="font-bold text-xl text-gray-900 tracking-tight">Ticket Manager</span>
                 </div>
-                <div class="flex space-x-3">
-                    <button onclick="exportData()" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center transition">
-                        <i class="fas fa-download mr-1"></i> Export
+                <div class="flex space-x-4">
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="text-sm font-semibold text-blue-600 border-b-2 border-blue-600 px-1 py-4 transition flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i> Dashboard
                     </button>
-                    <label class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center cursor-pointer transition">
-                        <i class="fas fa-upload mr-1"></i> Import
-                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
-                    </label>
+                    <button onclick="switchView('settings')" id="nav-settings" class="text-sm font-medium text-gray-500 hover:text-gray-800 border-b-2 border-transparent px-1 py-4 transition flex items-center">
+                        <i class="fas fa-cog mr-2"></i> Settings
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Dashboard Summary -->
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Financial Summary</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+        <!-- Dashboard View -->
+        <div id="view-dashboard">
+            <!-- Global Dashboard Summary -->
+            <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center"><i class="fas fa-globe mr-2 text-gray-400"></i> Global Financial Summary</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col relative overflow-hidden">
                 <span class="text-sm text-gray-500 font-medium mb-1">Total Billed</span>
-                <span id="summary-billed" class="text-2xl font-bold text-gray-900">₹0.00</span>
-                <span class="text-xs text-gray-400 mt-1">Active tickets only</span>
+                <span id="global-billed" class="text-2xl font-bold text-gray-900">₹0.00</span>
+                <span class="text-xs text-gray-400 mt-1">Active tickets across all</span>
+                <div class="absolute right-0 top-0 w-12 h-12 bg-gray-50 rounded-bl-full flex items-start justify-end p-2 opacity-50"><i class="fas fa-receipt text-gray-400 text-sm"></i></div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col relative overflow-hidden">
                 <span class="text-sm text-gray-500 font-medium mb-1">Total Paid</span>
-                <span id="summary-paid" class="text-2xl font-bold text-green-600">₹0.00</span>
-                <span class="text-xs text-gray-400 mt-1">Payments received</span>
+                <span id="global-paid" class="text-2xl font-bold text-green-600">₹0.00</span>
+                <span class="text-xs text-gray-400 mt-1">Payments received total</span>
+                <div class="absolute right-0 top-0 w-12 h-12 bg-green-50 rounded-bl-full flex items-start justify-end p-2 opacity-50"><i class="fas fa-money-bill-wave text-green-400 text-sm"></i></div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col relative overflow-hidden">
                 <span class="text-sm text-gray-500 font-medium mb-1">Total Refunds</span>
-                <span id="summary-refunds" class="text-2xl font-bold text-blue-500">₹0.00</span>
+                <span id="global-refunds" class="text-2xl font-bold text-blue-500">₹0.00</span>
                 <span class="text-xs text-gray-400 mt-1">Credits from cancellations</span>
+                <div class="absolute right-0 top-0 w-12 h-12 bg-blue-50 rounded-bl-full flex items-start justify-end p-2 opacity-50"><i class="fas fa-undo text-blue-400 text-sm"></i></div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-blue-200 p-5 flex flex-col relative overflow-hidden">
-                <div class="absolute right-0 top-0 w-16 h-16 bg-blue-50 rounded-full -mr-8 -mt-8"></div>
-                <span class="text-sm text-gray-600 font-semibold mb-1">Neighbor Owes</span>
-                <span id="summary-balance" class="text-2xl font-bold text-red-600">₹0.00</span>
-                <span class="text-xs text-gray-500 mt-1" id="balance-subtitle">Pending balance</span>
+            <div class="bg-white rounded-xl shadow-sm border border-blue-200 p-5 flex flex-col relative overflow-hidden bg-gradient-to-br from-white to-blue-50">
+                <span class="text-sm text-gray-600 font-semibold mb-1">Net Global Balance</span>
+                <span id="global-balance" class="text-2xl font-bold text-red-600">₹0.00</span>
+                <span class="text-xs text-gray-500 mt-1" id="global-balance-subtitle">Overall pending balance</span>
             </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-3 sm:space-y-0">
-            <h2 class="text-lg font-semibold text-gray-700">Ticket Records</h2>
-            <div class="flex space-x-3 w-full sm:w-auto">
-                <button onclick="openPaymentModal()" class="flex-1 sm:flex-none bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm flex justify-center items-center">
-                    <i class="fas fa-rupee-sign mr-2"></i> Record Payment
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-200 gap-3">
+            <h2 class="text-lg font-semibold text-gray-800 flex-shrink-0"><i class="fas fa-users mr-2 text-gray-400"></i> People & Tickets</h2>
+            <div class="flex flex-wrap sm:flex-nowrap gap-3 w-full sm:w-auto justify-end">
+                <button onclick="openBalanceModal()" class="flex-1 sm:flex-none bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 px-4 py-2 rounded-lg font-medium text-sm transition flex justify-center items-center">
+                    <i class="fas fa-scale-balanced mr-2"></i> Opening Balance
                 </button>
-                <button onclick="openTicketModal()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm flex justify-center items-center">
+                <button onclick="openPaymentModal()" class="flex-1 sm:flex-none bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-4 py-2 rounded-lg font-medium text-sm transition flex justify-center items-center">
+                    <i class="fas fa-hand-holding-dollar mr-2"></i> Record Payment
+                </button>
+                <button onclick="openTicketModal()" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition shadow-sm flex justify-center items-center">
                     <i class="fas fa-plus mr-2"></i> Add Ticket
                 </button>
             </div>
         </div>
 
-        <!-- Tickets List -->
-        <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-                            <th class="px-6 py-4 font-medium">Date</th>
-                            <th class="px-6 py-4 font-medium">Description / PNR</th>
-                            <th class="px-6 py-4 font-medium">Cost</th>
-                            <th class="px-6 py-4 font-medium">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ticket-list" class="divide-y divide-gray-100 text-sm">
-                        <!-- Tickets rendered dynamically -->
-                    </tbody>
-                </table>
-            </div>
-            <div id="empty-state" class="hidden p-8 text-center text-gray-500">
-                <i class="fas fa-ticket-alt text-4xl mb-3 text-gray-300"></i>
-                <p>No tickets recorded yet.</p>
-                <p class="text-xs mt-1">Click "Add Ticket" to get started.</p>
+        <!-- Per-Person Sections -->
+        <div id="persons-container" class="space-y-8">
+            <!-- Rendered dynamically -->
+            <div id="empty-state" class="p-12 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+                <div class="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-folder-open text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No Records Found</h3>
+                <p class="text-sm">Add a ticket or opening balance to get started.</p>
             </div>
         </div>
+        </div> <!-- End view-dashboard -->
+
+        <!-- Settings View -->
+        <div id="view-settings" class="hidden max-w-3xl mx-auto">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
+            
+            <!-- Data Management -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center">
+                    <i class="fas fa-database text-gray-400 mr-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-800">Data Management</h3>
+                </div>
+                <div class="p-6 flex space-x-4">
+                    <button onclick="exportData()" class="flex-1 bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-300 px-4 py-2 rounded-lg font-medium text-sm transition flex justify-center items-center shadow-sm">
+                        <i class="fas fa-download mr-2 text-blue-500"></i> Export JSON
+                    </button>
+                    <label class="flex-1 bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-300 px-4 py-2 rounded-lg font-medium text-sm transition flex justify-center items-center shadow-sm cursor-pointer">
+                        <i class="fas fa-upload mr-2 text-green-500"></i> Import JSON
+                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Person Manager -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center">
+                    <i class="fas fa-users-cog text-gray-400 mr-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-800">Person Manager</h3>
+                </div>
+                <div class="p-6">
+                    <form onsubmit="handleAddPerson(event)" class="flex gap-3 mb-6">
+                        <input type="text" id="new-person-name" required placeholder="Add new person..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition shadow-sm">Add Person</button>
+                    </form>
+                    <div id="people-list" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Overlay -->
-    <div id="modal-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 transition-opacity" onclick="closeAllModals()"></div>
+    <div id="modal-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden z-50 backdrop-blur-sm transition-opacity" onclick="closeAllModals()"></div>
 
     <!-- Add/Edit Ticket Modal -->
-    <div id="ticket-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900" id="ticket-modal-title">Add New Ticket</h3>
-                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    <div id="ticket-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none" onclick="closeAllModals()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300 overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900" id="ticket-modal-title">Add New Ticket</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6">
                 <form id="ticket-form" onsubmit="saveTicket(event)">
                     <input type="hidden" id="ticket-id">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input type="date" id="ticket-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description / PNR</label>
-                        <input type="text" id="ticket-desc" required placeholder="e.g., Flight to Delhi - PNR X123" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cost</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">₹</span>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Date</label>
+                            <input type="date" id="ticket-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Cost</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">₹</span></div>
+                                <input type="number" id="ticket-cost" required min="0" step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="0.00">
                             </div>
-                            <input type="number" id="ticket-cost" required min="0" step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0.00">
                         </div>
                     </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Ticket</button>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Booked For</label>
+                        <select id="ticket-booked-for" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                            <option value="" disabled selected>Select a person...</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Description / PNR</label>
+                        <input type="text" id="ticket-desc" required placeholder="e.g., Flight to Mumbai - PNR X123" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Payment Method</label>
+                        <input type="text" id="ticket-payment-method" required placeholder="e.g., Credit Card, UPI" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm font-medium">Cancel</button>
+                        <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-sm font-medium">Save Ticket</button>
                     </div>
                 </form>
             </div>
@@ -148,57 +193,99 @@
     </div>
 
     <!-- Record Payment Modal -->
-    <div id="payment-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900">Record Payment Received</h3>
-                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    <div id="payment-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none" onclick="closeAllModals()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300 overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 bg-green-50 border-b border-green-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900">Record Payment</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 bg-white hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6">
                 <form id="payment-form" onsubmit="savePayment(event)">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Received</label>
-                        <input type="date" id="payment-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">₹</span>
+                    <input type="hidden" id="payment-id">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Date</label>
+                            <input type="date" id="payment-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Amount</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">₹</span></div>
+                                <input type="number" id="payment-amount" required min="0.01" step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm" placeholder="0.00">
                             </div>
-                            <input type="number" id="payment-amount" required min="0.01" step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00">
                         </div>
                     </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Save Payment</button>
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Received From</label>
+                        <select id="payment-received-from" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-sm">
+                            <option value="" disabled selected>Select a person...</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Payment Method</label>
+                        <input type="text" id="payment-method" required placeholder="e.g., UPI, Cash" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm">
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm font-medium">Cancel</button>
+                        <button type="submit" class="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm text-sm font-medium">Save Payment</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Manage Ticket Modal (View/Edit/Cancel/Delete) -->
-    <div id="manage-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-semibold text-gray-900">Manage Ticket</h3>
-                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+    <!-- Opening Balance Modal -->
+    <div id="balance-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none" onclick="closeAllModals()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300 overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 bg-purple-50 border-b border-purple-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900">Set Opening Balance</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 bg-white hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6">
-                <div id="manage-details" class="mb-6 bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
+                <p class="text-sm text-gray-500 mb-5">Set a starting balance for a person. Positive means they owed you initially. Negative means you owed them.</p>
+                <form id="balance-form" onsubmit="saveBalance(event)">
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Person Name</label>
+                        <select id="balance-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-sm">
+                            <option value="" disabled selected>Select a person...</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Balance Amount</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">₹</span></div>
+                            <input type="number" id="balance-amount" required step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm font-medium">Cancel</button>
+                        <button type="submit" class="px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-sm text-sm font-medium">Save Balance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Ticket Modal -->
+    <div id="manage-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none" onclick="closeAllModals()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300 overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 bg-gray-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white">Manage Ticket</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="manage-details" class="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200 text-sm text-gray-700 shadow-inner">
                     <!-- Populated by JS -->
                 </div>
-                
-                <div class="flex flex-col space-y-3">
-                    <button id="btn-edit-ticket" class="w-full py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium text-sm flex justify-center items-center">
+                <div class="grid grid-cols-1 gap-3">
+                    <button id="btn-edit-ticket" class="w-full py-2.5 bg-white border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition font-medium text-sm flex justify-center items-center shadow-sm">
                         <i class="fas fa-edit mr-2"></i> Edit Details
                     </button>
-                    <button id="btn-cancel-ticket" class="w-full py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition font-medium text-sm flex justify-center items-center">
-                        <i class="fas fa-ban mr-2"></i> Cancel Ticket & Add Refund
+                    <button id="btn-cancel-ticket" class="w-full py-2.5 bg-white border border-orange-200 text-orange-700 rounded-lg hover:bg-orange-50 transition font-medium text-sm flex justify-center items-center shadow-sm">
+                        <i class="fas fa-ban mr-2"></i> Cancel Ticket
                     </button>
-                    <button id="btn-delete-ticket" class="w-full py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition font-medium text-sm flex justify-center items-center">
-                        <i class="fas fa-trash-alt mr-2"></i> Delete Record Completely
+                    <button id="btn-delete-ticket" class="w-full py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-lg hover:bg-red-100 transition font-medium text-sm flex justify-center items-center shadow-sm">
+                        <i class="fas fa-trash-alt mr-2"></i> Delete Record
                     </button>
                 </div>
             </div>
@@ -206,189 +293,384 @@
     </div>
 
     <!-- Cancel Ticket Prompt Modal -->
-    <div id="cancel-prompt-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+    <div id="cancel-prompt-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none" onclick="closeAllModals()">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto pointer-events-auto transform scale-95 transition-transform duration-300 overflow-hidden" onclick="event.stopPropagation()">
             <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Ticket</h3>
-                <p class="text-sm text-gray-600 mb-4">Enter the refund amount received (if any). This will be added to the neighbor's credit balance.</p>
+                <div class="flex items-center text-orange-600 mb-4">
+                    <div class="bg-orange-100 p-2 rounded-full mr-3"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3 class="text-lg font-bold">Cancel Ticket</h3>
+                </div>
+                <p class="text-sm text-gray-600 mb-5">Enter the refund amount received (if any). This will be credited to the person's balance.</p>
                 <form id="cancel-form" onsubmit="processCancel(event)">
                     <input type="hidden" id="cancel-ticket-id">
-                    <div class="mb-5">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Refund Amount</label>
+                    <div class="mb-6">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Refund Amount</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">₹</span>
-                            </div>
-                            <input type="number" id="refund-amount" required min="0" step="0.01" value="0.00" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span class="text-gray-500 sm:text-sm">₹</span></div>
+                            <input type="number" id="refund-amount" required min="0" step="0.01" value="0.00" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm">
                         </div>
                     </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="openManageModal(document.getElementById('cancel-ticket-id').value)" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm">Back</button>
-                        <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm">Confirm Cancellation</button>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="openManageModal(document.getElementById('cancel-ticket-id').value)" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm font-medium">Back</button>
+                        <button type="submit" class="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition shadow-sm text-sm font-medium">Confirm</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center">
-        <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-5 py-3 rounded-xl shadow-2xl translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center min-w-max">
+        <i class="fas fa-check-circle mr-3 text-green-400"></i>
         <span id="toast-msg" class="text-sm font-medium"></span>
     </div>
 
     <script>
         // --- State Management ---
         let appData = {
-            tickets: [], // { id, date, desc, cost, status, refundAmount }
-            payments: [] // { id, date, amount }
+            tickets: [],
+            payments: [],
+            openingBalances: {}, // { "Name": amount (float) }
+            people: [] // Array of person names
         };
-        const STORAGE_KEY = 'neighborTicketsData';
+        const STORAGE_KEY = 'PersonalTicketManagerData';
 
         // --- Initialization ---
         function init() {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) {
-                try { appData = JSON.parse(stored); } catch (e) { console.error("Could not parse data"); }
+                try { 
+                    appData = JSON.parse(stored); 
+                    // Migrate older data formats if needed
+                    if (!appData.openingBalances) appData.openingBalances = {};
+                    if (!appData.people) appData.people = [];
+                } catch (e) { console.error("Could not parse data"); }
             }
-            // Ensure arrays exist
             if (!appData.tickets) appData.tickets = [];
             if (!appData.payments) appData.payments = [];
+            if (!appData.openingBalances) appData.openingBalances = {};
+            if (!appData.people) appData.people = [];
+            
+            // Migration: Populate Person Manager if empty but records exist
+            if (appData.people.length === 0) {
+                const names = new Set();
+                appData.tickets.forEach(t => { if(t.bookedFor) names.add(t.bookedFor.trim()); });
+                appData.payments.forEach(p => { if(p.receivedFrom) names.add(p.receivedFrom.trim()); });
+                Object.keys(appData.openingBalances).forEach(n => { if(n) names.add(n.trim()); });
+                appData.people = Array.from(names).sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+            }
             
             recalculateAndRender();
         }
 
-        // --- Core Logic: Auto-Pay & Calculations ---
+        // --- View Toggling ---
+        function switchView(view) {
+            document.getElementById('view-dashboard').classList.toggle('hidden', view !== 'dashboard');
+            document.getElementById('view-settings').classList.toggle('hidden', view !== 'settings');
+            
+            const dashBtn = document.getElementById('nav-dashboard');
+            const setBtn = document.getElementById('nav-settings');
+            
+            if (view === 'dashboard') {
+                dashBtn.className = "text-sm font-semibold text-blue-600 border-b-2 border-blue-600 px-1 py-4 transition flex items-center";
+                setBtn.className = "text-sm font-medium text-gray-500 hover:text-gray-800 border-b-2 border-transparent px-1 py-4 transition flex items-center";
+            } else {
+                setBtn.className = "text-sm font-semibold text-blue-600 border-b-2 border-blue-600 px-1 py-4 transition flex items-center";
+                dashBtn.className = "text-sm font-medium text-gray-500 hover:text-gray-800 border-b-2 border-transparent px-1 py-4 transition flex items-center";
+                renderPeople();
+            }
+        }
+
+        // --- Core Logic ---
         function recalculateAndRender() {
-            let totalBilled = 0;
-            let totalPaid = 0;
-            let totalRefunds = 0;
+            let globalBilled = 0;
+            let globalPaid = 0;
+            let globalRefunds = 0;
 
-            // 1. Sum up all payments and refunds
-            appData.payments.forEach(p => totalPaid += parseFloat(p.amount));
+            const persons = {};
+            const getPerson = (name) => {
+                const n = (name || 'Unknown').trim();
+                if (!persons[n]) {
+                    persons[n] = { name: n, opening: appData.openingBalances[n] || 0, billed: 0, paid: 0, refunds: 0, transactions: [] };
+                }
+                return persons[n];
+            };
+
+            // Add everyone from opening balances first so they appear even if no tickets
+            Object.keys(appData.openingBalances).forEach(name => getPerson(name));
+
+            // Process Payments
+            appData.payments.forEach(p => {
+                const amt = parseFloat(p.amount);
+                globalPaid += amt;
+                const person = getPerson(p.receivedFrom);
+                person.paid += amt;
+                person.transactions.push({
+                    type: 'Payment',
+                    id: p.id,
+                    date: p.date,
+                    desc: 'Payment Received',
+                    method: p.paymentMethod || '-',
+                    amount: amt,
+                    status: 'Received',
+                    raw: p
+                });
+            });
             
-            // Separate active and cancelled tickets
-            let activeTickets = [];
-            
+            // Process Tickets
             appData.tickets.forEach(t => {
+                const p = getPerson(t.bookedFor);
+                const cost = parseFloat(t.cost);
                 if (t.status === 'Cancelled') {
-                    totalRefunds += parseFloat(t.refundAmount || 0);
+                    const refund = parseFloat(t.refundAmount || 0);
+                    globalRefunds += refund;
+                    p.refunds += refund;
                 } else {
-                    totalBilled += parseFloat(t.cost);
-                    activeTickets.push(t);
+                    globalBilled += cost;
+                    p.billed += cost;
+                }
+                p.transactions.push({
+                    type: 'Ticket',
+                    id: t.id,
+                    date: t.date,
+                    desc: t.desc,
+                    method: t.paymentMethod || '-',
+                    amount: cost,
+                    status: t.status,
+                    raw: t
+                });
+            });
+
+            // Calculate Balances & Auto-Pay Status per person
+            Object.keys(persons).forEach(name => {
+                const p = persons[name];
+                
+                // Available credit to pay tickets = Paid + Refunds - Opening (if positive it's debt, so it reduces credit)
+                let availableCredit = p.paid + p.refunds - p.opening;
+                
+                // Filter and sort ONLY active tickets chronologically for auto-pay
+                const tickets = p.transactions.filter(t => t.type === 'Ticket' && t.raw.status !== 'Cancelled');
+                tickets.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                tickets.forEach(t => {
+                    if (availableCredit >= t.amount) {
+                        t.status = 'Paid';
+                        t.raw.status = 'Paid';
+                        availableCredit -= t.amount;
+                    } else {
+                        t.status = 'Unpaid';
+                        t.raw.status = 'Unpaid';
+                    }
+                });
+
+                // Net Balance = (Opening Balance) + (Billed) - (Paid) - (Refunds)
+                p.netBalance = p.opening + p.billed - p.paid - p.refunds;
+                
+                // Inject Opening Balance as a transaction for display
+                if (appData.openingBalances[name] !== undefined) {
+                    p.transactions.push({
+                        type: 'Opening',
+                        id: name,
+                        date: '0000-00-00', // Forces it to bottom in sorting
+                        desc: 'Opening Balance',
+                        method: '-',
+                        amount: p.opening,
+                        status: 'Balance'
+                    });
                 }
             });
 
-            // 2. Auto-Pay Logic: Oldest tickets first
-            let availableCredit = totalPaid + totalRefunds;
-            
-            // Sort active tickets chronologically (oldest first)
-            activeTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const globalNetBalance = Object.values(persons).reduce((sum, p) => sum + p.netBalance, 0);
 
-            activeTickets.forEach(t => {
-                if (availableCredit >= t.cost) {
-                    t.status = 'Paid';
-                    availableCredit -= t.cost;
-                } else {
-                    t.status = 'Unpaid';
-                }
-            });
-
-            // Re-merge tickets to preserve original unsorted order in array, just update statuses
-            appData.tickets = appData.tickets.map(t => {
-                const activeMatch = activeTickets.find(act => act.id === t.id);
-                return activeMatch ? activeMatch : t;
-            });
-
-            // 3. Calculate Balance
-            // Balance > 0 means neighbor owes you. Balance < 0 means neighbor has surplus credit.
-            const balance = totalBilled - (totalPaid + totalRefunds);
-
-            // 4. Save & Render
+            // Save
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-            renderDashboard(totalBilled, totalPaid, totalRefunds, balance);
-            renderTicketList();
+            
+            // Render
+            renderGlobalSummary(globalBilled, globalPaid, globalRefunds, globalNetBalance);
+            renderDashboard(persons);
         }
 
         // --- Rendering ---
         function formatMoney(amount) {
-            return '₹' + parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return '₹' + parseFloat(Math.abs(amount)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         function formatDate(dateString) {
             if(!dateString) return '';
             const options = { year: 'numeric', month: 'short', day: 'numeric' };
             return new Date(dateString).toLocaleDateString(undefined, options);
         }
+        function escapeHtml(unsafe) {
+            return (unsafe || '').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
 
-        function renderDashboard(billed, paid, refunds, balance) {
-            document.getElementById('summary-billed').textContent = formatMoney(billed);
-            document.getElementById('summary-paid').textContent = formatMoney(paid);
-            document.getElementById('summary-refunds').textContent = formatMoney(refunds);
+        function renderGlobalSummary(billed, paid, refunds, balance) {
+            document.getElementById('global-billed').textContent = '₹' + parseFloat(billed).toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('global-paid').textContent = '₹' + parseFloat(paid).toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('global-refunds').textContent = '₹' + parseFloat(refunds).toLocaleString('en-IN', {minimumFractionDigits: 2});
             
-            const balEl = document.getElementById('summary-balance');
-            const subEl = document.getElementById('balance-subtitle');
+            const balEl = document.getElementById('global-balance');
+            const subEl = document.getElementById('global-balance-subtitle');
             
             if (balance > 0) {
                 balEl.textContent = formatMoney(balance);
                 balEl.className = "text-2xl font-bold text-red-600";
-                subEl.textContent = "Neighbor owes you";
+                subEl.textContent = "Pending (To Receive)";
             } else if (balance < 0) {
-                balEl.textContent = formatMoney(Math.abs(balance));
+                balEl.textContent = formatMoney(balance);
                 balEl.className = "text-2xl font-bold text-green-600";
-                subEl.textContent = "Surplus credit (You owe)";
+                subEl.textContent = "Surplus (To Pay Out)";
             } else {
                 balEl.textContent = formatMoney(0);
                 balEl.className = "text-2xl font-bold text-gray-700";
-                subEl.textContent = "All settled up";
+                subEl.textContent = "All settled up globally";
             }
         }
 
-        function renderTicketList() {
-            const tbody = document.getElementById('ticket-list');
+        function renderDashboard(persons) {
+            const container = document.getElementById('persons-container');
             const emptyState = document.getElementById('empty-state');
             
-            tbody.innerHTML = '';
+            const personNames = Object.keys(persons).sort(function (a, b) {
+                return a.toLowerCase().localeCompare(b.toLowerCase());
+            });
             
-            if (appData.tickets.length === 0) {
+            if (personNames.length === 0) {
+                container.innerHTML = '';
+                container.appendChild(emptyState);
                 emptyState.classList.remove('hidden');
                 return;
             } else {
                 emptyState.classList.add('hidden');
             }
 
-            // Sort displaying latest first
-            const displayTickets = [...appData.tickets].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            displayTickets.forEach(t => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-blue-50 cursor-pointer transition border-b border-gray-50 last:border-0";
-                tr.onclick = () => openManageModal(t.id);
+            let html = '';
+            personNames.forEach(name => {
+                const p = persons[name];
                 
-                let statusBadge = '';
-                if (t.status === 'Paid') {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i> Paid</span>`;
-                } else if (t.status === 'Cancelled') {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><i class="fas fa-ban mr-1"></i> Cancelled</span>`;
+                let balBadge = '';
+                if (p.netBalance > 0) {
+                    balBadge = `<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200 shadow-sm">Owes You: ${formatMoney(p.netBalance)}</span>`;
+                } else if (p.netBalance < 0) {
+                    balBadge = `<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold border border-green-200 shadow-sm">You Owe: ${formatMoney(p.netBalance)}</span>`;
                 } else {
-                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-clock mr-1"></i> Unpaid</span>`;
+                    balBadge = `<span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-bold border border-gray-200 shadow-sm">Settled</span>`;
                 }
 
-                tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-700">${formatDate(t.date)}</td>
-                    <td class="px-6 py-4 text-gray-900 font-medium">${t.desc}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-gray-700 font-semibold">${formatMoney(t.cost)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                // Table rows
+                let tableRows = '';
+                if (p.transactions.length === 0) {
+                    tableRows = `<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-gray-400 italic">No transactions found for ${escapeHtml(name)}</td></tr>`;
+                } else {
+                    const sortedTx = [...p.transactions].sort((a, b) => {
+                        if (a.type === 'Opening') return 1;
+                        if (b.type === 'Opening') return -1;
+                        return new Date(b.date) - new Date(a.date);
+                    });
+                    
+                    sortedTx.forEach(tx => {
+                        let statusBadge = '';
+                        let amountText = '';
+                        let dateText = tx.type === 'Opening' ? 'Initial' : formatDate(tx.date);
+                        let actionIcons = '';
+                        let rowAction = '';
+
+                        if (tx.type === 'Ticket') {
+                            if (tx.status === 'Paid') statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800 uppercase tracking-wide">Paid</span>`;
+                            else if (tx.status === 'Cancelled') statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-200 text-gray-700 uppercase tracking-wide">Cancelled</span>`;
+                            else statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 uppercase tracking-wide">Unpaid</span>`;
+                            
+                            amountText = `<span class="text-gray-800">${formatMoney(tx.amount)}</span>`;
+                            actionIcons = `<i class="fas fa-chevron-right text-xs hover:text-blue-600 transition"></i>`;
+                            rowAction = `onclick="openManageModal('${tx.id}')"`;
+                        } else if (tx.type === 'Payment') {
+                            statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 uppercase tracking-wide">Received</span>`;
+                            amountText = `<span class="text-green-600 font-bold">+${formatMoney(tx.amount)}</span>`;
+                            actionIcons = `<i class="fas fa-edit text-xs hover:text-blue-600 p-1 transition" onclick="event.stopPropagation(); openPaymentModal('${tx.id}')"></i> <i class="fas fa-trash-alt text-xs hover:text-red-600 p-1 ml-2 transition" onclick="event.stopPropagation(); deletePayment('${tx.id}')"></i>`;
+                        } else if (tx.type === 'Opening') {
+                            statusBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 uppercase tracking-wide">Opening</span>`;
+                            amountText = `<span class="text-gray-800">${formatMoney(tx.amount)}</span>`;
+                            actionIcons = `<i class="fas fa-edit text-xs hover:text-purple-600 p-1 transition" onclick="event.stopPropagation(); openBalanceModal('${escapeHtml(tx.id)}')"></i> <i class="fas fa-trash-alt text-xs hover:text-red-600 p-1 ml-2 transition" onclick="event.stopPropagation(); deleteBalance('${escapeHtml(tx.id)}')"></i>`;
+                            rowAction = `onclick="openBalanceModal('${escapeHtml(tx.id)}')"`;
+                        }
+
+                        tableRows += `
+                        <tr class="hover:bg-gray-50 cursor-pointer transition border-b border-gray-100 last:border-0" ${rowAction}>
+                            <td class="px-5 py-3 whitespace-nowrap text-sm text-gray-600 ${tx.type === 'Opening' ? 'italic' : ''}">${dateText}</td>
+                            <td class="px-5 py-3 text-sm text-gray-900 font-medium">${escapeHtml(tx.desc)}</td>
+                            <td class="px-5 py-3 whitespace-nowrap text-xs text-gray-500">${escapeHtml(tx.method)}</td>
+                            <td class="px-5 py-3 whitespace-nowrap text-sm font-semibold">${amountText}</td>
+                            <td class="px-5 py-3 whitespace-nowrap">${statusBadge}</td>
+                            <td class="px-5 py-3 whitespace-nowrap text-right text-gray-400">
+                                ${actionIcons}
+                            </td>
+                        </tr>`;
+                    });
+                }
+
+                html += `
+                <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden mb-6">
+                    <div class="bg-gray-50 px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold text-lg mr-3 shadow-sm">
+                                ${name.charAt(0).toUpperCase()}
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 tracking-tight">${escapeHtml(name)}</h3>
+                        </div>
+                        <div>${balBadge}</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-gray-100 bg-white border-b border-gray-200">
+                        <div class="p-4 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Opening</span>
+                            <span class="text-sm font-semibold text-gray-700">${formatMoney(p.opening)}</span>
+                        </div>
+                        <div class="p-4 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Billed</span>
+                            <span class="text-sm font-semibold text-gray-800">${formatMoney(p.billed)}</span>
+                        </div>
+                        <div class="p-4 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Paid</span>
+                            <span class="text-sm font-semibold text-green-600">${formatMoney(p.paid)}</span>
+                        </div>
+                        <div class="p-4 flex flex-col items-center justify-center text-center">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Refunds</span>
+                            <span class="text-sm font-semibold text-blue-600">${formatMoney(p.refunds)}</span>
+                        </div>
+                        <div class="p-4 flex flex-col items-center justify-center text-center bg-gray-50 sm:bg-white col-span-2 sm:col-span-1">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Net Balance</span>
+                            <span class="text-base font-bold ${p.netBalance > 0 ? 'text-red-600' : p.netBalance < 0 ? 'text-green-600' : 'text-gray-700'}">${formatMoney(p.netBalance)}</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-[10px] uppercase tracking-wider border-b border-gray-200">
+                                    <th class="px-5 py-2.5 font-bold">Date</th>
+                                    <th class="px-5 py-2.5 font-bold">Description</th>
+                                    <th class="px-5 py-2.5 font-bold">Pay Method</th>
+                                    <th class="px-5 py-2.5 font-bold">Cost</th>
+                                    <th class="px-5 py-2.5 font-bold">Status</th>
+                                    <th class="px-5 py-2.5 font-bold w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 `;
-                tbody.appendChild(tr);
             });
+            
+            container.innerHTML = html;
         }
 
-        // --- Modals & Interactions ---
+        // --- Modals ---
         function showModal(id) {
             document.getElementById('modal-overlay').classList.remove('hidden');
             const m = document.getElementById(id);
             m.classList.remove('hidden');
-            // small delay for transition
             setTimeout(() => {
                 m.classList.remove('opacity-0', 'pointer-events-none');
                 m.firstElementChild.classList.remove('scale-95');
@@ -397,12 +679,26 @@
 
         function closeAllModals() {
             document.getElementById('modal-overlay').classList.add('hidden');
-            const modals = ['ticket-modal', 'payment-modal', 'manage-modal', 'cancel-prompt-modal'];
+            const modals = ['ticket-modal', 'payment-modal', 'balance-modal', 'manage-modal', 'cancel-prompt-modal'];
             modals.forEach(id => {
                 const m = document.getElementById(id);
                 m.classList.add('opacity-0', 'pointer-events-none');
                 m.firstElementChild.classList.add('scale-95');
-                setTimeout(() => m.classList.add('hidden'), 300);
+                setTimeout(() => {
+                    if (m.classList.contains('opacity-0')) m.classList.add('hidden');
+                }, 300);
+            });
+        }
+
+        function populatePersonSelect(selectId, selectedValue = null) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="" disabled selected>Select a person...</option>';
+            appData.people.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                if (name === selectedValue) opt.selected = true;
+                select.appendChild(opt);
             });
         }
 
@@ -417,24 +713,55 @@
                         document.getElementById('ticket-modal-title').textContent = 'Edit Ticket';
                         document.getElementById('ticket-id').value = ticket.id;
                         document.getElementById('ticket-date').value = ticket.date;
+                        populatePersonSelect('ticket-booked-for', ticket.bookedFor);
                         document.getElementById('ticket-desc').value = ticket.desc;
+                        document.getElementById('ticket-payment-method').value = ticket.paymentMethod || '';
                         document.getElementById('ticket-cost').value = ticket.cost;
                     }
                 } else {
                     document.getElementById('ticket-modal-title').textContent = 'Add New Ticket';
                     document.getElementById('ticket-id').value = '';
                     document.getElementById('ticket-date').value = new Date().toISOString().split('T')[0];
+                    populatePersonSelect('ticket-booked-for');
                 }
                 showModal('ticket-modal');
-            }, 50); // slight delay to allow previous close transition
+            }, 50);
         }
 
-        function openPaymentModal() {
+        function openPaymentModal(id = null) {
             closeAllModals();
-            const form = document.getElementById('payment-form');
-            form.reset();
-            document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
-            showModal('payment-modal');
+            setTimeout(() => {
+                const form = document.getElementById('payment-form');
+                form.reset();
+                if (id) {
+                    const p = appData.payments.find(x => x.id === id);
+                    if (p) {
+                        document.getElementById('payment-id').value = p.id;
+                        document.getElementById('payment-date').value = p.date;
+                        populatePersonSelect('payment-received-from', p.receivedFrom);
+                        document.getElementById('payment-method').value = p.paymentMethod || '';
+                        document.getElementById('payment-amount').value = p.amount;
+                    }
+                } else {
+                    document.getElementById('payment-id').value = '';
+                    document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+                    populatePersonSelect('payment-received-from');
+                }
+                showModal('payment-modal');
+            }, 50);
+        }
+
+        function openBalanceModal(name = null) {
+            closeAllModals();
+            setTimeout(() => {
+                const form = document.getElementById('balance-form');
+                form.reset();
+                populatePersonSelect('balance-name', name);
+                if (name && appData.openingBalances[name] !== undefined) {
+                    document.getElementById('balance-amount').value = appData.openingBalances[name];
+                }
+                showModal('balance-modal');
+            }, 50);
         }
 
         function openManageModal(id) {
@@ -444,95 +771,125 @@
                 if (!ticket) return;
 
                 const detailsDiv = document.getElementById('manage-details');
+                let statColor = ticket.status === 'Paid' ? 'text-green-600' : (ticket.status === 'Cancelled' ? 'text-gray-500' : 'text-red-600');
+                
                 detailsDiv.innerHTML = `
-                    <p><strong>Date:</strong> ${formatDate(ticket.date)}</p>
-                    <p class="mt-1"><strong>Details:</strong> ${ticket.desc}</p>
-                    <p class="mt-1"><strong>Cost:</strong> ${formatMoney(ticket.cost)}</p>
-                    <p class="mt-1"><strong>Status:</strong> <span class="font-semibold">${ticket.status}</span></p>
-                    ${ticket.status === 'Cancelled' ? `<p class="mt-1 text-orange-600"><strong>Refund Logged:</strong> ${formatMoney(ticket.refundAmount)}</p>` : ''}
+                    <div class="grid grid-cols-2 gap-y-2">
+                        <div class="text-xs text-gray-500 uppercase">Date</div><div class="text-sm font-medium text-gray-900">${formatDate(ticket.date)}</div>
+                        <div class="text-xs text-gray-500 uppercase">Booked For</div><div class="text-sm font-medium text-gray-900">${escapeHtml(ticket.bookedFor)}</div>
+                        <div class="text-xs text-gray-500 uppercase">Description</div><div class="text-sm font-medium text-gray-900">${escapeHtml(ticket.desc)}</div>
+                        <div class="text-xs text-gray-500 uppercase">Pay Method</div><div class="text-sm font-medium text-gray-900">${escapeHtml(ticket.paymentMethod || '-')}</div>
+                        <div class="text-xs text-gray-500 uppercase">Cost</div><div class="text-sm font-bold text-gray-900">${formatMoney(ticket.cost)}</div>
+                        <div class="text-xs text-gray-500 uppercase">Status</div><div class="text-sm font-bold ${statColor} uppercase">${ticket.status}</div>
+                        ${ticket.status === 'Cancelled' ? `<div class="text-xs text-orange-500 uppercase mt-2">Refund Logged</div><div class="text-sm font-bold text-orange-600 mt-2">${formatMoney(ticket.refundAmount)}</div>` : ''}
+                    </div>
                 `;
 
-                // Configure buttons
-                const btnEdit = document.getElementById('btn-edit-ticket');
+                document.getElementById('btn-edit-ticket').onclick = () => openTicketModal(ticket.id);
+                document.getElementById('btn-delete-ticket').onclick = () => deleteTicket(ticket.id);
+
                 const btnCancel = document.getElementById('btn-cancel-ticket');
-                const btnDelete = document.getElementById('btn-delete-ticket');
-
-                btnEdit.onclick = () => openTicketModal(ticket.id);
-                btnDelete.onclick = () => deleteTicket(ticket.id);
-
                 if (ticket.status === 'Cancelled') {
-                    btnCancel.classList.add('hidden'); // already cancelled
+                    btnCancel.classList.add('hidden');
                 } else {
                     btnCancel.classList.remove('hidden');
                     btnCancel.onclick = () => {
                         closeAllModals();
                         setTimeout(() => {
                             document.getElementById('cancel-ticket-id').value = ticket.id;
-                            document.getElementById('refund-amount').value = ticket.cost; // default suggested refund
+                            document.getElementById('refund-amount').value = ticket.cost;
                             showModal('cancel-prompt-modal');
                         }, 300);
                     };
                 }
-
                 showModal('manage-modal');
             }, 50);
         }
 
         // --- Actions ---
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substring(2);
-        }
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2); }
 
         function saveTicket(e) {
             e.preventDefault();
             const id = document.getElementById('ticket-id').value;
-            const date = document.getElementById('ticket-date').value;
-            const desc = document.getElementById('ticket-desc').value;
-            const cost = parseFloat(document.getElementById('ticket-cost').value);
+            const data = {
+                date: document.getElementById('ticket-date').value,
+                bookedFor: document.getElementById('ticket-booked-for').value.trim(),
+                desc: document.getElementById('ticket-desc').value.trim(),
+                paymentMethod: document.getElementById('ticket-payment-method').value.trim(),
+                cost: parseFloat(document.getElementById('ticket-cost').value)
+            };
 
             if (id) {
-                // Edit
                 const index = appData.tickets.findIndex(t => t.id === id);
                 if (index > -1) {
-                    appData.tickets[index].date = date;
-                    appData.tickets[index].desc = desc;
-                    appData.tickets[index].cost = cost;
+                    appData.tickets[index] = { ...appData.tickets[index], ...data };
                     showToast('Ticket updated successfully');
                 }
             } else {
-                // Add
-                appData.tickets.push({
-                    id: generateId(),
-                    date,
-                    desc,
-                    cost,
-                    status: 'Unpaid' // Will be recalced anyway
-                });
+                appData.tickets.push({ id: generateId(), status: 'Unpaid', ...data });
                 showToast('Ticket added successfully');
             }
-            
             closeAllModals();
             recalculateAndRender();
         }
 
         function savePayment(e) {
             e.preventDefault();
-            const date = document.getElementById('payment-date').value;
-            const amount = parseFloat(document.getElementById('payment-amount').value);
+            const id = document.getElementById('payment-id').value;
+            const data = {
+                date: document.getElementById('payment-date').value,
+                receivedFrom: document.getElementById('payment-received-from').value,
+                paymentMethod: document.getElementById('payment-method').value.trim(),
+                amount: parseFloat(document.getElementById('payment-amount').value)
+            };
 
-            appData.payments.push({
-                id: generateId(),
-                date,
-                amount
-            });
-
-            showToast(`Payment of ${formatMoney(amount)} recorded`);
+            if (id) {
+                const idx = appData.payments.findIndex(p => p.id === id);
+                if (idx > -1) {
+                    appData.payments[idx] = { ...appData.payments[idx], ...data };
+                    showToast('Payment updated');
+                }
+            } else {
+                appData.payments.push({ id: generateId(), ...data });
+                showToast('Payment recorded');
+            }
             closeAllModals();
             recalculateAndRender();
         }
 
+        function deletePayment(id) {
+            if (confirm("Delete this payment record?")) {
+                appData.payments = appData.payments.filter(p => p.id !== id);
+                showToast('Payment deleted');
+                closeAllModals();
+                recalculateAndRender();
+            }
+        }
+
+        function saveBalance(e) {
+            e.preventDefault();
+            const name = document.getElementById('balance-name').value.trim();
+            const amount = parseFloat(document.getElementById('balance-amount').value);
+            
+            // Allow storing opening balances
+            appData.openingBalances[name] = amount;
+            showToast(`Opening balance set for ${name}`);
+            closeAllModals();
+            recalculateAndRender();
+        }
+
+        function deleteBalance(name) {
+            if (confirm(`Delete opening balance for ${name}?`)) {
+                delete appData.openingBalances[name];
+                showToast('Opening balance deleted');
+                closeAllModals();
+                recalculateAndRender();
+            }
+        }
+
         function deleteTicket(id) {
-            if (confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
+            if (confirm("Delete this record permanently?")) {
                 appData.tickets = appData.tickets.filter(t => t.id !== id);
                 showToast('Ticket deleted');
                 closeAllModals();
@@ -544,7 +901,6 @@
             e.preventDefault();
             const id = document.getElementById('cancel-ticket-id').value;
             const refund = parseFloat(document.getElementById('refund-amount').value);
-
             const index = appData.tickets.findIndex(t => t.id === id);
             if (index > -1) {
                 appData.tickets[index].status = 'Cancelled';
@@ -555,12 +911,107 @@
             }
         }
 
+        // --- Person Manager Logic ---
+        function renderPeople() {
+            const list = document.getElementById('people-list');
+            list.innerHTML = '';
+            
+            if (appData.people.length === 0) {
+                list.innerHTML = '<p class="text-sm text-gray-500 italic">No people added yet.</p>';
+                return;
+            }
+
+            appData.people.forEach(person => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-gray-50 border border-gray-200 px-4 py-3 rounded-lg";
+                div.innerHTML = `
+                    <span class="font-medium text-gray-800 text-sm">${escapeHtml(person)}</span>
+                    <div class="flex space-x-2">
+                        <button onclick="editPerson('${escapeHtml(person)}')" class="text-gray-500 hover:text-blue-600 bg-white border border-gray-300 rounded p-1.5 shadow-sm transition" title="Rename"><i class="fas fa-edit text-xs w-4"></i></button>
+                        <button onclick="deletePerson('${escapeHtml(person)}')" class="text-gray-500 hover:text-red-600 bg-white border border-gray-300 rounded p-1.5 shadow-sm transition" title="Delete"><i class="fas fa-trash-alt text-xs w-4"></i></button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function handleAddPerson(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-person-name');
+            const name = input.value.trim();
+            
+            if (!name) return;
+            
+            // Case insensitive check
+            if (appData.people.some(p => p.toLowerCase() === name.toLowerCase())) {
+                showToast('Person already exists');
+                return;
+            }
+
+            appData.people.push(name);
+            appData.people.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+            input.value = '';
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            showToast('Person added successfully');
+            renderPeople();
+        }
+
+        function editPerson(oldName) {
+            const newName = prompt("Rename person (this will update all their records):", oldName);
+            if (!newName || newName.trim() === "" || newName.trim() === oldName) return;
+            
+            const trimmedName = newName.trim();
+            
+            if (appData.people.some(p => p.toLowerCase() === trimmedName.toLowerCase())) {
+                alert("This name already exists.");
+                return;
+            }
+
+            // Update array
+            appData.people = appData.people.map(p => p === oldName ? trimmedName : p);
+            appData.people.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+            // Update associated records
+            appData.tickets.forEach(t => { if(t.bookedFor === oldName) t.bookedFor = trimmedName; });
+            appData.payments.forEach(p => { if(p.receivedFrom === oldName) p.receivedFrom = trimmedName; });
+            if (appData.openingBalances[oldName] !== undefined) {
+                appData.openingBalances[trimmedName] = appData.openingBalances[oldName];
+                delete appData.openingBalances[oldName];
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            showToast('Person renamed successfully');
+            renderPeople();
+            recalculateAndRender();
+        }
+
+        function deletePerson(name) {
+            const hasTickets = appData.tickets.some(t => t.bookedFor === name);
+            const hasPayments = appData.payments.some(p => p.receivedFrom === name);
+            const hasBalance = appData.openingBalances[name] !== undefined;
+
+            if (hasTickets || hasPayments || hasBalance) {
+                alert(`Cannot delete ${name} because they have existing records. Please delete all their tickets, payments, and balances first, or rename them instead.`);
+                return;
+            }
+
+            if (confirm(`Are you sure you want to delete ${name}?`)) {
+                appData.people = appData.people.filter(p => p !== name);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                showToast('Person deleted');
+                renderPeople();
+            }
+        }
+
         // --- Utilities ---
+        let toastTimeout;
         function showToast(message) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').textContent = message;
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
                 toast.classList.add('translate-y-20', 'opacity-0');
             }, 3000);
         }
@@ -582,29 +1033,36 @@
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (parsed && Array.isArray(parsed.tickets) && Array.isArray(parsed.payments)) {
+                    if (parsed && Array.isArray(parsed.tickets)) {
                         appData = parsed;
+                        if(!appData.payments) appData.payments = [];
+                        if(!appData.openingBalances) appData.openingBalances = {};
+                        if(!appData.people) appData.people = [];
+                        
+                        // Perform migration immediately upon import if missing people
+                        if (appData.people.length === 0) {
+                            const names = new Set();
+                            appData.tickets.forEach(t => { if(t.bookedFor) names.add(t.bookedFor.trim()); });
+                            appData.payments.forEach(p => { if(p.receivedFrom) names.add(p.receivedFrom.trim()); });
+                            Object.keys(appData.openingBalances).forEach(n => { if(n) names.add(n.trim()); });
+                            appData.people = Array.from(names).sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+                        }
+
                         recalculateAndRender();
+                        renderPeople(); // Update settings view if active
                         showToast('Data imported successfully');
-                    } else {
-                        alert("Invalid file format. Must contain 'tickets' and 'payments' arrays.");
-                    }
-                } catch (error) {
-                    alert("Error parsing JSON file.");
-                }
-                event.target.value = ''; // Reset input
+                    } else { alert("Invalid file format."); }
+                } catch (error) { alert("Error parsing JSON file."); }
+                event.target.value = '';
             };
             reader.readAsText(file);
         }
 
-        // Boot app
         window.onload = init;
-
     </script>
 </body>
 </html>
