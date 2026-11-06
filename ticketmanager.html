@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neighbor Ticket Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow-x: hidden; overflow-y: hidden; }
+        /* Hide scrollbar for cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased relative">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <i class="fas fa-ticket-alt text-blue-600 text-2xl mr-3"></i>
+                    <span class="font-bold text-xl text-gray-900">Ticket Manager</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="exportData()" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center transition">
+                        <i class="fas fa-download mr-1"></i> Export
+                    </button>
+                    <label class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center cursor-pointer transition">
+                        <i class="fas fa-upload mr-1"></i> Import
+                        <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Dashboard Summary -->
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Financial Summary</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+                <span class="text-sm text-gray-500 font-medium mb-1">Total Billed</span>
+                <span id="summary-billed" class="text-2xl font-bold text-gray-900">₹0.00</span>
+                <span class="text-xs text-gray-400 mt-1">Active tickets only</span>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+                <span class="text-sm text-gray-500 font-medium mb-1">Total Paid</span>
+                <span id="summary-paid" class="text-2xl font-bold text-green-600">₹0.00</span>
+                <span class="text-xs text-gray-400 mt-1">Payments received</span>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col">
+                <span class="text-sm text-gray-500 font-medium mb-1">Total Refunds</span>
+                <span id="summary-refunds" class="text-2xl font-bold text-blue-500">₹0.00</span>
+                <span class="text-xs text-gray-400 mt-1">Credits from cancellations</span>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-blue-200 p-5 flex flex-col relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-16 h-16 bg-blue-50 rounded-full -mr-8 -mt-8"></div>
+                <span class="text-sm text-gray-600 font-semibold mb-1">Neighbor Owes</span>
+                <span id="summary-balance" class="text-2xl font-bold text-red-600">₹0.00</span>
+                <span class="text-xs text-gray-500 mt-1" id="balance-subtitle">Pending balance</span>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-3 sm:space-y-0">
+            <h2 class="text-lg font-semibold text-gray-700">Ticket Records</h2>
+            <div class="flex space-x-3 w-full sm:w-auto">
+                <button onclick="openPaymentModal()" class="flex-1 sm:flex-none bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm flex justify-center items-center">
+                    <i class="fas fa-rupee-sign mr-2"></i> Record Payment
+                </button>
+                <button onclick="openTicketModal()" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-sm flex justify-center items-center">
+                    <i class="fas fa-plus mr-2"></i> Add Ticket
+                </button>
+            </div>
+        </div>
+
+        <!-- Tickets List -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                            <th class="px-6 py-4 font-medium">Date</th>
+                            <th class="px-6 py-4 font-medium">Description / PNR</th>
+                            <th class="px-6 py-4 font-medium">Cost</th>
+                            <th class="px-6 py-4 font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticket-list" class="divide-y divide-gray-100 text-sm">
+                        <!-- Tickets rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="empty-state" class="hidden p-8 text-center text-gray-500">
+                <i class="fas fa-ticket-alt text-4xl mb-3 text-gray-300"></i>
+                <p>No tickets recorded yet.</p>
+                <p class="text-xs mt-1">Click "Add Ticket" to get started.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 transition-opacity" onclick="closeAllModals()"></div>
+
+    <!-- Add/Edit Ticket Modal -->
+    <div id="ticket-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900" id="ticket-modal-title">Add New Ticket</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="ticket-form" onsubmit="saveTicket(event)">
+                    <input type="hidden" id="ticket-id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="ticket-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description / PNR</label>
+                        <input type="text" id="ticket-desc" required placeholder="e.g., Flight to Delhi - PNR X123" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cost</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" id="ticket-cost" required min="0" step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Save Ticket</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Payment Modal -->
+    <div id="payment-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Record Payment Received</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="payment-form" onsubmit="savePayment(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Received</label>
+                        <input type="date" id="payment-date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" id="payment-amount" required min="0.01" step="0.01" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeAllModals()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Save Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Ticket Modal (View/Edit/Cancel/Delete) -->
+    <div id="manage-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-gray-900">Manage Ticket</h3>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="manage-details" class="mb-6 bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <div class="flex flex-col space-y-3">
+                    <button id="btn-edit-ticket" class="w-full py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium text-sm flex justify-center items-center">
+                        <i class="fas fa-edit mr-2"></i> Edit Details
+                    </button>
+                    <button id="btn-cancel-ticket" class="w-full py-2 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 transition font-medium text-sm flex justify-center items-center">
+                        <i class="fas fa-ban mr-2"></i> Cancel Ticket & Add Refund
+                    </button>
+                    <button id="btn-delete-ticket" class="w-full py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition font-medium text-sm flex justify-center items-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Delete Record Completely
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Ticket Prompt Modal -->
+    <div id="cancel-prompt-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity px-4 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-auto pointer-events-auto transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Ticket</h3>
+                <p class="text-sm text-gray-600 mb-4">Enter the refund amount received (if any). This will be added to the neighbor's credit balance.</p>
+                <form id="cancel-form" onsubmit="processCancel(event)">
+                    <input type="hidden" id="cancel-ticket-id">
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Refund Amount</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">₹</span>
+                            </div>
+                            <input type="number" id="refund-amount" required min="0" step="0.01" value="0.00" class="w-full pl-8 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="openManageModal(document.getElementById('cancel-ticket-id').value)" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm">Back</button>
+                        <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm">Confirm Cancellation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center">
+        <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+        <span id="toast-msg" class="text-sm font-medium"></span>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let appData = {
+            tickets: [], // { id, date, desc, cost, status, refundAmount }
+            payments: [] // { id, date, amount }
+        };
+        const STORAGE_KEY = 'neighborTicketsData';
+
+        // --- Initialization ---
+        function init() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try { appData = JSON.parse(stored); } catch (e) { console.error("Could not parse data"); }
+            }
+            // Ensure arrays exist
+            if (!appData.tickets) appData.tickets = [];
+            if (!appData.payments) appData.payments = [];
+            
+            recalculateAndRender();
+        }
+
+        // --- Core Logic: Auto-Pay & Calculations ---
+        function recalculateAndRender() {
+            let totalBilled = 0;
+            let totalPaid = 0;
+            let totalRefunds = 0;
+
+            // 1. Sum up all payments and refunds
+            appData.payments.forEach(p => totalPaid += parseFloat(p.amount));
+            
+            // Separate active and cancelled tickets
+            let activeTickets = [];
+            
+            appData.tickets.forEach(t => {
+                if (t.status === 'Cancelled') {
+                    totalRefunds += parseFloat(t.refundAmount || 0);
+                } else {
+                    totalBilled += parseFloat(t.cost);
+                    activeTickets.push(t);
+                }
+            });
+
+            // 2. Auto-Pay Logic: Oldest tickets first
+            let availableCredit = totalPaid + totalRefunds;
+            
+            // Sort active tickets chronologically (oldest first)
+            activeTickets.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            activeTickets.forEach(t => {
+                if (availableCredit >= t.cost) {
+                    t.status = 'Paid';
+                    availableCredit -= t.cost;
+                } else {
+                    t.status = 'Unpaid';
+                }
+            });
+
+            // Re-merge tickets to preserve original unsorted order in array, just update statuses
+            appData.tickets = appData.tickets.map(t => {
+                const activeMatch = activeTickets.find(act => act.id === t.id);
+                return activeMatch ? activeMatch : t;
+            });
+
+            // 3. Calculate Balance
+            // Balance > 0 means neighbor owes you. Balance < 0 means neighbor has surplus credit.
+            const balance = totalBilled - (totalPaid + totalRefunds);
+
+            // 4. Save & Render
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            renderDashboard(totalBilled, totalPaid, totalRefunds, balance);
+            renderTicketList();
+        }
+
+        // --- Rendering ---
+        function formatMoney(amount) {
+            return '₹' + parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function formatDate(dateString) {
+            if(!dateString) return '';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        function renderDashboard(billed, paid, refunds, balance) {
+            document.getElementById('summary-billed').textContent = formatMoney(billed);
+            document.getElementById('summary-paid').textContent = formatMoney(paid);
+            document.getElementById('summary-refunds').textContent = formatMoney(refunds);
+            
+            const balEl = document.getElementById('summary-balance');
+            const subEl = document.getElementById('balance-subtitle');
+            
+            if (balance > 0) {
+                balEl.textContent = formatMoney(balance);
+                balEl.className = "text-2xl font-bold text-red-600";
+                subEl.textContent = "Neighbor owes you";
+            } else if (balance < 0) {
+                balEl.textContent = formatMoney(Math.abs(balance));
+                balEl.className = "text-2xl font-bold text-green-600";
+                subEl.textContent = "Surplus credit (You owe)";
+            } else {
+                balEl.textContent = formatMoney(0);
+                balEl.className = "text-2xl font-bold text-gray-700";
+                subEl.textContent = "All settled up";
+            }
+        }
+
+        function renderTicketList() {
+            const tbody = document.getElementById('ticket-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            tbody.innerHTML = '';
+            
+            if (appData.tickets.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Sort displaying latest first
+            const displayTickets = [...appData.tickets].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            displayTickets.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 cursor-pointer transition border-b border-gray-50 last:border-0";
+                tr.onclick = () => openManageModal(t.id);
+                
+                let statusBadge = '';
+                if (t.status === 'Paid') {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i> Paid</span>`;
+                } else if (t.status === 'Cancelled') {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><i class="fas fa-ban mr-1"></i> Cancelled</span>`;
+                } else {
+                    statusBadge = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-clock mr-1"></i> Unpaid</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-700">${formatDate(t.date)}</td>
+                    <td class="px-6 py-4 text-gray-900 font-medium">${t.desc}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-700 font-semibold">${formatMoney(t.cost)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Modals & Interactions ---
+        function showModal(id) {
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            const m = document.getElementById(id);
+            m.classList.remove('hidden');
+            // small delay for transition
+            setTimeout(() => {
+                m.classList.remove('opacity-0', 'pointer-events-none');
+                m.firstElementChild.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAllModals() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            const modals = ['ticket-modal', 'payment-modal', 'manage-modal', 'cancel-prompt-modal'];
+            modals.forEach(id => {
+                const m = document.getElementById(id);
+                m.classList.add('opacity-0', 'pointer-events-none');
+                m.firstElementChild.classList.add('scale-95');
+                setTimeout(() => m.classList.add('hidden'), 300);
+            });
+        }
+
+        function openTicketModal(id = null) {
+            closeAllModals();
+            setTimeout(() => {
+                const form = document.getElementById('ticket-form');
+                form.reset();
+                if (id) {
+                    const ticket = appData.tickets.find(t => t.id === id);
+                    if (ticket) {
+                        document.getElementById('ticket-modal-title').textContent = 'Edit Ticket';
+                        document.getElementById('ticket-id').value = ticket.id;
+                        document.getElementById('ticket-date').value = ticket.date;
+                        document.getElementById('ticket-desc').value = ticket.desc;
+                        document.getElementById('ticket-cost').value = ticket.cost;
+                    }
+                } else {
+                    document.getElementById('ticket-modal-title').textContent = 'Add New Ticket';
+                    document.getElementById('ticket-id').value = '';
+                    document.getElementById('ticket-date').value = new Date().toISOString().split('T')[0];
+                }
+                showModal('ticket-modal');
+            }, 50); // slight delay to allow previous close transition
+        }
+
+        function openPaymentModal() {
+            closeAllModals();
+            const form = document.getElementById('payment-form');
+            form.reset();
+            document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+            showModal('payment-modal');
+        }
+
+        function openManageModal(id) {
+            closeAllModals();
+            setTimeout(() => {
+                const ticket = appData.tickets.find(t => t.id === id);
+                if (!ticket) return;
+
+                const detailsDiv = document.getElementById('manage-details');
+                detailsDiv.innerHTML = `
+                    <p><strong>Date:</strong> ${formatDate(ticket.date)}</p>
+                    <p class="mt-1"><strong>Details:</strong> ${ticket.desc}</p>
+                    <p class="mt-1"><strong>Cost:</strong> ${formatMoney(ticket.cost)}</p>
+                    <p class="mt-1"><strong>Status:</strong> <span class="font-semibold">${ticket.status}</span></p>
+                    ${ticket.status === 'Cancelled' ? `<p class="mt-1 text-orange-600"><strong>Refund Logged:</strong> ${formatMoney(ticket.refundAmount)}</p>` : ''}
+                `;
+
+                // Configure buttons
+                const btnEdit = document.getElementById('btn-edit-ticket');
+                const btnCancel = document.getElementById('btn-cancel-ticket');
+                const btnDelete = document.getElementById('btn-delete-ticket');
+
+                btnEdit.onclick = () => openTicketModal(ticket.id);
+                btnDelete.onclick = () => deleteTicket(ticket.id);
+
+                if (ticket.status === 'Cancelled') {
+                    btnCancel.classList.add('hidden'); // already cancelled
+                } else {
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.onclick = () => {
+                        closeAllModals();
+                        setTimeout(() => {
+                            document.getElementById('cancel-ticket-id').value = ticket.id;
+                            document.getElementById('refund-amount').value = ticket.cost; // default suggested refund
+                            showModal('cancel-prompt-modal');
+                        }, 300);
+                    };
+                }
+
+                showModal('manage-modal');
+            }, 50);
+        }
+
+        // --- Actions ---
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
+        }
+
+        function saveTicket(e) {
+            e.preventDefault();
+            const id = document.getElementById('ticket-id').value;
+            const date = document.getElementById('ticket-date').value;
+            const desc = document.getElementById('ticket-desc').value;
+            const cost = parseFloat(document.getElementById('ticket-cost').value);
+
+            if (id) {
+                // Edit
+                const index = appData.tickets.findIndex(t => t.id === id);
+                if (index > -1) {
+                    appData.tickets[index].date = date;
+                    appData.tickets[index].desc = desc;
+                    appData.tickets[index].cost = cost;
+                    showToast('Ticket updated successfully');
+                }
+            } else {
+                // Add
+                appData.tickets.push({
+                    id: generateId(),
+                    date,
+                    desc,
+                    cost,
+                    status: 'Unpaid' // Will be recalced anyway
+                });
+                showToast('Ticket added successfully');
+            }
+            
+            closeAllModals();
+            recalculateAndRender();
+        }
+
+        function savePayment(e) {
+            e.preventDefault();
+            const date = document.getElementById('payment-date').value;
+            const amount = parseFloat(document.getElementById('payment-amount').value);
+
+            appData.payments.push({
+                id: generateId(),
+                date,
+                amount
+            });
+
+            showToast(`Payment of ${formatMoney(amount)} recorded`);
+            closeAllModals();
+            recalculateAndRender();
+        }
+
+        function deleteTicket(id) {
+            if (confirm("Are you sure you want to delete this record? This action cannot be undone.")) {
+                appData.tickets = appData.tickets.filter(t => t.id !== id);
+                showToast('Ticket deleted');
+                closeAllModals();
+                recalculateAndRender();
+            }
+        }
+
+        function processCancel(e) {
+            e.preventDefault();
+            const id = document.getElementById('cancel-ticket-id').value;
+            const refund = parseFloat(document.getElementById('refund-amount').value);
+
+            const index = appData.tickets.findIndex(t => t.id === id);
+            if (index > -1) {
+                appData.tickets[index].status = 'Cancelled';
+                appData.tickets[index].refundAmount = refund;
+                showToast('Ticket cancelled and refund logged');
+                closeAllModals();
+                recalculateAndRender();
+            }
+        }
+
+        // --- Utilities ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ticket_data_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Data exported successfully');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.tickets) && Array.isArray(parsed.payments)) {
+                        appData = parsed;
+                        recalculateAndRender();
+                        showToast('Data imported successfully');
+                    } else {
+                        alert("Invalid file format. Must contain 'tickets' and 'payments' arrays.");
+                    }
+                } catch (error) {
+                    alert("Error parsing JSON file.");
+                }
+                event.target.value = ''; // Reset input
+            };
+            reader.readAsText(file);
+        }
+
+        // Boot app
+        window.onload = init;
+
+    </script>
+</body>
+</html>
