@@ -3,239 +3,373 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAW Patrol & Zenith Pro - Infinite Styles Suite</title>
+    <title>PAW Patrol & Zenith Command Center</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #0b1220;
             --accent: #38bdf8;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --red: #dc2626;
+            --text: #f8fafc;
+            --muted: #94a3b8;
             --border: #334155;
-            --hover-bg: rgba(56, 189, 248, 0.1);
+            --danger: #ef4444;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            padding: 0;
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background: var(--bg);
+            color: var(--text);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background-image: url('https://bit.ly/4snaM5g');
-            background-size: cover;
-            background-position: center;
+            position: relative;
         }
 
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.9);
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            background: url('https://bit.ly/4snaM5g') center / cover no-repeat;
+            filter: brightness(0.25);
             z-index: -1;
+            pointer-events: none;
         }
 
-        .top-bar {
-            background-color: #dc2626;
+        /* 1. Red Top Bar with White Text */
+        header.top-bar {
+            background: var(--red);
             color: #ffffff;
             padding: 12px 20px;
-            font-size: 1.25rem;
-            font-weight: bold;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-            z-index: 10;
+            font-weight: 700;
+            font-size: 1.15rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            flex-shrink: 0;
         }
 
-        .notice-banner {
-            background: rgba(30, 41, 59, 0.9);
-            border: 2px solid var(--accent);
-            color: var(--text-main);
-            padding: 10px 20px;
-            text-align: center;
-            font-size: 0.9rem;
-            margin: 10px auto;
-            max-width: 650px;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
-        }
-
-        .workspace-container {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .card-panel {
-            background: rgba(30, 41, 59, 0.95);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            width: 100%;
-            max-width: 850px;
-            padding: 25px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            max-height: 75vh;
-        }
-
-        h1.screen-title {
-            margin-top: 0;
-            text-align: center;
-            color: var(--accent);
-            font-size: 1.8rem;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 10px;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 12px;
-            margin: 20px 0;
-            overflow-y: auto;
-            max-height: 45vh;
-            padding-right: 5px;
-        }
-
-        .option-button {
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-            color: white;
-            border: none;
-            padding: 14px 18px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .option-button:hover { transform: translateY(-2px); background: linear-gradient(135deg, #38bdf8, #0284c7); }
-
-        .action-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 15px;
-            border-top: 1px solid var(--border);
-            padding-top: 15px;
-        }
-
-        .btn-action { background: var(--accent); color: #0f172a; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-secondary { background: var(--border); color: var(--text-main); border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-
-        .bottom-bar {
-            background-color: var(--card-bg);
-            border-top: 1px solid var(--border);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            z-index: 10;
-            flex-wrap: wrap;
-        }
-
-        .bottom-btn {
-            background: transparent; border: 1px solid var(--border); color: var(--text-main);
-            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s;
-        }
-        .bottom-btn:hover { background: var(--hover-bg); border-color: var(--accent); }
-
-        .detail-view { overflow-y: auto; flex-grow: 1; padding: 10px 0; }
-        .detail-text { color: #38bdf8; font-size: 1.1rem; line-height: 1.6; background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent); margin: 15px 0; }
-
-        /* Modals & Editors */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85); display: none;
-            justify-content: center; align-items: center; z-index: 1000;
-        }
-        .modal-box {
-            background: var(--card-bg); border: 1px solid var(--accent);
-            padding: 25px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-        }
-        .modal-box input, .modal-box select {
-            width: 100%; background: var(--bg-color); border: 1px solid var(--border);
-            color: var(--text-main); padding: 10px; border-radius: 6px; margin: 8px 0; box-sizing: border-box; font-size: 1rem;
-        }
-
-        /* Ribbon Toolbar */
-        .ribbon {
-            background-color: var(--bg-color); border: 1px solid var(--border);
-            padding: 6px; display: flex; flex-wrap: wrap; gap: 4px; border-radius: 6px; margin-bottom: 8px;
-        }
-        .ribbon button, .ribbon select, .ribbon input[type="color"] {
-            background: transparent; border: 1px solid var(--border); color: var(--text-main);
-            padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
-        }
-        .editor-box {
-            background: var(--bg-color); border: 1px solid var(--border);
-            min-height: 150px; padding: 12px; border-radius: 6px; outline: none; color: var(--text-main);
-            overflow-y: auto;
-        }
-        .editor-box table, .detail-text table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        .editor-box td, .editor-box th, .detail-text td, .detail-text th { border: 1px solid var(--border); padding: 8px; }
-        .editor-box img, .editor-box video, .detail-text img, .detail-text video { max-width: 100%; border-radius: 6px; background: #000; }
-        .editor-box iframe, .detail-text iframe { max-width: 100%; border-radius: 6px; border: none; background: #000; }
-
-        /* Infinite Style Matrix Panel */
-        .style-studio-panel {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px dashed var(--accent);
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
+        .top-bar-right {
             display: flex;
             gap: 10px;
             align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .pill-btn {
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .pill-btn:hover { background: rgba(255,255,255,0.28); }
+
+        /* 4. Notice Box */
+        .notice-box {
+            margin: 12px auto 0;
+            width: min(760px, 94vw);
+            background: rgba(30, 41, 59, 0.92);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 0.92rem;
+            line-height: 1.45;
+            flex-shrink: 0;
+        }
+
+        /* Main Viewport */
+        main.viewport {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .panel {
+            width: min(860px, 100%);
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 18px 36px rgba(0,0,0,0.5);
+        }
+
+        h1.page-h1 {
+            margin: 0 0 18px;
+            text-align: center;
+            color: var(--accent);
+            font-size: 1.85rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .big-option-btn {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.15s, filter 0.15s;
+        }
+        .big-option-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+        .toolbar-row {
+            display: flex;
             flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            border: none;
+            border-radius: 6px;
+            padding: 9px 15px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-primary { background: var(--accent); color: #0f172a; }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        /* Detail Screen */
+        .detail-body {
+            color: #7dd3fc;
+            font-size: 1.08rem;
+            line-height: 1.65;
+            background: var(--surface-2);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 14px 0;
+            overflow-wrap: break-word;
+        }
+
+        .detail-body video {
+            display: block;
+            width: 100%;
+            max-width: 560px;
+            max-height: 340px;
+            margin: 12px 0;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .detail-body iframe {
+            display: block;
+            width: 100%;
+            max-width: 560px;
+            height: 315px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .detail-body img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .detail-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+        .detail-body td, .detail-body th {
+            border: 1px solid var(--border);
+            padding: 8px;
+        }
+
+        .link-chip {
+            display: inline-block;
+            color: #60a5fa;
+            text-decoration: underline;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 6px 0;
+        }
+
+        /* Editor Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            padding: 16px;
+        }
+        .modal-backdrop.open { display: flex; }
+
+        .modal-card {
+            width: min(640px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .field-group { margin-bottom: 12px; }
+        .field-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .field-group input, .field-group select {
+            width: 100%;
+            padding: 9px 11px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .fmt-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 7px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .fmt-bar button, .fmt-bar select {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+        }
+        .fmt-bar button:hover { border-color: var(--accent); }
+
+        .rich-editor {
+            min-height: 160px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            line-height: 1.55;
+            outline: none;
+        }
+        .rich-editor video {
+            display: block;
+            max-width: 100%;
+            max-height: 240px;
+            margin: 10px 0;
+            border-radius: 6px;
+            background: #000;
+        }
+
+        /* 5 & 13. Bottom Bar */
+        footer.bottom-bar {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        footer.bottom-bar.hidden { display: none; }
+
+        .bottom-nav-btn {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 7px 13px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+        .bottom-nav-btn:hover, .bottom-nav-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .status-msg {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: 8px;
         }
     </style>
 </head>
 <body>
+    <div class="bg-layer"></div>
 
-    <div class="top-bar">
-        <span>🐾 PAW PATROL COMMAND CENTER</span>
-        <span>Zenith Suite v5.1</span>
-    </div>
+    <header class="top-bar">
+        <span>🐾 PAW Patrol Details & Zenith Suite</span>
+        <div class="top-bar-right">
+            <span id="dbBadge">IndexedDB: Ready</span>
+        </div>
+    </header>
 
-    <div class="notice-banner">
+    <div class="notice-box">
         Please install or download this app. It contains detailed information about the Pups, Humans, Cats, Dogs, and everybody, even robots in PAW Patrol.
     </div>
 
-    <div class="workspace-container" id="workspaceContainer"></div>
+    <main class="viewport" id="viewport"></main>
 
-    <div class="bottom-bar">
-        <button class="bottom-btn" onclick="navigateTo('home')">🏠 Home</button>
-        <button class="bottom-btn" onclick="navigateTo('quadra')">Quadra</button>
-        <button class="bottom-btn" onclick="navigateTo('zenith')">Zenith</button>
-        <button class="bottom-btn" onclick="navigateTo('games')">Games</button>
-        <button class="bottom-btn" onclick="navigateTo('code')">Code</button>
-        <button class="bottom-btn" onclick="navigateTo('favorites')">⭐ Favorites</button>
-        <button class="bottom-btn" onclick="navigateTo('pinned')">📌 Pinned</button>
-    </div>
+    <footer class="bottom-bar" id="bottomBar">
+        <button class="bottom-nav-btn active" data-nav="home" onclick="goHome()">Home</button>
+        <button class="bottom-nav-btn" data-nav="quadra" onclick="openModule('Quadra', 'Quadra.html')">Quadra</button>
+        <button class="bottom-nav-btn" data-nav="zenith" onclick="openModule('Zenith', 'App.html')">Zenith</button>
+        <button class="bottom-nav-btn" data-nav="games" onclick="openModule('Games', 'Epic gamer.html')">Games</button>
+        <button class="bottom-nav-btn" data-nav="code" onclick="openModule('Code', 'Code.html')">Code</button>
+        <button class="bottom-nav-btn" data-nav="favorites" onclick="openCollection('favorites')">⭐ Favorites</button>
+        <button class="bottom-nav-btn" data-nav="pinned" onclick="openCollection('pinned')">📌 Pinned</button>
+    </footer>
 
-    <!-- Add / Edit Item Modal -->
-    <div id="itemModal" class="modal-overlay">
-        <div class="modal-box">
-            <h3 id="modalHeading" style="color:var(--accent); margin-top:0;">Add / Edit Item</h3>
-            
-            <div id="categorySelectWrapper">
-                <label style="font-size:0.85rem; color:var(--text-muted);">Category:</label>
-                <select id="itemCategorySelect">
+    <!-- Add / Edit Modal -->
+    <div class="modal-backdrop" id="editModal">
+        <div class="modal-card">
+            <h3 id="modalTitle" style="margin:0 0 14px; color:var(--accent);">Add Item</h3>
+
+            <div class="field-group" id="catField">
+                <label>Section</label>
+                <select id="editCat">
                     <option value="characters">List of Characters</option>
                     <option value="episodes">List of Episodes</option>
                     <option value="channel">Channel</option>
@@ -243,507 +377,603 @@
                 </select>
             </div>
 
-            <label style="font-size:0.85rem; color:var(--text-muted);">Name / Title:</label>
-            <input type="text" id="itemNameInput" placeholder="Name..." />
-
-            <label style="font-size:0.85rem; color:var(--text-muted);">Sub-Heading:</label>
-            <input type="text" id="itemTitleInput" placeholder="Title / Subtitle..." />
-
-            <div id="linkInputWrapper">
-                <label style="font-size:0.85rem; color:var(--text-muted);">External Link URL:</label>
-                <input type="text" id="itemLinkInput" placeholder="https://..." />
+            <div class="field-group" id="nameField">
+                <label>Name (Option Label)</label>
+                <input type="text" id="editName" placeholder="e.g. Chase, Skye, Lookout...">
             </div>
 
-            <!-- Style Studio for Infinite Styles -->
-            <div class="style-studio-panel">
-                <span style="font-size:0.8rem; color:var(--accent); font-weight:bold;">🎨 Style Studio (10^30+ Options):</span>
-                <select id="stylePreset" onchange="applyInfiniteStyle(this.value)">
-                    <option value="" disabled selected>Select Endless Style Preset...</option>
-                    <option value="neon">Neon Cyberpunk Glow</option>
-                    <option value="royal">Royal Gold & Obsidian</option>
-                    <option value="glass">Glassmorphism Blur</option>
-                    <option value="emerald">Emerald Forest</option>
-                    <option value="crimson">Crimson Elite</option>
-                    <option value="pastel">Pastel Dream</option>
-                </select>
-                <label style="font-size:0.8rem;">BG Tint: <input type="color" id="customBgTint" onchange="applyCustomTint(this.value)" value="#1e293b"></label>
+            <div class="field-group" id="headingField">
+                <label>Title (Screen Heading)</label>
+                <input type="text" id="editHeading" placeholder="Optional heading...">
             </div>
 
-            <!-- Ribbon Toolbar with Table & Media Opacity Tools -->
-            <label style="font-size:0.85rem; color:var(--text-muted);">Rich Content Editor:</label>
-            <div class="ribbon">
-                <button type="button" onclick="formatText('bold')"><b>B</b></button>
-                <button type="button" onclick="formatText('italic')"><i>I</i></button>
-                <button type="button" onclick="formatText('underline')"><u>U</u></button>
-                <button type="button" onclick="insertLinkPrompt()">🔗 Link</button>
-                <button type="button" onclick="insertAdvancedTable()">📊 Table (Merge/Opacity)</button>
-                <button type="button" onclick="promptImage()">🖼️ Image + Opacity</button>
-                <button type="button" onclick="promptVideo()">🎥 Video + Opacity</button>
-                <button type="button" onclick="formatText('insertUnorderedList')">• Bullets</button>
-                <select onchange="formatText('fontSize', this.value)"><option value="" disabled selected>Size</option><option value="2">Small</option><option value="3">Normal</option><option value="5">Large</option></select>
-                <input type="color" onchange="formatText('foreColor', this.value)" title="Text Color">
+            <div class="field-group" id="urlField" style="display:none;">
+                <label>Channel Link URL</label>
+                <input type="text" id="editUrl" placeholder="https://...">
             </div>
-            
-            <div id="itemTextEditor" class="editor-container editor-box" contenteditable="true" style="background:#0f172a;"></div>
 
-            <div class="modal-actions">
-                <button class="btn-secondary" onclick="closeItemModal()">Cancel</button>
-                <button class="btn-action" onclick="saveModalItem()">Save Item</button>
+            <div class="field-group">
+                <label>Text & Media (Optional)</label>
+                <div class="fmt-bar">
+                    <button type="button" onclick="cmd('bold')"><b>B</b></button>
+                    <button type="button" onclick="cmd('italic')"><i>I</i></button>
+                    <button type="button" onclick="cmd('underline')"><u>U</u></button>
+                    <button type="button" onclick="insertCustomLink()">Link</button>
+                    <button type="button" onclick="insertTableBox()">Table</button>
+                    <button type="button" onclick="mergeNextCell()">Merge Cell</button>
+                    <button type="button" onclick="setMediaOpacity()">Opacity</button>
+                    <button type="button" onclick="insertImageMedia()">Image</button>
+                    <button type="button" onclick="insertVideoMedia()">Video</button>
+                    <button type="button" onclick="cmd('insertUnorderedList')">Bullets</button>
+                    <button type="button" onclick="cmd('justifyLeft')">Left</button>
+                    <button type="button" onclick="cmd('justifyCenter')">Center</button>
+                    <button type="button" onclick="cmd('justifyRight')">Right</button>
+                    <button type="button" onclick="cmd('insertHorizontalRule')">HR</button>
+                    <select onchange="cmd('fontSize', this.value); this.selectedIndex=0;">
+                        <option value="">Size</option>
+                        <option value="2">Small</option>
+                        <option value="3">Normal</option>
+                        <option value="5">Large</option>
+                    </select>
+                    <input type="color" title="Text Color" onchange="cmd('foreColor', this.value)">
+                </div>
+                <div class="rich-editor" id="editBody" contenteditable="true"></div>
+                <div class="status-msg" id="videoStatus">Tip: Pick a local video file (.mp4/.webm) or paste a direct video/YouTube link.</div>
+            </div>
+
+            <div class="toolbar-row">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveModal()">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- Link Action Modal -->
-    <div id="linkActionModal" class="modal-overlay">
-        <div class="modal-box" style="width: 320px; text-align: center;">
-            <h3 style="color:var(--accent);">Link Options</h3>
-            <p id="linkModalDisplayUrl" style="color:var(--accent); word-break:break-all;"></p>
-            <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
-                <button class="btn-action" id="linkModalOpenBtn">i. Open Link</button>
-                <button class="btn-secondary" id="linkModalTextBtn">ii. View Text</button>
-                <button class="btn-secondary" onclick="closeModal('linkActionModal')">Cancel</button>
+    <!-- Link Choice Modal -->
+    <div class="modal-backdrop" id="linkModal">
+        <div class="modal-card" style="width:min(360px, 100%); text-align:center;">
+            <h3 style="margin:0 0 10px; color:var(--accent);">Link Options</h3>
+            <div id="linkPreviewUrl" style="color:#93c5fd; word-break:break-all; margin-bottom:16px;"></div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn btn-primary" id="openLinkAction">Open Link</button>
+                <button class="btn btn-secondary" id="showLinkTextAction">Show Text</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('linkModal').classList.remove('open')">Close</button>
             </div>
         </div>
     </div>
 
     <script>
-        // IndexedDB Persistence Layer
-        let db;
-        const dbName = "PawPatrolSuiteDBv2";
-        const storeName = "appData";
+        const DB_NAME = 'PawPatrolSuiteV6';
+        const STORE_NAME = 'records';
+        let db = null;
 
-        function initIndexedDB() {
-            return new Promise((resolve) => {
-                const request = indexedDB.open(dbName, 1);
-                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-                request.onupgradeneeded = (e) => {
-                    const database = e.target.result;
-                    if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName, { keyPath: "id" });
+        const DEFAULT_DATA = {
+            characters: [
+                { id: 1, name: 'Chase', title: 'Chase — Police & Spy Pup', text: '<p>German Shepherd police pup who leads missions with care and courage.</p>', isFav: true, isPinned: true },
+                { id: 2, name: 'Skye', title: 'Skye — Cockapoo Aviator', text: '<p>Fearless flying pup who pilots her helicopter on sky rescues.</p>', isFav: false, isPinned: false },
+                { id: 3, name: 'Marshall', title: 'Marshall — Fire & Medic Pup', text: '<p>Dalmatian firefighter and paramedic pup always ready to help.</p>', isFav: false, isPinned: false }
+            ],
+            episodes: [
+                { id: 101, name: 'Pups Make a Splash', title: 'Pups Make a Splash', text: '<p>The PAW Patrol helps Cap\'n Turbot in Adventure Bay.</p>', isFav: false, isPinned: false },
+                { id: 102, name: 'Pups Fall Festival', title: 'Pups Fall Festival', text: '<p>The pups pitch in to keep Farmer Yumi\'s festival running smoothly.</p>', isFav: false, isPinned: false }
+            ],
+            channel: [
+                { id: 201, name: 'Nick Jr.', title: 'Nick Jr. Official', text: '<p>Official PAW Patrol channel and clips.</p>', link: 'https://www.youtube.com/@nickjr', isFav: false, isPinned: false }
+            ],
+            places: [
+                { id: 301, name: 'The Lookout', title: 'The Lookout Tower', text: '<p>Main headquarters tower overlooking Adventure Bay.</p>', isFav: false, isPinned: true }
+            ],
+            modules: {
+                quadra: { title: 'Quadra', text: '<p>Quadra workspace module (Quadra.html).</p>' },
+                zenith: { title: 'Zenith', text: '<p>Zenith workspace module (App.html).</p>' },
+                games: { title: 'Games', text: '<p>Games hub module (Epic gamer.html).</p>' },
+                code: { title: 'Code', text: '<p>Code workspace module (Code.html).</p>' }
+            }
+        };
+
+        let store = structuredClone(DEFAULT_DATA);
+        let viewState = { mode: 'home', cat: null, itemId: null, modKey: null, collection: null };
+        let editingCtx = null;
+        let savedRange = null;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = () => {
+                    const d = req.result;
+                    if (!d.objectStoreNames.contains(STORE_NAME)) {
+                        d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
                 };
+                req.onsuccess = () => { db = req.result; resolve(db); };
+                req.onerror = () => reject(req.error);
             });
         }
 
-        async function saveDB(key, data) {
-            if (!db) await initIndexedDB();
+        function idbGet(key) {
             return new Promise((resolve) => {
-                const tx = db.transaction(storeName, "readwrite");
-                const store = tx.objectStore(storeName);
-                store.put({ id: key, payload: JSON.parse(JSON.stringify(data)) });
-                tx.oncomplete = () => resolve();
-            });
-        }
-
-        async function loadDB(key) {
-            if (!db) await initIndexedDB();
-            return new Promise((resolve) => {
-                const tx = db.transaction(storeName, "readonly");
-                const store = tx.objectStore(storeName);
-                const req = store.get(key);
-                req.onsuccess = () => resolve(req.result ? req.result.payload : null);
+                if (!db) return resolve(null);
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const req = tx.objectStore(STORE_NAME).get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.data : null);
                 req.onerror = () => resolve(null);
             });
         }
 
-        let appData = {
-            characters: [
-                { id: 1, name: "Chase", title: "Police & Spy Pup", text: "German Shepherd police pup leader.", style: "", isFav: false, isPinned: false }
-            ],
-            episodes: [
-                { id: 101, name: "Pups Make a Splash", title: "Season 1, Ep 1", text: "Cap'n Turbot's boat rescue mission.", style: "", isFav: false, isPinned: false }
-            ],
-            channel: [
-                { id: 201, name: "Nickelodeon", title: "Primary Broadcast", text: "Official TV network.", link: "https://www.nick.com", style: "", isFav: false, isPinned: false }
-            ],
-            places: [
-                { id: 301, name: "The Lookout", title: "Headquarters", text: "Multi-story tower base.", style: "", isFav: true, isPinned: true }
-            ]
-        };
-
-        let currentScreen = 'home';
-        let currentSubCategory = null;
-        let editingItemId = null;
-        let savedEditorRange = null;
-
-        async function initApp() {
-            await initIndexedDB();
-            let saved = await loadDB('pawPatrolState');
-            if (saved) appData = saved;
-            navigateTo('home');
+        function idbSet(key, data) {
+            return new Promise((resolve) => {
+                if (!db) return resolve();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({ id: key, data });
+                tx.oncomplete = () => resolve();
+            });
         }
 
-        async function persistState() {
-            await saveDB('pawPatrolState', appData);
+        async function persist() {
+            await idbSet('mainStore', store);
+            document.getElementById('dbBadge').textContent = 'IndexedDB: Saved';
         }
 
-        function captureEditorSelection() {
-            const editor = document.getElementById('itemTextEditor');
+        function saveSelection() {
+            const ed = document.getElementById('editBody');
             const sel = window.getSelection();
-            if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
-                savedEditorRange = sel.getRangeAt(0).cloneRange();
-            } else {
-                const range = document.createRange();
-                range.selectNodeContents(editor);
-                range.collapse(false);
-                savedEditorRange = range;
+            if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
+                savedRange = sel.getRangeAt(0).cloneRange();
             }
         }
 
-        function restoreEditorSelection() {
-            const editor = document.getElementById('itemTextEditor');
-            editor.focus();
-            if (savedEditorRange) {
+        function restoreSelection() {
+            const ed = document.getElementById('editBody');
+            ed.focus();
+            if (savedRange) {
                 const sel = window.getSelection();
                 sel.removeAllRanges();
-                sel.addRange(savedEditorRange);
+                sel.addRange(savedRange);
             }
         }
 
-        function insertHtmlAtEditorCaret(html) {
-            restoreEditorSelection();
-            const editor = document.getElementById('itemTextEditor');
+        function insertNodeAtCursor(html) {
+            restoreSelection();
+            const ed = document.getElementById('editBody');
             const sel = window.getSelection();
-            if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+            if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
                 const range = sel.getRangeAt(0);
                 range.deleteContents();
-                const temp = document.createElement('div');
-                temp.innerHTML = html;
+                const wrap = document.createElement('div');
+                wrap.innerHTML = html;
                 const frag = document.createDocumentFragment();
-                let lastNode = null;
-                while (temp.firstChild) {
-                    lastNode = temp.firstChild;
-                    frag.appendChild(lastNode);
+                let last = null;
+                while (wrap.firstChild) {
+                    last = wrap.firstChild;
+                    frag.appendChild(last);
                 }
                 range.insertNode(frag);
-                if (lastNode) {
-                    const newRange = document.createRange();
-                    newRange.setStartAfter(lastNode);
-                    newRange.collapse(true);
+                if (last) {
+                    const r = document.createRange();
+                    r.setStartAfter(last);
+                    r.collapse(true);
                     sel.removeAllRanges();
-                    sel.addRange(newRange);
-                    savedEditorRange = newRange.cloneRange();
+                    sel.addRange(r);
+                    savedRange = r.cloneRange();
                 }
             } else {
-                editor.insertAdjacentHTML('beforeend', html);
+                ed.insertAdjacentHTML('beforeend', html);
             }
         }
 
-        function getYouTubeEmbedUrl(url) {
-            const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-            if (watchMatch && watchMatch[1]) {
-                return `https://www.youtube.com/embed/${watchMatch[1]}`;
-            }
-            const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-            if (vimeoMatch && vimeoMatch[1]) {
-                return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
-            }
+        function cmd(name, val = null) {
+            restoreSelection();
+            document.execCommand(name, false, val);
+            saveSelection();
+        }
+
+        function insertCustomLink() {
+            saveSelection();
+            const url = prompt('Enter URL:');
+            if (!url) return;
+            const label = prompt('Enter link text:', url) || url;
+            insertNodeAtCursor(`<span class="link-chip" data-href="${url.replace(/"/g, '&quot;')}" onclick="onLinkClick(this.dataset.href)">${label}</span>&nbsp;`);
+        }
+
+        function onLinkClick(href) {
+            document.getElementById('linkPreviewUrl').textContent = href;
+            document.getElementById('openLinkAction').onclick = () => window.open(href, '_blank', 'noopener,noreferrer');
+            document.getElementById('showLinkTextAction').onclick = () => alert(href);
+            document.getElementById('linkModal').classList.add('open');
+        }
+
+        function insertTableBox() {
+            saveSelection();
+            insertNodeAtCursor(`<table style="width:100%;border-collapse:collapse;opacity:1;"><tr><td style="border:1px solid #475569;padding:8px;">Cell 1</td><td style="border:1px solid #475569;padding:8px;">Cell 2</td></tr><tr><td style="border:1px solid #475569;padding:8px;">Cell 3</td><td style="border:1px solid #475569;padding:8px;">Cell 4</td></tr></table><p><br></p>`);
+        }
+
+        function mergeNextCell() {
+            saveSelection();
+            const sel = window.getSelection();
+            const cell = sel && sel.anchorNode ? sel.anchorNode.parentElement?.closest('td, th') : null;
+            if (!cell || !cell.nextElementSibling) return;
+            const next = cell.nextElementSibling;
+            cell.colSpan = (cell.colSpan || 1) + (next.colSpan || 1);
+            cell.innerHTML += ' ' + next.innerHTML;
+            next.remove();
+        }
+
+        function setMediaOpacity() {
+            saveSelection();
+            const op = prompt('Enter opacity between 0.1 and 1.0:', '1.0');
+            if (op === null) return;
+            const val = Math.min(1, Math.max(0.1, parseFloat(op) || 1));
+            const sel = window.getSelection();
+            const target = sel?.anchorNode?.parentElement?.closest('video, img, table, iframe');
+            if (target) target.style.opacity = String(val);
+        }
+
+        function insertImageMedia() {
+            saveSelection();
+            const picker = document.createElement('input');
+            picker.type = 'file';
+            picker.accept = 'image/*';
+            picker.onchange = () => {
+                const file = picker.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => insertNodeAtCursor(`<img src="${reader.result}" alt="${file.name}" style="width:320px;opacity:1;"><p><br></p>`);
+                reader.readAsDataURL(file);
+            };
+            picker.click();
+        }
+
+        function toEmbedUrl(url) {
+            const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
+            if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+            const vm = url.match(/vimeo\.com\/(\d+)/);
+            if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
             return null;
         }
 
-        function detectVideoMimeType(url) {
-            const clean = url.split('?')[0].toLowerCase();
-            if (clean.endsWith('.webm')) return 'video/webm';
-            if (clean.endsWith('.ogg') || clean.endsWith('.ogv')) return 'video/ogg';
-            if (clean.endsWith('.mov')) return 'video/quicktime';
-            return 'video/mp4';
-        }
-
-        function navigateTo(screen, subCat = null) {
-            currentScreen = screen;
-            currentSubCategory = subCat;
-            const container = document.getElementById('workspaceContainer');
-            container.innerHTML = '';
-
-            if (screen === 'home') {
-                container.innerHTML = `
-                    <div class="card-panel">
-                        <h1 class="screen-title">PAW Patrol Command Center</h1>
-                        <div class="options-grid">
-                            <button class="option-button" onclick="navigateTo('sub', 'characters')"><span>List of Characters</span> ➔</button>
-                            <button class="option-button" onclick="navigateTo('sub', 'episodes')"><span>List of Episodes</span> ➔</button>
-                            <button class="option-button" onclick="navigateTo('sub', 'channel')"><span>Channel</span> ➔</button>
-                            <button class="option-button" onclick="navigateTo('sub', 'places')"><span>Places and Structures</span> ➔</button>
-                        </div>
-                        <div class="action-row">
-                            <button class="btn-action" onclick="openAddModal()">+ Add New Item</button>
-                        </div>
-                    </div>
-                `;
-            } else if (screen === 'sub') {
-                renderSubScreen(subCat);
-            } else if (screen === 'quadra' || screen === 'zenith' || screen === 'games' || screen === 'code') {
-                renderAppLauncherScreen(screen);
-            } else if (screen === 'favorites' || screen === 'pinned') {
-                renderFavoritesOrPinnedScreen(screen);
-            }
-        }
-
-        function renderSubScreen(catKey) {
-            let titleMap = { characters: 'List of Characters', episodes: 'List of Episodes', channel: 'Channel', places: 'Places and Structures' };
-            let items = appData[catKey] || [];
-            let gridHtml = items.map(item => `
-                <button class="option-button" onclick="openDetailScreen('${catKey}', ${item.id})">
-                    <span>${item.name}</span> ➔
-                </button>
-            `).join('');
-
-            const container = document.getElementById('workspaceContainer');
-            container.innerHTML = `
-                <div class="card-panel">
-                    <h1 class="screen-title">${titleMap[catKey]}</h1>
-                    <div class="options-grid">
-                        ${gridHtml.length ? gridHtml : '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">No items added yet.</p>'}
-                    </div>
-                    <div class="action-row">
-                        <button class="btn-secondary" onclick="navigateTo('home')">⬅ Back to Home</button>
-                        <button class="btn-action" onclick="openAddModal('${catKey}')">+ Add</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function openDetailScreen(catKey, itemId) {
-            let item = (appData[catKey] || []).find(i => i.id === itemId);
-            if (!item) return;
-
-            currentScreen = 'detail';
-            let favStar = item.isFav ? '⭐' : '☆';
-            let pinIcon = item.isPinned ? '📌' : '📍';
-
-            const container = document.getElementById('workspaceContainer');
-            container.innerHTML = `
-                <div class="card-panel" style="${item.style || ''}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <button class="btn-secondary" onclick="navigateTo('sub', '${catKey}')">⬅ Back</button>
-                        <div>
-                            <button class="btn-secondary" onclick="toggleFavorite('${catKey}', ${itemId})">${favStar} Fav</button>
-                            <button class="btn-secondary" onclick="togglePin('${catKey}', ${itemId})">${pinIcon} Pin</button>
-                        </div>
-                    </div>
-                    <h1 class="screen-title">${item.title || item.name}</h1>
-                    <div class="detail-view">
-                        <h3 style="color:var(--text-main); margin-bottom:5px;">Name: ${item.name}</h3>
-                        ${item.link ? `<p><a href="#" onclick="handleLinkClick('${item.link}')" style="color:var(--accent); text-decoration:underline;">🔗 Open External Link</a></p>` : ''}
-                        <div class="detail-text">${item.text || 'No detailed text provided.'}</div>
-                    </div>
-                    <div class="action-row">
-                        <button class="btn-secondary" onclick="openEditModal('${catKey}', ${itemId})">✏️ Edit</button>
-                        <button class="btn-secondary" onclick="deleteItem('${catKey}', ${itemId})" style="color:var(--danger);">🗑️ Delete</button>
-                    </div>
-                </div>
-            `;
-
-            // Ensure all video players reload cleanly when rendering detail view
-            container.querySelectorAll('video').forEach(vid => {
-                vid.controls = true;
-                if (!vid.preload) vid.preload = 'metadata';
-                vid.load();
-            });
-        }
-
-        function renderAppLauncherScreen(appName) {
-            let titleMap = { quadra: 'Quadra App', zenith: 'Zenith Canvas Pro', games: 'Epic Gamer Hub', code: 'Code IDE' };
-            const container = document.getElementById('workspaceContainer');
-            container.innerHTML = `
-                <div class="card-panel" style="text-align:center;">
-                    <h1 class="screen-title">${titleMap[appName]}</h1>
-                    <p style="color:var(--text-muted); font-size:1.1rem; margin:30px 0;">Standalone app module active.</p>
-                    <button class="btn-secondary" onclick="navigateTo('home')">Home</button>
-                </div>
-            `;
-        }
-
-        function renderFavoritesOrPinnedScreen(type) {
-            let isFavView = type === 'favorites';
-            let allItems = [];
-            Object.keys(appData).forEach(cat => {
-                appData[cat].forEach(item => {
-                    if ((isFavView && item.isFav) || (!isFavView && item.isPinned)) allItems.push({ ...item, catKey: cat });
-                });
-            });
-
-            let gridHtml = allItems.map(item => `
-                <button class="option-button" onclick="openDetailScreen('${item.catKey}', ${item.id})">
-                    <span>${item.name} (${item.catKey})</span> ➔
-                </button>
-            `).join('');
-
-            const container = document.getElementById('workspaceContainer');
-            container.innerHTML = `
-                <div class="card-panel">
-                    <h1 class="screen-title">${isFavView ? '⭐ Favorite Items' : '📌 Pinned Items'}</h1>
-                    <div class="options-grid">
-                        ${gridHtml.length ? gridHtml : `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">No items found.</p>`}
-                    </div>
-                    <div class="action-row"><button class="btn-secondary" onclick="navigateTo('home')">⬅ Home</button></div>
-                </div>
-            `;
-        }
-
-        // --- Infinite Style Matrix & Table Features ---
-        function applyInfiniteStyle(preset) {
-            let editor = document.getElementById('itemTextEditor');
-            if (preset === 'neon') editor.style.cssText = "background:#030712; border:2px solid #38bdf8; box-shadow:0 0 15px rgba(56,189,248,0.5); padding:15px; border-radius:8px;";
-            else if (preset === 'royal') editor.style.cssText = "background:#18181b; border:2px solid #fbbf24; box-shadow:0 0 15px rgba(251,191,36,0.5); padding:15px; border-radius:8px;";
-            else if (preset === 'glass') editor.style.cssText = "background:rgba(255,255,255,0.05); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); padding:15px; border-radius:8px;";
-            else if (preset === 'emerald') editor.style.cssText = "background:#064e3b; border:2px solid #34d399; padding:15px; border-radius:8px;";
-            else if (preset === 'crimson') editor.style.cssText = "background:#450a0a; border:2px solid #f87171; padding:15px; border-radius:8px;";
-            else if (preset === 'pastel') editor.style.cssText = "background:#f3e8ff; color:#3b0764; border:2px solid #d8b4fe; padding:15px; border-radius:8px;";
-        }
-
-        function applyCustomTint(color) {
-            document.getElementById('itemTextEditor').style.backgroundColor = color;
-        }
-
-        function insertAdvancedTable() {
-            let rows = prompt("Enter rows:", "3");
-            let cols = prompt("Enter columns:", "3");
-            let opacity = prompt("Table Opacity (0.2 to 1.0):", "1.0");
-            if (!rows || !cols) return;
-
-            let html = `<table style="width:100%; border-collapse:collapse; opacity:${opacity}; border:2px solid #38bdf8;">`;
-            for (let i = 0; i < rows; i++) {
-                html += '<tr>';
-                for (let j = 0; j < cols; j++) {
-                    html += `<td style="border:1px solid #334155; padding:10px;">Cell (${i+1},${j+1})</td>`;
-                }
-                html += '</tr>';
-            }
-            html += '</table><p></p>';
-            formatText('insertHTML', html);
-        }
-
-        function promptImage() {
-            let url = prompt("Image URL:");
-            let opacity = prompt("Image Opacity (0.2 to 1.0):", "1.0");
-            if (url) formatText('insertHTML', `<img src="${url}" style="width:350px; opacity:${opacity}; display:inline-block;" /><p></p>`);
-        }
-
-        function promptVideo() {
-            captureEditorSelection();
-            let choice = prompt("Type 'file' to pick a video from your device, or paste a video URL:");
+        function insertVideoMedia() {
+            saveSelection();
+            const status = document.getElementById('videoStatus');
+            const choice = prompt("Type 'file' to select a video from your device, or paste a video link (MP4/WebM/YouTube):");
             if (!choice) return;
 
-            let opacity = prompt("Video Opacity (0.2 to 1.0):", "1.0");
-            let opVal = (opacity === null || opacity.trim() === "") ? "1.0" : opacity.trim();
-
             if (choice.trim().toLowerCase() === 'file') {
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'video/*';
-                fileInput.onchange = (e) => {
-                    const file = e.target.files[0];
+                const picker = document.createElement('input');
+                picker.type = 'file';
+                picker.accept = 'video/*';
+                picker.onchange = () => {
+                    const file = picker.files[0];
                     if (!file) return;
+                    status.textContent = `Loading ${file.name}...`;
                     const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const dataUrl = ev.target.result;
+                    reader.onload = () => {
                         const mime = file.type || 'video/mp4';
-                        insertHtmlAtEditorCaret(`<video controls preload="metadata" playsinline width="420" style="opacity:${opVal}; display:inline-block;"><source src="${dataUrl}" type="${mime}"></video><p></p>`);
-                        const editor = document.getElementById('itemTextEditor');
-                        editor.querySelectorAll('video').forEach(v => v.load());
+                        insertNodeAtCursor(`<video controls preload="metadata" playsinline style="opacity:1;"><source src="${reader.result}" type="${mime}"></video><p><br></p>`);
+                        document.querySelectorAll('#editBody video').forEach(v => v.load());
+                        status.textContent = `Loaded ${file.name}.`;
                     };
                     reader.readAsDataURL(file);
                 };
-                fileInput.click();
+                picker.click();
             } else {
-                const cleanUrl = choice.trim();
-                const embedUrl = getYouTubeEmbedUrl(cleanUrl);
-                if (embedUrl) {
-                    insertHtmlAtEditorCaret(`<iframe width="420" height="240" src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="opacity:${opVal}; display:inline-block;"></iframe><p></p>`);
+                const raw = choice.trim();
+                const embed = toEmbedUrl(raw);
+                if (embed) {
+                    insertNodeAtCursor(`<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="opacity:1;"></iframe><p><br></p>`);
                 } else {
-                    const mime = detectVideoMimeType(cleanUrl);
-                    insertHtmlAtEditorCaret(`<video controls preload="metadata" playsinline crossorigin="anonymous" width="420" style="opacity:${opVal}; display:inline-block;"><source src="${cleanUrl}" type="${mime}"></video><p></p>`);
-                    const editor = document.getElementById('itemTextEditor');
-                    editor.querySelectorAll('video').forEach(v => v.load());
+                    const mime = raw.toLowerCase().includes('.webm') ? 'video/webm' : 'video/mp4';
+                    insertNodeAtCursor(`<video controls preload="metadata" playsinline style="opacity:1;"><source src="${raw}" type="${mime}"></video><p><br></p>`);
+                    document.querySelectorAll('#editBody video').forEach(v => v.load());
                 }
+                status.textContent = 'Video inserted.';
             }
         }
 
-        // CRUD Modal Functions
-        function openAddModal(forcedCat = null) {
-            editingItemId = null;
-            document.getElementById('modalHeading').textContent = forcedCat ? `Add to ${forcedCat.toUpperCase()}` : 'Add New Item';
-            document.getElementById('itemNameInput').value = '';
-            document.getElementById('itemTitleInput').value = '';
-            document.getElementById('itemLinkInput').value = '';
-            document.getElementById('itemTextEditor').innerHTML = '';
-            document.getElementById('itemModal').style.display = 'flex';
+        function setBottomBarVisible(visible) {
+            document.getElementById('bottomBar').classList.toggle('hidden', !visible);
         }
 
-        function openEditModal(catKey, itemId) {
-            let item = (appData[catKey] || []).find(i => i.id === itemId);
+        function markNavActive(key) {
+            document.querySelectorAll('.bottom-nav-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.nav === key);
+            });
+        }
+
+        function goHome() {
+            viewState = { mode: 'home' };
+            setBottomBarVisible(true);
+            markNavActive('home');
+            render();
+        }
+
+        function openSubSection(cat) {
+            viewState = { mode: 'sub', cat };
+            setBottomBarVisible(true);
+            render();
+        }
+
+        function openItemDetail(cat, itemId) {
+            viewState = { mode: 'detail', cat, itemId };
+            setBottomBarVisible(false); // No bottom-bar options on clicked sub-option screen
+            render();
+        }
+
+        function openModule(label, modKey) {
+            const key = modKey.replace('.html', '').toLowerCase().replace(/\s+/g, '');
+            const mapKey = key === 'app' ? 'zenith' : key === 'epicgamer' ? 'games' : key;
+            viewState = { mode: 'module', modKey: mapKey, label };
+            setBottomBarVisible(false);
+            markNavActive(mapKey);
+            render();
+        }
+
+        function openCollection(collection) {
+            viewState = { mode: 'collection', collection };
+            setBottomBarVisible(true);
+            markNavActive(collection);
+            render();
+        }
+
+        function hydrateVideos(rootEl) {
+            rootEl.querySelectorAll('video').forEach(v => {
+                v.controls = true;
+                v.preload = 'metadata';
+                v.playsInline = true;
+                v.load();
+            });
+        }
+
+        function render() {
+            const vp = document.getElementById('viewport');
+
+            if (viewState.mode === 'home') {
+                vp.innerHTML = `
+                    <div class="panel">
+                        <h1 class="page-h1">PAW Patrol</h1>
+                        <div class="btn-grid">
+                            <button class="big-option-btn" onclick="openSubSection('characters')"><span>List of Characters</span><span>›</span></button>
+                            <button class="big-option-btn" onclick="openSubSection('episodes')"><span>List of Episodes</span><span>›</span></button>
+                            <button class="big-option-btn" onclick="openSubSection('channel')"><span>Channel</span><span>›</span></button>
+                            <button class="big-option-btn" onclick="openSubSection('places')"><span>Places and Structures</span><span>›</span></button>
+                        </div>
+                        <div class="toolbar-row">
+                            <button class="btn btn-primary" onclick="openAdd('characters')">Add</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (viewState.mode === 'sub') {
+                const titles = {
+                    characters: 'List of Characters',
+                    episodes: 'List of Episodes',
+                    channel: 'Channel',
+                    places: 'Places and Structures'
+                };
+                const items = store[viewState.cat] || [];
+                vp.innerHTML = `
+                    <div class="panel">
+                        <h1 class="page-h1">${titles[viewState.cat]}</h1>
+                        <div class="btn-grid">
+                            ${items.map(it => `<button class="big-option-btn" onclick="openItemDetail('${viewState.cat}', ${it.id})"><span>${it.name}</span><span>›</span></button>`).join('')}
+                        </div>
+                        <div class="toolbar-row">
+                            <button class="btn btn-secondary" onclick="goHome()">Back</button>
+                            <button class="btn btn-primary" onclick="openAdd('${viewState.cat}')">Add</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (viewState.mode === 'detail') {
+                const item = (store[viewState.cat] || []).find(x => x.id === viewState.itemId);
+                if (!item) return goHome();
+                vp.innerHTML = `
+                    <div class="panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+                            <button class="btn btn-secondary" onclick="openSubSection('${viewState.cat}')">Back</button>
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn btn-secondary" title="Favorite" onclick="toggleFlag('${viewState.cat}', ${item.id}, 'isFav')">${item.isFav ? '⭐' : '☆'}</button>
+                                <button class="btn btn-secondary" title="Pin" onclick="toggleFlag('${viewState.cat}', ${item.id}, 'isPinned')">${item.isPinned ? '📌' : '📍'}</button>
+                            </div>
+                        </div>
+                        <h1 class="page-h1">${item.title || item.name}</h1>
+                        ${item.link ? `<span class="link-chip" onclick="onLinkClick('${item.link.replace(/"/g, '&quot;')}')">${item.link}</span>` : ''}
+                        <div class="detail-body">${item.text || ''}</div>
+                        <div class="toolbar-row">
+                            <button class="btn btn-primary" onclick="openEdit('${viewState.cat}', ${item.id})">Edit</button>
+                            <button class="btn btn-danger" onclick="removeItem('${viewState.cat}', ${item.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+                hydrateVideos(vp);
+                return;
+            }
+
+            if (viewState.mode === 'module') {
+                const mod = store.modules[viewState.modKey] || { title: viewState.label, text: '' };
+                vp.innerHTML = `
+                    <div class="panel">
+                        <div style="margin-bottom:8px;">
+                            <button class="btn btn-secondary" onclick="goHome()">Back</button>
+                        </div>
+                        <h1 class="page-h1">${mod.title}</h1>
+                        <div class="detail-body">${mod.text || ''}</div>
+                        <div class="toolbar-row">
+                            <button class="btn btn-primary" onclick="openModuleEdit('${viewState.modKey}')">Edit</button>
+                        </div>
+                    </div>
+                `;
+                hydrateVideos(vp);
+                return;
+            }
+
+            if (viewState.mode === 'collection') {
+                const isFav = viewState.collection === 'favorites';
+                const matches = [];
+                ['characters', 'episodes', 'channel', 'places'].forEach(cat => {
+                    (store[cat] || []).forEach(it => {
+                        if ((isFav && it.isFav) || (!isFav && it.isPinned)) matches.push({ cat, it });
+                    });
+                });
+                vp.innerHTML = `
+                    <div class="panel">
+                        <h1 class="page-h1">${isFav ? '⭐ Favorites' : '📌 Pinned'}</h1>
+                        <div class="btn-grid">
+                            ${matches.length
+                                ? matches.map(m => `<button class="big-option-btn" onclick="openItemDetail('${m.cat}', ${m.it.id})"><span>${m.it.name}</span><span>›</span></button>`).join('')
+                                : '<p style="color:var(--muted);">No items saved here yet.</p>'}
+                        </div>
+                        <div class="toolbar-row">
+                            <button class="btn btn-secondary" onclick="goHome()">Back</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function openAdd(defaultCat = 'characters') {
+            editingCtx = { mode: 'add' };
+            document.getElementById('modalTitle').textContent = 'Add';
+            document.getElementById('catField').style.display = 'block';
+            document.getElementById('nameField').style.display = 'block';
+            document.getElementById('headingField').style.display = 'block';
+            document.getElementById('editCat').value = defaultCat;
+            document.getElementById('editName').value = '';
+            document.getElementById('editHeading').value = '';
+            document.getElementById('editUrl').value = '';
+            document.getElementById('editBody').innerHTML = '';
+            syncUrlVisibility();
+            document.getElementById('editModal').classList.add('open');
+        }
+
+        function openEdit(cat, itemId) {
+            const item = (store[cat] || []).find(x => x.id === itemId);
             if (!item) return;
-
-            editingItemId = { catKey, id: itemId };
-            document.getElementById('modalHeading').textContent = `Edit ${item.name}`;
-            document.getElementById('itemNameInput').value = item.name || '';
-            document.getElementById('itemTitleInput').value = item.title || '';
-            document.getElementById('itemLinkInput').value = item.link || '';
-            document.getElementById('itemTextEditor').innerHTML = item.text || '';
-            document.getElementById('itemTextEditor').querySelectorAll('video').forEach(v => v.load());
-            document.getElementById('itemModal').style.display = 'flex';
+            editingCtx = { mode: 'editItem', cat, itemId };
+            document.getElementById('modalTitle').textContent = 'Edit';
+            document.getElementById('catField').style.display = 'none';
+            document.getElementById('nameField').style.display = 'block';
+            document.getElementById('headingField').style.display = 'block';
+            document.getElementById('editName').value = item.name || '';
+            document.getElementById('editHeading').value = item.title || '';
+            document.getElementById('editUrl').value = item.link || '';
+            document.getElementById('editBody').innerHTML = item.text || '';
+            document.getElementById('urlField').style.display = cat === 'channel' ? 'block' : 'none';
+            hydrateVideos(document.getElementById('editBody'));
+            document.getElementById('editModal').classList.add('open');
         }
 
-        function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+        function openModuleEdit(modKey) {
+            const mod = store.modules[modKey] || { title: modKey, text: '' };
+            editingCtx = { mode: 'editModule', modKey };
+            document.getElementById('modalTitle').textContent = 'Edit';
+            document.getElementById('catField').style.display = 'none';
+            document.getElementById('nameField').style.display = 'none';
+            document.getElementById('headingField').style.display = 'block';
+            document.getElementById('urlField').style.display = 'none';
+            document.getElementById('editHeading').value = mod.title || '';
+            document.getElementById('editBody').innerHTML = mod.text || '';
+            hydrateVideos(document.getElementById('editBody'));
+            document.getElementById('editModal').classList.add('open');
+        }
 
-        async function saveModalItem() {
-            let name = document.getElementById('itemNameInput').value.trim();
-            let title = document.getElementById('itemTitleInput').value.trim();
-            let link = document.getElementById('itemLinkInput').value.trim();
-            let text = document.getElementById('itemTextEditor').innerHTML;
-            let style = document.getElementById('itemTextEditor').style.cssText;
+        function syncUrlVisibility() {
+            const cat = document.getElementById('editCat').value;
+            document.getElementById('urlField').style.display = cat === 'channel' ? 'block' : 'none';
+        }
 
-            if (!name) { alert("Name is required."); return; }
-            let targetCat = currentSubCategory || document.getElementById('itemCategorySelect').value || 'characters';
+        document.getElementById('editCat').addEventListener('change', syncUrlVisibility);
+        document.getElementById('editBody').addEventListener('keyup', saveSelection);
+        document.getElementById('editBody').addEventListener('mouseup', saveSelection);
 
-            if (editingItemId) {
-                let item = appData[editingItemId.catKey].find(i => i.id === editingItemId.id);
-                if (item) { item.name = name; item.title = title; item.link = link; item.text = text; item.style = style; }
-            } else {
-                let newItem = { id: Date.now(), name, title, text, link, style, isFav: false, isPinned: false };
-                if (!appData[targetCat]) appData[targetCat] = [];
-                appData[targetCat].push(newItem);
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('open');
+        }
+
+        async function saveModal() {
+            if (!editingCtx) return;
+            const heading = document.getElementById('editHeading').value.trim();
+            const bodyHtml = document.getElementById('editBody').innerHTML;
+
+            if (editingCtx.mode === 'add') {
+                const cat = document.getElementById('editCat').value;
+                const name = document.getElementById('editName').value.trim() || heading || 'Untitled';
+                const link = document.getElementById('editUrl').value.trim();
+                const newItem = {
+                    id: Date.now(),
+                    name,
+                    title: heading || name,
+                    text: bodyHtml,
+                    link,
+                    isFav: false,
+                    isPinned: false
+                };
+                store[cat].push(newItem);
+                await persist();
+                closeModal();
+                openItemDetail(cat, newItem.id);
+                return;
             }
 
-            await persistState();
-            closeItemModal();
-            if (currentScreen === 'sub' && currentSubCategory) renderSubScreen(currentSubCategory);
-            else if (currentScreen === 'detail' && editingItemId) openDetailScreen(editingItemId.catKey, editingItemId.id);
-            else navigateTo('home');
-        }
+            if (editingCtx.mode === 'editItem') {
+                const item = (store[editingCtx.cat] || []).find(x => x.id === editingCtx.itemId);
+                if (item) {
+                    const name = document.getElementById('editName').value.trim();
+                    if (name) item.name = name;
+                    item.title = heading || item.name;
+                    item.text = bodyHtml;
+                    if (editingCtx.cat === 'channel') {
+                        item.link = document.getElementById('editUrl').value.trim();
+                    }
+                }
+                await persist();
+                closeModal();
+                openItemDetail(editingCtx.cat, editingCtx.itemId);
+                return;
+            }
 
-        async function deleteItem(catKey, itemId) {
-            if (confirm("Delete this item?")) {
-                appData[catKey] = appData[catKey].filter(i => i.id !== itemId);
-                await persistState();
-                navigateTo('sub', catKey);
+            if (editingCtx.mode === 'editModule') {
+                const mod = store.modules[editingCtx.modKey];
+                if (mod) {
+                    if (heading) mod.title = heading;
+                    mod.text = bodyHtml;
+                }
+                await persist();
+                closeModal();
+                render();
             }
         }
 
-        async function toggleFavorite(catKey, itemId) {
-            let item = appData[catKey].find(i => i.id === itemId);
-            if (item) { item.isFav = !item.isFav; await persistState(); openDetailScreen(catKey, itemId); }
+        async function removeItem(cat, itemId) {
+            store[cat] = (store[cat] || []).filter(x => x.id !== itemId);
+            await persist();
+            openSubSection(cat);
         }
 
-        async function togglePin(catKey, itemId) {
-            let item = appData[catKey].find(i => i.id === itemId);
-            if (item) { item.isPinned = !item.isPinned; await persistState(); openDetailScreen(catKey, itemId); }
+        async function toggleFlag(cat, itemId, prop) {
+            const item = (store[cat] || []).find(x => x.id === itemId);
+            if (!item) return;
+            item[prop] = !item[prop];
+            await persist();
+            render();
         }
 
-        function handleLinkClick(url) {
-            document.getElementById('linkModalDisplayUrl').textContent = url;
-            document.getElementById('linkModalOpenBtn').onclick = () => window.open(url, '_blank');
-            document.getElementById('linkModalTextBtn').onclick = () => alert(`URL: ${url}`);
-            document.getElementById('linkActionModal').style.display = 'flex';
-        }
-
-        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-        function formatText(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('itemTextEditor').focus(); captureEditorSelection(); }
-        function insertLinkPrompt() { captureEditorSelection(); let u = prompt("URL:"); if (u) { restoreEditorSelection(); formatText('createLink', u); } }
-
-        document.getElementById('itemTextEditor').addEventListener('keyup', captureEditorSelection);
-        document.getElementById('itemTextEditor').addEventListener('mouseup', captureEditorSelection);
-
-        initApp();
+        (async function boot() {
+            await openDB();
+            const saved = await idbGet('mainStore');
+            if (saved) {
+                store = {
+                    characters: saved.characters || store.characters,
+                    episodes: saved.episodes || store.episodes,
+                    channel: saved.channel || store.channel,
+                    places: saved.places || store.places,
+                    modules: { ...store.modules, ...(saved.modules || {}) }
+                };
+            }
+            goHome();
+        })();
     </script>
 </body>
 </html>
