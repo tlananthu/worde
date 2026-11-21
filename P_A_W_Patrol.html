@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAW Patrol & Zenith Pro - Infinite Styles Suite</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --hover-bg: rgba(56, 189, 248, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: url('https://bit.ly/4snaM5g');
+            background-size: cover;
+            background-position: center;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: -1;
+        }
+
+        .top-bar {
+            background-color: #dc2626;
+            color: #ffffff;
+            padding: 12px 20px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .notice-banner {
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid var(--accent);
+            color: var(--text-main);
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            margin: 10px auto;
+            max-width: 650px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.4);
+        }
+
+        .workspace-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .card-panel {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 850px;
+            padding: 25px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            max-height: 75vh;
+        }
+
+        h1.screen-title {
+            margin-top: 0;
+            text-align: center;
+            color: var(--accent);
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+            overflow-y: auto;
+            max-height: 45vh;
+            padding-right: 5px;
+        }
+
+        .option-button {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            border: none;
+            padding: 14px 18px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .option-button:hover { transform: translateY(-2px); background: linear-gradient(135deg, #38bdf8, #0284c7); }
+
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .btn-action { background: var(--accent); color: #0f172a; border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .btn-secondary { background: var(--border); color: var(--text-main); border: none; padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+
+        .bottom-bar {
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 10;
+            flex-wrap: wrap;
+        }
+
+        .bottom-btn {
+            background: transparent; border: 1px solid var(--border); color: var(--text-main);
+            padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s;
+        }
+        .bottom-btn:hover { background: var(--hover-bg); border-color: var(--accent); }
+
+        .detail-view { overflow-y: auto; flex-grow: 1; padding: 10px 0; }
+        .detail-text { color: #38bdf8; font-size: 1.1rem; line-height: 1.6; background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 6px; border-left: 4px solid var(--accent); margin: 15px 0; }
+
+        /* Modals & Editors */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-box {
+            background: var(--card-bg); border: 1px solid var(--accent);
+            padding: 25px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+        }
+        .modal-box input, .modal-box select {
+            width: 100%; background: var(--bg-color); border: 1px solid var(--border);
+            color: var(--text-main); padding: 10px; border-radius: 6px; margin: 8px 0; box-sizing: border-box; font-size: 1rem;
+        }
+
+        /* Ribbon Toolbar */
+        .ribbon {
+            background-color: var(--bg-color); border: 1px solid var(--border);
+            padding: 6px; display: flex; flex-wrap: wrap; gap: 4px; border-radius: 6px; margin-bottom: 8px;
+        }
+        .ribbon button, .ribbon select, .ribbon input[type="color"] {
+            background: transparent; border: 1px solid var(--border); color: var(--text-main);
+            padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;
+        }
+        .editor-box {
+            background: var(--bg-color); border: 1px solid var(--border);
+            min-height: 150px; padding: 12px; border-radius: 6px; outline: none; color: var(--text-main);
+            overflow-y: auto;
+        }
+        .editor-box table, .detail-text table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .editor-box td, .editor-box th, .detail-text td, .detail-text th { border: 1px solid var(--border); padding: 8px; }
+        .editor-box img, .editor-box video, .detail-text img, .detail-text video { max-width: 100%; border-radius: 6px; background: #000; }
+        .editor-box iframe, .detail-text iframe { max-width: 100%; border-radius: 6px; border: none; background: #000; }
+
+        /* Infinite Style Matrix Panel */
+        .style-studio-panel {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed var(--accent);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <span>🐾 PAW PATROL COMMAND CENTER</span>
+        <span>Zenith Suite v5.1</span>
+    </div>
+
+    <div class="notice-banner">
+        Please install or download this app. It contains detailed information about the Pups, Humans, Cats, Dogs, and everybody, even robots in PAW Patrol.
+    </div>
+
+    <div class="workspace-container" id="workspaceContainer"></div>
+
+    <div class="bottom-bar">
+        <button class="bottom-btn" onclick="navigateTo('home')">🏠 Home</button>
+        <button class="bottom-btn" onclick="navigateTo('quadra')">Quadra</button>
+        <button class="bottom-btn" onclick="navigateTo('zenith')">Zenith</button>
+        <button class="bottom-btn" onclick="navigateTo('games')">Games</button>
+        <button class="bottom-btn" onclick="navigateTo('code')">Code</button>
+        <button class="bottom-btn" onclick="navigateTo('favorites')">⭐ Favorites</button>
+        <button class="bottom-btn" onclick="navigateTo('pinned')">📌 Pinned</button>
+    </div>
+
+    <!-- Add / Edit Item Modal -->
+    <div id="itemModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="modalHeading" style="color:var(--accent); margin-top:0;">Add / Edit Item</h3>
+            
+            <div id="categorySelectWrapper">
+                <label style="font-size:0.85rem; color:var(--text-muted);">Category:</label>
+                <select id="itemCategorySelect">
+                    <option value="characters">List of Characters</option>
+                    <option value="episodes">List of Episodes</option>
+                    <option value="channel">Channel</option>
+                    <option value="places">Places and Structures</option>
+                </select>
+            </div>
+
+            <label style="font-size:0.85rem; color:var(--text-muted);">Name / Title:</label>
+            <input type="text" id="itemNameInput" placeholder="Name..." />
+
+            <label style="font-size:0.85rem; color:var(--text-muted);">Sub-Heading:</label>
+            <input type="text" id="itemTitleInput" placeholder="Title / Subtitle..." />
+
+            <div id="linkInputWrapper">
+                <label style="font-size:0.85rem; color:var(--text-muted);">External Link URL:</label>
+                <input type="text" id="itemLinkInput" placeholder="https://..." />
+            </div>
+
+            <!-- Style Studio for Infinite Styles -->
+            <div class="style-studio-panel">
+                <span style="font-size:0.8rem; color:var(--accent); font-weight:bold;">🎨 Style Studio (10^30+ Options):</span>
+                <select id="stylePreset" onchange="applyInfiniteStyle(this.value)">
+                    <option value="" disabled selected>Select Endless Style Preset...</option>
+                    <option value="neon">Neon Cyberpunk Glow</option>
+                    <option value="royal">Royal Gold & Obsidian</option>
+                    <option value="glass">Glassmorphism Blur</option>
+                    <option value="emerald">Emerald Forest</option>
+                    <option value="crimson">Crimson Elite</option>
+                    <option value="pastel">Pastel Dream</option>
+                </select>
+                <label style="font-size:0.8rem;">BG Tint: <input type="color" id="customBgTint" onchange="applyCustomTint(this.value)" value="#1e293b"></label>
+            </div>
+
+            <!-- Ribbon Toolbar with Table & Media Opacity Tools -->
+            <label style="font-size:0.85rem; color:var(--text-muted);">Rich Content Editor:</label>
+            <div class="ribbon">
+                <button type="button" onclick="formatText('bold')"><b>B</b></button>
+                <button type="button" onclick="formatText('italic')"><i>I</i></button>
+                <button type="button" onclick="formatText('underline')"><u>U</u></button>
+                <button type="button" onclick="insertLinkPrompt()">🔗 Link</button>
+                <button type="button" onclick="insertAdvancedTable()">📊 Table (Merge/Opacity)</button>
+                <button type="button" onclick="promptImage()">🖼️ Image + Opacity</button>
+                <button type="button" onclick="promptVideo()">🎥 Video + Opacity</button>
+                <button type="button" onclick="formatText('insertUnorderedList')">• Bullets</button>
+                <select onchange="formatText('fontSize', this.value)"><option value="" disabled selected>Size</option><option value="2">Small</option><option value="3">Normal</option><option value="5">Large</option></select>
+                <input type="color" onchange="formatText('foreColor', this.value)" title="Text Color">
+            </div>
+            
+            <div id="itemTextEditor" class="editor-container editor-box" contenteditable="true" style="background:#0f172a;"></div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeItemModal()">Cancel</button>
+                <button class="btn-action" onclick="saveModalItem()">Save Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Action Modal -->
+    <div id="linkActionModal" class="modal-overlay">
+        <div class="modal-box" style="width: 320px; text-align: center;">
+            <h3 style="color:var(--accent);">Link Options</h3>
+            <p id="linkModalDisplayUrl" style="color:var(--accent); word-break:break-all;"></p>
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                <button class="btn-action" id="linkModalOpenBtn">i. Open Link</button>
+                <button class="btn-secondary" id="linkModalTextBtn">ii. View Text</button>
+                <button class="btn-secondary" onclick="closeModal('linkActionModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IndexedDB Persistence Layer
+        let db;
+        const dbName = "PawPatrolSuiteDBv2";
+        const storeName = "appData";
+
+        function initIndexedDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open(dbName, 1);
+                request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains(storeName)) database.createObjectStore(storeName, { keyPath: "id" });
+                };
+            });
+        }
+
+        async function saveDB(key, data) {
+            if (!db) await initIndexedDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, "readwrite");
+                const store = tx.objectStore(storeName);
+                store.put({ id: key, payload: JSON.parse(JSON.stringify(data)) });
+                tx.oncomplete = () => resolve();
+            });
+        }
+
+        async function loadDB(key) {
+            if (!db) await initIndexedDB();
+            return new Promise((resolve) => {
+                const tx = db.transaction(storeName, "readonly");
+                const store = tx.objectStore(storeName);
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.payload : null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        let appData = {
+            characters: [
+                { id: 1, name: "Chase", title: "Police & Spy Pup", text: "German Shepherd police pup leader.", style: "", isFav: false, isPinned: false }
+            ],
+            episodes: [
+                { id: 101, name: "Pups Make a Splash", title: "Season 1, Ep 1", text: "Cap'n Turbot's boat rescue mission.", style: "", isFav: false, isPinned: false }
+            ],
+            channel: [
+                { id: 201, name: "Nickelodeon", title: "Primary Broadcast", text: "Official TV network.", link: "https://www.nick.com", style: "", isFav: false, isPinned: false }
+            ],
+            places: [
+                { id: 301, name: "The Lookout", title: "Headquarters", text: "Multi-story tower base.", style: "", isFav: true, isPinned: true }
+            ]
+        };
+
+        let currentScreen = 'home';
+        let currentSubCategory = null;
+        let editingItemId = null;
+        let savedEditorRange = null;
+
+        async function initApp() {
+            await initIndexedDB();
+            let saved = await loadDB('pawPatrolState');
+            if (saved) appData = saved;
+            navigateTo('home');
+        }
+
+        async function persistState() {
+            await saveDB('pawPatrolState', appData);
+        }
+
+        function captureEditorSelection() {
+            const editor = document.getElementById('itemTextEditor');
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+                savedEditorRange = sel.getRangeAt(0).cloneRange();
+            } else {
+                const range = document.createRange();
+                range.selectNodeContents(editor);
+                range.collapse(false);
+                savedEditorRange = range;
+            }
+        }
+
+        function restoreEditorSelection() {
+            const editor = document.getElementById('itemTextEditor');
+            editor.focus();
+            if (savedEditorRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(savedEditorRange);
+            }
+        }
+
+        function insertHtmlAtEditorCaret(html) {
+            restoreEditorSelection();
+            const editor = document.getElementById('itemTextEditor');
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                const frag = document.createDocumentFragment();
+                let lastNode = null;
+                while (temp.firstChild) {
+                    lastNode = temp.firstChild;
+                    frag.appendChild(lastNode);
+                }
+                range.insertNode(frag);
+                if (lastNode) {
+                    const newRange = document.createRange();
+                    newRange.setStartAfter(lastNode);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    savedEditorRange = newRange.cloneRange();
+                }
+            } else {
+                editor.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        function getYouTubeEmbedUrl(url) {
+            const watchMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
+            if (watchMatch && watchMatch[1]) {
+                return `https://www.youtube.com/embed/${watchMatch[1]}`;
+            }
+            const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+            if (vimeoMatch && vimeoMatch[1]) {
+                return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+            }
+            return null;
+        }
+
+        function detectVideoMimeType(url) {
+            const clean = url.split('?')[0].toLowerCase();
+            if (clean.endsWith('.webm')) return 'video/webm';
+            if (clean.endsWith('.ogg') || clean.endsWith('.ogv')) return 'video/ogg';
+            if (clean.endsWith('.mov')) return 'video/quicktime';
+            return 'video/mp4';
+        }
+
+        function navigateTo(screen, subCat = null) {
+            currentScreen = screen;
+            currentSubCategory = subCat;
+            const container = document.getElementById('workspaceContainer');
+            container.innerHTML = '';
+
+            if (screen === 'home') {
+                container.innerHTML = `
+                    <div class="card-panel">
+                        <h1 class="screen-title">PAW Patrol Command Center</h1>
+                        <div class="options-grid">
+                            <button class="option-button" onclick="navigateTo('sub', 'characters')"><span>List of Characters</span> ➔</button>
+                            <button class="option-button" onclick="navigateTo('sub', 'episodes')"><span>List of Episodes</span> ➔</button>
+                            <button class="option-button" onclick="navigateTo('sub', 'channel')"><span>Channel</span> ➔</button>
+                            <button class="option-button" onclick="navigateTo('sub', 'places')"><span>Places and Structures</span> ➔</button>
+                        </div>
+                        <div class="action-row">
+                            <button class="btn-action" onclick="openAddModal()">+ Add New Item</button>
+                        </div>
+                    </div>
+                `;
+            } else if (screen === 'sub') {
+                renderSubScreen(subCat);
+            } else if (screen === 'quadra' || screen === 'zenith' || screen === 'games' || screen === 'code') {
+                renderAppLauncherScreen(screen);
+            } else if (screen === 'favorites' || screen === 'pinned') {
+                renderFavoritesOrPinnedScreen(screen);
+            }
+        }
+
+        function renderSubScreen(catKey) {
+            let titleMap = { characters: 'List of Characters', episodes: 'List of Episodes', channel: 'Channel', places: 'Places and Structures' };
+            let items = appData[catKey] || [];
+            let gridHtml = items.map(item => `
+                <button class="option-button" onclick="openDetailScreen('${catKey}', ${item.id})">
+                    <span>${item.name}</span> ➔
+                </button>
+            `).join('');
+
+            const container = document.getElementById('workspaceContainer');
+            container.innerHTML = `
+                <div class="card-panel">
+                    <h1 class="screen-title">${titleMap[catKey]}</h1>
+                    <div class="options-grid">
+                        ${gridHtml.length ? gridHtml : '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">No items added yet.</p>'}
+                    </div>
+                    <div class="action-row">
+                        <button class="btn-secondary" onclick="navigateTo('home')">⬅ Back to Home</button>
+                        <button class="btn-action" onclick="openAddModal('${catKey}')">+ Add</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openDetailScreen(catKey, itemId) {
+            let item = (appData[catKey] || []).find(i => i.id === itemId);
+            if (!item) return;
+
+            currentScreen = 'detail';
+            let favStar = item.isFav ? '⭐' : '☆';
+            let pinIcon = item.isPinned ? '📌' : '📍';
+
+            const container = document.getElementById('workspaceContainer');
+            container.innerHTML = `
+                <div class="card-panel" style="${item.style || ''}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <button class="btn-secondary" onclick="navigateTo('sub', '${catKey}')">⬅ Back</button>
+                        <div>
+                            <button class="btn-secondary" onclick="toggleFavorite('${catKey}', ${itemId})">${favStar} Fav</button>
+                            <button class="btn-secondary" onclick="togglePin('${catKey}', ${itemId})">${pinIcon} Pin</button>
+                        </div>
+                    </div>
+                    <h1 class="screen-title">${item.title || item.name}</h1>
+                    <div class="detail-view">
+                        <h3 style="color:var(--text-main); margin-bottom:5px;">Name: ${item.name}</h3>
+                        ${item.link ? `<p><a href="#" onclick="handleLinkClick('${item.link}')" style="color:var(--accent); text-decoration:underline;">🔗 Open External Link</a></p>` : ''}
+                        <div class="detail-text">${item.text || 'No detailed text provided.'}</div>
+                    </div>
+                    <div class="action-row">
+                        <button class="btn-secondary" onclick="openEditModal('${catKey}', ${itemId})">✏️ Edit</button>
+                        <button class="btn-secondary" onclick="deleteItem('${catKey}', ${itemId})" style="color:var(--danger);">🗑️ Delete</button>
+                    </div>
+                </div>
+            `;
+
+            // Ensure all video players reload cleanly when rendering detail view
+            container.querySelectorAll('video').forEach(vid => {
+                vid.controls = true;
+                if (!vid.preload) vid.preload = 'metadata';
+                vid.load();
+            });
+        }
+
+        function renderAppLauncherScreen(appName) {
+            let titleMap = { quadra: 'Quadra App', zenith: 'Zenith Canvas Pro', games: 'Epic Gamer Hub', code: 'Code IDE' };
+            const container = document.getElementById('workspaceContainer');
+            container.innerHTML = `
+                <div class="card-panel" style="text-align:center;">
+                    <h1 class="screen-title">${titleMap[appName]}</h1>
+                    <p style="color:var(--text-muted); font-size:1.1rem; margin:30px 0;">Standalone app module active.</p>
+                    <button class="btn-secondary" onclick="navigateTo('home')">Home</button>
+                </div>
+            `;
+        }
+
+        function renderFavoritesOrPinnedScreen(type) {
+            let isFavView = type === 'favorites';
+            let allItems = [];
+            Object.keys(appData).forEach(cat => {
+                appData[cat].forEach(item => {
+                    if ((isFavView && item.isFav) || (!isFavView && item.isPinned)) allItems.push({ ...item, catKey: cat });
+                });
+            });
+
+            let gridHtml = allItems.map(item => `
+                <button class="option-button" onclick="openDetailScreen('${item.catKey}', ${item.id})">
+                    <span>${item.name} (${item.catKey})</span> ➔
+                </button>
+            `).join('');
+
+            const container = document.getElementById('workspaceContainer');
+            container.innerHTML = `
+                <div class="card-panel">
+                    <h1 class="screen-title">${isFavView ? '⭐ Favorite Items' : '📌 Pinned Items'}</h1>
+                    <div class="options-grid">
+                        ${gridHtml.length ? gridHtml : `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">No items found.</p>`}
+                    </div>
+                    <div class="action-row"><button class="btn-secondary" onclick="navigateTo('home')">⬅ Home</button></div>
+                </div>
+            `;
+        }
+
+        // --- Infinite Style Matrix & Table Features ---
+        function applyInfiniteStyle(preset) {
+            let editor = document.getElementById('itemTextEditor');
+            if (preset === 'neon') editor.style.cssText = "background:#030712; border:2px solid #38bdf8; box-shadow:0 0 15px rgba(56,189,248,0.5); padding:15px; border-radius:8px;";
+            else if (preset === 'royal') editor.style.cssText = "background:#18181b; border:2px solid #fbbf24; box-shadow:0 0 15px rgba(251,191,36,0.5); padding:15px; border-radius:8px;";
+            else if (preset === 'glass') editor.style.cssText = "background:rgba(255,255,255,0.05); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.2); padding:15px; border-radius:8px;";
+            else if (preset === 'emerald') editor.style.cssText = "background:#064e3b; border:2px solid #34d399; padding:15px; border-radius:8px;";
+            else if (preset === 'crimson') editor.style.cssText = "background:#450a0a; border:2px solid #f87171; padding:15px; border-radius:8px;";
+            else if (preset === 'pastel') editor.style.cssText = "background:#f3e8ff; color:#3b0764; border:2px solid #d8b4fe; padding:15px; border-radius:8px;";
+        }
+
+        function applyCustomTint(color) {
+            document.getElementById('itemTextEditor').style.backgroundColor = color;
+        }
+
+        function insertAdvancedTable() {
+            let rows = prompt("Enter rows:", "3");
+            let cols = prompt("Enter columns:", "3");
+            let opacity = prompt("Table Opacity (0.2 to 1.0):", "1.0");
+            if (!rows || !cols) return;
+
+            let html = `<table style="width:100%; border-collapse:collapse; opacity:${opacity}; border:2px solid #38bdf8;">`;
+            for (let i = 0; i < rows; i++) {
+                html += '<tr>';
+                for (let j = 0; j < cols; j++) {
+                    html += `<td style="border:1px solid #334155; padding:10px;">Cell (${i+1},${j+1})</td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</table><p></p>';
+            formatText('insertHTML', html);
+        }
+
+        function promptImage() {
+            let url = prompt("Image URL:");
+            let opacity = prompt("Image Opacity (0.2 to 1.0):", "1.0");
+            if (url) formatText('insertHTML', `<img src="${url}" style="width:350px; opacity:${opacity}; display:inline-block;" /><p></p>`);
+        }
+
+        function promptVideo() {
+            captureEditorSelection();
+            let choice = prompt("Type 'file' to pick a video from your device, or paste a video URL:");
+            if (!choice) return;
+
+            let opacity = prompt("Video Opacity (0.2 to 1.0):", "1.0");
+            let opVal = (opacity === null || opacity.trim() === "") ? "1.0" : opacity.trim();
+
+            if (choice.trim().toLowerCase() === 'file') {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'video/*';
+                fileInput.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const dataUrl = ev.target.result;
+                        const mime = file.type || 'video/mp4';
+                        insertHtmlAtEditorCaret(`<video controls preload="metadata" playsinline width="420" style="opacity:${opVal}; display:inline-block;"><source src="${dataUrl}" type="${mime}"></video><p></p>`);
+                        const editor = document.getElementById('itemTextEditor');
+                        editor.querySelectorAll('video').forEach(v => v.load());
+                    };
+                    reader.readAsDataURL(file);
+                };
+                fileInput.click();
+            } else {
+                const cleanUrl = choice.trim();
+                const embedUrl = getYouTubeEmbedUrl(cleanUrl);
+                if (embedUrl) {
+                    insertHtmlAtEditorCaret(`<iframe width="420" height="240" src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="opacity:${opVal}; display:inline-block;"></iframe><p></p>`);
+                } else {
+                    const mime = detectVideoMimeType(cleanUrl);
+                    insertHtmlAtEditorCaret(`<video controls preload="metadata" playsinline crossorigin="anonymous" width="420" style="opacity:${opVal}; display:inline-block;"><source src="${cleanUrl}" type="${mime}"></video><p></p>`);
+                    const editor = document.getElementById('itemTextEditor');
+                    editor.querySelectorAll('video').forEach(v => v.load());
+                }
+            }
+        }
+
+        // CRUD Modal Functions
+        function openAddModal(forcedCat = null) {
+            editingItemId = null;
+            document.getElementById('modalHeading').textContent = forcedCat ? `Add to ${forcedCat.toUpperCase()}` : 'Add New Item';
+            document.getElementById('itemNameInput').value = '';
+            document.getElementById('itemTitleInput').value = '';
+            document.getElementById('itemLinkInput').value = '';
+            document.getElementById('itemTextEditor').innerHTML = '';
+            document.getElementById('itemModal').style.display = 'flex';
+        }
+
+        function openEditModal(catKey, itemId) {
+            let item = (appData[catKey] || []).find(i => i.id === itemId);
+            if (!item) return;
+
+            editingItemId = { catKey, id: itemId };
+            document.getElementById('modalHeading').textContent = `Edit ${item.name}`;
+            document.getElementById('itemNameInput').value = item.name || '';
+            document.getElementById('itemTitleInput').value = item.title || '';
+            document.getElementById('itemLinkInput').value = item.link || '';
+            document.getElementById('itemTextEditor').innerHTML = item.text || '';
+            document.getElementById('itemTextEditor').querySelectorAll('video').forEach(v => v.load());
+            document.getElementById('itemModal').style.display = 'flex';
+        }
+
+        function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+
+        async function saveModalItem() {
+            let name = document.getElementById('itemNameInput').value.trim();
+            let title = document.getElementById('itemTitleInput').value.trim();
+            let link = document.getElementById('itemLinkInput').value.trim();
+            let text = document.getElementById('itemTextEditor').innerHTML;
+            let style = document.getElementById('itemTextEditor').style.cssText;
+
+            if (!name) { alert("Name is required."); return; }
+            let targetCat = currentSubCategory || document.getElementById('itemCategorySelect').value || 'characters';
+
+            if (editingItemId) {
+                let item = appData[editingItemId.catKey].find(i => i.id === editingItemId.id);
+                if (item) { item.name = name; item.title = title; item.link = link; item.text = text; item.style = style; }
+            } else {
+                let newItem = { id: Date.now(), name, title, text, link, style, isFav: false, isPinned: false };
+                if (!appData[targetCat]) appData[targetCat] = [];
+                appData[targetCat].push(newItem);
+            }
+
+            await persistState();
+            closeItemModal();
+            if (currentScreen === 'sub' && currentSubCategory) renderSubScreen(currentSubCategory);
+            else if (currentScreen === 'detail' && editingItemId) openDetailScreen(editingItemId.catKey, editingItemId.id);
+            else navigateTo('home');
+        }
+
+        async function deleteItem(catKey, itemId) {
+            if (confirm("Delete this item?")) {
+                appData[catKey] = appData[catKey].filter(i => i.id !== itemId);
+                await persistState();
+                navigateTo('sub', catKey);
+            }
+        }
+
+        async function toggleFavorite(catKey, itemId) {
+            let item = appData[catKey].find(i => i.id === itemId);
+            if (item) { item.isFav = !item.isFav; await persistState(); openDetailScreen(catKey, itemId); }
+        }
+
+        async function togglePin(catKey, itemId) {
+            let item = appData[catKey].find(i => i.id === itemId);
+            if (item) { item.isPinned = !item.isPinned; await persistState(); openDetailScreen(catKey, itemId); }
+        }
+
+        function handleLinkClick(url) {
+            document.getElementById('linkModalDisplayUrl').textContent = url;
+            document.getElementById('linkModalOpenBtn').onclick = () => window.open(url, '_blank');
+            document.getElementById('linkModalTextBtn').onclick = () => alert(`URL: ${url}`);
+            document.getElementById('linkActionModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        function formatText(cmd, val = null) { document.execCommand(cmd, false, val); document.getElementById('itemTextEditor').focus(); captureEditorSelection(); }
+        function insertLinkPrompt() { captureEditorSelection(); let u = prompt("URL:"); if (u) { restoreEditorSelection(); formatText('createLink', u); } }
+
+        document.getElementById('itemTextEditor').addEventListener('keyup', captureEditorSelection);
+        document.getElementById('itemTextEditor').addEventListener('mouseup', captureEditorSelection);
+
+        initApp();
+    </script>
+</body>
+</html>
