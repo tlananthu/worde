@@ -1,979 +1,885 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAW Patrol & Zenith Command Center</title>
+    <title>Paw Patrol Ultimate Explorer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons --> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --surface-2: #0b1220;
-            --accent: #38bdf8;
-            --red: #dc2626;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --border: #334155;
-            --danger: #ef4444;
-        }
-
-        * { box-sizing: border-box; }
-
         body {
-            margin: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            font-family: 'Inter', sans-serif;
         }
-
-        .bg-layer {
-            position: fixed;
-            inset: 0;
-            background: url('https://bit.ly/4snaM5g') center / cover no-repeat;
-            filter: brightness(0.25);
-            z-index: -1;
-            pointer-events: none;
+        .bg-paw-image {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65)), url('https://bit.ly/4snaM5g');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
-
-        /* 1. Red Top Bar with White Text */
-        header.top-bar {
-            background: var(--red);
-            color: #ffffff;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-            font-size: 1.15rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            flex-shrink: 0;
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-
-        .top-bar-right {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            font-size: 0.9rem;
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
         }
-
-        .pill-btn {
-            background: rgba(255,255,255,0.16);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .pill-btn:hover { background: rgba(255,255,255,0.28); }
-
-        /* 4. Notice Box */
-        .notice-box {
-            margin: 12px auto 0;
-            width: min(760px, 94vw);
-            background: rgba(30, 41, 59, 0.92);
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            padding: 10px 16px;
-            text-align: center;
-            font-size: 0.92rem;
-            line-height: 1.45;
-            flex-shrink: 0;
-        }
-
-        /* Main Viewport */
-        main.viewport {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        .panel {
-            width: min(860px, 100%);
-            background: rgba(30, 41, 59, 0.95);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 18px 36px rgba(0,0,0,0.5);
-        }
-
-        h1.page-h1 {
-            margin: 0 0 18px;
-            text-align: center;
-            color: var(--accent);
-            font-size: 1.85rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-        }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-            gap: 12px;
-            margin: 16px 0;
-        }
-
-        .big-option-btn {
-            background: linear-gradient(135deg, #0284c7, #0369a1);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 14px 16px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.15s, filter 0.15s;
-        }
-        .big-option-btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-
-        .toolbar-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 18px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border);
-        }
-
-        .btn {
-            border: none;
-            border-radius: 6px;
-            padding: 9px 15px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .btn-primary { background: var(--accent); color: #0f172a; }
-        .btn-secondary { background: var(--border); color: var(--text); }
-        .btn-danger { background: var(--danger); color: #fff; }
-
-        /* Detail Screen */
-        .detail-body {
-            color: #7dd3fc;
-            font-size: 1.08rem;
-            line-height: 1.65;
-            background: var(--surface-2);
-            border-left: 4px solid var(--accent);
-            border-radius: 8px;
-            padding: 16px;
-            margin: 14px 0;
-            overflow-wrap: break-word;
-        }
-
-        .detail-body video {
-            display: block;
-            width: 100%;
-            max-width: 560px;
-            max-height: 340px;
-            margin: 12px 0;
-            border-radius: 8px;
-            background: #000;
-        }
-
-        .detail-body iframe {
-            display: block;
-            width: 100%;
-            max-width: 560px;
-            height: 315px;
-            margin: 12px 0;
-            border: none;
-            border-radius: 8px;
-            background: #000;
-        }
-
-        .detail-body img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-
-        .detail-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0;
-        }
-        .detail-body td, .detail-body th {
-            border: 1px solid var(--border);
-            padding: 8px;
-        }
-
-        .link-chip {
-            display: inline-block;
-            color: #60a5fa;
-            text-decoration: underline;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 6px 0;
-        }
-
-        /* Editor Modal */
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(2, 6, 23, 0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            padding: 16px;
-        }
-        .modal-backdrop.open { display: flex; }
-
-        .modal-card {
-            width: min(640px, 100%);
-            max-height: 90vh;
-            overflow-y: auto;
-            background: var(--surface);
-            border: 1px solid var(--accent);
-            border-radius: 12px;
-            padding: 22px;
-        }
-
-        .field-group { margin-bottom: 12px; }
-        .field-group label {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-        .field-group input, .field-group select {
-            width: 100%;
-            padding: 9px 11px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--surface-2);
-            color: var(--text);
-            font-size: 0.95rem;
-        }
-
-        .fmt-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 7px;
-            margin-bottom: 8px;
-            align-items: center;
-        }
-        .fmt-bar button, .fmt-bar select {
-            background: var(--surface);
-            color: var(--text);
-            border: 1px solid var(--border);
+        ::-webkit-scrollbar-thumb {
+            background: #E53935;
             border-radius: 4px;
-            padding: 5px 8px;
-            cursor: pointer;
-            font-size: 0.82rem;
-        }
-        .fmt-bar button:hover { border-color: var(--accent); }
-
-        .rich-editor {
-            min-height: 160px;
-            max-height: 300px;
-            overflow-y: auto;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 12px;
-            line-height: 1.55;
-            outline: none;
-        }
-        .rich-editor video {
-            display: block;
-            max-width: 100%;
-            max-height: 240px;
-            margin: 10px 0;
-            border-radius: 6px;
-            background: #000;
-        }
-
-        /* 5 & 13. Bottom Bar */
-        footer.bottom-bar {
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            padding: 10px 16px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        footer.bottom-bar.hidden { display: none; }
-
-        .bottom-nav-btn {
-            background: var(--surface-2);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 7px 13px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.88rem;
-        }
-        .bottom-nav-btn:hover, .bottom-nav-btn.active {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .status-msg {
-            font-size: 0.82rem;
-            color: var(--muted);
-            margin-top: 8px;
         }
     </style>
 </head>
-<body>
-    <div class="bg-layer"></div>
+<body class="h-full bg-paw-image text-gray-900 flex flex-col justify-between overflow-x-hidden selection:bg-red-500 selection:text-white">
 
-    <header class="top-bar">
-        <span>🐾 PAW Patrol Details & Zenith Suite</span>
-        <div class="top-bar-right">
-            <span id="dbBadge">IndexedDB: Ready</span>
+    <!-- Top Bar -->
+    <header class="bg-[#E53935] text-white py-3 px-6 shadow-md flex items-center justify-between z-20 sticky top-0 border-b-4 border-red-700">
+        <div class="flex items-center space-x-3">
+            <div class="bg-white text-[#E53935] w-9 h-9 rounded-full flex items-center justify-center font-extrabold shadow-inner">
+                <i class="fa-solid fa-shield-dog text-lg"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-wide uppercase drop-shadow">Paw Patrol Details</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="openGlobalAddModal()" class="bg-white text-[#E53935] font-bold px-3 py-1.5 rounded-lg shadow hover:bg-red-50 transition transform hover:scale-105 flex items-center space-x-1 text-sm">
+                <i class="fa-solid fa-plus"></i>
+                <span class="hidden sm:inline">Add Item</span>
+            </button>
         </div>
     </header>
 
-    <div class="notice-box">
-        Please install or download this app. It contains detailed information about the Pups, Humans, Cats, Dogs, and everybody, even robots in PAW Patrol.
-    </div>
+    <!-- Main Dynamic Content Area -->
+    <main id="main-content" class="flex-grow p-4 sm:p-8 max-w-6xl mx-auto w-full flex flex-col items-center justify-start z-10 my-auto">
+        <!-- Home / Dashboard View -->
+        <div id="home-view" class="w-full space-y-8 animate-fadeIn">
+            
+            <!-- Welcome Banner / Intro Box -->
+            <div class="bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-2xl border-2 border-red-500 text-center max-w-3xl mx-auto transform transition hover:shadow-red-500/2og">
+                <div class="text-[#E53935] text-3xl mb-2"><i class="fa-solid fa-paw"></i></div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome to the Ultimate Paw Patrol Wiki!</h2>
+                <p class="text-gray-700 text-base leading-relaxed font-medium">
+                    Please install or download this app. It contains detailed information about the Pups, Humans, Cats, Dogs, and everybody, even robots in PAW Patrol.
+                </p>
+            </div>
 
-    <main class="viewport" id="viewport"></main>
+            <!-- Options Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
+                <!-- Characters -->
+                <button onclick="loadSection('characters')" class="group bg-white/95 hover:bg-red-50 border-2 border-transparent hover:border-[#E53935] p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-red-100 text-[#E53935] rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition shadow-inner">
+                        <i class="fa-solid fa-dog"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#E53935]">List of Characters</h3>
+                    <p class="text-sm text-gray-500 mt-1">Explore all pups, humans, and friends with detailed bios.</p>
+                </button>
 
-    <footer class="bottom-bar" id="bottomBar">
-        <button class="bottom-nav-btn active" data-nav="home" onclick="goHome()">Home</button>
-        <button class="bottom-nav-btn" data-nav="quadra" onclick="openModule('Quadra', 'Quadra.html')">Quadra</button>
-        <button class="bottom-nav-btn" data-nav="zenith" onclick="openModule('Zenith', 'App.html')">Zenith</button>
-        <button class="bottom-nav-btn" data-nav="games" onclick="openModule('Games', 'Epic gamer.html')">Games</button>
-        <button class="bottom-nav-btn" data-nav="code" onclick="openModule('Code', 'Code.html')">Code</button>
-        <button class="bottom-nav-btn" data-nav="favorites" onclick="openCollection('favorites')">⭐ Favorites</button>
-        <button class="bottom-nav-btn" data-nav="pinned" onclick="openCollection('pinned')">📌 Pinned</button>
+                <!-- Episodes -->
+                <button onclick="loadSection('episodes')" class="group bg-white/95 hover:bg-red-50 border-2 border-transparent hover:border-[#E53935] p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-red-100 text-[#E53935] rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition shadow-inner">
+                        <i class="fa-solid fa-film"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#E53935]">List of Episodes</h3>
+                    <p class="text-sm text-gray-500 mt-1">Browse all episode titles and adventures.</p>
+                </button>
+
+                <!-- Edit Master List -->
+                <button onclick="loadSection('edit-list')" class="group bg-white/95 hover:bg-red-50 border-2 border-transparent hover:border-[#E53935] p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-red-100 text-[#E53935] rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition shadow-inner">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#E53935]">Edit Records</h3>
+                    <p class="text-sm text-gray-500 mt-1">Manage and edit all stored entries, titles, and descriptions.</p>
+                </button>
+
+                <!-- Add New -->
+                <button onclick="openGlobalAddModal()" class="group bg-white/95 hover:bg-red-50 border-2 border-transparent hover:border-[#E53935] p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-red-100 text-[#E53935] rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition shadow-inner">
+                        <i class="fa-solid fa-circle-plus"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#E53935]">Add Pup / Person</h3>
+                    <p class="text-sm text-gray-500 mt-1">Add new entries with custom details and rich content.</p>
+                </button>
+
+                <!-- Channels -->
+                <button onclick="loadSection('channels')" class="group bg-white/95 hover:bg-red-50 border-2 border-transparent hover:border-[#E53935] p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-red-100 text-[#E53935] rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition shadow-inner">
+                        <i class="fa-solid fa-tv"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#E53935]">Channels</h3>
+                    <p class="text-sm text-gray-500 mt-1">Watch and discover all broadcasting channels.</p>
+                </button>
+
+                <!-- Places & Structures -->
+                <button onclick="loadSection('places')" class="group bg-white/95 hover:bg-red-50 border-2 border-transparent hover:border-[#E53935] p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col items-center text-center">
+                    <div class="w-16 h-16 bg-red-100 text-[#E53935] rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition shadow-inner">
+                        <i class="fa-solid fa-house-chimney"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-[#E53935]">Places & Structures</h3>
+                    <p class="text-sm text-gray-500 mt-1">Look up Adventure Bay landmarks, Lookout tower, and more.</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- Section / Sub-option Detail View (No Bottom Bar) -->
+        <div id="section-view" class="hidden w-full space-y-6 animate-fadeIn">
+            <!-- Back & Header Controls -->
+            <div class="flex items-center justify-between bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-md">
+                <button onclick="goHome()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded-lg transition flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Home</span>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openGlobalAddModal()" class="bg-[#E53935] hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg shadow transition flex items-center space-x-1">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Section Header -->
+            <div class="text-center bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl border-b-4 border-red-500">
+                <h1 id="section-title" class="text-3xl sm:text-4xl font-extrabold text-[#E53935] mb-2 uppercase drop-shadow-sm"></h1>
+                <p id="section-subtitle" class="text-gray-600 text-sm sm:text-base"></p>
+            </div>
+
+            <!-- Items List Container -->
+            <div id="section-items-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <!-- Dynamically populated cards -->
+            </div>
+        </div>
+
+        <!-- Single Item Detail View (Sub-option clicked screen) -->
+        <div id="detail-view" class="hidden w-full space-y-6 animate-fadeIn max-w-3xl mx-auto">
+            <div class="flex items-center justify-between bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-md">
+                <button onclick="goBackToSection()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded-lg transition flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back</span>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <button id="detail-edit-btn" onclick="openEditCurrentItem()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-lg shadow transition flex items-center space-x-1">
+                        <i class="fa-solid fa-pen"></i>
+                        <span>Edit</span>
+                    </button>
+                    <button onclick="openGlobalAddModal()" class="bg-[#E53935] hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg shadow transition flex items-center space-x-1">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl border-t-8 border-[#E53935] space-y-6">
+                <!-- Action bar (Favorite & Pin) -->
+                <div class="flex justify-end space-x-3 border-b pb-4">
+                    <button id="detail-fav-btn" onclick="toggleCurrentFavorite()" class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 flex items-center justify-center text-lg transition shadow">
+                        <i class="fa-solid fa-star"></i>
+                    </button>
+                    <button id="detail-pin-btn" onclick="toggleCurrentPin()" class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center text-lg transition shadow">
+                        <i class="fa-solid fa-thumbtack"></i>
+                    </button>
+                </div>
+
+                <!-- Title -->
+                <h1 id="detail-title" class="text-3xl sm:text-4xl font-black text-center text-gray-900 capitalize tracking-tight"></h1>
+                
+                <!-- Category/Name Badge -->
+                <div class="flex justify-center">
+                    <span id="detail-category-badge" class="bg-red-100 text-[#E53935] font-bold px-4 py-1.5 rounded-full text-sm uppercase tracking-wide"></span>
+                </div>
+
+                <!-- Channel Link Display if available -->
+                <div id="detail-link-container" class="hidden text-center">
+                    <a id="detail-external-link" href="#" target="_blank" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition transform hover:scale-105">
+                        <i class="fa-solid fa-external-link-alt"></i>
+                        <span id="detail-link-text">Visit Channel Link</span>
+                    </a>
+                </div>
+
+                <!-- Rich Text Body Content -->
+                <div id="detail-body-content" class="prose max-w-none text-gray-800 text-lg leading-relaxed pt-4 border-t">
+                    <!-- Formatted text / HTML -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites & Pins View -->
+        <div id="fav-pin-view" class="hidden w-full space-y-6 animate-fadeIn">
+            <div class="flex items-center justify-between bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-md">
+                <button onclick="goHome()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-4 py-2 rounded-lg transition flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Back to Home</span>
+                </button>
+            </div>
+
+            <div class="text-center bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-xl border-b-4 border-red-500">
+                <h1 id="fav-pin-title" class="text-3xl font-extrabold text-[#E53935] uppercase"></h1>
+                <p class="text-gray-600">Your bookmarked and pinned Paw Patrol favorites.</p>
+            </div>
+
+            <div id="fav-pin-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Bar -->
+    <footer id="bottom-bar" class="bg-gray-900 text-white border-t border-gray-800 py-3 px-4 shadow-2xl z-20 sticky bottom-0">
+        <div class="max-w-4xl mx-auto flex justify-around items-center text-xs sm:text-sm font-semibold">
+            <button onclick="openExternalApp('Quadra.html', 'Quadra')" class="flex flex-col items-center hover:text-red-400 transition group p-1">
+                <div class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center mb-1 group-hover:bg-red-600 transition">
+                    <i class="fa-solid fa-cube"></i>
+                </div>
+                <span>Quadra</span>
+            </button>
+            <button onclick="openExternalApp('App.html', 'Zenith')" class="flex flex-col items-center hover:text-red-400 transition group p-1">
+                <div class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center mb-1 group-hover:bg-red-600 transition">
+                    <i class="fa-solid fa-compass"></i>
+                </div>
+                <span>Zenith</span>
+            </button>
+            <button onclick="openExternalApp('Epic gamer.html', 'Games')" class="flex flex-col items-center hover:text-red-400 transition group p-1">
+                <div class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center mb-1 group-hover:bg-red-600 transition">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <span>Games</span>
+            </button>
+            <button onclick="openExternalApp('Code.html', 'Code')" class="flex flex-col items-center hover:text-red-400 transition group p-1">
+                <div class="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center mb-1 group-hover:bg-red-600 transition">
+                    <i class="fa-solid fa-code"></i>
+                </div>
+                <span>Code</span>
+            </button>
+            <button onclick="loadFavoritesView()" class="flex flex-col items-center hover:text-yellow-400 transition group p-1 text-yellow-400">
+                <div class="w-9 h-9 rounded-full bg-yellow-500/20 flex items-center justify-center mb-1 group-hover:bg-yellow-500 group-hover:text-gray-900 transition">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <span>Favorite</span>
+            </button>
+            <button onclick="loadPinsView()" class="flex flex-col items-center hover:text-blue-400 transition group p-1 text-blue-400">
+                <div class="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center mb-1 group-hover:bg-blue-500 group-hover:text-gray-900 transition">
+                    <i class="fa-solid fa-thumbtack"></i>
+                </div>
+                <span>Pin</span>
+            </button>
+        </div>
     </footer>
 
-    <!-- Add / Edit Modal -->
-    <div class="modal-backdrop" id="editModal">
-        <div class="modal-card">
-            <h3 id="modalTitle" style="margin:0 0 14px; color:var(--accent);">Add Item</h3>
-
-            <div class="field-group" id="catField">
-                <label>Section</label>
-                <select id="editCat">
-                    <option value="characters">List of Characters</option>
-                    <option value="episodes">List of Episodes</option>
-                    <option value="channel">Channel</option>
-                    <option value="places">Places and Structures</option>
-                </select>
+    <!-- Universal Add / Edit Modal with Rich Text & Formatting Toolbar -->
+    <div id="item-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 my-8 border-t-8 border-[#E53935] transform transition-all">
+            <div class="flex items-center justify-between border-b pb-4">
+                <h3 id="modal-heading" class="text-2xl font-extrabold text-gray-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-circle-plus text-[#E53935]"></i>
+                    <span>Add New Record</span>
+                </h3>
+                <button onclick="closeModal()" class="w-9 h-9 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
-            <div class="field-group" id="nameField">
-                <label>Name (Option Label)</label>
-                <input type="text" id="editName" placeholder="e.g. Chase, Skye, Lookout...">
-            </div>
-
-            <div class="field-group" id="headingField">
-                <label>Title (Screen Heading)</label>
-                <input type="text" id="editHeading" placeholder="Optional heading...">
-            </div>
-
-            <div class="field-group" id="urlField" style="display:none;">
-                <label>Channel Link URL</label>
-                <input type="text" id="editUrl" placeholder="https://...">
-            </div>
-
-            <div class="field-group">
-                <label>Text & Media (Optional)</label>
-                <div class="fmt-bar">
-                    <button type="button" onclick="cmd('bold')"><b>B</b></button>
-                    <button type="button" onclick="cmd('italic')"><i>I</i></button>
-                    <button type="button" onclick="cmd('underline')"><u>U</u></button>
-                    <button type="button" onclick="insertCustomLink()">Link</button>
-                    <button type="button" onclick="insertTableBox()">Table</button>
-                    <button type="button" onclick="mergeNextCell()">Merge Cell</button>
-                    <button type="button" onclick="setMediaOpacity()">Opacity</button>
-                    <button type="button" onclick="insertImageMedia()">Image</button>
-                    <button type="button" onclick="insertVideoMedia()">Video</button>
-                    <button type="button" onclick="cmd('insertUnorderedList')">Bullets</button>
-                    <button type="button" onclick="cmd('justifyLeft')">Left</button>
-                    <button type="button" onclick="cmd('justifyCenter')">Center</button>
-                    <button type="button" onclick="cmd('justifyRight')">Right</button>
-                    <button type="button" onclick="cmd('insertHorizontalRule')">HR</button>
-                    <select onchange="cmd('fontSize', this.value); this.selectedIndex=0;">
-                        <option value="">Size</option>
-                        <option value="2">Small</option>
-                        <option value="3">Normal</option>
-                        <option value="5">Large</option>
+            <form id="item-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="item-id">
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Category / Section</label>
+                    <select id="item-category" required class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-[#E53935] focus:outline-none transition">
+                        <option value="characters">Characters (Pups & People)</option>
+                        <option value="episodes">Episodes</option>
+                        <option value="channels">Channel (with link)</option>
+                        <option value="places">Places & Structures</option>
                     </select>
-                    <input type="color" title="Text Color" onchange="cmd('foreColor', this.value)">
                 </div>
-                <div class="rich-editor" id="editBody" contenteditable="true"></div>
-                <div class="status-msg" id="videoStatus">Tip: Pick a local video file (.mp4/.webm) or paste a direct video/YouTube link.</div>
-            </div>
 
-            <div class="toolbar-row">
-                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="saveModal()">Save</button>
-            </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Name / Title (e.g., Chase, Episode 1)</label>
+                    <input type="text" id="item-name" required placeholder="Enter name or title..." class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-[#E53935] focus:outline-none transition">
+                </div>
+
+                <div id="channel-link-group" class="hidden">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Channel External Link (URL)</label>
+                    <input type="url" id="item-link" placeholder="https://example.com" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-[#E53935] focus:outline-none transition">
+                </div>
+
+                <!-- Rich Formatting Toolbar -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Details & Description (Rich Text Editor)</label>
+                    
+                    <!-- Toolbar -->
+                    <div class="flex flex-wrap gap-1 bg-gray-100 p-2 rounded-t-xl border-2 border-b-0 border-gray-200 text-gray-700">
+                        <button type="button" onclick="formatText('bold')" title="Bold" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-bold"></i></button>
+                        <button type="button" onclick="formatText('italic')" title="Italic" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-italic"></i></button>
+                        <button type="button" onclick="formatText('underline')" title="Underline" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-underline"></i></button>
+                        <div class="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+                        <button type="button" onclick="insertLinkPrompt()" title="Insert Link" class="p-2 hover:bg-white rounded transition text-blue-600"><i class="fa-solid fa-link"></i></button>
+                        <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-list-ul"></i></button>
+                        <button type="button" onclick="formatText('justifyLeft')" title="Align Left" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-align-left"></i></button>
+                        <button type="button" onclick="formatText('justifyCenter')" title="Align Center" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-align-center"></i></button>
+                        <button type="button" onclick="formatText('justifyRight')" title="Align Right" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-align-right"></i></button>
+                        <div class="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+                        <button type="button" onclick="insertImagePrompt()" title="Insert Image" class="p-2 hover:bg-white rounded transition text-emerald-600"><i class="fa-solid fa-image"></i></button>
+                        <button type="button" onclick="insertVideoPrompt()" title="Insert Video" class="p-2 hover:bg-white rounded transition text-purple-600"><i class="fa-solid fa-video"></i></button>
+                        <button type="button" onclick="insertTablePrompt()" title="Insert Table" class="p-2 hover:bg-white rounded transition text-amber-600"><i class="fa-solid fa-table"></i></button>
+                        <button type="button" onclick="insertDivider()" title="Horizontal Divider" class="p-2 hover:bg-white rounded transition"><i class="fa-solid fa-ruler-horizontal"></i></button>
+                        <div class="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+                        <select onchange="applyFontSize(this.value)" class="p-1 text-xs rounded border border-gray-300 bg-white">
+                            <option value="">Size</option>
+                            <option value="3">Normal</option>
+                            <option value="4">Large</option>
+                            <option value="5">X-Large</option>
+                        </select>
+                        <input type="color" onchange="applyColor(this.value)" title="Text Color" class="w-8 h-8 p-0 border-0 rounded cursor-pointer self-center">
+                    </div>
+
+                    <!-- Editable Content Div -->
+                    <div id="editor-textarea" contenteditable="true" class="w-full p-4 min-h-[160px] max-h-[250px] overflow-y-auto border-2 border-gray-200 rounded-b-xl focus:border-[#E53935] focus:outline-none transition bg-white prose"></div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-5 py-2.5 rounded-xl transition">Cancel</button>
+                    <button type="submit" class="bg-[#E53935] hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-lg transition transform hover:scale-105">Save Record</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Link Choice Modal -->
-    <div class="modal-backdrop" id="linkModal">
-        <div class="modal-card" style="width:min(360px, 100%); text-align:center;">
-            <h3 style="margin:0 0 10px; color:var(--accent);">Link Options</h3>
-            <div id="linkPreviewUrl" style="color:#93c5fd; word-break:break-all; margin-bottom:16px;"></div>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <button class="btn btn-primary" id="openLinkAction">Open Link</button>
-                <button class="btn btn-secondary" id="showLinkTextAction">Show Text</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('linkModal').classList.remove('open')">Close</button>
-            </div>
+    <!-- Alert Modal (replacing alert() / confirm()) -->
+    <div id="alert-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4 border-t-8 border-[#E53935]">
+            <div id="alert-icon" class="text-4xl text-[#E53935]"><i class="fa-solid fa-circle-info"></i></div>
+            <h4 id="alert-title" class="text-xl font-bold text-gray-900">Notice</h4>
+            <p id="alert-message" class="text-gray-600 text-sm"></p>
+            <button onclick="closeAlertModal()" class="w-full bg-[#E53935] hover:bg-red-700 text-white font-bold py-2.5 rounded-xl shadow transition">OK</button>
         </div>
     </div>
 
+    <!-- JavaScript Application Logic & IndexedDB -->
     <script>
-        const DB_NAME = 'PawPatrolSuiteV6';
+        // --- IndexedDB Setup ---
+        let db;
+        const DB_NAME = 'PawPatrolDB';
+        const DB_VERSION = 1;
         const STORE_NAME = 'records';
-        let db = null;
 
-        const DEFAULT_DATA = {
-            characters: [
-                { id: 1, name: 'Chase', title: 'Chase — Police & Spy Pup', text: '<p>German Shepherd police pup who leads missions with care and courage.</p>', isFav: true, isPinned: true },
-                { id: 2, name: 'Skye', title: 'Skye — Cockapoo Aviator', text: '<p>Fearless flying pup who pilots her helicopter on sky rescues.</p>', isFav: false, isPinned: false },
-                { id: 3, name: 'Marshall', title: 'Marshall — Fire & Medic Pup', text: '<p>Dalmatian firefighter and paramedic pup always ready to help.</p>', isFav: false, isPinned: false }
-            ],
-            episodes: [
-                { id: 101, name: 'Pups Make a Splash', title: 'Pups Make a Splash', text: '<p>The PAW Patrol helps Cap\'n Turbot in Adventure Bay.</p>', isFav: false, isPinned: false },
-                { id: 102, name: 'Pups Fall Festival', title: 'Pups Fall Festival', text: '<p>The pups pitch in to keep Farmer Yumi\'s festival running smoothly.</p>', isFav: false, isPinned: false }
-            ],
-            channel: [
-                { id: 201, name: 'Nick Jr.', title: 'Nick Jr. Official', text: '<p>Official PAW Patrol channel and clips.</p>', link: 'https://www.youtube.com/@nickjr', isFav: false, isPinned: false }
-            ],
-            places: [
-                { id: 301, name: 'The Lookout', title: 'The Lookout Tower', text: '<p>Main headquarters tower overlooking Adventure Bay.</p>', isFav: false, isPinned: true }
-            ],
-            modules: {
-                quadra: { title: 'Quadra', text: '<p>Quadra workspace module (Quadra.html).</p>' },
-                zenith: { title: 'Zenith', text: '<p>Zenith workspace module (App.html).</p>' },
-                games: { title: 'Games', text: '<p>Games hub module (Epic gamer.html).</p>' },
-                code: { title: 'Code', text: '<p>Code workspace module (Code.html).</p>' }
-            }
-        };
-
-        let store = structuredClone(DEFAULT_DATA);
-        let viewState = { mode: 'home', cat: null, itemId: null, modKey: null, collection: null };
-        let editingCtx = null;
-        let savedRange = null;
-
-        function openDB() {
+        function initDB() {
             return new Promise((resolve, reject) => {
-                const req = indexedDB.open(DB_NAME, 1);
-                req.onupgradeneeded = () => {
-                    const d = req.result;
-                    if (!d.objectStoreNames.contains(STORE_NAME)) {
-                        d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = (event) => {
+                    console.error("IndexedDB error:", event.target.error);
+                    reject(event.target.error);
+                };
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        const store = database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        store.createIndex('category', 'category', { unique: false });
                     }
                 };
-                req.onsuccess = () => { db = req.result; resolve(db); };
-                req.onerror = () => reject(req.error);
             });
         }
 
-        function idbGet(key) {
-            return new Promise((resolve) => {
-                if (!db) return resolve(null);
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const req = tx.objectStore(STORE_NAME).get(key);
-                req.onsuccess = () => resolve(req.result ? req.result.data : null);
-                req.onerror = () => resolve(null);
-            });
-        }
+        // Default initial seed records if database is empty
+        const seedData = [
+            { category: 'characters', name: 'Chase', link: '', text: '<b>Chase</b> is a German Shepherd puppy and the police & spy pup of the Paw Patrol. He is allergic to cats and feathers!' },
+            { category: 'characters', name: 'Marshall', link: '', text: '<b>Marshall</b> is a Dalmatian who acts as the fire-pup and medic. He is famously clumsy and loves making everyone laugh.' },
+            { category: 'characters', name: 'Skye', link: '', text: '<b>Skye</b> is a smart and fearless Cockapoo who serves as the air pup, flying in her pink helicopter.' },
+            { category: 'characters', name: 'Ryder', link: '', text: '<b>Ryder</b> is the 10-year-old human leader, rescuer, and teacher of the Paw Patrol pups.' },
+            { category: 'episodes', name: 'Pups Save a Water Pup', link: '', text: 'Adventure Bay celebrates when a cute sea pup is rescued by the team.' },
+            { category: 'episodes', name: 'Pups Save the Circus', link: '', text: 'Ringmaster Keith and his animals need Ryder and the pups when their train breaks down.' },
+            { category: 'channels', name: 'Nickelodeon Official', link: 'https://www.nick.com', text: 'Official broadcasting home for Paw Patrol worldwide.' },
+            { category: 'channels', name: 'Paw Patrol YouTube Channel', link: 'https://www.youtube.com/@pawpatrol', text: 'Watch clips, songs, and full episodes online.' },
+            { category: 'places', name: 'The Lookout', link: '', text: 'The iconic tall red and white headquarters tower with the slide and pup elevator.' },
+            { category: 'places', name: 'Adventure Bay Beach', link: '', text: 'Sandy beach where Captain Turbot docks his flounder boat and adventures take place.' }
+        ];
 
-        function idbSet(key, data) {
-            return new Promise((resolve) => {
-                if (!db) return resolve();
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                tx.objectStore(STORE_NAME).put({ id: key, data });
-                tx.oncomplete = () => resolve();
-            });
-        }
-
-        async function persist() {
-            await idbSet('mainStore', store);
-            document.getElementById('dbBadge').textContent = 'IndexedDB: Saved';
-        }
-
-        function saveSelection() {
-            const ed = document.getElementById('editBody');
-            const sel = window.getSelection();
-            if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
-                savedRange = sel.getRangeAt(0).cloneRange();
-            }
-        }
-
-        function restoreSelection() {
-            const ed = document.getElementById('editBody');
-            ed.focus();
-            if (savedRange) {
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(savedRange);
-            }
-        }
-
-        function insertNodeAtCursor(html) {
-            restoreSelection();
-            const ed = document.getElementById('editBody');
-            const sel = window.getSelection();
-            if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
-                const range = sel.getRangeAt(0);
-                range.deleteContents();
-                const wrap = document.createElement('div');
-                wrap.innerHTML = html;
-                const frag = document.createDocumentFragment();
-                let last = null;
-                while (wrap.firstChild) {
-                    last = wrap.firstChild;
-                    frag.appendChild(last);
+        async function seedDatabaseIfNeeded() {
+            const records = await getAllRecords();
+            if (records.length === 0) {
+                for (let rec of seedData) {
+                    await addRecordDB(rec);
                 }
-                range.insertNode(frag);
-                if (last) {
-                    const r = document.createRange();
-                    r.setStartAfter(last);
-                    r.collapse(true);
-                    sel.removeAllRanges();
-                    sel.addRange(r);
-                    savedRange = r.cloneRange();
-                }
-            } else {
-                ed.insertAdjacentHTML('beforeend', html);
             }
         }
 
-        function cmd(name, val = null) {
-            restoreSelection();
-            document.execCommand(name, false, val);
-            saveSelection();
-        }
-
-        function insertCustomLink() {
-            saveSelection();
-            const url = prompt('Enter URL:');
-            if (!url) return;
-            const label = prompt('Enter link text:', url) || url;
-            insertNodeAtCursor(`<span class="link-chip" data-href="${url.replace(/"/g, '&quot;')}" onclick="onLinkClick(this.dataset.href)">${label}</span>&nbsp;`);
-        }
-
-        function onLinkClick(href) {
-            document.getElementById('linkPreviewUrl').textContent = href;
-            document.getElementById('openLinkAction').onclick = () => window.open(href, '_blank', 'noopener,noreferrer');
-            document.getElementById('showLinkTextAction').onclick = () => alert(href);
-            document.getElementById('linkModal').classList.add('open');
-        }
-
-        function insertTableBox() {
-            saveSelection();
-            insertNodeAtCursor(`<table style="width:100%;border-collapse:collapse;opacity:1;"><tr><td style="border:1px solid #475569;padding:8px;">Cell 1</td><td style="border:1px solid #475569;padding:8px;">Cell 2</td></tr><tr><td style="border:1px solid #475569;padding:8px;">Cell 3</td><td style="border:1px solid #475569;padding:8px;">Cell 4</td></tr></table><p><br></p>`);
-        }
-
-        function mergeNextCell() {
-            saveSelection();
-            const sel = window.getSelection();
-            const cell = sel && sel.anchorNode ? sel.anchorNode.parentElement?.closest('td, th') : null;
-            if (!cell || !cell.nextElementSibling) return;
-            const next = cell.nextElementSibling;
-            cell.colSpan = (cell.colSpan || 1) + (next.colSpan || 1);
-            cell.innerHTML += ' ' + next.innerHTML;
-            next.remove();
-        }
-
-        function setMediaOpacity() {
-            saveSelection();
-            const op = prompt('Enter opacity between 0.1 and 1.0:', '1.0');
-            if (op === null) return;
-            const val = Math.min(1, Math.max(0.1, parseFloat(op) || 1));
-            const sel = window.getSelection();
-            const target = sel?.anchorNode?.parentElement?.closest('video, img, table, iframe');
-            if (target) target.style.opacity = String(val);
-        }
-
-        function insertImageMedia() {
-            saveSelection();
-            const picker = document.createElement('input');
-            picker.type = 'file';
-            picker.accept = 'image/*';
-            picker.onchange = () => {
-                const file = picker.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => insertNodeAtCursor(`<img src="${reader.result}" alt="${file.name}" style="width:320px;opacity:1;"><p><br></p>`);
-                reader.readAsDataURL(file);
-            };
-            picker.click();
-        }
-
-        function toEmbedUrl(url) {
-            const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-            if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
-            const vm = url.match(/vimeo\.com\/(\d+)/);
-            if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
-            return null;
-        }
-
-        function insertVideoMedia() {
-            saveSelection();
-            const status = document.getElementById('videoStatus');
-            const choice = prompt("Type 'file' to select a video from your device, or paste a video link (MP4/WebM/YouTube):");
-            if (!choice) return;
-
-            if (choice.trim().toLowerCase() === 'file') {
-                const picker = document.createElement('input');
-                picker.type = 'file';
-                picker.accept = 'video/*';
-                picker.onchange = () => {
-                    const file = picker.files[0];
-                    if (!file) return;
-                    status.textContent = `Loading ${file.name}...`;
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const mime = file.type || 'video/mp4';
-                        insertNodeAtCursor(`<video controls preload="metadata" playsinline style="opacity:1;"><source src="${reader.result}" type="${mime}"></video><p><br></p>`);
-                        document.querySelectorAll('#editBody video').forEach(v => v.load());
-                        status.textContent = `Loaded ${file.name}.`;
-                    };
-                    reader.readAsDataURL(file);
-                };
-                picker.click();
-            } else {
-                const raw = choice.trim();
-                const embed = toEmbedUrl(raw);
-                if (embed) {
-                    insertNodeAtCursor(`<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="opacity:1;"></iframe><p><br></p>`);
-                } else {
-                    const mime = raw.toLowerCase().includes('.webm') ? 'video/webm' : 'video/mp4';
-                    insertNodeAtCursor(`<video controls preload="metadata" playsinline style="opacity:1;"><source src="${raw}" type="${mime}"></video><p><br></p>`);
-                    document.querySelectorAll('#editBody video').forEach(v => v.load());
-                }
-                status.textContent = 'Video inserted.';
-            }
-        }
-
-        function setBottomBarVisible(visible) {
-            document.getElementById('bottomBar').classList.toggle('hidden', !visible);
-        }
-
-        function markNavActive(key) {
-            document.querySelectorAll('.bottom-nav-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.nav === key);
+        function getAllRecords() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
             });
+        }
+
+        function addRecordDB(record) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.add(record);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function updateRecordDB(record) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(record);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function deleteRecordDB(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // --- Navigation & UI State ---
+        let currentSection = '';
+        let currentItemId = null;
+
+        function showCustomAlert(title, message) {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-message').innerText = message;
+            document.getElementById('alert-modal').classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alert-modal').classList.add('hidden');
         }
 
         function goHome() {
-            viewState = { mode: 'home' };
-            setBottomBarVisible(true);
-            markNavActive('home');
-            render();
+            currentSection = '';
+            currentItemId = null;
+            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('section-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('fav-pin-view').classList.add('hidden');
+            document.getElementById('bottom-bar').classList.remove('hidden');
         }
 
-        function openSubSection(cat) {
-            viewState = { mode: 'sub', cat };
-            setBottomBarVisible(true);
-            render();
-        }
+        async function loadSection(sectionKey) {
+            currentSection = sectionKey;
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('fav-pin-view').classList.add('hidden');
+            document.getElementById('section-view').classList.remove('hidden');
+            document.getElementById('bottom-bar').classList.add('hidden'); // hide bottom bar in sub-option screen
 
-        function openItemDetail(cat, itemId) {
-            viewState = { mode: 'detail', cat, itemId };
-            setBottomBarVisible(false); // No bottom-bar options on clicked sub-option screen
-            render();
-        }
+            const titles = {
+                'characters': 'List of Characters',
+                'episodes': 'List of Episodes',
+                'channels': 'Channels of Paw Patrol',
+                'places': 'Places and Structures',
+                'edit-list': 'Edit All Records'
+            };
 
-        function openModule(label, modKey) {
-            const key = modKey.replace('.html', '').toLowerCase().replace(/\s+/g, '');
-            const mapKey = key === 'app' ? 'zenith' : key === 'epicgamer' ? 'games' : key;
-            viewState = { mode: 'module', modKey: mapKey, label };
-            setBottomBarVisible(false);
-            markNavActive(mapKey);
-            render();
-        }
+            const subtitles = {
+                'characters': 'All pups, humans, and friends in Adventure Bay',
+                'episodes': 'Complete catalog of Paw Patrol episodes',
+                'channels': 'Broadcasting networks and online channels',
+                'places': 'Landmarks and headquarters in Paw Patrol',
+                'edit-list': 'Click any record to edit or update details'
+            };
 
-        function openCollection(collection) {
-            viewState = { mode: 'collection', collection };
-            setBottomBarVisible(true);
-            markNavActive(collection);
-            render();
-        }
+            document.getElementById('section-title').innerText = titles[sectionKey] || 'Paw Patrol Records';
+            document.getElementById('section-subtitle').innerText = subtitles[sectionKey] || '';
 
-        function hydrateVideos(rootEl) {
-            rootEl.querySelectorAll('video').forEach(v => {
-                v.controls = true;
-                v.preload = 'metadata';
-                v.playsInline = true;
-                v.load();
+            const container = document.getElementById('section-items-container');
+            container.innerHTML = '<div class="col-span-2 text-center py-8 text-gray-500"><i class="fa-solid fa-spinner fa-spin text-2xl"></i><p class="mt-2">Loading records...</p></div>';
+
+            const records = await getAllRecords();
+            const filtered = sectionKey === 'edit-list' ? records : records.filter(r => r.category === sectionKey);
+
+            container.innerHTML = '';
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full bg-white/90 p-8 rounded-2xl text-center shadow">
+                        <p class="text-gray-500 text-lg mb-4">No items found in this section yet.</p>
+                        <button onclick="openGlobalAddModal('${sectionKey === 'edit-list' ? 'characters' : sectionKey}')" class="bg-[#E53935] text-white font-bold px-6 py-2.5 rounded-xl shadow hover:bg-red-700 transition">
+                            <i class="fa-solid fa-plus mr-2"></i> Add First Item
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white/95 hover:bg-white border-2 border-gray-100 hover:border-red-400 p-6 rounded-2xl shadow-lg transition transform hover:-translate-y-1 flex flex-col justify-between space-y-4";
+                
+                const previewText = item.text ? item.text.replace(/<[^>]*>?/gm, '').substring(0, 100) + '...' : 'No description provided.';
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="bg-red-100 text-[#E53935] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">${item.category}</span>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="event.stopPropagation(); toggleFavorite(${item.id})" class="text-yellow-500 hover:text-yellow-600 p-1 text-lg">
+                                    <i class="fa-${item.isFavorite ? 'solid' : 'regular'} fa-star"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); togglePin(${item.id})" class="text-blue-500 hover:text-blue-600 p-1 text-lg">
+                                    <i class="fa-${item.isPinned ? 'solid' : 'regular'} fa-thumbtack"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="text-2xl font-black text-gray-800 cursor-pointer hover:text-[#E53935] transition" onclick="viewDetail(${item.id})">${item.name}</h3>
+                        <p class="text-gray-600 text-sm mt-2 line-clamp-2">${previewText}</p>
+                        ${item.link ? `<a href="${item.link}" target="_blank" onclick="event.stopPropagation()" class="inline-block mt-2 text-blue-600 hover:underline text-sm font-semibold"><i class="fa-solid fa-link mr-1"></i> ${item.link}</a>` : ''}
+                    </div>
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <button onclick="viewDetail(${item.id})" class="bg-[#E53935] hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-sm shadow transition">
+                            <i class="fa-solid fa-eye mr-1"></i> View Details
+                        </button>
+                        <div class="flex space-x-2">
+                            <button onclick="openEditModal(${item.id})" class="bg-amber-500 hover:bg-amber-600 text-white p-2 rounded-xl text-sm transition" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteItem(${item.id})" class="bg-gray-200 hover:bg-red-100 text-gray-700 hover:text-red-600 p-2 rounded-xl text-sm transition" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
             });
         }
 
-        function render() {
-            const vp = document.getElementById('viewport');
+        async function viewDetail(id) {
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(id);
 
-            if (viewState.mode === 'home') {
-                vp.innerHTML = `
-                    <div class="panel">
-                        <h1 class="page-h1">PAW Patrol</h1>
-                        <div class="btn-grid">
-                            <button class="big-option-btn" onclick="openSubSection('characters')"><span>List of Characters</span><span>›</span></button>
-                            <button class="big-option-btn" onclick="openSubSection('episodes')"><span>List of Episodes</span><span>›</span></button>
-                            <button class="big-option-btn" onclick="openSubSection('channel')"><span>Channel</span><span>›</span></button>
-                            <button class="big-option-btn" onclick="openSubSection('places')"><span>Places and Structures</span><span>›</span></button>
-                        </div>
-                        <div class="toolbar-row">
-                            <button class="btn btn-primary" onclick="openAdd('characters')">Add</button>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
+            request.onsuccess = () => {
+                const item = request.result;
+                if (!item) return;
+                currentItemId = item.id;
 
-            if (viewState.mode === 'sub') {
-                const titles = {
-                    characters: 'List of Characters',
-                    episodes: 'List of Episodes',
-                    channel: 'Channel',
-                    places: 'Places and Structures'
-                };
-                const items = store[viewState.cat] || [];
-                vp.innerHTML = `
-                    <div class="panel">
-                        <h1 class="page-h1">${titles[viewState.cat]}</h1>
-                        <div class="btn-grid">
-                            ${items.map(it => `<button class="big-option-btn" onclick="openItemDetail('${viewState.cat}', ${it.id})"><span>${it.name}</span><span>›</span></button>`).join('')}
-                        </div>
-                        <div class="toolbar-row">
-                            <button class="btn btn-secondary" onclick="goHome()">Back</button>
-                            <button class="btn btn-primary" onclick="openAdd('${viewState.cat}')">Add</button>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
+                document.getElementById('section-view').classList.add('hidden');
+                document.getElementById('fav-pin-view').classList.add('hidden');
+                document.getElementById('detail-view').classList.remove('hidden');
+                document.getElementById('bottom-bar').classList.add('hidden');
 
-            if (viewState.mode === 'detail') {
-                const item = (store[viewState.cat] || []).find(x => x.id === viewState.itemId);
-                if (!item) return goHome();
-                vp.innerHTML = `
-                    <div class="panel">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
-                            <button class="btn btn-secondary" onclick="openSubSection('${viewState.cat}')">Back</button>
-                            <div style="display:flex; gap:8px;">
-                                <button class="btn btn-secondary" title="Favorite" onclick="toggleFlag('${viewState.cat}', ${item.id}, 'isFav')">${item.isFav ? '⭐' : '☆'}</button>
-                                <button class="btn btn-secondary" title="Pin" onclick="toggleFlag('${viewState.cat}', ${item.id}, 'isPinned')">${item.isPinned ? '📌' : '📍'}</button>
-                            </div>
-                        </div>
-                        <h1 class="page-h1">${item.title || item.name}</h1>
-                        ${item.link ? `<span class="link-chip" onclick="onLinkClick('${item.link.replace(/"/g, '&quot;')}')">${item.link}</span>` : ''}
-                        <div class="detail-body">${item.text || ''}</div>
-                        <div class="toolbar-row">
-                            <button class="btn btn-primary" onclick="openEdit('${viewState.cat}', ${item.id})">Edit</button>
-                            <button class="btn btn-danger" onclick="removeItem('${viewState.cat}', ${item.id})">Delete</button>
-                        </div>
-                    </div>
-                `;
-                hydrateVideos(vp);
-                return;
-            }
+                document.getElementById('detail-title').innerText = item.name;
+                document.getElementById('detail-category-badge').innerText = item.category;
+                document.getElementById('detail-body-content').innerHTML = item.text || '<p class="text-gray-400 italic">No details added yet.</p>';
 
-            if (viewState.mode === 'module') {
-                const mod = store.modules[viewState.modKey] || { title: viewState.label, text: '' };
-                vp.innerHTML = `
-                    <div class="panel">
-                        <div style="margin-bottom:8px;">
-                            <button class="btn btn-secondary" onclick="goHome()">Back</button>
-                        </div>
-                        <h1 class="page-h1">${mod.title}</h1>
-                        <div class="detail-body">${mod.text || ''}</div>
-                        <div class="toolbar-row">
-                            <button class="btn btn-primary" onclick="openModuleEdit('${viewState.modKey}')">Edit</button>
-                        </div>
-                    </div>
-                `;
-                hydrateVideos(vp);
-                return;
-            }
+                const linkContainer = document.getElementById('detail-link-container');
+                if (item.link) {
+                    linkContainer.classList.remove('hidden');
+                    document.getElementById('detail-external-link').href = item.link;
+                    document.getElementById('detail-link-text').innerText = `Open Link: ${item.name}`;
+                } else {
+                    linkContainer.classList.add('hidden');
+                }
 
-            if (viewState.mode === 'collection') {
-                const isFav = viewState.collection === 'favorites';
-                const matches = [];
-                ['characters', 'episodes', 'channel', 'places'].forEach(cat => {
-                    (store[cat] || []).forEach(it => {
-                        if ((isFav && it.isFav) || (!isFav && it.isPinned)) matches.push({ cat, it });
-                    });
-                });
-                vp.innerHTML = `
-                    <div class="panel">
-                        <h1 class="page-h1">${isFav ? '⭐ Favorites' : '📌 Pinned'}</h1>
-                        <div class="btn-grid">
-                            ${matches.length
-                                ? matches.map(m => `<button class="big-option-btn" onclick="openItemDetail('${m.cat}', ${m.it.id})"><span>${m.it.name}</span><span>›</span></button>`).join('')
-                                : '<p style="color:var(--muted);">No items saved here yet.</p>'}
-                        </div>
-                        <div class="toolbar-row">
-                            <button class="btn btn-secondary" onclick="goHome()">Back</button>
-                        </div>
-                    </div>
-                `;
+                updateDetailFavPinButtons(item);
+            };
+        }
+
+        function updateDetailFavPinButtons(item) {
+            const favBtn = document.getElementById('detail-fav-btn');
+            const pinBtn = document.getElementById('detail-pin-btn');
+
+            favBtn.innerHTML = `<i class="fa-${item.isFavorite ? 'solid' : 'regular'} fa-star"></i>`;
+            favBtn.className = `w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow ${item.isFavorite ? 'bg-yellow-500 text-white' : 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'}`;
+
+            pinBtn.innerHTML = `<i class="fa-${item.isPinned ? 'solid' : 'regular'} fa-thumbtack"></i>`;
+            pinBtn.className = `w-10 h-10 rounded-full flex items-center justify-center text-lg transition shadow ${item.isPinned ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'}`;
+        }
+
+        function goBackToSection() {
+            if (currentSection) {
+                loadSection(currentSection);
+            } else {
+                goHome();
             }
         }
 
-        function openAdd(defaultCat = 'characters') {
-            editingCtx = { mode: 'add' };
-            document.getElementById('modalTitle').textContent = 'Add';
-            document.getElementById('catField').style.display = 'block';
-            document.getElementById('nameField').style.display = 'block';
-            document.getElementById('headingField').style.display = 'block';
-            document.getElementById('editCat').value = defaultCat;
-            document.getElementById('editName').value = '';
-            document.getElementById('editHeading').value = '';
-            document.getElementById('editUrl').value = '';
-            document.getElementById('editBody').innerHTML = '';
-            syncUrlVisibility();
-            document.getElementById('editModal').classList.add('open');
+        // --- Modal & Add / Edit Functions ---
+        function openGlobalAddModal(defaultCategory = 'characters') {
+            document.getElementById('item-id').value = '';
+            document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-circle-plus text-[#E53935]"></i> <span>Add New Record</span>';
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-link').value = '';
+            document.getElementById('editor-textarea').innerHTML = '';
+            document.getElementById('item-category').value = defaultCategory;
+            
+            checkCategoryLinkField(defaultCategory);
+            document.getElementById('item-modal').classList.remove('hidden');
         }
 
-        function openEdit(cat, itemId) {
-            const item = (store[cat] || []).find(x => x.id === itemId);
-            if (!item) return;
-            editingCtx = { mode: 'editItem', cat, itemId };
-            document.getElementById('modalTitle').textContent = 'Edit';
-            document.getElementById('catField').style.display = 'none';
-            document.getElementById('nameField').style.display = 'block';
-            document.getElementById('headingField').style.display = 'block';
-            document.getElementById('editName').value = item.name || '';
-            document.getElementById('editHeading').value = item.title || '';
-            document.getElementById('editUrl').value = item.link || '';
-            document.getElementById('editBody').innerHTML = item.text || '';
-            document.getElementById('urlField').style.display = cat === 'channel' ? 'block' : 'none';
-            hydrateVideos(document.getElementById('editBody'));
-            document.getElementById('editModal').classList.add('open');
+        async function openEditModal(id) {
+            const transaction = db.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const item = request.result;
+                if (!item) return;
+
+                document.getElementById('item-id').value = item.id;
+                document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-pen text-[#E53935]"></i> <span>Edit Record</span>';
+                document.getElementById('item-name').value = item.name;
+                document.getElementById('item-link').value = item.link || '';
+                document.getElementById('editor-textarea').innerHTML = item.text || '';
+                document.getElementById('item-category').value = item.category;
+
+                checkCategoryLinkField(item.category);
+                document.getElementById('item-modal').classList.remove('hidden');
+            };
         }
 
-        function openModuleEdit(modKey) {
-            const mod = store.modules[modKey] || { title: modKey, text: '' };
-            editingCtx = { mode: 'editModule', modKey };
-            document.getElementById('modalTitle').textContent = 'Edit';
-            document.getElementById('catField').style.display = 'none';
-            document.getElementById('nameField').style.display = 'none';
-            document.getElementById('headingField').style.display = 'block';
-            document.getElementById('urlField').style.display = 'none';
-            document.getElementById('editHeading').value = mod.title || '';
-            document.getElementById('editBody').innerHTML = mod.text || '';
-            hydrateVideos(document.getElementById('editBody'));
-            document.getElementById('editModal').classList.add('open');
+        function openEditCurrentItem() {
+            if (currentItemId) {
+                openEditModal(currentItemId);
+            }
         }
-
-        function syncUrlVisibility() {
-            const cat = document.getElementById('editCat').value;
-            document.getElementById('urlField').style.display = cat === 'channel' ? 'block' : 'none';
-        }
-
-        document.getElementById('editCat').addEventListener('change', syncUrlVisibility);
-        document.getElementById('editBody').addEventListener('keyup', saveSelection);
-        document.getElementById('editBody').addEventListener('mouseup', saveSelection);
 
         function closeModal() {
-            document.getElementById('editModal').classList.remove('open');
+            document.getElementById('item-modal').classList.add('hidden');
         }
 
-        async function saveModal() {
-            if (!editingCtx) return;
-            const heading = document.getElementById('editHeading').value.trim();
-            const bodyHtml = document.getElementById('editBody').innerHTML;
+        document.getElementById('item-category').addEventListener('change', (e) => {
+            checkCategoryLinkField(e.target.value);
+        });
 
-            if (editingCtx.mode === 'add') {
-                const cat = document.getElementById('editCat').value;
-                const name = document.getElementById('editName').value.trim() || heading || 'Untitled';
-                const link = document.getElementById('editUrl').value.trim();
-                const newItem = {
-                    id: Date.now(),
-                    name,
-                    title: heading || name,
-                    text: bodyHtml,
-                    link,
-                    isFav: false,
-                    isPinned: false
-                };
-                store[cat].push(newItem);
-                await persist();
-                closeModal();
-                openItemDetail(cat, newItem.id);
+        function checkCategoryLinkField(cat) {
+            const linkGroup = document.getElementById('channel-link-group');
+            if (cat === 'channels') {
+                linkGroup.classList.remove('hidden');
+            } else {
+                linkGroup.classList.add('hidden');
+            }
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const idVal = document.getElementById('item-id').value;
+            const category = document.getElementById('item-category').value;
+            const name = document.getElementById('item-name').value;
+            const link = document.getElementById('item-link').value;
+            const text = document.getElementById('editor-textarea').innerHTML;
+
+            const record = {
+                category,
+                name,
+                link,
+                text,
+                isFavorite: false,
+                isPinned: false
+            };
+
+            if (idVal) {
+                record.id = Number(idVal);
+                // preserve existing favorite/pin status if updating
+                const existingRecords = await getAllRecords();
+                const existing = existingRecords.find(r => r.id === record.id);
+                if (existing) {
+                    record.isFavorite = existing.isFavorite || false;
+                    record.isPinned = existing.isPinned || false;
+                }
+                await updateRecordDB(record);
+            } else {
+                await addRecordDB(record);
+            }
+
+            closeModal();
+            showCustomAlert('Success', 'Record saved successfully!');
+
+            if (currentItemId && idVal == currentItemId) {
+                viewDetail(currentItemId);
+            } else if (currentSection) {
+                loadSection(currentSection);
+            } else {
+                loadSection(category);
+            }
+        }
+
+        async function deleteItem(id) {
+            await deleteRecordDB(id);
+            showCustomAlert('Deleted', 'Record removed successfully.');
+            if (currentSection) {
+                loadSection(currentSection);
+            } else {
+                goHome();
+            }
+        }
+
+        // --- Favorites & Pins ---
+        async function toggleFavorite(id) {
+            const records = await getAllRecords();
+            const item = records.find(r => r.id === id);
+            if (item) {
+                item.isFavorite = !item.isFavorite;
+                await updateRecordDB(item);
+                if (currentSection) loadSection(currentSection);
+                if (currentItemId === id) updateDetailFavPinButtons(item);
+            }
+        }
+
+        async function togglePin(id) {
+            const records = await getAllRecords();
+            const item = records.find(r => r.id === id);
+            if (item) {
+                item.isPinned = !item.isPinned;
+                await updateRecordDB(item);
+                if (currentSection) loadSection(currentSection);
+                if (currentItemId === id) updateDetailFavPinButtons(item);
+            }
+        }
+
+        async function toggleCurrentFavorite() {
+            if (currentItemId) await toggleFavorite(currentItemId);
+        }
+
+        async function toggleCurrentPin() {
+            if (currentItemId) await togglePin(currentItemId);
+        }
+
+        async function loadFavoritesView() {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('section-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('fav-pin-view').classList.remove('hidden');
+            document.getElementById('bottom-bar').classList.remove('hidden');
+
+            document.getElementById('fav-pin-title').innerText = 'Your Favorites';
+            const records = await getAllRecords();
+            const favs = records.filter(r => r.isFavorite);
+            renderFavPinContainer(favs, 'favorite');
+        }
+
+        async function loadPinsView() {
+            document.getElementById('home-view').classList.add('hidden');
+            document.getElementById('section-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('fav-pin-view').classList.remove('hidden');
+            document.getElementById('bottom-bar').classList.remove('hidden');
+
+            document.getElementById('fav-pin-title').innerText = 'Your Pinned Items';
+            const records = await getAllRecords();
+            const pins = records.filter(r => r.isPinned);
+            renderFavPinContainer(pins, 'pinned');
+        }
+
+        function renderFavPinContainer(items, type) {
+            const container = document.getElementById('fav-pin-container');
+            container.innerHTML = '';
+            if (items.length === 0) {
+                container.innerHTML = `<div class="col-span-full bg-white/90 p-8 rounded-2xl text-center shadow text-gray-500">No ${type} items found.</div>`;
                 return;
             }
 
-            if (editingCtx.mode === 'editItem') {
-                const item = (store[editingCtx.cat] || []).find(x => x.id === editingCtx.itemId);
-                if (item) {
-                    const name = document.getElementById('editName').value.trim();
-                    if (name) item.name = name;
-                    item.title = heading || item.name;
-                    item.text = bodyHtml;
-                    if (editingCtx.cat === 'channel') {
-                        item.link = document.getElementById('editUrl').value.trim();
-                    }
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white/95 p-6 rounded-2xl shadow-lg border-2 border-gray-100 flex flex-col justify-between space-y-3";
+                card.innerHTML = `
+                    <div>
+                        <span class="bg-red-100 text-[#E53935] text-xs font-bold px-3 py-1 rounded-full uppercase">${item.category}</span>
+                        <h3 class="text-2xl font-black text-gray-800 mt-2">${item.name}</h3>
+                        <p class="text-gray-600 text-sm mt-1 line-clamp-2">${item.text ? item.text.replace(/<[^>]*>?/gm, '') : ''}</p>
+                    </div>
+                    <button onclick="viewDetail(${item.id})" class="bg-[#E53935] text-white font-bold px-4 py-2 rounded-xl text-sm self-start shadow">
+                        <i class="fa-solid fa-eye mr-1"></i> View
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Bottom Bar External Apps Launcher ---
+        function openExternalApp(appName, displayName) {
+            showCustomAlert(displayName, `Launching ${displayName} (${appName})...`);
+        }
+
+        // --- Rich Text Formatting Toolbar Handlers ---
+        function formatText(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor-textarea').focus();
+        }
+
+        function applyFontSize(size) {
+            if (size) formatText('fontSize', size);
+        }
+
+        function applyColor(color) {
+            if (color) formatText('foreColor', color);
+        }
+
+        function insertDivider() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            const hr = document.createElement('hr');
+            hr.className = "my-4 border-t-2 border-red-500";
+            const range = selection.getRangeAt(0);
+            range.insertNode(hr);
+            range.collapse(false);
+        }
+
+        function insertLinkPrompt() {
+            const url = prompt('Enter the link URL (e.g., https://example.com):');
+            if (!url) return;
+            const text = prompt('Enter the display text for the link:', url);
+            const html = `<a href="${url}" target="_blank" class="text-blue-600 underline font-semibold">${text || url}</a>`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function insertImagePrompt() {
+            const src = prompt('Enter Image URL or file path:');
+            if (!src) return;
+            const html = `<img src="${src}" alt="Paw Patrol Image" class="my-4 rounded-xl max-h-64 object-cover shadow-md" onerror="this.src='https://placehold.co/400x250/E53935/ffffff?text=Image+Not+Found'">`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function insertVideoPrompt() {
+            const src = prompt('Enter Video embed URL or file link:');
+            if (!src) return;
+            const html = `<div class="my-4 aspect-video bg-black rounded-xl overflow-hidden shadow-md"><iframe src="${src}" class="w-full h-full" frameborder="0" allowfullscreen></iframe></div>`;
+            document.execCommand('insertHTML', false, html);
+        }
+
+        function insertTablePrompt() {
+            const rows = prompt('Enter number of rows:', '2');
+            const cols = prompt('Enter number of columns:', '2');
+            if (!rows || !cols) return;
+
+            let tableHtml = '<table class="w-full border-collapse my-4 border border-gray-300 rounded-lg overflow-hidden shadow">';
+            for (let i = 0; i < Number(rows); i++) {
+                tableHtml += '<tr>';
+                for (let j = 0; j < Number(cols); j++) {
+                    tableHtml += '<td class="border border-gray-300 p-2 text-center bg-gray-50">Cell</td>';
                 }
-                await persist();
-                closeModal();
-                openItemDetail(editingCtx.cat, editingCtx.itemId);
-                return;
+                tableHtml += '</tr>';
             }
-
-            if (editingCtx.mode === 'editModule') {
-                const mod = store.modules[editingCtx.modKey];
-                if (mod) {
-                    if (heading) mod.title = heading;
-                    mod.text = bodyHtml;
-                }
-                await persist();
-                closeModal();
-                render();
-            }
+            tableHtml += '</table>';
+            document.execCommand('insertHTML', false, tableHtml);
         }
 
-        async function removeItem(cat, itemId) {
-            store[cat] = (store[cat] || []).filter(x => x.id !== itemId);
-            await persist();
-            openSubSection(cat);
-        }
-
-        async function toggleFlag(cat, itemId, prop) {
-            const item = (store[cat] || []).find(x => x.id === itemId);
-            if (!item) return;
-            item[prop] = !item[prop];
-            await persist();
-            render();
-        }
-
-        (async function boot() {
-            await openDB();
-            const saved = await idbGet('mainStore');
-            if (saved) {
-                store = {
-                    characters: saved.characters || store.characters,
-                    episodes: saved.episodes || store.episodes,
-                    channel: saved.channel || store.channel,
-                    places: saved.places || store.places,
-                    modules: { ...store.modules, ...(saved.modules || {}) }
-                };
+        // --- Initialization ---
+        window.onload = async () => {
+            try {
+                await initDB();
+                await seedDatabaseIfNeeded();
+                console.log("Paw Patrol IndexedDB initialized successfully.");
+            } catch (err) {
+                console.error("Initialization failed:", err);
             }
-            goHome();
-        })();
+        };
     </script>
 </body>
 </html>
