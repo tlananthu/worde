@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Builds - Minecraft Mega Projects & Redstone Machines</title>
+    <style>
+        :root {
+            --bg-dark: #090e1a;
+            --card-bg: #131c31;
+            --card-border: #253657;
+            --mega-gold: #facc15;
+            --redstone-red: #f43f5e;
+            --farm-green: #38e54d;
+            --paw-blue: #38bdf8;
+            --structure-purple: #c084fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #182747 0%, var(--bg-dark) 80%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 36px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid var(--mega-gold);
+            border-radius: 18px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(250, 204, 21, 0.18);
+            margin-bottom: 28px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(250, 204, 21, 0.15);
+            color: var(--mega-gold);
+            border: 1px solid var(--mega-gold);
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            text-shadow: 0 3px 12px rgba(250, 204, 21, 0.35);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .legend-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .legend-pill {
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+        }
+
+        .builds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 16px;
+        }
+
+        .build-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .build-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--mega-gold);
+        }
+
+        .build-num {
+            background: linear-gradient(135deg, var(--mega-gold), #d97706);
+            color: #1c1917;
+            font-weight: 900;
+            font-size: 1rem;
+            min-width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .build-card.redstone .build-num {
+            background: linear-gradient(135deg, var(--redstone-red), #be123c);
+            color: #ffffff;
+        }
+
+        .build-card.farm .build-num {
+            background: linear-gradient(135deg, var(--farm-green), #16a34a);
+            color: #052e16;
+        }
+
+        .build-card.paw .build-num {
+            background: linear-gradient(135deg, var(--paw-blue), #0284c7);
+            color: #061326;
+        }
+
+        .build-card.structure .build-num {
+            background: linear-gradient(135deg, var(--structure-purple), #7e22ce);
+            color: #ffffff;
+        }
+
+        .build-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .build-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .cat-tag {
+            display: inline-block;
+            align-self: flex-start;
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 2px 10px;
+            border-radius: 6px;
+            background: rgba(250, 204, 21, 0.14);
+            color: #fef08a;
+            border: 1px solid rgba(250, 204, 21, 0.35);
+        }
+
+        .build-card.redstone .cat-tag {
+            background: rgba(244, 63, 94, 0.14);
+            color: #fda4af;
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        .build-card.farm .cat-tag {
+            background: rgba(56, 229, 77, 0.14);
+            color: var(--farm-green);
+            border-color: rgba(56, 229, 77, 0.35);
+        }
+
+        .build-card.paw .cat-tag {
+            background: rgba(56, 189, 248, 0.14);
+            color: var(--paw-blue);
+            border-color: rgba(56, 189, 248, 0.35);
+        }
+
+        .build-card.structure .cat-tag {
+            background: rgba(192, 132, 252, 0.14);
+            color: #e9d5ff;
+            border-color: rgba(192, 132, 252, 0.35);
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero-header">
+            <div class="badge">Minecraft Construction Checklist</div>
+            <h1>Builds</h1>
+            <p class="subtitle">Mega Builds • Redstone Automation • Farms &amp; Upgraded Structures</p>
+        </div>
+
+        <div class="legend-bar">
+            <span class="legend-pill" style="color: #fef08a; border-color: var(--mega-gold);">🏛️ Mega Build</span>
+            <span class="legend-pill" style="color: var(--paw-blue); border-color: var(--paw-blue);">🐾 PAW Patrol Build</span>
+            <span class="legend-pill" style="color: #fda4af; border-color: var(--redstone-red);">⚙️ Redstone &amp; Automation</span>
+            <span class="legend-pill" style="color: var(--farm-green); border-color: var(--farm-green);">⚡ Farm &amp; Utility</span>
+            <span class="legend-pill" style="color: #e9d5ff; border-color: var(--structure-purple);">🏰 World Structures</span>
+        </div>
+
+        <div class="builds-grid">
+            <div class="build-card">
+                <div class="build-num">1</div>
+                <div class="build-content">
+                    <div class="build-title">Solar system</div>
+                    <span class="cat-tag">🪐 Mega Build</span>
+                </div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-num">2</div>
+                <div class="build-content">
+                    <div class="build-title">Castle</div>
+                    <span class="cat-tag">🏰 Mega Build</span>
+                </div>
+            </div>
+
+            <div class="build-card paw">
+                <div class="build-num">3</div>
+                <div class="build-content">
+                    <div class="build-title">Lookout, Pups, Vehicles, Ryder, etc….</div>
+                    <span class="cat-tag">🐾 PAW Patrol Build</span>
+                </div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-num">4</div>
+                <div class="build-content">
+                    <div class="build-title">Eiffel tower</div>
+                    <span class="cat-tag">🗼 Landmark Build</span>
+                </div>
+            </div>
+
+            <div class="build-card farm">
+                <div class="build-num">5</div>
+                <div class="build-content">
+                    <div class="build-title">Bartering area</div>
+                    <span class="cat-tag">🐷 Piglin Trading</span>
+                </div>
+            </div>
+
+            <div class="build-card">
+                <div class="build-num">6</div>
+                <div class="build-content">
+                    <div class="build-title">Floating base</div>
+                    <span class="cat-tag">☁️ Sky Base</span>
+                </div>
+            </div>
+
+            <div class="build-card redstone">
+                <div class="build-num">7</div>
+                <div class="build-content">
+                    <div class="build-title">Auto crafter</div>
+                    <span class="cat-tag">⚙️ Redstone Automation</span>
+                </div>
+            </div>
+
+            <div class="build-card redstone">
+                <div class="build-num">8</div>
+                <div class="build-content">
+                    <div class="build-title">Auto brewer</div>
+                    <span class="cat-tag">🧪 Redstone Automation</span>
+                </div>
+            </div>
+
+            <div class="build-card redstone">
+                <div class="build-num">9</div>
+                <div class="build-content">
+                    <div class="build-title">Auto smelter</div>
+                    <span class="cat-tag">🔥 Redstone Automation</span>
+                </div>
+            </div>
+
+            <div class="build-card farm">
+                <div class="build-num">10</div>
+                <div class="build-content">
+                    <div class="build-title">Sand duper</div>
+                    <span class="cat-tag">⏳ Resource Farm</span>
+                </div>
+            </div>
+
+            <div class="build-card farm">
+                <div class="build-num">11</div>
+                <div class="build-content">
+                    <div class="build-title">Experience farm</div>
+                    <span class="cat-tag">✨ XP Farm</span>
+                </div>
+            </div>
+
+            <div class="build-card structure">
+                <div class="build-num">12</div>
+                <div class="build-content">
+                    <div class="build-title">Build every structure upgraded</div>
+                    <span class="cat-tag">🏛️ World Structures</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">Minecraft Builds Master List — 12 Planned Projects</div>
+    </div>
+</body>
+</html>

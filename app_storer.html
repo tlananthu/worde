@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Storer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-image: url("https://i.ytimg.com/vi/OF-PyvWfgE8/maxresdefault.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #ffffff;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.72);
+            z-index: -1;
+        }
+
+        .launcher-card {
+            width: 100%;
+            max-width: 720px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 20px;
+            padding: 36px 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            color: #f8fafc;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            margin-bottom: 28px;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .app-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 18px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-decoration: none;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .app-btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .app-btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-gamer { background: linear-gradient(135deg, #ec4899, #8b5cf6); }
+        .btn-zenith { background: linear-gradient(135deg, #0ea5e9, #2563eb); }
+        .btn-paw { background: linear-gradient(135deg, #ef4444, #f59e0b); }
+        .btn-quadra { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+        .btn-minetube { background: linear-gradient(135deg, #22c55e, #15803d); }
+    </style>
+</head>
+<body>
+    <div class="launcher-card">
+        <h1>App Storer</h1>
+        <p class="subtitle">Select an application to launch</p>
+
+        <div class="apps-grid">
+            <a class="app-btn btn-gamer" href="Epic Gamer.html">🎮 Epic gamer</a>
+            <a class="app-btn btn-zenith" href="App.html">✨ Zenith</a>
+            <a class="app-btn btn-paw" href="Paw.html">🐾 Paw Patrol Wiki</a>
+            <a class="app-btn btn-quadra" href="Quadra.html">💠 Quadra</a>
+            <a class="app-btn btn-minetube" href="minecraft_related_books.html">🟩 Mine tube</a>
+        </div>
+    </div>
+</body>
+</html>

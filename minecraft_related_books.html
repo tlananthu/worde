@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft related books</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-elevated: #0b1220;
+            --accent: #22c55e;
+            --accent-hover: #16a34a;
+            --blue: #38bdf8;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            background-image: url("");
+            background-size: cover;
+            background-position: center;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 2px solid var(--accent);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 6px;
+            padding: 8px 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: transform 0.1s, opacity 0.2s, background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-green { background: var(--accent); color: #052e16; }
+        .btn-green:hover { background: var(--accent-hover); color: #fff; }
+        .btn-blue { background: var(--blue); color: #082f49; }
+        .btn-dark { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-dark:hover { border-color: var(--accent); }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        .screen {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        #homeScreen {
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .home-box {
+            flex: 1;
+            height: 100%;
+            background: rgba(30, 41, 59, 0.92);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .home-box:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            background: rgba(30, 41, 59, 0.98);
+        }
+
+        .home-box-img {
+            width: 180px;
+            height: 180px;
+            border-radius: 14px;
+            background-color: var(--bg-elevated);
+            background-image: url("");
+            background-size: cover;
+            background-position: center;
+            border: 2px dashed var(--text-muted);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .home-box-title {
+            font-size: 2.4rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--text-main);
+        }
+
+        #videosScreen {
+            flex-direction: column;
+        }
+
+        .videos-workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .page-a-panel {
+            flex: 1;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-heading {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .media-btn-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .media-picker-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 14px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: border-color 0.2s;
+        }
+        .media-picker-btn:hover { border-color: var(--accent); }
+        .media-picker-btn.loaded { border-color: var(--accent); background: rgba(34, 197, 94, 0.12); }
+
+        .preview-stage {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .preview-stage video {
+            width: 100%;
+            max-height: 240px;
+            border-radius: 8px;
+            background: #000;
+        }
+
+        .cover-preview-thumb {
+            width: 120px;
+            height: 75px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            display: none;
+        }
+
+        .name-textarea {
+            width: 100%;
+            min-height: 75px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            padding: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .page-b-panel {
+            flex: 1;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .page-b-panel.visible {
+            display: flex;
+        }
+
+        .video-item-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .video-item-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .video-cover-box {
+            width: 96px;
+            height: 60px;
+            border-radius: 6px;
+            background: #000;
+            object-fit: cover;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .video-item-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .video-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .channel-bar {
+            background: rgba(15, 23, 42, 0.96);
+            border-top: 1px solid var(--border);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .channel-chip {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            flex-shrink: 0;
+            background-color: var(--bg-surface);
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--text-main);
+            transition: transform 0.15s, border-color 0.2s;
+        }
+
+        .channel-chip.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+            transform: scale(1.06);
+        }
+
+        .channel-remove-x {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--danger);
+            color: #fff;
+            border: 1px solid #0f172a;
+            font-size: 11px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .add-channel-plus {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px dashed var(--accent);
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent);
+            font-size: 1.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .add-channel-plus:hover {
+            background: var(--accent);
+            color: #052e16;
+        }
+
+        #storyScreen {
+            flex-direction: column;
+            padding: 16px;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .zenith-container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .zenith-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .heading-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            background: var(--bg-elevated);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .heading-input {
+            flex: 1;
+            min-width: 220px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .h1-live-preview {
+            text-align: center;
+            margin: 6px 0;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            min-height: 48px;
+        }
+
+        .mini-zenith-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            background: var(--bg-elevated);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .mini-zenith-toolbar button,
+        .mini-zenith-toolbar select,
+        .mini-zenith-toolbar input[type="color"] {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 5px 9px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .mini-zenith-toolbar button:hover { border-color: var(--accent); }
+
+        .mini-zenith-editor {
+            min-height: 180px;
+            max-height: 320px;
+            overflow-y: auto;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            line-height: 1.6;
+            outline: none;
+            font-size: 1.05rem;
+        }
+        .mini-zenith-editor img,
+        .mini-zenith-editor video {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .story-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        .story-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .story-card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        .fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            padding: 24px;
+            overflow-y: auto;
+        }
+        .fullscreen-overlay.open {
+            display: flex;
+        }
+
+        .overlay-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+        }
+
+        .close-cross-btn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 90;
+            padding: 16px;
+        }
+        .modal-backdrop.open {
+            display: flex;
+        }
+        .modal-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 22px;
+            width: min(460px, 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-box input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span>🟩 Minecraft related books</span>
+        </div>
+        <div class="nav-controls">
+            <span id="storageIndicator" style="font-size:0.8rem; color:var(--text-muted);">IndexedDB: Synced</span>
+            <button class="btn btn-dark" onclick="showScreen('home')">🏠 Home</button>
+            <button class="btn btn-dark" onclick="showScreen('videos')">🎬 Videos</button>
+            <button class="btn btn-dark" onclick="showScreen('story')">📖 Story</button>
+        </div>
+    </header>
+
+    <section id="homeScreen" class="screen active">
+        <div class="home-box" onclick="showScreen('videos')">
+            <div class="home-box-img">url("")</div>
+            <div class="home-box-title">Videos</div>
+        </div>
+
+        <div class="home-box" onclick="showScreen('story')">
+            <div class="home-box-img">url("")</div>
+            <div class="home-box-title">Story</div>
+        </div>
+    </section>
+
+    <section id="videosScreen" class="screen">
+        <div class="videos-workspace">
+            <div class="page-a-panel" id="pageAPanel">
+                <h2 class="panel-heading">
+                    <span id="pageAHeading">Page A — Video Studio (<span id="activeChannelTitle">Default Channel</span>)</span>
+                    <button class="btn btn-dark" style="padding:4px 10px; font-size:0.8rem;" onclick="resetVideoForm()">+ Clear Form</button>
+                </h2>
+
+                <div class="media-btn-row">
+                    <button type="button" class="media-picker-btn" id="btnPickVideo" onclick="pickVideoFile()">
+                        <span>🎥 Video</span>
+                        <small id="videoFileLabel" style="color:var(--text-muted);">Select Video</small>
+                    </button>
+                    <button type="button" class="media-picker-btn" id="btnPickAudio" onclick="pickAudioFile()">
+                        <span>🎵 Audio (BG)</span>
+                        <small id="audioFileLabel" style="color:var(--text-muted);">Background Audio</small>
+                    </button>
+                    <button type="button" class="media-picker-btn" id="btnPickCover" onclick="pickCoverFile()">
+                        <span>🖼️ Cover</span>
+                        <small id="coverFileLabel" style="color:var(--text-muted);">Select Cover</small>
+                    </button>
+                </div>
+
+                <div class="preview-stage">
+                    <video id="studioVideoPlayer" controls playsinline></video>
+                    <audio id="studioAudioPlayer" loop></audio>
+                    <div style="display:flex; align-items:center; gap:12px; width:100%; justify-content:space-between;">
+                        <span id="progressTrackerText" style="font-size:0.82rem; color:var(--text-muted);">Video Time: 0.0s</span>
+                        <img id="studioCoverPreview" class="cover-preview-thumb" alt="Cover Preview">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--text-muted);">Name (Textarea):</label>
+                    <textarea id="videoNameTextarea" class="name-textarea" placeholder="Write video name here..."></textarea>
+                </div>
+
+                <button type="button" class="btn btn-green" style="justify-content:center; padding:12px; font-size:1rem;" onclick="saveVideoEntry()">OK</button>
+            </div>
+
+            <div class="page-b-panel" id="pageBPanel">
+                <h2 class="panel-heading">
+                    <span>Page B — Channel Videos</span>
+                    <span id="channelVideoCount" style="font-size:0.85rem; color:var(--text-muted);">0 videos</span>
+                </h2>
+                <div id="channelVideoList" style="display:flex; flex-direction:column; gap:10px;"></div>
+            </div>
+        </div>
+
+        <div class="channel-bar" id="channelBar">
+            <button class="add-channel-plus" title="Create Channel" onclick="openChannelModal()">+</button>
+        </div>
+    </section>
+
+    <section id="storyScreen" class="screen">
+        <div class="zenith-container">
+            <div class="zenith-box">
+                <h2 class="panel-heading">
+                    <span id="storyEditorHeading">Page C — Mini Zenith Story Creator</span>
+                    <button class="btn btn-dark" style="padding:4px 10px; font-size:0.8rem;" onclick="resetStoryForm()">New Story</button>
+                </h2>
+
+                <div class="heading-bar">
+                    <input type="text" id="storyH1Input" class="heading-input" placeholder="Enter Story Heading (H1)..." oninput="updateLiveH1Preview()">
+                    <select id="h1FontSelect" onchange="updateLiveH1Preview()">
+                        <option value="inherit">Font: Default</option>
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="'Courier New', monospace">Monospace</option>
+                        <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                    </select>
+                    <input type="color" id="h1ColorInput" value="#22c55e" title="Heading Color" oninput="updateLiveH1Preview()">
+                    <label style="font-size:0.85rem; display:flex; align-items:center; gap:4px;">
+                        <input type="checkbox" id="h1ShadowCheck" onchange="updateLiveH1Preview()"> Glow
+                    </label>
+                    <label style="font-size:0.85rem; display:flex; align-items:center; gap:4px;">
+                        <input type="checkbox" id="h1UnderlineCheck" onchange="updateLiveH1Preview()"> Underline
+                    </label>
+                </div>
+
+                <div class="h1-live-preview">
+                    <h1 id="liveH1Display" style="margin:0; text-align:center; color:#22c55e;">Story Heading</h1>
+                </div>
+
+                <div class="mini-zenith-toolbar">
+                    <button type="button" onclick="execZenith('bold')"><b>B</b></button>
+                    <button type="button" onclick="execZenith('italic')"><i>I</i></button>
+                    <button type="button" onclick="execZenith('strikeThrough')"><s>S</s></button>
+                    <select onchange="applyUnderlineStyle(this.value); this.selectedIndex=0;">
+                        <option value="">Underline Type</option>
+                        <option value="solid">Solid Underline</option>
+                        <option value="double">Double Underline</option>
+                        <option value="wavy">Wavy Underline</option>
+                        <option value="dotted">Dotted Underline</option>
+                    </select>
+                    <label style="font-size:0.8rem; display:inline-flex; align-items:center; gap:3px;">
+                        Highlight <input type="color" id="zenithHighlightColor" value="#fde047">
+                        <button type="button" onclick="applyZenithHighlight()">Apply</button>
+                    </label>
+                    <input type="color" title="Text Color" onchange="execZenith('foreColor', this.value)">
+                    <button type="button" onclick="execZenith('justifyLeft')">Left</button>
+                    <button type="button" onclick="execZenith('justifyCenter')">Center</button>
+                    <button type="button" onclick="execZenith('justifyRight')">Right</button>
+                    <button type="button" onclick="execZenith('insertUnorderedList')">• Bullets</button>
+                    <button type="button" onclick="execZenith('insertOrderedList')">1. Numbers</button>
+                    <button type="button" onclick="insertStoryImage()">🖼️ Image</button>
+                    <button type="button" onclick="insertStoryVideo()">🎥 Video</button>
+                    <button type="button" onclick="insertStoryLink()">🔗 Link</button>
+                    <button type="button" onclick="execZenith('insertHorizontalRule')">― HR</button>
+                </div>
+
+                <div id="storyEditor" class="mini-zenith-editor" contenteditable="true" placeholder="Write your Minecraft story here..."></div>
+
+                <button type="button" class="btn btn-green" style="justify-content:center; padding:12px; font-size:1rem;" onclick="saveStoryEntry()">OK</button>
+            </div>
+
+            <div class="zenith-box">
+                <h2 class="panel-heading">Saved Minecraft Stories</h2>
+                <div id="savedStoriesGrid" class="story-cards-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <div id="storyFullscreenOverlay" class="fullscreen-overlay">
+        <div class="overlay-top">
+            <span style="font-weight:800; color:var(--accent);">📖 Story Full-Screen View</span>
+            <button class="close-cross-btn" title="Close" onclick="closeStoryFullscreen()">✕</button>
+        </div>
+        <div id="fullscreenStoryContent" style="max-width:900px; width:100%; margin:0 auto; line-height:1.7;"></div>
+    </div>
+
+    <div id="channelModal" class="modal-backdrop">
+        <div class="modal-box">
+            <h3 style="margin:0; color:var(--accent);">Create New Channel</h3>
+            <input type="text" id="newChannelName" placeholder="Channel Name...">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button type="button" class="btn btn-dark" onclick="pickNewChannelCover()">🖼️ Select Channel Cover Image</button>
+                <img id="newChannelCoverPreview" style="width:48px; height:48px; border-radius:50%; object-fit:cover; display:none; border:2px solid var(--accent);" alt="Cover">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+                <button type="button" class="btn btn-dark" onclick="closeChannelModal()">Cancel</button>
+                <button type="button" class="btn btn-green" onclick="createChannel()">Create Channel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'MinecraftBooksDB_v1';
+        const STORE_NAME = 'appStore';
+        let db = null;
+
+        function openIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = () => {
+                    const database = req.result;
+                    if (!database.objectStoreNames.contains(STORE_NAME)) {
+                        database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = () => {
+                    db = req.result;
+                    resolve(db);
+                };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbGet(key) {
+            return new Promise((resolve) => {
+                if (!db) return resolve(null);
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const req = tx.objectStore(STORE_NAME).get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.value : null);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        function dbSet(key, value) {
+            return new Promise((resolve) => {
+                if (!db) return resolve();
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({ id: key, value });
+                tx.oncomplete = () => {
+                    document.getElementById('storageIndicator').textContent = 'IndexedDB: Saved';
+                    resolve();
+                };
+            });
+        }
+
+        let appState = {
+            channels: [
+                { id: 'ch_default', name: 'Main Channel', cover: '' }
+            ],
+            activeChannelId: 'ch_default',
+            videos: [],
+            stories: []
+        };
+
+        let videoDraft = {
+            editingId: null,
+            videoData: '',
+            audioData: '',
+            coverData: '',
+            savedProgress: 0
+        };
+
+        let newChannelCoverData = '';
+        let editingStoryId = null;
+        let savedZenithRange = null;
+
+        async function persistAll() {
+            await dbSet('minecraftBooksState', appState);
+        }
+
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            if (screenName === 'home') {
+                document.getElementById('homeScreen').classList.add('active');
+            } else if (screenName === 'videos') {
+                document.getElementById('videosScreen').classList.add('active');
+                renderChannels();
+                renderChannelVideos();
+            } else if (screenName === 'story') {
+                document.getElementById('storyScreen').classList.add('active');
+                renderStoriesList();
+            }
+        }
+
+        const studioVideo = document.getElementById('studioVideoPlayer');
+        const studioAudio = document.getElementById('studioAudioPlayer');
+
+        studioVideo.addEventListener('play', () => {
+            if (studioAudio.src) {
+                studioAudio.currentTime = studioVideo.currentTime % (studioAudio.duration || 1);
+                studioAudio.play().catch(() => {});
+            }
+        });
+        studioVideo.addEventListener('pause', () => {
+            studioAudio.pause();
+            saveLiveVideoProgress();
+        });
+        studioVideo.addEventListener('seeked', () => {
+            if (studioAudio.src && studioAudio.duration) {
+                studioAudio.currentTime = studioVideo.currentTime % studioAudio.duration;
+            }
+            saveLiveVideoProgress();
+        });
+        studioVideo.addEventListener('timeupdate', () => {
+            videoDraft.savedProgress = studioVideo.currentTime;
+            document.getElementById('progressTrackerText').textContent = `Video Time: ${studioVideo.currentTime.toFixed(1)}s`;
+        });
+
+        async function saveLiveVideoProgress() {
+            if (videoDraft.editingId) {
+                const target = appState.videos.find(v => v.id === videoDraft.editingId);
+                if (target) {
+                    target.savedProgress = studioVideo.currentTime;
+                    await persistAll();
+                }
+            }
+        }
+
+        function pickVideoFile() {
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'video/*';
+            inp.onchange = () => {
+                const file = inp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    videoDraft.videoData = reader.result;
+                    studioVideo.src = videoDraft.videoData;
+                    studioVideo.load();
+                    document.getElementById('btnPickVideo').classList.add('loaded');
+                    document.getElementById('videoFileLabel').textContent = file.name.slice(0, 16);
+                };
+                reader.readAsDataURL(file);
+            };
+            inp.click();
+        }
+
+        function pickAudioFile() {
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'audio/*';
+            inp.onchange = () => {
+                const file = inp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    videoDraft.audioData = reader.result;
+                    studioAudio.src = videoDraft.audioData;
+                    document.getElementById('btnPickAudio').classList.add('loaded');
+                    document.getElementById('audioFileLabel').textContent = file.name.slice(0, 16);
+                };
+                reader.readAsDataURL(file);
+            };
+            inp.click();
+        }
+
+        function pickCoverFile() {
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'image/*';
+            inp.onchange = () => {
+                const file = inp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    videoDraft.coverData = reader.result;
+                    const img = document.getElementById('studioCoverPreview');
+                    img.src = videoDraft.coverData;
+                    img.style.display = 'block';
+                    document.getElementById('btnPickCover').classList.add('loaded');
+                    document.getElementById('coverFileLabel').textContent = file.name.slice(0, 16);
+                };
+                reader.readAsDataURL(file);
+            };
+            inp.click();
+        }
+
+        function resetVideoForm() {
+            studioVideo.pause();
+            studioAudio.pause();
+            videoDraft = {
+                editingId: null,
+                videoData: '',
+                audioData: '',
+                coverData: '',
+                savedProgress: 0
+            };
+            studioVideo.removeAttribute('src');
+            studioVideo.load();
+            studioAudio.removeAttribute('src');
+            document.getElementById('studioCoverPreview').style.display = 'none';
+            document.getElementById('videoNameTextarea').value = '';
+            document.getElementById('btnPickVideo').classList.remove('loaded');
+            document.getElementById('btnPickAudio').classList.remove('loaded');
+            document.getElementById('btnPickCover').classList.remove('loaded');
+            document.getElementById('videoFileLabel').textContent = 'Select Video';
+            document.getElementById('audioFileLabel').textContent = 'Background Audio';
+            document.getElementById('coverFileLabel').textContent = 'Select Cover';
+            document.getElementById('progressTrackerText').textContent = 'Video Time: 0.0s';
+        }
+
+        async function saveVideoEntry() {
+            const nameVal = document.getElementById('videoNameTextarea').value.trim();
+            if (!nameVal && !videoDraft.videoData) {
+                alert('Please insert a video or enter a name.');
+                return;
+            }
+
+            const currentProgress = studioVideo.currentTime || videoDraft.savedProgress || 0;
+
+            if (videoDraft.editingId) {
+                const existing = appState.videos.find(v => v.id === videoDraft.editingId);
+                if (existing) {
+                    existing.name = nameVal || 'Untitled Video';
+                    existing.videoData = videoDraft.videoData;
+                    existing.audioData = videoDraft.audioData;
+                    existing.coverData = videoDraft.coverData;
+                    existing.savedProgress = currentProgress;
+                }
+            } else {
+                appState.videos.push({
+                    id: 'vid_' + Date.now(),
+                    channelId: appState.activeChannelId,
+                    name: nameVal || 'Untitled Video',
+                    videoData: videoDraft.videoData,
+                    audioData: videoDraft.audioData,
+                    coverData: videoDraft.coverData,
+                    savedProgress: currentProgress
+                });
+            }
+
+            await persistAll();
+            resetVideoForm();
+            renderChannelVideos(true);
+        }
+
+        function editVideoInPageA(videoId) {
+            const item = appState.videos.find(v => v.id === videoId);
+            if (!item) return;
+
+            studioVideo.pause();
+            studioAudio.pause();
+
+            videoDraft = {
+                editingId: item.id,
+                videoData: item.videoData || '',
+                audioData: item.audioData || '',
+                coverData: item.coverData || '',
+                savedProgress: item.savedProgress || 0
+            };
+
+            document.getElementById('videoNameTextarea').value = item.name || '';
+
+            if (item.videoData) {
+                studioVideo.src = item.videoData;
+                studioVideo.load();
+                studioVideo.onloadedmetadata = () => {
+                    if (item.savedProgress && item.savedProgress < studioVideo.duration) {
+                        studioVideo.currentTime = item.savedProgress;
+                    }
+                };
+                document.getElementById('btnPickVideo').classList.add('loaded');
+                document.getElementById('videoFileLabel').textContent = 'Video Loaded';
+            } else {
+                studioVideo.removeAttribute('src');
+                studioVideo.load();
+                document.getElementById('btnPickVideo').classList.remove('loaded');
+                document.getElementById('videoFileLabel').textContent = 'Select Video';
+            }
+
+            if (item.audioData) {
+                studioAudio.src = item.audioData;
+                document.getElementById('btnPickAudio').classList.add('loaded');
+                document.getElementById('audioFileLabel').textContent = 'Audio Loaded';
+            } else {
+                studioAudio.removeAttribute('src');
+                document.getElementById('btnPickAudio').classList.remove('loaded');
+                document.getElementById('audioFileLabel').textContent = 'Background Audio';
+            }
+
+            const coverImg = document.getElementById('studioCoverPreview');
+            if (item.coverData) {
+                coverImg.src = item.coverData;
+                coverImg.style.display = 'block';
+                document.getElementById('btnPickCover').classList.add('loaded');
+                document.getElementById('coverFileLabel').textContent = 'Cover Loaded';
+            } else {
+                coverImg.style.display = 'none';
+                document.getElementById('btnPickCover').classList.remove('loaded');
+                document.getElementById('coverFileLabel').textContent = 'Select Cover';
+            }
+
+            document.getElementById('progressTrackerText').textContent = `Resumed at: ${(item.savedProgress || 0).toFixed(1)}s`;
+        }
+
+        async function deleteVideoEntry(videoId) {
+            appState.videos = appState.videos.filter(v => v.id !== videoId);
+            if (videoDraft.editingId === videoId) {
+                resetVideoForm();
+            }
+            await persistAll();
+            renderChannelVideos();
+        }
+
+        function renderChannelVideos(forceOpenB = false) {
+            const activeCh = appState.channels.find(c => c.id === appState.activeChannelId) || appState.channels[0];
+            if (activeCh) {
+                document.getElementById('activeChannelTitle').textContent = activeCh.name;
+            }
+
+            const filtered = appState.videos.filter(v => v.channelId === appState.activeChannelId);
+            const pageB = document.getElementById('pageBPanel');
+            const listEl = document.getElementById('channelVideoList');
+            document.getElementById('channelVideoCount').textContent = `${filtered.length} video${filtered.length === 1 ? '' : 's'}`;
+
+            if (filtered.length > 0 || forceOpenB) {
+                pageB.classList.add('visible');
+            } else {
+                pageB.classList.remove('visible');
+            }
+
+            listEl.innerHTML = filtered.map(v => `
+                <div class="video-item-card">
+                    <div class="video-item-left" onclick="editVideoInPageA('${v.id}')" title="Click to load in Page A">
+                        ${v.coverData
+                            ? `<img src="${v.coverData}" class="video-cover-box" alt="Cover">`
+                            : `<div class="video-cover-box" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.75rem;">No Cover</div>`}
+                        <div>
+                            <div class="video-item-name">${escapeHtml(v.name)}</div>
+                            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:4px;">Progress: ${(v.savedProgress || 0).toFixed(1)}s</div>
+                        </div>
+                    </div>
+                    <div class="video-item-actions">
+                        <button type="button" class="btn btn-blue" style="padding:6px 10px; font-size:0.82rem;" onclick="editVideoInPageA('${v.id}')">Edit</button>
+                        <button type="button" class="btn btn-danger" style="padding:6px 10px; font-size:0.82rem;" onclick="deleteVideoEntry('${v.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderChannels() {
+            const bar = document.getElementById('channelBar');
+            const plusBtn = bar.querySelector('.add-channel-plus');
+            bar.querySelectorAll('.channel-chip').forEach(el => el.remove());
+
+            appState.channels.forEach(ch => {
+                const chip = document.createElement('div');
+                chip.className = 'channel-chip' + (ch.id === appState.activeChannelId ? ' active' : '');
+                chip.title = ch.name;
+                if (ch.cover) {
+                    chip.style.backgroundImage = `url("${ch.cover}")`;
+                } else {
+                    chip.textContent = ch.name.slice(0, 2).toUpperCase();
+                }
+
+                chip.onclick = () => switchChannel(ch.id);
+
+                const cross = document.createElement('span');
+                cross.className = 'channel-remove-x';
+                cross.textContent = '✕';
+                cross.title = `Remove ${ch.name}`;
+                cross.onclick = (e) => {
+                    e.stopPropagation();
+                    removeChannel(ch.id);
+                };
+                chip.appendChild(cross);
+
+                bar.insertBefore(chip, plusBtn);
+            });
+        }
+
+        function switchChannel(channelId) {
+            appState.activeChannelId = channelId;
+            resetVideoForm();
+            persistAll();
+            renderChannels();
+            renderChannelVideos();
+        }
+
+        async function removeChannel(channelId) {
+            if (appState.channels.length <= 1) {
+                alert('At least one channel must remain.');
+                return;
+            }
+            appState.channels = appState.channels.filter(c => c.id !== channelId);
+            appState.videos = appState.videos.filter(v => v.channelId !== channelId);
+            if (appState.activeChannelId === channelId) {
+                appState.activeChannelId = appState.channels[0].id;
+            }
+            resetVideoForm();
+            await persistAll();
+            renderChannels();
+            renderChannelVideos();
+        }
+
+        function openChannelModal() {
+            newChannelCoverData = '';
+            document.getElementById('newChannelName').value = '';
+            const prev = document.getElementById('newChannelCoverPreview');
+            prev.style.display = 'none';
+            document.getElementById('channelModal').classList.add('open');
+        }
+
+        function closeChannelModal() {
+            document.getElementById('channelModal').classList.remove('open');
+        }
+
+        function pickNewChannelCover() {
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'image/*';
+            inp.onchange = () => {
+                const file = inp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    newChannelCoverData = reader.result;
+                    const prev = document.getElementById('newChannelCoverPreview');
+                    prev.src = newChannelCoverData;
+                    prev.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            };
+            inp.click();
+        }
+
+        async function createChannel() {
+            const name = document.getElementById('newChannelName').value.trim();
+            if (!name) {
+                alert('Please enter a channel name.');
+                return;
+            }
+            const newCh = {
+                id: 'ch_' + Date.now(),
+                name,
+                cover: newChannelCoverData
+            };
+            appState.channels.push(newCh);
+            appState.activeChannelId = newCh.id;
+            resetVideoForm();
+            await persistAll();
+            closeChannelModal();
+            renderChannels();
+            renderChannelVideos();
+        }
+
+        function saveZenithSelection() {
+            const ed = document.getElementById('storyEditor');
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
+                savedZenithRange = sel.getRangeAt(0).cloneRange();
+            }
+        }
+
+        function restoreZenithSelection() {
+            const ed = document.getElementById('storyEditor');
+            ed.focus();
+            if (savedZenithRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(savedZenithRange);
+            }
+        }
+
+        document.getElementById('storyEditor').addEventListener('keyup', saveZenithSelection);
+        document.getElementById('storyEditor').addEventListener('mouseup', saveZenithSelection);
+
+        function updateLiveH1Preview() {
+            const text = document.getElementById('storyH1Input').value || 'Story Heading';
+            const font = document.getElementById('h1FontSelect').value;
+            const color = document.getElementById('h1ColorInput').value;
+            const glow = document.getElementById('h1ShadowCheck').checked;
+            const underline = document.getElementById('h1UnderlineCheck').checked;
+
+            const h1 = document.getElementById('liveH1Display');
+            h1.textContent = text;
+            h1.style.fontFamily = font;
+            h1.style.color = color;
+            h1.style.textShadow = glow ? `0 0 14px ${color}` : 'none';
+            h1.style.textDecoration = underline ? 'underline' : 'none';
+        }
+
+        function execZenith(command, value = null) {
+            restoreZenithSelection();
+            document.execCommand(command, false, value);
+            saveZenithSelection();
+        }
+
+        function applyUnderlineStyle(styleType) {
+            if (!styleType) return;
+            restoreZenithSelection();
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                const span = document.createElement('span');
+                span.style.textDecoration = `underline ${styleType}`;
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            } else {
+                document.execCommand('underline', false, null);
+            }
+            saveZenithSelection();
+        }
+
+        function applyZenithHighlight() {
+            restoreZenithSelection();
+            const color = document.getElementById('zenithHighlightColor').value;
+            const sel = window.getSelection();
+            if (sel && !sel.isCollapsed) {
+                const range = sel.getRangeAt(0);
+                const span = document.createElement('span');
+                span.style.backgroundColor = color;
+                span.style.color = '#0f172a';
+                span.style.padding = '0 3px';
+                span.style.borderRadius = '3px';
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+            }
+            saveZenithSelection();
+        }
+
+        function insertStoryHtml(html) {
+            restoreZenithSelection();
+            const ed = document.getElementById('storyEditor');
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0 && ed.contains(sel.anchorNode)) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                const div = document.createElement('div');
+                div.innerHTML = html;
+                const frag = document.createDocumentFragment();
+                let last = null;
+                while (div.firstChild) {
+                    last = div.firstChild;
+                    frag.appendChild(last);
+                }
+                range.insertNode(frag);
+                if (last) {
+                    const r = document.createRange();
+                    r.setStartAfter(last);
+                    r.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(r);
+                    savedZenithRange = r.cloneRange();
+                }
+            } else {
+                ed.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        function insertStoryImage() {
+            saveZenithSelection();
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'image/*';
+            inp.onchange = () => {
+                const file = inp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => insertStoryHtml(`<img src="${reader.result}" style="max-width:100%;"><p><br></p>`);
+                reader.readAsDataURL(file);
+            };
+            inp.click();
+        }
+
+        function insertStoryVideo() {
+            saveZenithSelection();
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = 'video/*';
+            inp.onchange = () => {
+                const file = inp.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => insertStoryHtml(`<video controls style="max-width:100%;" src="${reader.result}"></video><p><br></p>`);
+                reader.readAsDataURL(file);
+            };
+            inp.click();
+        }
+
+        function insertStoryLink() {
+            saveZenithSelection();
+            const url = prompt('Enter URL:');
+            if (!url) return;
+            const text = prompt('Enter link text:', url) || url;
+            insertStoryHtml(`<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" style="color:#38bdf8;text-decoration:underline;">${escapeHtml(text)}</a>&nbsp;`);
+        }
+
+        function resetStoryForm() {
+            editingStoryId = null;
+            document.getElementById('storyEditorHeading').textContent = 'Page C — Mini Zenith Story Creator';
+            document.getElementById('storyH1Input').value = '';
+            document.getElementById('h1FontSelect').value = 'inherit';
+            document.getElementById('h1ColorInput').value = '#22c55e';
+            document.getElementById('h1ShadowCheck').checked = false;
+            document.getElementById('h1UnderlineCheck').checked = false;
+            document.getElementById('storyEditor').innerHTML = '';
+            updateLiveH1Preview();
+        }
+
+        async function saveStoryEntry() {
+            const headingText = document.getElementById('storyH1Input').value.trim() || 'Untitled Minecraft Story';
+            const headingStyle = document.getElementById('liveH1Display').getAttribute('style') || '';
+            const bodyHtml = document.getElementById('storyEditor').innerHTML;
+
+            if (editingStoryId) {
+                const item = appState.stories.find(s => s.id === editingStoryId);
+                if (item) {
+                    item.headingText = headingText;
+                    item.headingStyle = headingStyle;
+                    item.bodyHtml = bodyHtml;
+                }
+            } else {
+                appState.stories.push({
+                    id: 'story_' + Date.now(),
+                    headingText,
+                    headingStyle,
+                    bodyHtml
+                });
+            }
+
+            await persistAll();
+            resetStoryForm();
+            renderStoriesList();
+        }
+
+        function editStoryEntry(storyId) {
+            const item = appState.stories.find(s => s.id === storyId);
+            if (!item) return;
+            editingStoryId = item.id;
+            document.getElementById('storyEditorHeading').textContent = `Editing: ${item.headingText}`;
+            document.getElementById('storyH1Input').value = item.headingText;
+            const h1 = document.getElementById('liveH1Display');
+            h1.textContent = item.headingText;
+            h1.setAttribute('style', item.headingStyle || 'margin:0; text-align:center; color:#22c55e;');
+            document.getElementById('storyEditor').innerHTML = item.bodyHtml || '';
+            document.getElementById('storyScreen').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteStoryEntry(storyId) {
+            appState.stories = appState.stories.filter(s => s.id !== storyId);
+            if (editingStoryId === storyId) {
+                resetStoryForm();
+            }
+            await persistAll();
+            renderStoriesList();
+        }
+
+        function viewStoryDetails(storyId) {
+            const item = appState.stories.find(s => s.id === storyId);
+            if (!item) return;
+            document.getElementById('fullscreenStoryContent').innerHTML = `
+                <h1 style="${item.headingStyle || 'text-align:center;color:#22c55e;'}">${escapeHtml(item.headingText)}</h1>
+                <div style="margin-top:20px; font-size:1.12rem;">${item.bodyHtml || ''}</div>
+            `;
+            document.getElementById('storyFullscreenOverlay').classList.add('open');
+        }
+
+        function closeStoryFullscreen() {
+            document.getElementById('storyFullscreenOverlay').classList.remove('open');
+        }
+
+        function renderStoriesList() {
+            const grid = document.getElementById('savedStoriesGrid');
+            if (appState.stories.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1;">No stories saved yet. Write above and click OK.</p>';
+                return;
+            }
+
+            grid.innerHTML = appState.stories.map(s => `
+                <div class="story-card">
+                    <div>
+                        <h3 style="margin:0 0 8px; color:var(--accent);">${escapeHtml(s.headingText)}</h3>
+                        <div style="font-size:0.9rem; color:var(--text-muted); max-height:80px; overflow:hidden;">
+                            ${stripTags(s.bodyHtml).slice(0, 140) || 'Rich story content...'}
+                        </div>
+                    </div>
+                    <div class="story-card-actions">
+                        <button type="button" class="btn btn-green" style="padding:6px 10px; font-size:0.82rem;" onclick="viewStoryDetails('${s.id}')">View Details</button>
+                        <button type="button" class="btn btn-blue" style="padding:6px 10px; font-size:0.82rem;" onclick="editStoryEntry('${s.id}')">Edit</button>
+                        <button type="button" class="btn btn-danger" style="padding:6px 10px; font-size:0.82rem;" onclick="deleteStoryEntry('${s.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function stripTags(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html || '';
+            return tmp.textContent || tmp.innerText || '';
+        }
+
+        (async function init() {
+            await openIndexedDB();
+            const saved = await dbGet('minecraftBooksState');
+            if (saved) {
+                appState = {
+                    channels: (saved.channels && saved.channels.length) ? saved.channels : appState.channels,
+                    activeChannelId: saved.activeChannelId || appState.activeChannelId,
+                    videos: saved.videos || [],
+                    stories: saved.stories || []
+                };
+            }
+            updateLiveH1Preview();
+            showScreen('home');
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best World - Minecraft Custom Map Blueprint</title>
+    <style>
+        :root {
+            --bg-dark: #0b111e;
+            --card-bg: #151f32;
+            --card-border: #2a3b59;
+            --mc-green: #38e54d;
+            --mc-diamond: #38bdf8;
+            --mc-gold: #facc15;
+            --mc-red: #f43f5e;
+            --mc-purple: #c084fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #182640 0%, var(--bg-dark) 80%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 36px 20px;
+            line-height: 1.65;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid var(--mc-green);
+            border-radius: 18px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(56, 229, 77, 0.15);
+            margin-bottom: 28px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(56, 229, 77, 0.15);
+            color: var(--mc-green);
+            border: 1px solid var(--mc-green);
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            text-shadow: 0 3px 12px rgba(56, 229, 77, 0.35);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .rule-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .rule-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--mc-diamond);
+        }
+
+        .rule-num {
+            background: linear-gradient(135deg, var(--mc-diamond), #0284c7);
+            color: #061326;
+            font-weight: 900;
+            font-size: 1.05rem;
+            min-width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .rule-card.danger .rule-num {
+            background: linear-gradient(135deg, var(--mc-red), #be123c);
+            color: #ffffff;
+        }
+
+        .rule-card.gold .rule-num {
+            background: linear-gradient(135deg, var(--mc-gold), #d97706);
+            color: #1c1917;
+        }
+
+        .rule-card.green .rule-num {
+            background: linear-gradient(135deg, var(--mc-green), #16a34a);
+            color: #052e16;
+        }
+
+        .rule-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .code-cmd {
+            background: rgba(56, 189, 248, 0.14);
+            color: var(--mc-diamond);
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.92rem;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        /* Mega Section #8: Clone Levers & Dimensions */
+        .mega-section {
+            background: var(--card-bg);
+            border: 2px solid var(--mc-purple);
+            border-radius: 16px;
+            padding: 26px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .mega-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .mega-num {
+            background: linear-gradient(135deg, var(--mc-purple), #7e22ce);
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 1.2rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .mega-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #f3e8ff;
+        }
+
+        .tags-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .biome-tag {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 7px 13px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .biome-tag.nether {
+            border-color: #f43f5e;
+            color: #fda4af;
+        }
+
+        .biome-tag.special {
+            border-color: var(--mc-gold);
+            color: #fef08a;
+        }
+
+        .biome-tag.clone {
+            border-color: var(--mc-diamond);
+            color: #bae6fd;
+        }
+
+        .detector-box {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--mc-diamond);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 12px;
+        }
+
+        .detector-title {
+            font-weight: 800;
+            color: var(--mc-diamond);
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+        }
+
+        .status-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .status-red {
+            background: rgba(244, 63, 94, 0.14);
+            border: 1px solid var(--mc-red);
+            color: #fecdd3;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .status-green {
+            background: rgba(56, 229, 77, 0.14);
+            border: 1px solid var(--mc-green);
+            color: #bbf7d0;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .dimension-warning {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(250, 204, 21, 0.12);
+            border-left: 4px solid var(--mc-gold);
+            border-radius: 6px;
+            color: #fef9c3;
+            font-weight: 600;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero-header">
+            <div class="badge">Minecraft Custom Adventure Blueprint</div>
+            <h1>Best World</h1>
+            <p class="subtitle">Sky-Platform Challenge • Command &amp; Clone Mechanics • Secret Dimensions</p>
+        </div>
+
+        <div class="rules-grid">
+            <div class="rule-card green">
+                <div class="rule-num">1</div>
+                <div class="rule-text">Make a platform on <strong>Y level 300</strong>.</div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-num">2</div>
+                <div class="rule-text">Add many levers that do crazy things.</div>
+            </div>
+
+            <div class="rule-card gold">
+                <div class="rule-num">3</div>
+                <div class="rule-text">The goal is to get a <strong>Mace</strong>.</div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-num">4</div>
+                <div class="rule-text">Use <span class="code-cmd">/clone</span> command to make the entire <strong>stronghold</strong>, <strong>ruined portal</strong>, <strong>structures</strong>, and <strong>trial chamber</strong> appear.</div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-num">5</div>
+                <div class="rule-text">Make a <strong>villager lever area</strong>.</div>
+            </div>
+
+            <div class="rule-card">
+                <div class="rule-num">6</div>
+                <div class="rule-text">A <strong>storage lever system</strong>.</div>
+            </div>
+
+            <div class="rule-card danger">
+                <div class="rule-num">7</div>
+                <div class="rule-text">Add a lever that will keep a platform with a <strong>Warden</strong> in it.</div>
+            </div>
+
+            <div class="rule-card danger">
+                <div class="rule-num">9</div>
+                <div class="rule-text">Make that if anyone crosses <strong>Y level 200</strong>, they are dead.</div>
+            </div>
+
+            <div class="rule-card green">
+                <div class="rule-num">10</div>
+                <div class="rule-text"><strong>Keep Inventory</strong> should be on.</div>
+            </div>
+        </div>
+
+        <div class="mega-section">
+            <div class="mega-header">
+                <div class="mega-num">8</div>
+                <div class="mega-title"><span class="code-cmd">/clone</span> Mega Lever — Biomes, Dimensions, Bosses &amp; Secret Gate</div>
+            </div>
+
+            <p style="color: var(--text-muted); margin-bottom: 12px;">A lever that spawns and clones each of the following areas and challenges:</p>
+
+            <div class="tags-wrap">
+                <span class="biome-tag">🍄 Mushroom Island</span>
+                <span class="biome-tag nether">🔥 Nether Wastelands</span>
+                <span class="biome-tag nether">👻 Soul Sand Valley</span>
+                <span class="biome-tag nether">🌋 Basalt Delta</span>
+                <span class="biome-tag nether">🌲 Crimson Forest</span>
+                <span class="biome-tag nether">🌿 Warped Forest</span>
+                <span class="biome-tag">🌼 Meadow</span>
+                <span class="biome-tag">🌾 Plains</span>
+                <span class="biome-tag">🧪 Sulfur Cave</span>
+                <span class="biome-tag">🏜️ Desert</span>
+                <span class="biome-tag">🧱 Eroded Badlands</span>
+                <span class="biome-tag">⛰️ Windswept Gravelly Hills</span>
+                <span class="biome-tag">🐸 Mangrove Swamp</span>
+                <span class="biome-tag">🌫️ The Pale Garden</span>
+                <span class="biome-tag">🌳 The Forest</span>
+                <span class="biome-tag">❄️ Ice Spikes</span>
+                <span class="biome-tag">🌊 Deep Ocean</span>
+                <span class="biome-tag clone">🚀 Space (Build space &amp; use /clone)</span>
+                <span class="biome-tag clone">🐉 End Island</span>
+                <span class="biome-tag clone">☁️ Aether ([100 × 100] /clone)</span>
+                <span class="biome-tag clone">💎 Diamond Dimension ([100 × 100] /clone)</span>
+                <span class="biome-tag clone">🏰 Mansion (/clone)</span>
+                <span class="biome-tag special">🍪 Statue — LockdownYT: Statue of Cookie God (/clone)</span>
+                <span class="biome-tag special">⚔️ Raid</span>
+                <span class="biome-tag special">🏃 Parkour Area</span>
+                <span class="biome-tag special">🧩 Minecraft Rubik's Solve</span>
+                <span class="biome-tag special">🚧 Reset Lever Surrounded by Barriers</span>
+            </div>
+
+            <div class="detector-box">
+                <div class="detector-title">🔐 Secret Dimension Detector Mechanism</div>
+                <p>Keep a <strong>Diamond Block</strong> inside a <strong>Barrel</strong>:</p>
+                <div class="status-row">
+                    <div class="status-red">❌ If you don't do it: <strong>Red</strong> will appear and the gate will close.</div>
+                    <div class="status-green">✅ If you do it: <strong>Green</strong> will appear and you can enter the secret dimension (<strong>Heaven</strong>).</div>
+                </div>
+                <div class="dimension-warning">
+                    ⚠️ If they don't, <strong>Hell</strong> will come — <em>before a Barrel of Gold enters a Chest</em>.
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">Best World — Minecraft Custom World Specification</div>
+    </div>
+</body>
+</html>

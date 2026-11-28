@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worlds - Minecraft Worlds Directory & Projects</title>
+    <style>
+        :root {
+            --bg-dark: #090e1a;
+            --card-bg: #131c31;
+            --card-border: #253657;
+            --water-blue: #38bdf8;
+            --cheats-green: #38e54d;
+            --nocheats-red: #f43f5e;
+            --gold-accent: #facc15;
+            --purple-accent: #c084fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #172747 0%, var(--bg-dark) 80%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 36px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1020px;
+            margin: 0 auto;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid var(--water-blue);
+            border-radius: 18px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(56, 189, 248, 0.18);
+            margin-bottom: 28px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--water-blue);
+            border: 1px solid var(--water-blue);
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            text-shadow: 0 3px 12px rgba(56, 189, 248, 0.35);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .legend-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .legend-pill {
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+        }
+
+        /* Featured Mega Card for World 1 */
+        .featured-world {
+            background: var(--card-bg);
+            border: 2px solid var(--water-blue);
+            border-radius: 16px;
+            padding: 26px;
+            margin-bottom: 22px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .world-header-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .world-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .world-num {
+            background: linear-gradient(135deg, var(--water-blue), #0284c7);
+            color: #061326;
+            font-weight: 900;
+            font-size: 1.1rem;
+            min-width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .world-num.nocheats {
+            background: linear-gradient(135deg, var(--nocheats-red), #be123c);
+            color: #ffffff;
+        }
+
+        .world-num.cheats {
+            background: linear-gradient(135deg, var(--cheats-green), #16a34a);
+            color: #052e16;
+        }
+
+        .world-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .cheat-badge {
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cheat-badge.allowed {
+            background: rgba(56, 229, 77, 0.15);
+            color: var(--cheats-green);
+            border: 1px solid var(--cheats-green);
+        }
+
+        .cheat-badge.not-allowed {
+            background: rgba(244, 63, 94, 0.15);
+            color: #fda4af;
+            border: 1px solid var(--nocheats-red);
+        }
+
+        .subprojects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+
+        .sub-item {
+            background: #0f172a;
+            border: 1px solid #2b3c5e;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .sub-letter {
+            background: rgba(56, 189, 248, 0.16);
+            color: var(--water-blue);
+            font-weight: 800;
+            font-size: 0.85rem;
+            min-width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sub-text {
+            font-weight: 600;
+            font-size: 0.96rem;
+            color: var(--text-main);
+        }
+
+        /* Beacon nested breakdown */
+        .beacon-box {
+            grid-column: 1 / -1;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--gold-accent);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .beacon-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-weight: 800;
+            color: #fef08a;
+            font-size: 1.02rem;
+        }
+
+        .beacon-arrow-row {
+            margin: 8px 0 10px 12px;
+            font-weight: 700;
+            color: var(--water-blue);
+            font-size: 0.95rem;
+        }
+
+        .beacon-tiers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 12px 26px;
+        }
+
+        .tier-pill {
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.86rem;
+            font-weight: 700;
+            background: #1e293b;
+            border: 1px solid #475569;
+        }
+
+        .tier-pill.netherite { border-color: #a855f7; color: #e9d5ff; }
+        .tier-pill.diamond { border-color: #38bdf8; color: #bae6fd; }
+        .tier-pill.gold { border-color: #facc15; color: #fef08a; }
+        .tier-pill.iron { border-color: #cbd5e1; color: #f1f5f9; }
+        .tier-pill.copper { border-color: #fb923c; color: #fed7aa; }
+        .tier-pill.emerald { border-color: #38e54d; color: #bbf7d0; }
+
+        .beacon-note {
+            margin-left: 12px;
+            padding: 8px 12px;
+            background: rgba(250, 204, 21, 0.12);
+            border-left: 3px solid var(--gold-accent);
+            border-radius: 6px;
+            color: #fef9c3;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* Remaining Worlds Grid */
+        .worlds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .world-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .world-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--water-blue);
+        }
+
+        .world-card-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .world-card-title {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .world-subnote {
+            background: #0f172a;
+            border: 1px solid #2b3c5e;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #bbf7d0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero-header">
+            <div class="badge">Minecraft Save Files &amp; Game Modes</div>
+            <h1>Worlds</h1>
+            <p class="subtitle">10 Custom Worlds • Rules, Cheats Status &amp; Mega Builds</p>
+        </div>
+
+        <div class="legend-bar">
+            <span class="legend-pill" style="color: var(--cheats-green); border-color: var(--cheats-green);">✅ Cheats Allowed</span>
+            <span class="legend-pill" style="color: #fda4af; border-color: var(--nocheats-red);">🔒 Cheats Not Allowed / Not Possible</span>
+        </div>
+
+        <!-- World 1: Featured Mega World -->
+        <div class="featured-world">
+            <div class="world-header-row">
+                <div class="world-title-group">
+                    <div class="world-num">1</div>
+                    <div class="world-name">🌊 Water world</div>
+                </div>
+                <span class="cheat-badge allowed">✅ Cheats allowed</span>
+            </div>
+
+            <div class="subprojects-grid">
+                <div class="sub-item">
+                    <div class="sub-letter">a</div>
+                    <div class="sub-text">🪐 Solar system</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">b</div>
+                    <div class="sub-text">🐾 Paw patrol Lookout</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">c</div>
+                    <div class="sub-text">🐶 Pet houses for all Paw patrol pups</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">e</div>
+                    <div class="sub-text">📦 I built an automatic storage system</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">f</div>
+                    <div class="sub-text">🟩 I built a minecraft cube planet</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">g</div>
+                    <div class="sub-text">🔥 Nether hub</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">h</div>
+                    <div class="sub-text">⚔️ Every farm for every mob</div>
+                </div>
+
+                <div class="sub-item">
+                    <div class="sub-letter">i</div>
+                    <div class="sub-text">🐕 Every Pup of PAW Patrol</div>
+                </div>
+
+                <!-- Item d: Beacon Hierarchy -->
+                <div class="beacon-box">
+                    <div class="beacon-header">
+                        <div class="sub-letter" style="background: rgba(250, 204, 21, 0.2); color: var(--gold-accent);">d</div>
+                        <span>🔦 I built a beacon</span>
+                    </div>
+                    <div class="beacon-arrow-row">➔ Every beacon</div>
+                    <div class="beacon-tiers">
+                        <span class="tier-pill netherite">i. Netherite beacon</span>
+                        <span class="tier-pill diamond">ii. Diamond beacon</span>
+                        <span class="tier-pill gold">iii. Gold beacon</span>
+                        <span class="tier-pill iron">iv. Iron beacon</span>
+                        <span class="tier-pill copper">v. Copper beacon</span>
+                        <span class="tier-pill emerald">vi. Emerald beacon</span>
+                    </div>
+                    <div class="beacon-note">➔ A beacon consists of 164 blocks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Worlds 2 to 10 -->
+        <div class="worlds-grid">
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num nocheats">2</div>
+                    <div class="world-card-title">💀 Hardcore world</div>
+                </div>
+                <span class="cheat-badge not-allowed">🔒 Cheats not possible</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num nocheats">3</div>
+                    <div class="world-card-title">🕊️ Survival peaceful</div>
+                </div>
+                <span class="cheat-badge not-allowed">🔒 Cheats not allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num cheats">4</div>
+                    <div class="world-card-title">🌍 Survival Overworld</div>
+                </div>
+                <span class="cheat-badge allowed">✅ Cheats allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num cheats">5</div>
+                    <div class="world-card-title">🧭 Adventure mode</div>
+                </div>
+                <span class="cheat-badge allowed">✅ Cheats allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num nocheats">6</div>
+                    <div class="world-card-title">☁️ Skyblock survival</div>
+                </div>
+                <span class="cheat-badge not-allowed">🔒 Cheats not allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num nocheats">7</div>
+                    <div class="world-card-title">🔥 Nether Survival</div>
+                </div>
+                <span class="cheat-badge not-allowed">🔒 Cheats not allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num nocheats">8</div>
+                    <div class="world-card-title">🔄 Survival, Backwards</div>
+                </div>
+                <span class="cheat-badge not-allowed">🔒 Cheats not allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num nocheats">9</div>
+                    <div class="world-card-title">🕹️ Lever world (Note 6)</div>
+                </div>
+                <span class="cheat-badge not-allowed">🔒 Cheats not allowed</span>
+            </div>
+
+            <div class="world-card">
+                <div class="world-card-top">
+                    <div class="world-num cheats">10</div>
+                    <div class="world-card-title">⚔️ Survival</div>
+                </div>
+                <div class="world-subnote">
+                    <span>a.</span>
+                    <span>🏛️ I upgraded every structure</span>
+                </div>
+                <span class="cheat-badge allowed">✅ Cheats allowed</span>
+            </div>
+        </div>
+
+        <div class="footer-note">Minecraft Worlds Master Directory — All 10 Worlds</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Ideas - Minecraft Series & Challenges</title>
+    <style>
+        :root {
+            --bg-dark: #0a101d;
+            --card-bg: #131c31;
+            --card-border: #263656;
+            --water-blue: #38bdf8;
+            --survival-green: #38e54d;
+            --hardcore-red: #f43f5e;
+            --gold-accent: #facc15;
+            --purple-accent: #c084fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top, #172747 0%, var(--bg-dark) 80%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 36px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1020px;
+            margin: 0 auto;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid var(--water-blue);
+            border-radius: 18px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(56, 189, 248, 0.18);
+            margin-bottom: 28px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--water-blue);
+            border: 1px solid var(--water-blue);
+            padding: 4px 14px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            text-shadow: 0 3px 12px rgba(56, 189, 248, 0.35);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .legend-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .legend-pill {
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 999px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+        }
+
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .video-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .video-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--water-blue);
+        }
+
+        .video-num {
+            background: linear-gradient(135deg, var(--water-blue), #0284c7);
+            color: #061326;
+            font-weight: 900;
+            font-size: 1rem;
+            min-width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .video-card.survival .video-num {
+            background: linear-gradient(135deg, var(--survival-green), #16a34a);
+            color: #052e16;
+        }
+
+        .video-card.hardcore .video-num {
+            background: linear-gradient(135deg, var(--hardcore-red), #be123c);
+            color: #ffffff;
+        }
+
+        .video-card.special .video-num {
+            background: linear-gradient(135deg, var(--gold-accent), #d97706);
+            color: #1c1917;
+        }
+
+        .video-card.allworlds .video-num {
+            background: linear-gradient(135deg, var(--purple-accent), #7e22ce);
+            color: #ffffff;
+        }
+
+        .video-content {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .video-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .world-tag {
+            display: inline-block;
+            align-self: flex-start;
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 2px 10px;
+            border-radius: 6px;
+            background: rgba(56, 189, 248, 0.14);
+            color: var(--water-blue);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+
+        .video-card.survival .world-tag {
+            background: rgba(56, 229, 77, 0.14);
+            color: var(--survival-green);
+            border-color: rgba(56, 229, 77, 0.35);
+        }
+
+        .video-card.hardcore .world-tag {
+            background: rgba(244, 63, 94, 0.14);
+            color: #fda4af;
+            border-color: rgba(244, 63, 94, 0.35);
+        }
+
+        .video-card.special .world-tag {
+            background: rgba(250, 204, 21, 0.14);
+            color: #fef08a;
+            border-color: rgba(250, 204, 21, 0.35);
+        }
+
+        .video-card.allworlds .world-tag {
+            background: rgba(192, 132, 252, 0.14);
+            color: #e9d5ff;
+            border-color: rgba(192, 132, 252, 0.35);
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 28px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero-header">
+            <div class="badge">Minecraft Content Roadmap</div>
+            <h1>Video</h1>
+            <p class="subtitle">20 Episode Concepts • Water World • Survival • 100 Days Hardcore</p>
+        </div>
+
+        <div class="legend-bar">
+            <span class="legend-pill" style="color: var(--water-blue); border-color: var(--water-blue);">🌊 Water World</span>
+            <span class="legend-pill" style="color: var(--survival-green); border-color: var(--survival-green);">⚔️ Survival</span>
+            <span class="legend-pill" style="color: #fda4af; border-color: var(--hardcore-red);">💀 Hardcore</span>
+            <span class="legend-pill" style="color: #fef08a; border-color: var(--gold-accent);">⭐ Special Challenge</span>
+            <span class="legend-pill" style="color: #e9d5ff; border-color: var(--purple-accent);">🌐 Every World</span>
+        </div>
+
+        <div class="videos-grid">
+            <div class="video-card">
+                <div class="video-num">1</div>
+                <div class="video-content">
+                    <div class="video-title">I became invincible in my new world</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">2</div>
+                <div class="video-content">
+                    <div class="video-title">I built a netherite beacon, max powered</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card survival">
+                <div class="video-num">3</div>
+                <div class="video-content">
+                    <div class="video-title">I upgraded every structure</div>
+                    <span class="world-tag">⚔️ Survival world</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">4</div>
+                <div class="video-content">
+                    <div class="video-title">I build an automatic storage system</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card special">
+                <div class="video-num">5</div>
+                <div class="video-content">
+                    <div class="video-title">I survived in an ocean only world</div>
+                    <span class="world-tag">🏝️ Ocean Only</span>
+                </div>
+            </div>
+
+            <div class="video-card hardcore">
+                <div class="video-num">6</div>
+                <div class="video-content">
+                    <div class="video-title">I survived 100 days in minecraft hardcore</div>
+                    <span class="world-tag">💀 Hardcore</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">7</div>
+                <div class="video-content">
+                    <div class="video-title">I built the Lookout in Water world</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card special">
+                <div class="video-num">8</div>
+                <div class="video-content">
+                    <div class="video-title">I survived 100 days in skyblock</div>
+                    <span class="world-tag">☁️ Skyblock</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">9</div>
+                <div class="video-content">
+                    <div class="video-title">I built a minecraft planet</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card special">
+                <div class="video-num">10</div>
+                <div class="video-content">
+                    <div class="video-title">I survived in adventure mode</div>
+                    <span class="world-tag">🧭 Adventure Mode</span>
+                </div>
+            </div>
+
+            <div class="video-card hardcore">
+                <div class="video-num">11</div>
+                <div class="video-content">
+                    <div class="video-title">I survived 100 days in overworld hardcore</div>
+                    <span class="world-tag">💀 Overworld Hardcore</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">12</div>
+                <div class="video-content">
+                    <div class="video-title">I built a nether start (Hub)</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">13</div>
+                <div class="video-content">
+                    <div class="video-title">I built a farm for each and slew every mob</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card survival">
+                <div class="video-num">14</div>
+                <div class="video-content">
+                    <div class="video-title">I started minecraft in the nether</div>
+                    <span class="world-tag">🔥 Survival</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">15</div>
+                <div class="video-content">
+                    <div class="video-title">I built a solar system</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card survival">
+                <div class="video-num">16</div>
+                <div class="video-content">
+                    <div class="video-title">Minecraft but everything is backwards</div>
+                    <span class="world-tag">🔄 Survival</span>
+                </div>
+            </div>
+
+            <div class="video-card hardcore">
+                <div class="video-num">17</div>
+                <div class="video-content">
+                    <div class="video-title">I survived 100 days in peaceful mode</div>
+                    <span class="world-tag">🕊️ Hardcore</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">18</div>
+                <div class="video-content">
+                    <div class="video-title">I built every pup of Paw patrol</div>
+                    <span class="world-tag">🐾 Water world</span>
+                </div>
+            </div>
+
+            <div class="video-card allworlds">
+                <div class="video-num">19</div>
+                <div class="video-content">
+                    <div class="video-title">I built a city connecting every build</div>
+                    <span class="world-tag">🌐 Every world</span>
+                </div>
+            </div>
+
+            <div class="video-card">
+                <div class="video-num">20</div>
+                <div class="video-content">
+                    <div class="video-title">I built pet houses for my new pets</div>
+                    <span class="world-tag">🌊 Water world</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-note">Minecraft Video Episode List — Complete 20-Video Roster</div>
+    </div>
+</body>
+</html>
